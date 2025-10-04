@@ -1,3 +1,4 @@
+'use client';
 import type { Timestamp } from 'firebase/firestore';
 
 export type UserProfile = {
@@ -7,6 +8,10 @@ export type UserProfile = {
   photoURL: string | null;
   phoneNumber: string | null;
   defaultCurrency?: string;
+  expenseFieldSettings?: {
+    isDescriptionRequired?: boolean;
+    isTagRequired?: boolean;
+  };
   createdAt?: Timestamp;
 };
 

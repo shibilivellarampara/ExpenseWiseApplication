@@ -1,3 +1,5 @@
+'use client';
+
 import { PageHeader } from "@/components/PageHeader";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { UserSettings } from "@/components/profile/UserSettings";

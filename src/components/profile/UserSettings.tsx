@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { UserProfile } from "@/lib/types";
 import { CategorySettings } from "./CategorySettings";
 import { PaymentMethodSettings } from "./PaymentMethodSettings";
 import { TagSettings } from "./TagSettings";
+import { ExpenseFieldSettings } from "./ExpenseFieldSettings";
 
 const currencies = ["USD", "EUR", "JPY", "GBP", "INR"];
 
@@ -99,6 +99,7 @@ export function UserSettings() {
                 </CardContent>
             </Card>
 
+            <ExpenseFieldSettings />
             <CategorySettings />
             <PaymentMethodSettings />
             <TagSettings />

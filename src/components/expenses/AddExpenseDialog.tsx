@@ -21,7 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '../ui/textarea';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
@@ -32,14 +32,21 @@ import { getCurrencySymbol } from '@/lib/currencies';
 import * as LucideIcons from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 
-const expenseSchema = z.object({
-  amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
-  categoryId: z.string().min(1, { message: 'Please select a category.' }),
-  description: z.string().optional(),
-  date: z.date({ required_error: 'A date is required.' }),
-  paymentMethodId: z.string().min(1, { message: 'Please select a payment method.' }),
-  tagId: z.string().optional(),
-});
+// Function to create a dynamic schema
+const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
+  return z.object({
+    amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
+    categoryId: z.string().min(1, { message: 'Please select a category.' }),
+    description: settings?.isDescriptionRequired
+      ? z.string().min(1, 'Description is required.')
+      : z.string().optional(),
+    date: z.date({ required_error: 'A date is required.' }),
+    paymentMethodId: z.string().min(1, { message: 'Please select a payment method.' }),
+    tagId: settings?.isTagRequired
+      ? z.string().min(1, 'Please select a tag.')
+      : z.string().optional(),
+  });
+};
 
 
 export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
@@ -49,19 +56,11 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
     const { user } = useUser();
     const firestore = useFirestore();
 
-    // Fetch relational data for dropdowns
-    const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [user, firestore]);
-    const paymentMethodsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/paymentMethods`) : null, [user, firestore]);
-    const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [user, firestore]);
-    
-    const { data: categories } = useCollection<Category>(categoriesQuery);
-    const { data: paymentMethods } = useCollection<PaymentMethod>(paymentMethodsQuery);
-    const { data: tags } = useCollection<Tag>(tagsQuery);
-    
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-    const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
+    // Memoize the schema so it only changes when settings do
+    const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
 
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
@@ -73,6 +72,23 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
             paymentMethodId: '',
             tagId: '',
         },
+    });
+     
+    // Fetch relational data for dropdowns
+    const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [user, firestore]);
+    const paymentMethodsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/paymentMethods`) : null, [user, firestore]);
+    const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [user, firestore]);
+    
+    const { data: categories } = useCollection<Category>(categoriesQuery);
+    const { data: paymentMethods } = useCollection<PaymentMethod>(paymentMethodsQuery);
+    const { data: tags } = useCollection<Tag>(tagsQuery);
+    
+    const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
+
+    // Reset the form whenever the schema changes (i.e., when settings change)
+    // or when the dialog is opened.
+    useState(() => {
+        form.reset();
     });
 
     const resetForm = () => {
@@ -98,6 +114,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
           ...values,
           userId: user.uid,
           createdAt: serverTimestamp(),
+          tagId: values.tagId === 'no-tag' ? '' : values.tagId,
         };
 
         try {
@@ -122,6 +139,10 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
         const IconComponent = (LucideIcons as any)[iconName];
         return IconComponent ? <IconComponent className="mr-2 h-4 w-4" /> : <Pilcrow className="mr-2 h-4 w-4" />;
     };
+
+    // Determine if fields are required for UI cues
+    const isDescriptionRequired = userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false;
+    const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -214,7 +235,9 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     name="tagId"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Tag / Label (Optional)</FormLabel>
+                        <FormLabel>
+                            Tag / Label {isTagRequired ? '' : '(Optional)'}
+                        </FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                             <SelectTrigger>
@@ -222,7 +245,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            <SelectItem value="no-tag">No Tag</SelectItem>
+                            {!isTagRequired && <SelectItem value="no-tag">No Tag</SelectItem>}
                             {tags?.map(tag => (
                                 <SelectItem key={tag.id} value={tag.id}>
                                     <div className="flex items-center">
@@ -243,7 +266,9 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Description (Optional)</FormLabel>
+                        <FormLabel>
+                            Description {isDescriptionRequired ? '' : '(Optional)'}
+                        </FormLabel>
                         <FormControl>
                             <Textarea placeholder="e.g., Groceries from Walmart" {...field} />
                         </FormControl>

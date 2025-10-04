@@ -16,39 +16,39 @@
   "avatarPlaceholders": [
     {
       "id": "avatar-1",
-      "description": "Abstract avatar with blue and purple tones",
-      "imageUrl": "https://picsum.photos/seed/avatar1/200/200",
-      "imageHint": "abstract avatar"
+      "description": "Cartoon avatar of a person with glasses",
+      "imageUrl": "https://picsum.photos/seed/p-avatar1/200/200",
+      "imageHint": "cartoon avatar"
     },
     {
       "id": "avatar-2",
-      "description": "Abstract avatar with green and yellow tones",
-      "imageUrl": "https://picsum.photos/seed/avatar2/200/200",
-      "imageHint": "abstract avatar"
+      "description": "Cartoon avatar of a person with a hat",
+      "imageUrl": "https://picsum.photos/seed/p-avatar2/200/200",
+      "imageHint": "cartoon avatar"
     },
     {
       "id": "avatar-3",
-      "description": "Abstract avatar with red and orange tones",
-      "imageUrl": "https://picsum.photos/seed/avatar3/200/200",
-      "imageHint": "abstract avatar"
+      "description": "Cartoon avatar of a person smiling",
+      "imageUrl": "https://picsum.photos/seed/p-avatar3/200/200",
+      "imageHint": "cartoon avatar"
     },
     {
       "id": "avatar-4",
-      "description": "Abstract avatar with geometric patterns",
-      "imageUrl": "https://picsum.photos/seed/avatar4/200/200",
-      "imageHint": "geometric avatar"
+      "description": "Colorful cartoon avatar of a character",
+      "imageUrl": "https://picsum.photos/seed/p-avatar4/200/200",
+      "imageHint": "cartoon character"
     },
     {
       "id": "avatar-5",
-      "description": "Minimalist avatar with a single color",
-      "imageUrl": "https://picsum.photos/seed/avatar5/200/200",
+      "description": "Minimalist cartoon avatar",
+      "imageUrl": "https://picsum.photos/seed/p-avatar5/200/200",
       "imageHint": "minimalist avatar"
     },
     {
       "id": "avatar-6",
-      "description": "Abstract avatar with watercolor effect",
-      "imageUrl": "https://picsum.photos/seed/avatar6/200/200",
-      "imageHint": "watercolor avatar"
+      "description": "Cute cartoon animal avatar",
+      "imageUrl": "https://picsum.photos/seed/p-avatar6/200/200",
+      "imageHint": "animal avatar"
     }
   ]
 }

@@ -34,8 +34,10 @@ export function ProfileForm() {
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
 
+    // Use local state for form inputs that can be edited
     const [name, setName] = useState('');
-    const [photoURL, setPhotoURL] = useState<string | null>(null);
+    // Use a separate state for the displayed photo URL, which can be a local blob or a remote URL
+    const [displayPhotoUrl, setDisplayPhotoUrl] = useState<string | null>(null);
     const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
 
     // State for phone number update
@@ -60,6 +62,18 @@ export function ProfileForm() {
         }
     }, [showPhoneDialog, auth]);
 
+    // Effect to populate form when userProfile data loads from Firestore
+    useEffect(() => {
+        if (userProfile) {
+            setName(userProfile.name || '');
+            setDisplayPhotoUrl(userProfile.photoURL || null);
+        } else if (user) {
+            // Fallback to auth data if firestore profile is not available yet
+            setName(user.displayName || '');
+            setDisplayPhotoUrl(user.photoURL || null);
+        }
+    }, [userProfile, user]);
+
 
     const getInitials = (name?: string | null) => {
         if (!name) return 'U';
@@ -71,12 +85,12 @@ export function ProfileForm() {
         if (!file || !user) return;
 
         const localImageUrl = URL.createObjectURL(file);
-        setPhotoURL(localImageUrl);
+        setDisplayPhotoUrl(localImageUrl);
         setNewAvatarFile(file);
     };
 
     const handleAvatarSelect = (url: string) => {
-        setPhotoURL(url);
+        setDisplayPhotoUrl(url);
         setNewAvatarFile(null); // Clear file if a pre-designed avatar is selected
     }
 
@@ -86,7 +100,7 @@ export function ProfileForm() {
 
         setIsLoading(true);
         
-        let finalPhotoURL = photoURL; // Start with the currently displayed URL
+        let finalPhotoURL = displayPhotoUrl;
 
         // If a new file was uploaded, handle the upload process
         if (newAvatarFile) {
@@ -106,18 +120,25 @@ export function ProfileForm() {
         }
 
         try {
+            // Data to be saved in Firestore
+            const userProfileData: { name: string; photoURL?: string | null } = {
+                name: name,
+            };
+            if (finalPhotoURL !== null) {
+                userProfileData.photoURL = finalPhotoURL;
+            }
+
+            // Update Firebase Auth profile
             await updateProfile(auth.currentUser, {
                 displayName: name,
                 photoURL: finalPhotoURL,
             });
 
+            // Update Firestore document
             const userDocRef = doc(firestore, 'users', user.uid);
-            await setDoc(userDocRef, {
-                name: name,
-                photoURL: finalPhotoURL,
-            }, { merge: true });
+            await setDoc(userDocRef, userProfileData, { merge: true });
 
-            if(finalPhotoURL) setPhotoURL(finalPhotoURL);
+            setDisplayPhotoUrl(finalPhotoURL);
             
             toast({ title: "Profile Updated", description: "Your changes have been saved." });
         } catch (error: any) {
@@ -169,17 +190,6 @@ export function ProfileForm() {
         }
     };
 
-    // Effect to reset form state when user profile from Firestore is loaded
-    useEffect(() => {
-        if (userProfile) {
-            setName(userProfile.name || '');
-            setPhotoURL(userProfile.photoURL || null);
-        } else if (user) {
-            setName(user.displayName || '');
-            setPhotoURL(user.photoURL || null);
-        }
-        setNewAvatarFile(null);
-    }, [userProfile, user]);
 
     if (isProfileLoading) {
         return (
@@ -208,7 +218,7 @@ export function ProfileForm() {
                             <PopoverTrigger asChild>
                                 <button type="button" className="relative h-24 w-24 rounded-full">
                                     <Avatar className="h-24 w-24">
-                                        <AvatarImage src={photoURL || undefined} alt={name || 'User'} />
+                                        <AvatarImage src={displayPhotoUrl || undefined} alt={name || 'User'} />
                                         <AvatarFallback>{getInitials(name)}</AvatarFallback>
                                     </Avatar>
                                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs font-semibold rounded-full opacity-0 hover:opacity-100 transition-opacity">
@@ -245,7 +255,7 @@ export function ProfileForm() {
                                                 onClick={() => handleAvatarSelect(avatar.imageUrl)}
                                                 className={cn(
                                                     "rounded-full ring-2 ring-transparent hover:ring-primary focus:ring-primary focus:outline-none transition-all",
-                                                    photoURL === avatar.imageUrl && "ring-primary"
+                                                    displayPhotoUrl === avatar.imageUrl && "ring-primary"
                                                 )}
                                             >
                                                 <Image

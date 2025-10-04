@@ -167,26 +167,23 @@ export default function DashboardPage() {
                     </Tabs>
                 </Card>
                 <Card className="lg:col-span-3">
-                     <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="font-headline">Spending Breakdown</CardTitle>
-                         <Select value={pieChartGrouping} onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)}>
-                            <SelectTrigger className="w-[120px]">
-                                <SelectValue placeholder="Group by" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="category">Category</SelectItem>
-                                <SelectItem value="account">Account</SelectItem>
-                                <SelectItem value="tag">Tag</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                             <Skeleton className="h-[350px] w-full" />
-                        ) : (
-                             <CategoryPieChart data={pieChartData} currencySymbol={currencySymbol} />
-                        )}
-                    </CardContent>
+                    <Tabs value={pieChartGrouping} onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)}>
+                        <CardHeader className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+                            <CardTitle className="font-headline">Spending Breakdown</CardTitle>
+                            <TabsList>
+                                <TabsTrigger value="category">Category</TabsTrigger>
+                                <TabsTrigger value="account">Account</TabsTrigger>
+                                <TabsTrigger value="tag">Tag</TabsTrigger>
+                            </TabsList>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoading ? (
+                                <Skeleton className="h-[350px] w-full" />
+                            ) : (
+                                <CategoryPieChart data={pieChartData} currencySymbol={currencySymbol} />
+                            )}
+                        </CardContent>
+                    </Tabs>
                 </Card>
             </div>
         </div>

@@ -3,7 +3,7 @@ const currencySymbols: { [key: string]: string } = {
     EUR: '€', // Euro
     JPY: '¥', // Japanese Yen
     GBP: '£', // British Pound Sterling
-    INR: '₹', // Indian Rupee
+    INR: '\u20B9', // Indian Rupee (using Unicode escape sequence)
     AUD: 'A$', // Australian Dollar
     CAD: 'C$', // Canadian Dollar
     CHF: 'CHF', // Swiss Franc

@@ -1,13 +1,14 @@
 'use client';
 
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -15,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, Pilcrow } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ import { addDoc, collection, doc, serverTimestamp } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { UserProfile, Category, PaymentMethod, Tag } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
+import * as LucideIcons from 'lucide-react';
 
 const expenseSchema = z.object({
   amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
@@ -39,7 +41,7 @@ const expenseSchema = z.object({
 });
 
 
-export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
+export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
@@ -72,14 +74,21 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
         },
     });
 
-    async function onSubmit(values: z.infer<typeof expenseSchema>) {
+    const resetForm = () => {
+        form.reset({
+            amount: 0,
+            categoryId: '',
+            description: '',
+            date: new Date(),
+            paymentMethodId: '',
+            tagId: '',
+        });
+    }
+
+    const handleSave = async (values: z.infer<typeof expenseSchema>, shouldClose: boolean) => {
         setIsLoading(true);
         if (!firestore || !user) {
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'You must be logged in to add an expense.',
-            });
+            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to add an expense.' });
             setIsLoading(false);
             return;
         }
@@ -94,42 +103,35 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
             const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
             addDocumentNonBlocking(expensesCol, expenseData);
             
-            toast({
-                title: 'Expense Added!',
-                description: `Your expense has been recorded.`,
-            });
+            toast({ title: 'Expense Added!', description: `Your expense has been recorded.` });
             
-            form.reset({
-                amount: 0,
-                categoryId: '',
-                description: '',
-                date: new Date(),
-                paymentMethodId: '',
-                tagId: '',
-            });
-            setOpen(false);
-
+            resetForm();
+            if (shouldClose) {
+                setOpen(false);
+            }
         } catch (error: any) {
-             toast({
-                variant: 'destructive',
-                title: 'Uh oh! Something went wrong.',
-                description: error.message || 'Could not save expense.',
-            });
+             toast({ variant: 'destructive', title: 'Uh oh! Something went wrong.', description: error.message || 'Could not save expense.' });
         } finally {
             setIsLoading(false);
         }
     }
+    
+    const renderIcon = (iconName: string | undefined) => {
+        if (!iconName) return <Pilcrow className="mr-2 h-4 w-4" />;
+        const IconComponent = (LucideIcons as any)[iconName];
+        return IconComponent ? <IconComponent className="mr-2 h-4 w-4" /> : <Pilcrow className="mr-2 h-4 w-4" />;
+    };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent className="overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="font-headline">Add a New Expense</SheetTitle>
-          <SheetDescription>Fill in the details of your expense below.</SheetDescription>
-        </SheetHeader>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="font-headline">Add a New Expense</DialogTitle>
+          <DialogDescription>Fill in the details of your expense below.</DialogDescription>
+        </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-6">
+          <form className="space-y-4 pt-2">
              <FormField
                 control={form.control}
                 name="amount"
@@ -163,7 +165,12 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
                         </FormControl>
                         <SelectContent>
                         {categories?.map(cat => (
-                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                            <SelectItem key={cat.id} value={cat.id}>
+                                <div className="flex items-center">
+                                    {renderIcon(cat.icon)}
+                                    {cat.name}
+                                </div>
+                            </SelectItem>
                         ))}
                         </SelectContent>
                     </Select>
@@ -186,7 +193,12 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
                         </FormControl>
                         <SelectContent>
                         {paymentMethods?.map(method => (
-                            <SelectItem key={method.id} value={method.id}>{method.name}</SelectItem>
+                            <SelectItem key={method.id} value={method.id}>
+                               <div className="flex items-center">
+                                    {renderIcon(method.icon)}
+                                    {method.name}
+                                </div>
+                            </SelectItem>
                         ))}
                         </SelectContent>
                     </Select>
@@ -210,7 +222,12 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
                         <SelectContent>
                           <SelectItem value="no-tag">No Tag</SelectItem>
                           {tags?.map(tag => (
-                              <SelectItem key={tag.id} value={tag.id}>{tag.name}</SelectItem>
+                              <SelectItem key={tag.id} value={tag.id}>
+                                <div className="flex items-center">
+                                    {renderIcon(tag.icon)}
+                                    {tag.name}
+                                </div>
+                              </SelectItem>
                           ))}
                         </SelectContent>
                     </Select>
@@ -274,13 +291,26 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Add Expense
-            </Button>
           </form>
         </Form>
-      </SheetContent>
-    </Sheet>
+        <DialogFooter>
+            <Button 
+                variant="outline"
+                onClick={form.handleSubmit(v => handleSave(v, false))} 
+                disabled={isLoading}
+            >
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save and Add New
+            </Button>
+            <Button 
+                onClick={form.handleSubmit(v => handleSave(v, true))} 
+                disabled={isLoading}
+            >
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Expense
+            </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

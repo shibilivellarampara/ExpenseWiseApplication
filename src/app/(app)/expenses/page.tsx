@@ -1,7 +1,7 @@
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
-import { AddExpenseSheet } from "@/components/expenses/AddExpenseSheet";
+import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
@@ -64,12 +64,12 @@ export default function ExpensesPage() {
     return (
         <div className="space-y-8">
             <PageHeader title="Your Expenses" description="A detailed list of your recent expenses.">
-                <AddExpenseSheet>
+                <AddExpenseDialog>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Expense
                     </Button>
-                </AddExpenseSheet>
+                </AddExpenseDialog>
             </PageHeader>
 
             <ExpensesTable expenses={enrichedExpenses} isLoading={isLoading} />

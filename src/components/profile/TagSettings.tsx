@@ -7,8 +7,12 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Loader2, PlusCircle, Trash2, Edit, Check, X } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { availableIcons } from '@/lib/defaults';
+import * as LucideIcons from 'lucide-react';
+
 
 export function TagSettings() {
     const { user } = useUser();
@@ -21,17 +25,22 @@ export function TagSettings() {
 
     const { data: items, isLoading } = useCollection<Tag>(query);
 
-    const [newItem, setNewItem] = useState('');
-    const [editingItem, setEditingItem] = useState<{ id: string; name: string } | null>(null);
+    const [newItem, setNewItem] = useState<{name: string, icon: string}>({ name: '', icon: 'Tag' });
+    const [editingItem, setEditingItem] = useState<{ id: string; name: string; icon: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
+    const renderIcon = (iconName: string) => {
+        const IconComponent = (LucideIcons as any)[iconName];
+        return IconComponent ? <IconComponent className="h-5 w-5 mr-3" /> : <Pilcrow className="h-5 w-5 mr-3" />;
+    };
+
     const handleAddItem = async () => {
-        if (!newItem || !user || !firestore) return;
+        if (!newItem.name || !user || !firestore) return;
         setIsSaving(true);
         try {
             const ref = collection(firestore, `users/${user.uid}/tags`);
-            await addDoc(ref, { name: newItem, userId: user.uid });
-            setNewItem('');
+            await addDoc(ref, { name: newItem.name, icon: newItem.icon, userId: user.uid });
+            setNewItem({ name: '', icon: 'Tag' });
             toast({ title: 'Tag Added' });
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
@@ -59,7 +68,7 @@ export function TagSettings() {
         setIsSaving(true);
         try {
             const itemRef = doc(firestore, `users/${user.uid}/tags`, editingItem.id);
-            await setDoc(itemRef, { name: editingItem.name }, { merge: true });
+            await setDoc(itemRef, { name: editingItem.name, icon: editingItem.icon }, { merge: true });
             toast({ title: "Tag Updated" });
         } catch (error: any) {
             toast({ variant: "destructive", title: "Update Failed", description: error.message });
@@ -83,14 +92,30 @@ export function TagSettings() {
                         {items?.map((item) => (
                             <div key={item.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
                                 {editingItem?.id === item.id ? (
-                                    <Input
-                                        value={editingItem.name}
-                                        onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                                        autoFocus
-                                        className="flex-1"
-                                    />
+                                    <div className="flex-1 flex items-center gap-2">
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                                                {availableIcons.map(icon => (
+                                                    <Button key={icon} variant="ghost" size="icon" onClick={() => setEditingItem({ ...editingItem, icon })}>
+                                                        {renderIcon(icon)}
+                                                    </Button>
+                                                ))}
+                                            </PopoverContent>
+                                        </Popover>
+                                        <Input
+                                            value={editingItem.name}
+                                            onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                            autoFocus
+                                        />
+                                    </div>
                                 ) : (
-                                    <span>{item.name}</span>
+                                    <div className="flex items-center">
+                                      {renderIcon(item.icon)}
+                                      <span>{item.name}</span>
+                                    </div>
                                 )}
                                 <div className="flex items-center">
                                     {editingItem?.id === item.id ? (
@@ -118,9 +143,21 @@ export function TagSettings() {
                     </div>
                 )}
                  <div className="flex items-center gap-2 pt-4">
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="icon" className="shrink-0">{renderIcon(newItem.icon)}</Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                            {availableIcons.map(icon => (
+                                <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItem({...newItem, icon})}>
+                                    {renderIcon(icon)}
+                                </Button>
+                            ))}
+                        </PopoverContent>
+                    </Popover>
                     <Input
-                        value={newItem}
-                        onChange={(e) => setNewItem(e.target.value)}
+                        value={newItem.name}
+                        onChange={(e) => setNewItem({...newItem, name: e.target.value})}
                         placeholder="Add new tag"
                     />
                     <Button type="button" size="icon" onClick={handleAddItem} disabled={isSaving}>

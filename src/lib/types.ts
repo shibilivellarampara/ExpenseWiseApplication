@@ -20,12 +20,14 @@ export type Category = {
 export type PaymentMethod = {
   id: string;
   name:string;
+  icon: string; // lucide-react icon name
   userId: string;
 }
 
 export type Tag = {
   id: string;
   name: string;
+  icon: string; // lucide-react icon name
   userId: string;
 }
 

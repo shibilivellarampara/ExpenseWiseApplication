@@ -11,13 +11,14 @@ export const defaultCategories = [
 
 // Default payment methods for new users
 export const defaultPaymentMethods = [
-  { name: 'Cash' },
-  { name: 'Credit Card' },
+  { name: 'Cash', icon: 'Wallet' },
+  { name: 'Credit Card', icon: 'CreditCard' },
 ];
 
 // Available icons for categories
 export const availableIcons = [
   "Utensils", "Car", "ShoppingBag", "Receipt", "PartyPopper", "HeartPulse",
   "Home", "Plane", "Book", "Gift", "Film", "Shirt", "Gamepad2", "Bus", "Train",
-  "Briefcase", "Coffee", "Droplets", "Pizza", "GraduationCap", "PawPrint"
+  "Briefcase", "Coffee", "Droplets", "Pizza", "GraduationCap", "PawPrint",
+  "Wallet", "CreditCard", "Landmark", "Tag", "Ticket"
 ];

@@ -6,22 +6,15 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useLoading } from '@/context/LoadingProvider';
-import { useEffect } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+import { PageLoader } from '@/components/PageLoader';
+
 
 export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { isPageLoading } = useLoading();
-
-  useEffect(() => {
-    // This effect is to demonstrate how to use the loading context.
-    // The actual loading state is controlled in the LoadingProvider.
-  }, [pathname, searchParams]);
 
   return (
       <AuthGuard>
@@ -31,7 +24,9 @@ export default function AppLayout({
             <main className="flex-1 flex flex-col">
               <AppHeader />
               <div className="flex-1 p-4 md:p-8 overflow-y-auto">
-                {isPageLoading ? null : children}
+                <Suspense fallback={<PageLoader />}>
+                  {children}
+                </Suspense>
               </div>
             </main>
           </div>

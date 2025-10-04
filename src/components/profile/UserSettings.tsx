@@ -38,15 +38,15 @@ export function UserSettings() {
     
     const form = useForm<z.infer<typeof currencySchema>>({
         resolver: zodResolver(currencySchema),
-        values: {
+        defaultValues: {
             defaultCurrency: userProfile?.defaultCurrency || 'USD'
         }
     });
 
     // Effect to reset form when user profile loads/changes
     useEffect(() => {
-        if (userProfile) {
-            form.reset({ defaultCurrency: userProfile.defaultCurrency || 'USD' });
+        if (userProfile?.defaultCurrency) {
+            form.setValue('defaultCurrency', userProfile.defaultCurrency);
         }
     }, [userProfile, form]);
     

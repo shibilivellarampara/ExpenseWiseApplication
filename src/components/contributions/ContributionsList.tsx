@@ -1,19 +1,44 @@
+'use client';
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-interface Contribution {
-    id: string;
-    description: string;
-    totalAmount: number;
-    date: Date;
-    paidBy: string;
-}
+import { EnrichedContribution } from "@/lib/types";
+import { Skeleton } from "../ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 interface ContributionsListProps {
-    contributions: Contribution[];
+    contributions: EnrichedContribution[];
+    isLoading?: boolean;
 }
 
-export function ContributionsList({ contributions }: ContributionsListProps) {
+const getInitials = (name?: string | null) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+};
+
+export function ContributionsList({ contributions, isLoading }: ContributionsListProps) {
+    if (isLoading) {
+        return (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                     <Card key={i}>
+                        <CardHeader>
+                            <Skeleton className="h-6 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                        </CardHeader>
+                        <CardContent>
+                           <Skeleton className="h-8 w-1/4 mb-2" />
+                           <Skeleton className="h-4 w-1/3" />
+                        </CardContent>
+                        <CardFooter>
+                            <Skeleton className="h-10 w-full" />
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
+        )
+    }
+
     if (contributions.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg">
@@ -30,9 +55,26 @@ export function ContributionsList({ contributions }: ContributionsListProps) {
                         <CardTitle>{item.description}</CardTitle>
                         <CardDescription>{item.date.toLocaleDateString()}</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold">${item.totalAmount.toFixed(2)}</p>
-                        <p className="text-sm text-muted-foreground">Total Amount</p>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <p className="text-3xl font-bold">${item.totalAmount.toFixed(2)}</p>
+                            <p className="text-sm text-muted-foreground">Total Amount</p>
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium">Paid by {item.paidBy?.name || 'Unknown'}</p>
+                            <p className="text-sm font-medium mt-2">Contributors:</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                                {item.contributors?.map(c => (
+                                    <div key={c.id} className="flex flex-col items-center">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={c.photoURL || ''} alt={c.name || 'user'}/>
+                                            <AvatarFallback>{getInitials(c.name)}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="text-xs text-muted-foreground mt-1">${c.share.toFixed(2)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </CardContent>
                     <CardFooter>
                         <Button variant="outline" className="w-full">View Details</Button>

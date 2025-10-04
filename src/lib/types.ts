@@ -50,15 +50,21 @@ export type EnrichedExpense = Omit<Expense, 'categoryId' | 'paymentMethodId' | '
 
 
 export type Contribution = {
-  id?: string;
+  id: string;
+  userId: string; // User who created this entry
   totalAmount: number;
   description: string;
-  date: Date;
-  paidBy: string;
-  contributors: {
+  date: Timestamp | Date;
+  paidById: string; // UID of the user who paid
+  contributorShares: {
     userId: string;
-    name: string;
-    amount: number;
+    share: number;
   }[];
   createdAt: Timestamp;
 };
+
+export type EnrichedContribution = Omit<Contribution, 'date'> & {
+  date: Date;
+  paidBy?: UserProfile;
+  contributors?: (UserProfile & { share: number })[];
+}

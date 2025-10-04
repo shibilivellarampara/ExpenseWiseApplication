@@ -1,12 +1,14 @@
+'use client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Expense } from "@/lib/types";
+import type { EnrichedExpense } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Tag } from "lucide-react";
+import { Tag, Pilcrow } from "lucide-react";
+import * as LucideIcons from 'lucide-react';
 
 interface ExpensesTableProps {
-  expenses: Expense[];
+  expenses: EnrichedExpense[];
   isLoading?: boolean;
 }
 
@@ -22,13 +24,20 @@ const categoryColors: { [key: string]: string } = {
 
 
 export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
+  
+  const renderCategoryIcon = (iconName: string | undefined) => {
+    if (!iconName) return <Pilcrow className="mr-2 h-4 w-4" />;
+    const IconComponent = (LucideIcons as any)[iconName];
+    return IconComponent ? <IconComponent className="mr-2 h-4 w-4" /> : <Pilcrow className="mr-2 h-4 w-4" />;
+  };
+
   return (
     <Card>
       <CardContent className="pt-6">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
+              <TableHead className="w-[100px]">Date</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Payment Method</TableHead>
@@ -40,7 +49,7 @@ export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
                 Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
                         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-28 rounded-full" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                         <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
@@ -48,21 +57,22 @@ export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
                 ))
             ) : expenses.length > 0 ? expenses.map((expense) => (
               <TableRow key={expense.id}>
-                <TableCell>{expense.date instanceof Date ? expense.date.toLocaleDateString() : ''}</TableCell>
+                <TableCell>{expense.date.toLocaleDateString()}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary" className={categoryColors[expense.category] || 'bg-gray-100 text-gray-800'}>
-                    {expense.category}
+                  <Badge variant="secondary" className={`flex items-center ${categoryColors[expense.category?.name || ''] || 'bg-gray-100 text-gray-800'}`}>
+                    {renderCategoryIcon(expense.category?.icon)}
+                    {expense.category?.name || 'Uncategorized'}
                   </Badge>
                 </TableCell>
                 <TableCell className="font-medium">
                     {expense.description}
                     {expense.tag && (
                         <div className="flex items-center text-xs text-muted-foreground mt-1">
-                           <Tag className="w-3 h-3 mr-1" /> {expense.tag}
+                           <Tag className="w-3 h-3 mr-1" /> {expense.tag.name}
                         </div>
                     )}
                 </TableCell>
-                <TableCell>{expense.paymentMethod}</TableCell>
+                <TableCell>{expense.paymentMethod?.name || '-'}</TableCell>
                 <TableCell className="text-right">${expense.amount.toFixed(2)}</TableCell>
               </TableRow>
             )) : (
@@ -78,5 +88,3 @@ export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
     </Card>
   );
 }
-
-    

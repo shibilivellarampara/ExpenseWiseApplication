@@ -12,7 +12,8 @@ import { useAuth, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
+import { defaultCategories, defaultPaymentMethods } from '@/lib/defaults';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -55,13 +56,37 @@ export function SignUpForm() {
         displayName: values.name,
       });
 
+      // --- Batch write for new user setup ---
+      const batch = writeBatch(firestore);
+
+      // 1. Create user profile document
       const userDocRef = doc(firestore, 'users', user.uid);
-      await setDoc(userDocRef, {
+      batch.set(userDocRef, {
+        id: user.uid,
         name: values.name,
-        email: values.email.toLowerCase(), // Use consistent casing for email
+        email: values.email.toLowerCase(),
         photoURL: user.photoURL,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
+        defaultCurrency: 'USD',
       });
+      
+      // 2. Add default categories
+      const categoriesRef = collection(firestore, `users/${user.uid}/categories`);
+      defaultCategories.forEach(category => {
+          const categoryDoc = doc(categoriesRef);
+          batch.set(categoryDoc, { ...category, userId: user.uid });
+      });
+
+      // 3. Add default payment methods
+      const paymentMethodsRef = collection(firestore, `users/${user.uid}/paymentMethods`);
+      defaultPaymentMethods.forEach(pm => {
+          const pmDoc = doc(paymentMethodsRef);
+          batch.set(pmDoc, { ...pm, userId: user.uid });
+      });
+
+      // Commit the batch
+      await batch.commit();
+      // --- End batch write ---
 
       toast({
         title: 'Account created!',

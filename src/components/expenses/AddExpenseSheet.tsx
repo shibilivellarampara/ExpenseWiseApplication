@@ -20,24 +20,23 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '../ui/textarea';
-import { useDoc, useFirestore, useUser } from '@/firebase';
+import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { addDoc, collection, doc, serverTimestamp } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { UserProfile } from '@/lib/types';
+import { UserProfile, Category, PaymentMethod, Tag } from '@/lib/types';
 
 const expenseSchema = z.object({
   amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
-  category: z.string().min(1, { message: 'Please select a category.' }),
+  categoryId: z.string().min(1, { message: 'Please select a category.' }),
   description: z.string().min(1, { message: 'Description is required.' }),
   date: z.date({ required_error: 'A date is required.' }),
-  paymentMethod: z.string().min(1, { message: 'Please select a payment method.' }),
-  tag: z.string().optional(),
+  paymentMethodId: z.string().min(1, { message: 'Please select a payment method.' }),
+  tagId: z.string().optional(),
 });
 
-const categories = ['Food', 'Transport', 'Shopping', 'Utilities', 'Entertainment', 'Health', 'Other'];
 
 export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
     const [open, setOpen] = useState(false);
@@ -46,6 +45,15 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
     const { user } = useUser();
     const firestore = useFirestore();
 
+    // Fetch relational data for dropdowns
+    const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [user, firestore]);
+    const paymentMethodsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/paymentMethods`) : null, [user, firestore]);
+    const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [user, firestore]);
+    
+    const { data: categories } = useCollection<Category>(categoriesQuery);
+    const { data: paymentMethods } = useCollection<PaymentMethod>(paymentMethodsQuery);
+    const { data: tags } = useCollection<Tag>(tagsQuery);
+    
     const userProfileRef = user ? doc(firestore, 'users', user.uid) : null;
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
@@ -53,19 +61,13 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
         resolver: zodResolver(expenseSchema),
         defaultValues: {
             amount: 0,
-            category: '',
+            categoryId: '',
             description: '',
             date: new Date(),
-            paymentMethod: '',
-            tag: '',
+            paymentMethodId: '',
+            tagId: '',
         },
     });
-
-     useEffect(() => {
-        if (userProfile?.paymentMethods?.[0]) {
-            form.setValue('paymentMethod', userProfile.paymentMethods[0]);
-        }
-    }, [userProfile, form]);
 
     async function onSubmit(values: z.infer<typeof expenseSchema>) {
         setIsLoading(true);
@@ -91,11 +93,19 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
             
             toast({
                 title: 'Expense Added!',
-                description: `Your expense of $${values.amount} has been recorded.`,
+                description: `Your expense has been recorded.`,
             });
             
+            form.reset({
+                amount: 0,
+                categoryId: '',
+                description: '',
+                date: new Date(),
+                paymentMethodId: '',
+                tagId: '',
+            });
             setOpen(false);
-            form.reset();
+
         } catch (error: any) {
              toast({
                 variant: 'destructive',
@@ -138,7 +148,7 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
             
             <FormField
                 control={form.control}
-                name="category"
+                name="categoryId"
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Category</FormLabel>
@@ -149,8 +159,8 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        {categories.map(cat => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        {categories?.map(cat => (
+                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                         ))}
                         </SelectContent>
                     </Select>
@@ -161,7 +171,7 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
 
             <FormField
                 control={form.control}
-                name="paymentMethod"
+                name="paymentMethodId"
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Payment Method</FormLabel>
@@ -172,8 +182,8 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        {userProfile?.paymentMethods?.map(method => (
-                            <SelectItem key={method} value={method}>{method}</SelectItem>
+                        {paymentMethods?.map(method => (
+                            <SelectItem key={method.id} value={method.id}>{method.name}</SelectItem>
                         ))}
                         </SelectContent>
                     </Select>
@@ -184,7 +194,7 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
 
             <FormField
                 control={form.control}
-                name="tag"
+                name="tagId"
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Tag / Label (Optional)</FormLabel>
@@ -195,9 +205,10 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        {userProfile?.tags?.map(tag => (
-                            <SelectItem key={tag} value={tag}>{tag}</SelectItem>
-                        ))}
+                          <SelectItem value="no-tag">No Tag</SelectItem>
+                          {tags?.map(tag => (
+                              <SelectItem key={tag.id} value={tag.id}>{tag.name}</SelectItem>
+                          ))}
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -270,5 +281,3 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
     </Sheet>
   );
 }
-
-    

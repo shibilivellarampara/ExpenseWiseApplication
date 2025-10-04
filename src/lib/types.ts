@@ -1,26 +1,53 @@
 import type { Timestamp } from 'firebase/firestore';
 
 export type UserProfile = {
-  uid: string;
+  id: string; // Firebase Auth UID
   email: string | null;
   name: string | null;
   photoURL: string | null;
-  paymentMethods?: string[];
-  tags?: string[];
   defaultCurrency?: string;
+  createdAt: Timestamp;
 };
 
+export type Category = {
+  id: string;
+  name: string;
+  icon: string; // lucide-react icon name
+  userId: string;
+};
+
+export type PaymentMethod = {
+  id: string;
+  name:string;
+  userId: string;
+}
+
+export type Tag = {
+  id: string;
+  name: string;
+  userId: string;
+}
+
 export type Expense = {
-  id?: string;
-  category: string;
+  id: string;
+  userId: string;
   amount: number;
   description: string;
-  date: Timestamp | Date; // Allow both Timestamp from Firestore and Date object for forms
+  date: Timestamp | Date; // Firestore Timestamp on read, Date on write
   createdAt: Timestamp;
-  userId: string;
-  paymentMethod: string;
-  tag?: string;
+  categoryId: string;
+  paymentMethodId: string;
+  tagId?: string;
 };
+
+export type EnrichedExpense = Omit<Expense, 'categoryId' | 'paymentMethodId' | 'tagId'> & {
+  id: string;
+  category?: Category;
+  paymentMethod?: PaymentMethod;
+  tag?: Tag;
+  date: Date; // Ensure date is always a Date object for the UI
+};
+
 
 export type Contribution = {
   id?: string;
@@ -35,5 +62,3 @@ export type Contribution = {
   }[];
   createdAt: Timestamp;
 };
-
-    

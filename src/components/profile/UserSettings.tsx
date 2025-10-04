@@ -1,0 +1,203 @@
+'use client';
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { UserProfile } from "@/lib/types";
+import { Separator } from "../ui/separator";
+
+const currencySchema = z.object({
+  defaultCurrency: z.string().min(3, "Must be a 3-letter code").max(3, "Must be a 3-letter code"),
+});
+
+const currencies = ["USD", "EUR", "JPY", "GBP", "INR"];
+
+export function UserSettings() {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    
+    const userProfileRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, `users/${user.uid}`);
+    }, [user, firestore]);
+
+    const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
+
+    const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
+    const [newPaymentMethod, setNewPaymentMethod] = useState("");
+    
+    const [tags, setTags] = useState<string[]>([]);
+    const [newTag, setNewTag] = useState("");
+
+    const [isSaving, setIsSaving] = useState(false);
+
+    const form = useForm<z.infer<typeof currencySchema>>({
+        resolver: zodResolver(currencySchema),
+    });
+
+    useEffect(() => {
+        if (userProfile) {
+            form.setValue('defaultCurrency', userProfile.defaultCurrency || 'USD');
+            setPaymentMethods(userProfile.paymentMethods || ['Cash', 'Credit Card']);
+            setTags(userProfile.tags || []);
+        }
+    }, [userProfile, form]);
+    
+    const handleAddPaymentMethod = () => {
+        if (newPaymentMethod && !paymentMethods.includes(newPaymentMethod)) {
+            setPaymentMethods([...paymentMethods, newPaymentMethod]);
+            setNewPaymentMethod("");
+        }
+    };
+    
+    const handleRemovePaymentMethod = (methodToRemove: string) => {
+        setPaymentMethods(paymentMethods.filter(method => method !== methodToRemove));
+    };
+
+    const handleAddTag = () => {
+        if (newTag && !tags.includes(newTag)) {
+            setTags([...tags, newTag]);
+            setNewTag("");
+        }
+    };
+
+    const handleRemoveTag = (tagToRemove: string) => {
+        setTags(tags.filter(tag => tag !== tagToRemove));
+    };
+
+    const onSubmit = async (values: z.infer<typeof currencySchema>) => {
+        if (!userProfileRef) return;
+        setIsSaving(true);
+        try {
+            await setDoc(userProfileRef, {
+                defaultCurrency: values.defaultCurrency,
+                paymentMethods: paymentMethods,
+                tags: tags,
+            }, { merge: true });
+            toast({ title: "Settings Saved", description: "Your preferences have been updated." });
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Error", description: error.message });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (isProfileLoading) {
+        return (
+            <Card>
+                <CardHeader><CardTitle>User Settings</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                    <Loader2 className="mx-auto animate-spin" />
+                </CardContent>
+            </Card>
+        )
+    }
+
+    return (
+        <Card>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <CardHeader>
+                        <CardTitle className="font-headline">Preferences</CardTitle>
+                        <CardDescription>Manage your app settings.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-8">
+                        {/* Currency Settings */}
+                        <FormField
+                            control={form.control}
+                            name="defaultCurrency"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Default Currency</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a currency" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <Separator />
+
+                        {/* Payment Methods */}
+                        <div className="space-y-4">
+                            <FormLabel>Payment Methods</FormLabel>
+                            <div className="space-y-2">
+                                {paymentMethods.map((method) => (
+                                    <div key={method} className="flex items-center justify-between">
+                                        <span>{method}</span>
+                                        <Button variant="ghost" size="icon" type="button" onClick={() => handleRemovePaymentMethod(method)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    value={newPaymentMethod}
+                                    onChange={(e) => setNewPaymentMethod(e.target.value)}
+                                    placeholder="Add new payment method"
+                                />
+                                <Button type="button" size="icon" onClick={handleAddPaymentMethod}>
+                                    <PlusCircle className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+
+                        <Separator />
+
+                        {/* Tags */}
+                        <div className="space-y-4">
+                            <FormLabel>Expense Tags</FormLabel>
+                             <div className="space-y-2">
+                                {tags.map((tag) => (
+                                    <div key={tag} className="flex items-center justify-between">
+                                        <span>{tag}</span>
+                                        <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveTag(tag)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    value={newTag}
+                                    onChange={(e) => setNewTag(e.target.value)}
+                                    placeholder="Add new tag"
+                                />
+                                <Button type="button" size="icon" onClick={handleAddTag}>
+                                    <PlusCircle className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="border-t pt-6">
+                        <Button type="submit" disabled={isSaving} className="w-full">
+                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Preferences
+                        </Button>
+                    </CardFooter>
+                </form>
+            </Form>
+        </Card>
+    );
+}
+    

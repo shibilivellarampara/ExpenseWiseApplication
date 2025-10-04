@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useFirestore, useStorage } from "@/firebase";
+import { useUser, useFirestore, useStorage, useAuth } from "@/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Loader2, Upload } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { updateProfile } from "firebase/auth";
 import { doc, setDoc } from 'firebase/firestore';
@@ -18,6 +18,7 @@ export function ProfileForm() {
     const { user } = useUser();
     const firestore = useFirestore();
     const storage = useStorage();
+    const auth = useAuth();
     const avatarImage = PlaceHolderImages.find((img) => img.id === 'avatar');
     
     const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +36,7 @@ export function ProfileForm() {
     const getInitials = (name?: string | null) => {
         if (!name) return 'U';
         const names = name.split(' ');
-        if (names.length > 1) {
+        if (names.length > 1 && names[1]) {
             return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
         }
         return name.substring(0, 2).toUpperCase();
@@ -54,7 +55,7 @@ export function ProfileForm() {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        if (!user || !firestore) return;
+        if (!user || !firestore || !auth.currentUser) return;
 
         setIsLoading(true);
         
@@ -78,7 +79,7 @@ export function ProfileForm() {
         }
 
         try {
-            await updateProfile(user, {
+            await updateProfile(auth.currentUser, {
                 displayName: name,
                 photoURL: finalPhotoURL,
             });
@@ -102,13 +103,13 @@ export function ProfileForm() {
     }
 
     return (
-        <Card className="max-w-2xl">
-             <form onSubmit={handleSubmit}>
+        <Card className="h-full">
+             <form onSubmit={handleSubmit} className="flex flex-col h-full">
                 <CardHeader>
                     <CardTitle className="font-headline">Profile Details</CardTitle>
                     <CardDescription>Update your personal information here.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-6 flex-grow">
                     <div className="flex items-center gap-6">
                         <Avatar className="h-24 w-24">
                             <AvatarImage src={photoURL || avatarImage?.imageUrl} alt={name || 'User'} />
@@ -154,3 +155,5 @@ export function ProfileForm() {
         </Card>
     );
 }
+
+    

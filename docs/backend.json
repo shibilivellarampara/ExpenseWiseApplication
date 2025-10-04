@@ -23,6 +23,25 @@
           "type": "string",
           "description": "URL of the user's profile picture.",
           "format": "uri"
+        },
+        "paymentMethods": {
+          "type": "array",
+          "description": "List of user-defined payment methods (e.g., 'Credit Card', 'UPI', 'Cash').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "description": "List of user-defined tags for categorizing expenses.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultCurrency": {
+          "type": "string",
+          "description": "The user's default currency code (e.g., 'USD', 'INR').",
+          "default": "USD"
         }
       },
       "required": [
@@ -61,6 +80,14 @@
           "type": "string",
           "description": "Date of the expense.",
           "format": "date-time"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Payment method used for the expense."
+        },
+        "tag": {
+          "type": "string",
+          "description": "An optional tag or label for the expense."
         }
       },
       "required": [
@@ -68,7 +95,8 @@
         "userId",
         "category",
         "amount",
-        "date"
+        "date",
+        "paymentMethod"
       ]
     },
     "Contribution": {
@@ -178,3 +206,5 @@
     "reasoning": "The Firestore structure is designed to ensure secure and efficient data management for the ExpenseWise application, adhering to the principles of Authorization Independence, Structural Segregation, Access Modeling, and Data Clarity. It uses path-based ownership for user-specific data and denormalization where necessary to avoid complex security rules and `get()` calls. User profiles are stored at the root level, while expenses and contributions are stored under user-specific subcollections to enforce ownership. This structure is highly scalable and secure, making the security rules simple and efficient.\n\n**Authorization Independence:** Expenses and contributions are stored as subcollections of the `users/{userId}` document. This structure inherently provides authorization independence because access control can be enforced based solely on the `userId` in `request.auth.uid`, eliminating the need for `get()` calls to parent documents. Each user can only access data under their own `userId`.\n\n**Structural Segregation:** Each collection (e.g., `users`, `users/{userId}/expenses`, `users/{userId}/contributions`) contains documents of the same entity type, ensuring a homogeneous security posture within each collection.\n\n**Access Modeling:** The design emphasizes path-based ownership. Expenses and contributions related to a user are stored under the respective user's document (`/users/{userId}/expenses/{expenseId}` and `/users/{userId}/contributions/{contributionId}`). This approach simplifies security rules because access is implicitly granted to the user identified by `{userId}`.\n\n**QAPs (Rules are not Filters):** The path-based structure (`/users/{userId}/expenses`) allows for secure `list` operations. A user can only list expenses under their `userId`, preventing unauthorized access to other users' data. Since there's no filtering required at the rule level (rules are not filters), listing is straightforward and efficient."
   }
 }
+
+    

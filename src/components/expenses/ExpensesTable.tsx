@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Expense } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
+import { Tag } from "lucide-react";
 
 interface ExpensesTableProps {
   expenses: Expense[];
@@ -30,6 +31,7 @@ export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
               <TableHead>Date</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Description</TableHead>
+              <TableHead>Payment Method</TableHead>
               <TableHead className="text-right">Amount</TableHead>
             </TableRow>
           </TableHeader>
@@ -40,6 +42,7 @@ export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
                         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                         <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                         <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
                     </TableRow>
                 ))
@@ -51,12 +54,20 @@ export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
                     {expense.category}
                   </Badge>
                 </TableCell>
-                <TableCell className="font-medium">{expense.description}</TableCell>
+                <TableCell className="font-medium">
+                    {expense.description}
+                    {expense.tag && (
+                        <div className="flex items-center text-xs text-muted-foreground mt-1">
+                           <Tag className="w-3 h-3 mr-1" /> {expense.tag}
+                        </div>
+                    )}
+                </TableCell>
+                <TableCell>{expense.paymentMethod}</TableCell>
                 <TableCell className="text-right">${expense.amount.toFixed(2)}</TableCell>
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   No expenses found. Click "Add Expense" to get started!
                 </TableCell>
               </TableRow>
@@ -67,3 +78,5 @@ export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
     </Card>
   );
 }
+
+    

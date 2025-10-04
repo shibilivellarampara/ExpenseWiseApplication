@@ -20,18 +20,21 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '../ui/textarea';
-import { useFirestore, useUser } from '@/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useDoc, useFirestore, useUser } from '@/firebase';
+import { addDoc, collection, doc, serverTimestamp } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { UserProfile } from '@/lib/types';
 
 const expenseSchema = z.object({
   amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
   category: z.string().min(1, { message: 'Please select a category.' }),
   description: z.string().min(1, { message: 'Description is required.' }),
   date: z.date({ required_error: 'A date is required.' }),
+  paymentMethod: z.string().min(1, { message: 'Please select a payment method.' }),
+  tag: z.string().optional(),
 });
 
 const categories = ['Food', 'Transport', 'Shopping', 'Utilities', 'Entertainment', 'Health', 'Other'];
@@ -43,6 +46,9 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
     const { user } = useUser();
     const firestore = useFirestore();
 
+    const userProfileRef = user ? doc(firestore, 'users', user.uid) : null;
+    const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
         defaultValues: {
@@ -50,8 +56,16 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
             category: '',
             description: '',
             date: new Date(),
+            paymentMethod: '',
+            tag: '',
         },
     });
+
+     useEffect(() => {
+        if (userProfile?.paymentMethods?.[0]) {
+            form.setValue('paymentMethod', userProfile.paymentMethods[0]);
+        }
+    }, [userProfile, form]);
 
     async function onSubmit(values: z.infer<typeof expenseSchema>) {
         setIsLoading(true);
@@ -96,7 +110,7 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent>
+      <SheetContent className="overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="font-headline">Add a New Expense</SheetTitle>
           <SheetDescription>Fill in the details of your expense below.</SheetDescription>
@@ -108,7 +122,7 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
                 name="amount"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Amount</FormLabel>
+                    <FormLabel>Amount ({userProfile?.defaultCurrency || 'USD'})</FormLabel>
                     <FormControl>
                         <div className="relative">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -137,6 +151,52 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
                         <SelectContent>
                         {categories.map(cat => (
                             <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Payment Method</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a payment method" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {userProfile?.paymentMethods?.map(method => (
+                            <SelectItem key={method} value={method}>{method}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="tag"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Tag / Label (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a tag" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {userProfile?.tags?.map(tag => (
+                            <SelectItem key={tag} value={tag}>{tag}</SelectItem>
                         ))}
                         </SelectContent>
                     </Select>
@@ -210,3 +270,5 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
     </Sheet>
   );
 }
+
+    

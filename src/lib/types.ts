@@ -5,6 +5,9 @@ export type UserProfile = {
   email: string | null;
   name: string | null;
   photoURL: string | null;
+  paymentMethods?: string[];
+  tags?: string[];
+  defaultCurrency?: string;
 };
 
 export type Expense = {
@@ -15,6 +18,8 @@ export type Expense = {
   date: Timestamp | Date; // Allow both Timestamp from Firestore and Date object for forms
   createdAt: Timestamp;
   userId: string;
+  paymentMethod: string;
+  tag?: string;
 };
 
 export type Contribution = {
@@ -30,3 +35,5 @@ export type Contribution = {
   }[];
   createdAt: Timestamp;
 };
+
+    

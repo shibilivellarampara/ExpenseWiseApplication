@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogFooter,
   DialogTrigger,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   Drawer,
@@ -16,7 +15,7 @@ import {
   DrawerDescription,
   DrawerFooter,
   DrawerHeader,
-  DrawerTitle as VaulTitle,
+  DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
 import { useForm, UseFormReturn } from 'react-hook-form';
@@ -25,12 +24,8 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Loader2, Pilcrow } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
+import { Loader2, Pilcrow } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import { format, setHours, setMinutes, getHours, getMinutes } from 'date-fns';
 import { useState, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
@@ -88,7 +83,7 @@ function DateTimePicker({ field }: { field: any }) {
         <FormControl>
             <Input
                 type="datetime-local"
-                className="w-[240px]"
+                className="w-full"
                 value={formatForInput(field.value)}
                 onChange={handleDateChange}
             />
@@ -167,14 +162,16 @@ function ExpenseForm({
                         <FormMessage />
                         </FormItem>
                     )}
-                    />
-                <FormField
+                />
+                 <FormField
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between">
+                         <FormItem className="flex flex-row items-center justify-between">
                             <FormLabel>Date:</FormLabel>
-                            <DateTimePicker field={field} />
+                            <div className="w-[240px]">
+                                <DateTimePicker field={field} />
+                            </div>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -225,71 +222,67 @@ function ExpenseForm({
                     )}
                 />    
                 
-                {transactionType === 'expense' && (
-                    <FormField
-                        control={form.control}
-                        name="categoryId"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>
-                              Category {isCategoryRequired ? '' : '(Optional)'}
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a category" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {!isCategoryRequired && <SelectItem value="">No Category</SelectItem>}
-                                {categories?.map(cat => (
-                                    <SelectItem key={cat.id} value={cat.id}>
-                                        <div className="flex items-center">
-                                            {renderIcon(cat.icon)}
-                                            {cat.name}
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
+                <FormField
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>
+                            Category {isCategoryRequired ? '' : '(Optional)'}
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {!isCategoryRequired && <SelectItem value="">No Category</SelectItem>}
+                            {categories?.map(cat => (
+                                <SelectItem key={cat.id} value={cat.id}>
+                                    <div className="flex items-center">
+                                        {renderIcon(cat.icon)}
+                                        {cat.name}
+                                    </div>
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 
-                {transactionType === 'expense' && (
-                    <FormField
-                        control={form.control}
-                        name="tagId"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>
-                                Tag {isTagRequired ? '' : '(Optional)'}
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ''}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a tag" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {!isTagRequired && <SelectItem value="no-tag">No Tag</SelectItem>}
-                                {tags?.map(tag => (
-                                    <SelectItem key={tag.id} value={tag.id}>
-                                        <div className="flex items-center">
-                                            {renderIcon(tag.icon)}
-                                            {tag.name}
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
+                <FormField
+                    control={form.control}
+                    name="tagId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>
+                            Tag {isTagRequired ? '' : '(Optional)'}
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a tag" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {!isTagRequired && <SelectItem value="no-tag">No Tag</SelectItem>}
+                            {tags?.map(tag => (
+                                <SelectItem key={tag.id} value={tag.id}>
+                                    <div className="flex items-center">
+                                        {renderIcon(tag.icon)}
+                                        {tag.name}
+                                    </div>
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                  <FormField
                     control={form.control}
@@ -365,7 +358,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
               userId: user.uid,
               createdAt: serverTimestamp(),
               tagId: values.tagId === 'no-tag' || !values.tagId ? '' : values.tagId,
-              categoryId: values.type === 'income' ? '' : values.categoryId,
+              categoryId: values.categoryId || '',
             };
             batch.set(newExpenseRef, expenseData);
 
@@ -405,7 +398,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                 <DialogTrigger asChild>{children}</DialogTrigger>
                 <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
                     <DialogHeader>
-                        <DialogTitle className="font-headline">Add a New Transaction</DialogTitle>
+                        <DrawerTitle className="font-headline">Add a New Transaction</DrawerTitle>
                         <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                     </DialogHeader>
                     <div className="flex-1 overflow-y-auto -mx-6 px-6">
@@ -433,7 +426,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
             <DrawerTrigger asChild>{children}</DrawerTrigger>
             <DrawerContent>
                 <DrawerHeader className="text-left">
-                    <VaulTitle>Add a New Transaction</VaulTitle>
+                    <DrawerTitle>Add a New Transaction</DrawerTitle>
                     <DrawerDescription>Fill in the details of your income or expense below.</DrawerDescription>
                 </DrawerHeader>
                  <div className="overflow-y-auto px-4">

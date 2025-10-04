@@ -49,7 +49,7 @@ export type Expense = {
   date: Timestamp | Date; // Firestore Timestamp on read, Date on write
   createdAt: Timestamp;
   accountId: string;
-  categoryId?: string; // Only for expenses
+  categoryId?: string;
   tagId?: string;
 };
 
@@ -59,6 +59,7 @@ export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagId'
   account?: Account;
   tag?: Tag;
   date: Date; // Ensure date is always a Date object for the UI
+  balanceAfterTransaction?: number;
 };
 
 

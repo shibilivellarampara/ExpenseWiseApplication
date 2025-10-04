@@ -5,8 +5,8 @@ import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { Expense, EnrichedExpense, Category, PaymentMethod, Tag, Account } from "@/lib/types";
-import { collection, orderBy, query } from "firebase/firestore";
+import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
+import { collection, orderBy, query, doc } from "firebase/firestore";
 import { PlusCircle } from "lucide-react";
 import { useMemo } from "react";
 
@@ -30,6 +30,8 @@ export default function ExpensesPage() {
     const tagsQuery = useMemoFirebase(() => 
         user ? collection(firestore, `users/${user.uid}/tags`) : null
     , [firestore, user]);
+    
+    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
     // Fetch all data collections
     const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
@@ -44,22 +46,48 @@ export default function ExpensesPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(p => [p.id, p])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
 
-    // Enrich expenses with relational data
+    // Enrich expenses with relational data and running balances
     const enrichedExpenses = useMemo((): EnrichedExpense[] => {
-        if (!expenses) return [];
-        return expenses.map(expense => {
-            // Ensure date is a JS Date object
-            const date = expense.date instanceof Date ? expense.date : expense.date.toDate();
-            
-            return {
-                ...expense,
-                date,
-                category: categoryMap.get(expense.categoryId),
-                account: accountMap.get(expense.accountId),
-                tag: expense.tagId ? tagMap.get(expense.tagId) : undefined,
-            };
+        if (!expenses || !accounts) return [];
+
+        // Create a mutable copy of accounts to track running balances
+        const currentAccountBalances = new Map(accounts.map(acc => [acc.id, acc.balance]));
+
+        // The `expenses` are already sorted by date descending from the query.
+        // We need to process them in chronological order (oldest first) to calculate running balance correctly.
+        const sortedExpenses = [...expenses].reverse(); 
+
+        const processedExpenses: EnrichedExpense[] = [];
+
+        sortedExpenses.forEach(expense => {
+            const accountBalance = currentAccountBalances.get(expense.accountId);
+
+            if (accountBalance !== undefined) {
+                // The balance *after* this transaction is the current running balance.
+                const balanceAfter = accountBalance;
+
+                // To get the balance *before* this transaction, we reverse the operation.
+                const amountChange = expense.type === 'income' ? -expense.amount : expense.amount;
+                const balanceBefore = balanceAfter + amountChange;
+
+                processedExpenses.push({
+                    ...expense,
+                    date: expense.date.toDate(),
+                    category: categoryMap.get(expense.categoryId),
+                    account: accountMap.get(expense.accountId),
+                    tag: expense.tagId ? tagMap.get(expense.tagId) : undefined,
+                    balanceAfterTransaction: balanceAfter,
+                });
+                
+                // Update the running balance for the next (older) transaction.
+                currentAccountBalances.set(expense.accountId, balanceBefore);
+            }
         });
-    }, [expenses, categoryMap, accountMap, tagMap]);
+
+        // Return the expenses in the original descending order for display
+        return processedExpenses.reverse();
+
+    }, [expenses, accounts, categoryMap, accountMap, tagMap]);
 
     return (
         <div className="space-y-8">

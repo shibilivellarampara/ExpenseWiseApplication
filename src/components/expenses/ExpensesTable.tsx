@@ -62,7 +62,7 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                         {expense.account?.name}
                                     </div>
                                      <div className="text-xs text-muted-foreground text-right">
-                                        Balance: {currencySymbol}{expense.account?.balance?.toFixed(2)}
+                                        Balance: {currencySymbol}{expense.balanceAfterTransaction?.toFixed(2)}
                                     </div>
                                 </div>
                             </div>

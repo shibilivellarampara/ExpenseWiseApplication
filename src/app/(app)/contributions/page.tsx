@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { ContributionsList } from "@/components/contributions/ContributionsList";
 import { AddContributionSheet } from "@/components/contributions/AddContributionSheet";
-import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, query, orderBy, doc } from "firebase/firestore";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { collection, query, orderBy, doc, getDoc, onSnapshot } from "firebase/firestore";
 import { Contribution, EnrichedContribution, UserProfile } from "@/lib/types";
 import { useMemo, useEffect, useState } from "react";
 
@@ -24,22 +24,18 @@ const useUsers = (userIds: string[]) => {
 
         const fetchUsers = async () => {
             setIsLoading(true);
-            const userPromises = userIds.map(id => {
+            const userPromises = userIds.map(async id => {
+                if (!id) return null;
                 const userDocRef = doc(firestore, 'users', id);
-                // This is a simplified fetch, not using useDoc to avoid hook-in-loop
-                return new Promise<UserProfile | null>(resolve => {
-                    const unsub = onSnapshot(userDocRef, (snapshot) => {
-                        if (snapshot.exists()) {
-                            resolve({ id: snapshot.id, ...snapshot.data() } as UserProfile);
-                        } else {
-                            resolve(null);
-                        }
-                        unsub(); // Unsubscribe after getting the first snapshot
-                    }, () => {
-                        resolve(null); // Resolve null on error
-                        unsub();
-                    });
-                });
+                try {
+                    const docSnap = await getDoc(userDocRef);
+                    if (docSnap.exists()) {
+                        return { id: docSnap.id, ...docSnap.data() } as UserProfile;
+                    }
+                } catch (e) {
+                    console.error("Error fetching user:", id, e);
+                }
+                return null;
             });
 
             const fetchedUsers = await Promise.all(userPromises);
@@ -54,7 +50,7 @@ const useUsers = (userIds: string[]) => {
         };
 
         fetchUsers();
-    }, [firestore, userIds.join(',')]); // Rerun when userIds change
+    }, [firestore, userIds.join(',')]); // Rerun when userIds change (stringified for dependency array)
 
     return { users, isLoading };
 };
@@ -78,8 +74,12 @@ export default function ContributionsPage() {
             idSet.add(c.paidById);
             c.contributorShares.forEach(share => idSet.add(share.userId));
         });
+        // Ensure the current user is always in the list for the form
+        if (user) {
+            idSet.add(user.uid);
+        }
         return Array.from(idSet);
-    }, [contributions]);
+    }, [contributions, user]);
 
     const { users: userMap, isLoading: usersLoading } = useUsers(allUserIds);
 
@@ -103,11 +103,12 @@ export default function ContributionsPage() {
         })
     }, [contributions, userMap]);
 
+    const userListForForm = useMemo(() => Object.values(userMap), [userMap]);
 
     return (
         <div className="space-y-8">
             <PageHeader title="Shared Expenses" description="Track expenses shared with friends and family.">
-                <AddContributionSheet>
+                <AddContributionSheet users={userListForForm}>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Shared Expense

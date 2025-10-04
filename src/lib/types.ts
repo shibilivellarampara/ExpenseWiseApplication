@@ -6,7 +6,7 @@ export type UserProfile = {
   name: string | null;
   photoURL: string | null;
   defaultCurrency?: string;
-  createdAt: Timestamp;
+  createdAt?: Timestamp;
 };
 
 export type Category = {

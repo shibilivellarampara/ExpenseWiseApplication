@@ -9,7 +9,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
@@ -24,11 +24,10 @@ import { Checkbox } from '../ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useUser } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
 import { UserProfile } from '@/lib/types';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-
 
 const contributionSchema = z.object({
   description: z.string().min(1, 'Description is required.'),
@@ -38,17 +37,17 @@ const contributionSchema = z.object({
   contributorIds: z.array(z.string()).min(1, 'At least one contributor must be selected.'),
 });
 
-export function AddContributionSheet({ children }: { children: React.ReactNode }) {
+interface AddContributionSheetProps {
+    children: React.ReactNode;
+    users: UserProfile[];
+}
+
+export function AddContributionSheet({ children, users }: AddContributionSheetProps) {
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
-
-    // In a real app with many users, you would likely fetch a list of "friends"
-    // or members of a group. For this app, we'll just fetch all users.
-    const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, `users`) : null, [firestore]);
-    const { data: users } = useCollection<UserProfile>(usersQuery);
 
     const form = useForm<z.infer<typeof contributionSchema>>({
         resolver: zodResolver(contributionSchema),

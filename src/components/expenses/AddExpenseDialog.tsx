@@ -165,8 +165,10 @@ function DatePicker({ field }: { field: any }) {
 
 function ExpenseForm({
   form,
+  id,
 }: {
   form: UseFormReturn<any>;
+  id: string;
 }) {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -200,7 +202,7 @@ function ExpenseForm({
 
     return (
         <Form {...form}>
-            <form id="expense-form" className="grid items-start gap-4">
+            <form id={id} className="grid items-start gap-4">
                 <FormField
                     control={form.control}
                     name="type"
@@ -383,6 +385,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
+    const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
@@ -467,18 +470,18 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                 <DialogTrigger asChild>{children}</DialogTrigger>
                 <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
                     <DialogHeader>
-                    <DialogTitle className="font-headline">Add a New Transaction</DialogTitle>
-                    <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
+                        <DialogTitle className="font-headline">Add a New Transaction</DialogTitle>
+                        <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                     </DialogHeader>
-                    <ScrollArea className="pr-6 -mr-6">
-                        <ExpenseForm form={form} />
-                    </ScrollArea>
-                    <DialogFooter>
+                    <div className="flex-1 overflow-y-auto -mx-6 px-6">
+                        <ExpenseForm form={form} id={formId} />
+                    </div>
+                    <DialogFooter className="mt-auto pt-4 border-t">
                          <Button type="button" variant="outline" onClick={onSaveAndNewSubmit} disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Save and Add New
                         </Button>
-                         <Button type="button" onClick={onFinalSubmit} disabled={isLoading}>
+                         <Button type="button" form={formId} onClick={onFinalSubmit} disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Save Transaction
                         </Button>
@@ -498,7 +501,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                 </DrawerHeader>
                  <ScrollArea className="overflow-y-auto px-4">
-                    <ExpenseForm form={form} />
+                    <ExpenseForm form={form} id={formId} />
                 </ScrollArea>
                  <DrawerFooter className="pt-2">
                     <Button onClick={onSaveAndNewSubmit} disabled={isLoading}>

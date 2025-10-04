@@ -78,7 +78,7 @@ function DatePicker({ field }: { field: any }) {
             <Button
               variant={'outline'}
               className={cn(
-                'w-full pl-3 text-left font-normal',
+                'w-[240px] pl-3 text-left font-normal',
                 !field.value && 'text-muted-foreground'
               )}
             >
@@ -311,15 +311,15 @@ function ExpenseForm({
                 )}
                 
                 <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Date of Transaction</FormLabel>
-                      <DatePicker field={field} />
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between">
+                            <FormLabel>Date:</FormLabel>
+                            <DatePicker field={field} />
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
 
                 <FormField

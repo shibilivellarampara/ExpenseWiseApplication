@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Pilcrow, TrendingUp, TrendingDown, Edit } from "lucide-react";
+import { Pilcrow, TrendingUp, Edit } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -27,6 +27,14 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
 
 // Function to generate a color from a string
 const generateColorFromString = (str: string): { backgroundColor: string, textColor: string } => {
+    if (!str) {
+        // Return a default color for undefined/null/empty strings
+        const defaultHue = 0;
+        return {
+            backgroundColor: `hsl(${defaultHue}, 70%, 90%)`,
+            textColor: `hsl(${defaultHue}, 70%, 25%)`
+        };
+    }
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -36,6 +44,7 @@ const generateColorFromString = (str: string): { backgroundColor: string, textCo
     const textColor = `hsl(${hue}, 70%, 25%)`; // Darker text
     return { backgroundColor, textColor };
 };
+
 
 function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedExpense[], currencySymbol: string }) {
     const [editingExpense, setEditingExpense] = useState<EnrichedExpense | undefined>(undefined);
@@ -74,9 +83,11 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                 </div>
                                 <div className="flex-grow grid grid-cols-2 gap-x-4 gap-y-1">
                                     <div className="font-semibold truncate">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
-                                    <div className={`font-bold text-right ${expense.type === 'income' ? 'text-green-600' : ''}`}>
+                                    <div className={`font-bold text-lg text-right ${expense.type === 'income' ? 'text-green-600' : ''}`}>
                                         {expense.type === 'income' ? '+' : '-'}{currencySymbol}{expense.amount.toFixed(2)}
                                     </div>
+
+                                    {/* Middle section for details */}
                                     <div className="col-span-2 text-xs text-muted-foreground flex items-center gap-4">
                                         <div className="flex items-center gap-1">
                                             {renderIcon(expense.account?.icon, "h-3 w-3")}
@@ -86,7 +97,8 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                             {expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
                                     </div>
-                                    <div className="col-span-2 flex items-center gap-2 mt-1">
+                                    
+                                     <div className="col-span-2 flex items-center gap-2 mt-1">
                                         {expense.category && categoryColor && (
                                             <Badge 
                                                 style={{ backgroundColor: categoryColor.backgroundColor, color: categoryColor.textColor }}
@@ -107,13 +119,15 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                         )}
                                     </div>
                                 </div>
-                                <div className="text-xs text-muted-foreground text-right flex-shrink-0 w-32">
-                                    <p>Balance: {currencySymbol}{expense.balanceAfterTransaction?.toFixed(2)}</p>
+                                <div className="text-right flex-shrink-0 w-32 flex flex-col justify-between items-end h-full">
                                     <AddExpenseDialog expenseToEdit={expense}>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 mt-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                     </AddExpenseDialog>
+                                    <p className="text-xs text-muted-foreground mt-auto">
+                                        Balance: {currencySymbol}{expense.balanceAfterTransaction?.toFixed(2)}
+                                    </p>
                                 </div>
                             </div>
                         )})}

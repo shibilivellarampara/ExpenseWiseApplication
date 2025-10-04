@@ -138,7 +138,7 @@ function DatePicker({ field }: { field: any }) {
                 Choose the date when the transaction occurred.
             </DrawerDescription>
         </DrawerHeader>
-        <div className="p-4 flex justify-center">
+        <div className="p-4">
         <Calendar
           mode="single"
           selected={field.value}
@@ -150,9 +150,10 @@ function DatePicker({ field }: { field: any }) {
             date > new Date() || date < new Date('1900-01-01')
           }
           initialFocus
+          className="mx-auto"
         />
         </div>
-        <DrawerFooter>
+        <DrawerFooter className="pt-2">
             <DrawerClose asChild>
                 <Button variant="outline">Cancel</Button>
             </DrawerClose>

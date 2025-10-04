@@ -120,21 +120,22 @@ function DatePicker({ field }: { field: any }) {
                 Choose the date when the expense occurred.
             </DrawerDescription>
         </DrawerHeader>
-        <div className="p-4 flex justify-center">
-        <Calendar
-          mode="single"
-          selected={field.value}
-          onSelect={(date) => {
-            field.onChange(date);
-            setOpen(false);
-          }}
-          disabled={(date) =>
-            date > new Date() || date < new Date('1900-01-01')
-          }
-          initialFocus
-        />
+        <div className="p-4">
+          <Calendar
+            mode="single"
+            selected={field.value}
+            onSelect={(date) => {
+              field.onChange(date);
+              setOpen(false);
+            }}
+            disabled={(date) =>
+              date > new Date() || date < new Date('1900-01-01')
+            }
+            initialFocus
+            className="mx-auto"
+          />
         </div>
-        <DrawerFooter>
+        <DrawerFooter className="pt-2">
             <DrawerClose asChild>
                 <Button variant="outline">Cancel</Button>
             </DrawerClose>

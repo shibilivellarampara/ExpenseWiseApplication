@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, LogIn } from "lucide-react";
 import { AddSharedExpenseSheet } from "@/components/shared-expenses/AddSharedExpenseSheet";
 import { SharedExpensesList } from "@/components/shared-expenses/SharedExpensesList";
-import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useMemoFirebase, useCollection } from "@/firebase";
 import { collection, where, query } from "firebase/firestore";
-import { useCollection } from "@/firebase/firestore/use-collection";
 import { SharedExpense } from "@/lib/types";
 import { JoinSharedExpenseDialog } from "@/components/shared-expenses/JoinSharedExpenseDialog";
 
@@ -16,7 +15,7 @@ export default function SharedExpensesPage() {
     const firestore = useFirestore();
 
     const sharedExpensesQuery = useMemoFirebase(() =>
-        user ? query(collection(firestore, `users/${user.uid}/shared_expenses`), where('memberIds', 'array-contains', user.uid)) : null
+        user ? query(collection(firestore, `shared_expenses`), where('memberIds', 'array-contains', user.uid)) : null
     , [user, firestore]);
 
     const { data: sharedExpenses, isLoading } = useCollection<SharedExpense>(sharedExpensesQuery);

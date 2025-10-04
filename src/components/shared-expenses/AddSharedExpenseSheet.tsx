@@ -110,7 +110,7 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
                 userDocsToUpdate.push({ref: userDoc.ref, id: userDoc.id});
             }
 
-            // 2. Create the new shared_expense document
+            // 2. Create the new shared_expense document in the root collection
             const sharedExpensesCol = collection(firestore, `shared_expenses`);
             const newSharedExpenseRef = doc(sharedExpensesCol);
             
@@ -122,9 +122,6 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
                 joinId: generateJoinId(),
                 createdAt: serverTimestamp(),
             });
-
-            // 3. Add the shared expense ID to each member's user profile (optional, can be denormalized)
-            // This part is removed to simplify logic and reduce writes. The main query will be on the shared_expenses collection.
             
             await batch.commit();
             

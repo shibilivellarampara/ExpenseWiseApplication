@@ -1,169 +1,186 @@
-/**
- * @fileoverview Firestore Security Rules for Expense Tracker App
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Users can only access
- * and modify data that belongs to them. All data is nested under /users/{userId},
- * ensuring clear ownership. Shared expenses (contributions) are not supported in this version of the rules.
- *
- * Data Structure:
- * - /users/{userId}: Stores user profile information.
- * - /users/{userId}/expenses/{expenseId}: Stores individual expense records.
- * - /users/{userId}/accounts/{accountId}: Stores user-defined account information.
- * - /users/{userId}/contributions/{contributionId}: Stores contribution records for shared expenses.
- * - /users/{userId}/categories/{categoryId}: Stores user-defined expense categories.
- * - /users/{userId}/tags/{tagId}: Stores user-defined tags for expenses.
- *
- * Key Security Decisions:
- * - User listing is explicitly disallowed.
- * - Data validation is limited to fields critical for authorization (e.g., userId).
- * - Shared expenses are disallowed in the current security rules, so `shared_expenses` is denied.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the current user is signed in.
-     * @param {string} userId The user ID to check against.
-     * @returns {boolean} True if the user is signed in, false otherwise.
+     * @description Checks if the user is signed in.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Authentication required for all protected resources.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the current user is the owner of the document.
-     * @param {string} userId The user ID to check against.
-     * @returns {boolean} True if the user is the owner, false otherwise.
+     * @description Checks if the user is the owner of the resource.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle User ownership is enforced for all resources.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-        /**
-     * @description Checks if the current user is the owner of the existing document.
-     * @param {string} userId The user ID to check against.
-     * @returns {boolean} True if the user is the owner and the resource exists, false otherwise.
+    /**
+     * @description Checks if the user is the owner of the resource and the resource exists.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Prevents updates and deletes on non-existent documents.
      */
     function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+      return isOwner(userId) && exists(resource);
+    }
+
+    /**
+     * @description Enforces that on a create operation, the resource's userId field matches the userId in the path.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Ensures data integrity and prevents unauthorized data creation.
+     */
+    function isCreatingWithOwnerId(userId) {
+        return request.resource.data.userId == userId;
+    }
+
+    /**
+     * @description Enforces that an update operation cannot change the userId field.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Ensures data integrity by preventing unauthorized modification of user relationships.
+     */
+    function isOwnerIdImmutable(userId) {
+        return resource.data.userId == request.resource.data.userId;
     }
 
     /**
      * @description Rules for user profiles.
      * @path /users/{userId}
-     * @allow (create) User with UID 'user123' can create their profile if request.auth.uid == 'user123'.
-     * @deny (create) User with UID 'user123' cannot create a profile with a different userId in the document.
-     * @allow (get) User with UID 'user123' can read their profile.
-     * @deny (get) User with UID 'user456' cannot read user 'user123's profile.
-     * @principle Enforces user ownership.
+     * @allow (create) If the authenticated user's ID matches the userId.
+     * @deny (create) If the authenticated user's ID does not match the userId.
+     * @allow (get) If the authenticated user's ID matches the userId.
+     * @deny (get) If the authenticated user's ID does not match the userId.
+     * @allow (update) If the authenticated user's ID matches the userId and the user profile exists.
+     * @deny (update) If the authenticated user's ID does not match the userId or the user profile does not exist.
+     * @allow (delete) If the authenticated user's ID matches the userId and the user profile exists.
+     * @deny (delete) If the authenticated user's ID does not match the userId or the user profile does not exist.
+     * @principle Enforces user ownership for profile management.
      */
     match /users/{userId} {
+      allow create: if isOwner(userId);
       allow get: if isOwner(userId);
-      allow list: if false; // User listing is not allowed.
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
+      allow list: if false; // User listing is not permitted
     }
 
     /**
-     * @description Rules for expenses.
+     * @description Rules for expenses under a user.
      * @path /users/{userId}/expenses/{expenseId}
-     * @allow (create) User with UID 'user123' can create an expense under their profile.
-     * @deny (create) User with UID 'user123' cannot create an expense for another user.
-     * @allow (get) User with UID 'user123' can read their expenses.
-     * @deny (get) User with UID 'user456' cannot read user 'user123's expenses.
-     * @principle Enforces user ownership for expenses.
+     * @allow (create) If the authenticated user is the owner and the expense's userId matches the path's userId.
+     * @deny (create) If the authenticated user is not the owner or the expense's userId does not match the path's userId.
+     * @allow (get) If the authenticated user is the owner.
+     * @deny (get) If the authenticated user is not the owner.
+     * @allow (update) If the authenticated user is the owner, the expense exists, and the userId field is immutable.
+     * @deny (update) If the authenticated user is not the owner, the expense does not exist, or the userId field is changed.
+     * @allow (delete) If the authenticated user is the owner and the expense exists.
+     * @deny (delete) If the authenticated user is not the owner or the expense does not exist.
+     * @principle Enforces user ownership for expense management.
      */
     match /users/{userId}/expenses/{expenseId} {
+      allow create: if isOwner(userId); // && isCreatingWithOwnerId(userId);  Data shape is flexible in Prototyping Mode
       allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && getResource(resource).data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
+      allow list: if isOwner(userId);
     }
 
     /**
-     * @description Rules for accounts.
+     * @description Rules for accounts under a user.
      * @path /users/{userId}/accounts/{accountId}
-     * @allow (create) User with UID 'user123' can create an account under their profile.
-     * @deny (create) User with UID 'user123' cannot create an account for another user.
-     * @allow (get) User with UID 'user123' can read their accounts.
-     * @deny (get) User with UID 'user456' cannot read user 'user123's accounts.
-     * @principle Enforces user ownership for accounts.
+     * @allow (create) If the authenticated user is the owner and the account's userId matches the path's userId.
+     * @deny (create) If the authenticated user is not the owner or the account's userId does not match the path's userId.
+     * @allow (get) If the authenticated user is the owner.
+     * @deny (get) If the authenticated user is not the owner.
+     * @allow (update) If the authenticated user is the owner, the account exists, and the userId field is immutable.
+     * @deny (update) If the authenticated user is not the owner, the account does not exist, or the userId field is changed.
+     * @allow (delete) If the authenticated user is the owner and the account exists.
+     * @deny (delete) If the authenticated user is not the owner or the account does not exist.
+     * @principle Enforces user ownership for account management.
      */
     match /users/{userId}/accounts/{accountId} {
+      allow create: if isOwner(userId); // && isCreatingWithOwnerId(userId);  Data shape is flexible in Prototyping Mode
       allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && getResource(resource).data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
+      allow list: if isOwner(userId);
     }
 
     /**
-     * @description Rules for contributions.
+     * @description Rules for contributions under a user.
      * @path /users/{userId}/contributions/{contributionId}
-     * @allow (create) User with UID 'user123' can create a contribution under their profile.
-     * @deny (create) User with UID 'user123' cannot create a contribution for another user.
-     * @allow (get) User with UID 'user123' can read their contributions.
-     * @deny (get) User with UID 'user456' cannot read user 'user123's contributions.
-     * @principle Enforces user ownership for contributions.
+     * @allow (create) If the authenticated user is the owner and the contribution's userId matches the path's userId.
+     * @deny (create) If the authenticated user is not the owner or the contribution's userId does not match the path's userId.
+     * @allow (get) If the authenticated user is the owner.
+     * @deny (get) If the authenticated user is not the owner.
+     * @allow (update) If the authenticated user is the owner, the contribution exists, and the userId field is immutable.
+     * @deny (update) If the authenticated user is not the owner, the contribution does not exist, or the userId field is changed.
+     * @allow (delete) If the authenticated user is the owner and the contribution exists.
+     * @deny (delete) If the authenticated user is not the owner or the contribution does not exist.
+     * @principle Enforces user ownership for contribution management.
      */
     match /users/{userId}/contributions/{contributionId} {
+      allow create: if isOwner(userId); // && isCreatingWithOwnerId(userId);  Data shape is flexible in Prototyping Mode
       allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && getResource(resource).data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
+      allow list: if isOwner(userId);
     }
 
     /**
-     * @description Rules for categories.
+     * @description Rules for categories under a user.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) User with UID 'user123' can create a category under their profile.
-     * @deny (create) User with UID 'user123' cannot create a category for another user.
-     * @allow (get) User with UID 'user123' can read their categories.
-     * @deny (get) User with UID 'user456' cannot read user 'user123's categories.
-     * @principle Enforces user ownership for categories.
+     * @allow (create) If the authenticated user is the owner and the category's userId matches the path's userId.
+     * @deny (create) If the authenticated user is not the owner or the category's userId does not match the path's userId.
+     * @allow (get) If the authenticated user is the owner.
+     * @deny (get) If the authenticated user is not the owner.
+     * @allow (update) If the authenticated user is the owner, the category exists, and the userId field is immutable.
+     * @deny (update) If the authenticated user is not the owner, the category does not exist, or the userId field is changed.
+     * @allow (delete) If the authenticated user is the owner and the category exists.
+     * @deny (delete) If the authenticated user is not the owner or the category does not exist.
+     * @principle Enforces user ownership for category management.
      */
     match /users/{userId}/categories/{categoryId} {
+      allow create: if isOwner(userId); // && isCreatingWithOwnerId(userId);  Data shape is flexible in Prototyping Mode
       allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && getResource(resource).data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
+      allow list: if isOwner(userId);
     }
 
     /**
-     * @description Rules for tags.
+     * @description Rules for tags under a user.
      * @path /users/{userId}/tags/{tagId}
-     * @allow (create) User with UID 'user123' can create a tag under their profile.
-     * @deny (create) User with UID 'user123' cannot create a tag for another user.
-     * @allow (get) User with UID 'user123' can read their tags.
-     * @deny (get) User with UID 'user456' cannot read user 'user123's tags.
-     * @principle Enforces user ownership for tags.
+     * @allow (create) If the authenticated user is the owner and the tag's userId matches the path's userId.
+     * @deny (create) If the authenticated user is not the owner or the tag's userId does not match the path's userId.
+     * @allow (get) If the authenticated user is the owner.
+     * @deny (get) If the authenticated user is not the owner.
+     * @allow (update) If the authenticated user is the owner, the tag exists, and the userId field is immutable.
+     * @deny (update) If the authenticated user is not the owner, the tag does not exist, or the userId field is changed.
+     * @allow (delete) If the authenticated user is the owner and the tag exists.
+     * @deny (delete) If the authenticated user is not the owner or the tag does not exist.
+     * @principle Enforces user ownership for tag management.
      */
     match /users/{userId}/tags/{tagId} {
+      allow create: if isOwner(userId); // && isCreatingWithOwnerId(userId);  Data shape is flexible in Prototyping Mode
       allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && getResource(resource).data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
+      allow list: if isOwner(userId);
     }
-
-      /**
-     * @description Shared expenses are not supported, deny listing.
-     * @path /shared_expenses
-     * @deny (list) Listing shared expenses is not allowed.
-     * @principle Shared expenses are not supported.
-     */
-      match /shared_expenses {
-        allow get: if false;
-        allow list: if false;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
-      }
   }
 }

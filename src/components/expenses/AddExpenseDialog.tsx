@@ -42,6 +42,7 @@ import * as LucideIcons from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Label } from '../ui/label';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {

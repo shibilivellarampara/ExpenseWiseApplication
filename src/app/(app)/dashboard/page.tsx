@@ -103,7 +103,7 @@ export default function DashboardPage() {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="lg:col-span-4">
                     <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as 'week' | 'month' | 'year')}>
-                        <CardHeader className="flex flex-row items-center justify-between">
+                        <CardHeader className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
                             <CardTitle className="font-headline">Expenses Overview</CardTitle>
                              <TabsList>
                                 <TabsTrigger value="week">This Week</TabsTrigger>

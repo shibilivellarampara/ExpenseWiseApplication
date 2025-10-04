@@ -54,7 +54,7 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
     const { data: paymentMethods } = useCollection<PaymentMethod>(paymentMethodsQuery);
     const { data: tags } = useCollection<Tag>(tagsQuery);
     
-    const userProfileRef = user ? doc(firestore, 'users', user.uid) : null;
+    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
     const form = useForm<z.infer<typeof expenseSchema>>({

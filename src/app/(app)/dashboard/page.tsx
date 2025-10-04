@@ -167,23 +167,23 @@ export default function DashboardPage() {
                     </Tabs>
                 </Card>
                 <Card className="lg:col-span-3">
-                    <Tabs value={pieChartGrouping} onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)}>
-                        <CardHeader className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-                            <CardTitle className="font-headline">Spending Breakdown</CardTitle>
-                            <TabsList>
+                     <CardHeader>
+                        <CardTitle className="font-headline">Spending Breakdown</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                         <Tabs value={pieChartGrouping} onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)}>
+                             <TabsList className="grid w-full grid-cols-3 mb-4">
                                 <TabsTrigger value="category">Category</TabsTrigger>
                                 <TabsTrigger value="account">Account</TabsTrigger>
                                 <TabsTrigger value="tag">Tag</TabsTrigger>
                             </TabsList>
-                        </CardHeader>
-                        <CardContent>
                             {isLoading ? (
                                 <Skeleton className="h-[350px] w-full" />
                             ) : (
                                 <CategoryPieChart data={pieChartData} currencySymbol={currencySymbol} />
                             )}
-                        </CardContent>
-                    </Tabs>
+                        </Tabs>
+                    </CardContent>
                 </Card>
             </div>
         </div>

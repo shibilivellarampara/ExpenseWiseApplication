@@ -225,14 +225,14 @@ function ExpenseForm({
                         <FormLabel>
                             Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
                         </FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="">No Category</SelectItem>}
+                            {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
                             {categories?.map(cat => (
                                 <SelectItem key={cat.id} value={cat.id}>
                                     <div className="flex items-center">
@@ -383,7 +383,7 @@ export function AddExpenseDialog({
                 batch.update(newAccountRef, { balance: increment(newAmount) });
                 
                 // Update expense document
-                const updatedData = { ...values, tagId: values.tagId === 'no-tag' ? '' : values.tagId, categoryId: values.categoryId || '' };
+                const updatedData = { ...values, tagId: values.tagId === 'no-tag' ? '' : values.tagId, categoryId: values.categoryId === 'no-category' ? '' : values.categoryId };
                 batch.update(expenseRef, updatedData);
 
             } else {
@@ -396,7 +396,7 @@ export function AddExpenseDialog({
                   userId: user.uid,
                   createdAt: serverTimestamp(),
                   tagId: values.tagId === 'no-tag' || !values.tagId ? '' : values.tagId,
-                  categoryId: values.categoryId || '',
+                  categoryId: values.categoryId === 'no-category' || !values.categoryId ? '' : values.categoryId,
                 };
                 batch.set(newExpenseRef, expenseData);
     

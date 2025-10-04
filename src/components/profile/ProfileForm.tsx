@@ -36,20 +36,19 @@ export function ProfileForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
-
-    // Use derived state for form inputs that can be edited
-    const name = userProfile?.name ?? '';
-    const displayPhotoUrl = userProfile?.photoURL ?? null;
     
-    const [nameInput, setNameInput] = useState(name);
+    const [tempDisplayPhotoUrl, setTempDisplayPhotoUrl] = useState<string | null>(null);
+    const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
+
+    const [nameInput, setNameInput] = useState('');
+    
     useEffect(() => {
         if (userProfile) {
-            setNameInput(userProfile.name || '');
+            setNameInput(userProfile.name ?? '');
+            setTempDisplayPhotoUrl(userProfile.photoURL ?? null);
         }
     }, [userProfile]);
 
-    const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
-    const [tempDisplayPhotoUrl, setTempDisplayPhotoUrl] = useState<string | null>(null);
 
     // State for phone number update
     const [showPhoneDialog, setShowPhoneDialog] = useState(false);
@@ -104,9 +103,9 @@ export function ProfileForm() {
 
         setIsLoading(true);
         
-        let finalPhotoURL = displayPhotoUrl;
+        let finalPhotoURL = userProfile?.photoURL ?? null;
 
-        if (tempDisplayPhotoUrl && tempDisplayPhotoUrl !== displayPhotoUrl) {
+        if (tempDisplayPhotoUrl && tempDisplayPhotoUrl !== (userProfile?.photoURL ?? null)) {
             // If a new file was uploaded, handle the upload process
             if (newAvatarFile) {
                 setIsUploading(true);
@@ -231,7 +230,7 @@ export function ProfileForm() {
         }
     };
 
-    const currentPhoto = tempDisplayPhotoUrl || displayPhotoUrl;
+    const currentPhoto = tempDisplayPhotoUrl ?? userProfile?.photoURL;
 
     if (isProfileLoading) {
         return (
@@ -253,15 +252,15 @@ export function ProfileForm() {
                     <CardTitle className="font-headline">Profile Details</CardTitle>
                     <CardDescription>Update your personal information here.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6 flex-grow">
+                <CardContent className="space-y-4 flex-grow">
                     <div className="space-y-2">
                         <Label>Profile Picture</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <button type="button" className="relative h-24 w-24 rounded-full">
                                     <Avatar className="h-24 w-24">
-                                        <AvatarImage src={currentPhoto ?? undefined} alt={name || 'User'} />
-                                        <AvatarFallback>{getInitials(name)}</AvatarFallback>
+                                        <AvatarImage src={currentPhoto ?? undefined} alt={nameInput || 'User'} />
+                                        <AvatarFallback>{getInitials(nameInput)}</AvatarFallback>
                                     </Avatar>
                                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs font-semibold rounded-full opacity-0 hover:opacity-100 transition-opacity">
                                         Change

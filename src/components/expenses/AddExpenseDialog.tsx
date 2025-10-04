@@ -36,6 +36,7 @@ import * as LucideIcons from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
+import { cn } from '@/lib/utils';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -396,9 +397,9 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
         return (
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>{children}</DialogTrigger>
-                <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+                <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]">
                     <DialogHeader>
-                        <DrawerTitle className="font-headline">Add a New Transaction</DrawerTitle>
+                        <DialogTitle className="font-headline">Add a New Transaction</DialogTitle>
                         <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                     </DialogHeader>
                     <div className="flex-1 overflow-y-auto -mx-6 px-6">

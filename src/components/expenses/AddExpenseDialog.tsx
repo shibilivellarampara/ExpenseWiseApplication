@@ -19,7 +19,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
-import { useForm } from 'react-hook-form';
+import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -138,7 +138,7 @@ function DatePicker({ field }: { field: any }) {
                 Choose the date when the transaction occurred.
             </DrawerDescription>
         </DrawerHeader>
-        <div className="p-4">
+        <div className="p-4 flex justify-center">
         <Calendar
           mode="single"
           selected={field.value}
@@ -165,36 +165,16 @@ function DatePicker({ field }: { field: any }) {
 
 function ExpenseForm({
   className,
-  setOpen,
-  onFormSubmit,
-  isLoading,
+  form,
 }: {
   className?: string;
-  setOpen: (open: boolean) => void;
-  onFormSubmit: (values: any) => Promise<void>;
-  isLoading: boolean;
+  form: UseFormReturn<any>;
 }) {
     const { user } = useUser();
     const firestore = useFirestore();
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-
-    // Memoize the schema so it only changes when settings do
-    const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
-
-    const form = useForm<z.infer<typeof expenseSchema>>({
-        resolver: zodResolver(expenseSchema),
-        defaultValues: {
-            type: 'expense',
-            amount: undefined,
-            accountId: '',
-            categoryId: '',
-            description: '',
-            date: new Date(),
-            tagId: '',
-        },
-    });
      
     // Fetch relational data for dropdowns
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [user, firestore]);
@@ -207,24 +187,6 @@ function ExpenseForm({
     
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
-    // Reset the form whenever the schema changes (i.e., when settings change)
-    // or when the dialog is opened.
-    useEffect(() => {
-        resetForm();
-    }, [userProfile]);
-
-    const resetForm = () => {
-        form.reset({
-            type: 'expense',
-            amount: undefined,
-            accountId: '',
-            categoryId: '',
-            description: '',
-            date: new Date(),
-            tagId: '',
-        });
-    }
-
     const renderIcon = (iconName: string | undefined) => {
         if (!iconName) return <Pilcrow className="mr-2 h-4 w-4" />;
         const IconComponent = (LucideIcons as any)[iconName];
@@ -236,12 +198,11 @@ function ExpenseForm({
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
     
-    const isDesktop = useMediaQuery("(min-width: 768px)");
     const transactionType = form.watch('type');
 
     return (
         <Form {...form}>
-            <form id="expense-form" onSubmit={form.handleSubmit(onFormSubmit)} className={cn("grid items-start gap-4", className)}>
+            <form id="expense-form" className={cn("grid items-start gap-4", className)}>
                 <FormField
                     control={form.control}
                     name="type"
@@ -411,22 +372,6 @@ function ExpenseForm({
                     </FormItem>
                   )}
                 />
-
-                 {!isDesktop && (
-                     <DrawerFooter className="pt-2 px-0">
-                        <Button 
-                            type="submit"
-                            form="expense-form"
-                            disabled={isLoading}
-                        >
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Transaction
-                        </Button>
-                        <DrawerClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                        </DrawerClose>
-                    </DrawerFooter>
-                 )}
             </form>
         </Form>
     );
@@ -441,18 +386,41 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
     const { user } = useUser();
     const firestore = useFirestore();
 
-    const handleSave = async (values: z.infer<any>) => {
-        setIsLoading(true);
+    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+    const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+    const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
+
+    const form = useForm<z.infer<typeof expenseSchema>>({
+        resolver: zodResolver(expenseSchema),
+    });
+
+    const resetForm = () => {
+        form.reset({
+            type: 'expense',
+            amount: undefined,
+            accountId: '',
+            categoryId: '',
+            description: '',
+            date: new Date(),
+            tagId: '',
+        });
+    }
+
+    useEffect(() => {
+        if (open) {
+            resetForm();
+        }
+    }, [open, userProfile]);
+
+    const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
         if (!firestore || !user) {
             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to add a transaction.' });
-            setIsLoading(false);
-            return;
+            return false;
         }
-
+        setIsLoading(true);
         try {
             const batch = writeBatch(firestore);
-
-            // 1. Add the expense/income document
             const expenseCol = collection(firestore, `users/${user.uid}/expenses`);
             const newExpenseRef = doc(expenseCol);
             const expenseData = {
@@ -465,22 +433,34 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
             };
             batch.set(newExpenseRef, expenseData);
 
-            // 2. Update the account balance
             const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
             const amountToUpdate = values.type === 'income' ? values.amount : -values.amount;
             batch.update(accountRef, { balance: increment(amountToUpdate) });
 
             await batch.commit();
-            
             toast({ title: 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
-            
-            setOpen(false);
+            return true;
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Uh oh! Something went wrong.', description: error.message || 'Could not save transaction.' });
+             return false;
         } finally {
             setIsLoading(false);
         }
     }
+
+    const onFinalSubmit = form.handleSubmit(async (values) => {
+        const success = await handleTransactionSave(values);
+        if (success) {
+            setOpen(false);
+        }
+    });
+
+    const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
+        const success = await handleTransactionSave(values);
+        if (success) {
+            resetForm();
+        }
+    });
 
 
     if (isDesktop) {
@@ -493,10 +473,14 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                     </DialogHeader>
                     <ScrollArea className="pr-6 -mr-6">
-                        <ExpenseForm setOpen={setOpen} onFormSubmit={handleSave} isLoading={isLoading} />
+                        <ExpenseForm form={form} />
                     </ScrollArea>
                     <DialogFooter>
-                         <Button type="submit" form="expense-form" disabled={isLoading}>
+                         <Button type="button" variant="outline" onClick={onSaveAndNewSubmit} disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save and Add New
+                        </Button>
+                         <Button type="button" onClick={onFinalSubmit} disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Save Transaction
                         </Button>
@@ -506,6 +490,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
         );
     }
 
+    // Mobile Drawer
     return (
         <Drawer open={open} onOpenChange={setOpen}>
             <DrawerTrigger asChild>{children}</DrawerTrigger>
@@ -515,8 +500,21 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                 </DrawerHeader>
                  <ScrollArea className="overflow-y-auto px-4">
-                    <ExpenseForm setOpen={setOpen} onFormSubmit={handleSave} isLoading={isLoading}/>
+                    <ExpenseForm form={form} />
                 </ScrollArea>
+                 <DrawerFooter className="pt-2">
+                    <Button onClick={onSaveAndNewSubmit} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save and Add New
+                    </Button>
+                    <Button onClick={onFinalSubmit} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Transaction
+                    </Button>
+                    <DrawerClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                    </DrawerClose>
+                </DrawerFooter>
             </DrawerContent>
         </Drawer>
     )

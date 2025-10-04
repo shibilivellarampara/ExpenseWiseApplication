@@ -201,7 +201,7 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
     // Reset the form whenever the schema changes (i.e., when settings change)
     // or when the dialog is opened.
     useEffect(() => {
-        form.reset();
+        resetForm();
     }, [open, userProfile, form]);
 
     const resetForm = () => {
@@ -288,15 +288,15 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
                             className="grid grid-cols-2 gap-4"
                             >
                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'expense' && "border-primary")}>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'expense' ? "border-red-500 text-red-500" : "")}>
                                         <RadioGroupItem value="expense" className="sr-only" />
-                                        <span>Expense / Cash Out</span>
+                                        <span>Cashout</span>
                                     </Label>
                                 </FormItem>
                                  <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'income' && "border-primary")}>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'income' ? "border-green-500 text-green-500" : "")}>
                                         <RadioGroupItem value="income" className="sr-only" />
-                                        <span>Income / Cash In</span>
+                                        <span>Cash In</span>
                                     </Label>
                                 </FormItem>
                             </RadioGroup>
@@ -500,8 +500,8 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
             <DrawerTrigger asChild>{children}</DrawerTrigger>
             <DrawerContent>
                 <DrawerHeader className="text-left">
-                    <DrawerTitle>Add a New Transaction</DrawerTitle>
-                    <DrawerDescription>Fill in the details of your income or expense below.</DrawerDescription>
+                    <DialogTitle>Add a New Transaction</DialogTitle>
+                    <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                 </DrawerHeader>
                  <ScrollArea className="overflow-y-auto">
                     <ExpenseForm className="px-4" setOpen={setOpen} />

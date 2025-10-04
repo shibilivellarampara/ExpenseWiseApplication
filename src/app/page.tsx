@@ -12,8 +12,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cookies } from 'next/headers';
+import { UserProfile } from '@/lib/types';
 
-async function getUser() {
+async function getUser(): Promise<UserProfile | null> {
   // This is a simplified example. In a real app, you'd verify the session.
   // For this example, we'll assume a cookie indicates a logged-in user.
   // A more robust solution would involve server-side session validation with Firebase Admin SDK.

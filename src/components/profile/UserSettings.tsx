@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { UserProfile } from "@/lib/types";
 import { CategorySettings } from "./CategorySettings";
 import { PaymentMethodSettings } from "./PaymentMethodSettings";
@@ -35,49 +35,37 @@ export function UserSettings() {
 
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
     const [isSaving, setIsSaving] = useState(false);
-    const isInitialLoad = useRef(true);
-
+    
     const form = useForm<z.infer<typeof currencySchema>>({
         resolver: zodResolver(currencySchema),
+        values: {
+            defaultCurrency: userProfile?.defaultCurrency || 'USD'
+        }
     });
 
-    const { watch, setValue } = form;
-    const selectedCurrency = watch('defaultCurrency');
-
-    // Set initial form value from profile
+    // Effect to reset form when user profile loads/changes
     useEffect(() => {
-        if (userProfile && isInitialLoad.current) {
-            setValue('defaultCurrency', userProfile.defaultCurrency || 'USD');
+        if (userProfile) {
+            form.reset({ defaultCurrency: userProfile.defaultCurrency || 'USD' });
         }
-    }, [userProfile, setValue]);
+    }, [userProfile, form]);
     
-    // Auto-save on currency change
-    useEffect(() => {
-        if (isInitialLoad.current) {
-            isInitialLoad.current = false;
+    async function onSubmit(data: z.infer<typeof currencySchema>) {
+        if (!userProfileRef || data.defaultCurrency === userProfile?.defaultCurrency) {
             return;
         }
-
-        if (!userProfileRef || !selectedCurrency || selectedCurrency === userProfile?.defaultCurrency) {
-            return;
+        setIsSaving(true);
+        try {
+            await setDoc(userProfileRef, {
+                defaultCurrency: data.defaultCurrency,
+            }, { merge: true });
+            toast({ title: "Currency Saved", description: `Your default currency is now ${data.defaultCurrency}.` });
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Error", description: error.message });
+        } finally {
+            setIsSaving(false);
         }
-
-        const saveCurrency = async () => {
-            setIsSaving(true);
-            try {
-                await setDoc(userProfileRef, {
-                    defaultCurrency: selectedCurrency,
-                }, { merge: true });
-                toast({ title: "Currency Saved", description: `Your default currency is now ${selectedCurrency}.` });
-            } catch (error: any) {
-                toast({ variant: "destructive", title: "Error", description: error.message });
-            } finally {
-                setIsSaving(false);
-            }
-        };
-
-        saveCurrency();
-    }, [selectedCurrency, userProfileRef, toast, userProfile?.defaultCurrency]);
+    }
 
 
     if (isProfileLoading) {
@@ -98,7 +86,7 @@ export function UserSettings() {
         <div className="space-y-8">
             <Card>
                 <Form {...form}>
-                    <form>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
                         <CardHeader>
                             <CardTitle className="font-headline">Currency</CardTitle>
                             <CardDescription>Set your default currency for expenses.</CardDescription>
@@ -111,7 +99,7 @@ export function UserSettings() {
                                     <FormItem>
                                         <FormLabel>Default Currency</FormLabel>
                                         <div className="relative">
-                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSaving}>
+                                            <Select onValueChange={field.onChange} value={field.value} disabled={isSaving}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select a currency" />
@@ -121,13 +109,18 @@ export function UserSettings() {
                                                     {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
-                                            {isSaving && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
                                         </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         </CardContent>
+                        <CardFooter className="border-t pt-6 flex justify-end">
+                           <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
+                             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                             Save Currency
+                           </Button>
+                        </CardFooter>
                     </form>
                 </Form>
             </Card>

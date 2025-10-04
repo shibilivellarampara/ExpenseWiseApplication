@@ -2,10 +2,13 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { EnrichedExpense } from "@/lib/types";
+import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Tag, Pilcrow } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
+import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];
@@ -24,7 +27,12 @@ const categoryColors: { [key: string]: string } = {
 
 
 export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
-  
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+  const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
+
   const renderCategoryIcon = (iconName: string | undefined) => {
     if (!iconName) return <Pilcrow className="mr-2 h-4 w-4" />;
     const IconComponent = (LucideIcons as any)[iconName];
@@ -73,7 +81,7 @@ export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
                     )}
                 </TableCell>
                 <TableCell>{expense.paymentMethod?.name || '-'}</TableCell>
-                <TableCell className="text-right">${expense.amount.toFixed(2)}</TableCell>
+                <TableCell className="text-right">{currencySymbol}{expense.amount.toFixed(2)}</TableCell>
               </TableRow>
             )) : (
               <TableRow>

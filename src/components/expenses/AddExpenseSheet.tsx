@@ -27,6 +27,7 @@ import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@
 import { addDoc, collection, doc, serverTimestamp } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { UserProfile, Category, PaymentMethod, Tag } from '@/lib/types';
+import { getCurrencySymbol } from '@/lib/currencies';
 
 const expenseSchema = z.object({
   amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
@@ -56,6 +57,8 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
     
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+    const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
@@ -136,7 +139,7 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
                     <FormControl>
                         <div className="relative">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                <span className="text-gray-500 sm:text-sm">$</span>
+                                <span className="text-gray-500 sm:text-sm">{currencySymbol}</span>
                             </div>
                             <Input type="number" placeholder="0.00" {...field} className="pl-7" />
                         </div>

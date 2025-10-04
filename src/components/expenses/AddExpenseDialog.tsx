@@ -311,6 +311,34 @@ function ExpenseForm({
                         )}
                     />
                 )}
+                
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date of Transaction</FormLabel>
+                      <DatePicker field={field} />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>
+                            Description {isDescriptionRequired ? '' : '(Optional)'}
+                        </FormLabel>
+                        <FormControl>
+                            <Textarea placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 {transactionType === 'expense' && (
                     <FormField
@@ -319,7 +347,7 @@ function ExpenseForm({
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>
-                                Tag / Label {isTagRequired ? '' : '(Optional)'}
+                                Tag {isTagRequired ? '' : '(Optional)'}
                             </FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ''}>
                                 <FormControl>
@@ -345,33 +373,6 @@ function ExpenseForm({
                     />
                 )}
 
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>
-                            Description {isDescriptionRequired ? '' : '(Optional)'}
-                        </FormLabel>
-                        <FormControl>
-                            <Textarea placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Date of Transaction</FormLabel>
-                      <DatePicker field={field} />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
             </form>
         </Form>
     );
@@ -476,14 +477,14 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     <div className="flex-1 overflow-y-auto -mx-6 px-6">
                         <ExpenseForm form={form} id={formId} />
                     </div>
-                    <DialogFooter className="mt-auto pt-4 border-t">
-                         <Button type="button" variant="outline" onClick={onSaveAndNewSubmit} disabled={isLoading}>
+                    <DialogFooter>
+                         <Button type="button" variant="secondary" onClick={onSaveAndNewSubmit} disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save and Add New
+                            Add New
                         </Button>
                          <Button type="button" form={formId} onClick={onFinalSubmit} disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Transaction
+                            Save
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -500,23 +501,22 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     <DialogTitle>Add a New Transaction</DialogTitle>
                     <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                 </DrawerHeader>
-                 <ScrollArea className="overflow-y-auto px-4">
+                 <div className="overflow-y-auto px-4">
                     <ExpenseForm form={form} id={formId} />
-                </ScrollArea>
-                 <DrawerFooter className="pt-2">
-                    <Button onClick={onSaveAndNewSubmit} disabled={isLoading}>
+                </div>
+                 <DrawerFooter className="pt-2 flex-row gap-2">
+                    <Button variant="secondary" className="flex-1" onClick={onSaveAndNewSubmit} disabled={isLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save and Add New
+                        Add New
                     </Button>
-                    <Button onClick={onFinalSubmit} disabled={isLoading}>
+                    <Button className="flex-1" onClick={onFinalSubmit} disabled={isLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save Transaction
+                        Save
                     </Button>
-                    <DrawerClose asChild>
-                        <Button variant="outline">Cancel</Button>
-                    </DrawerClose>
                 </DrawerFooter>
             </DrawerContent>
         </Drawer>
     )
 }
+
+    

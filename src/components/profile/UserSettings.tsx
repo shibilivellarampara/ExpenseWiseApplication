@@ -9,10 +9,6 @@ import { doc, setDoc } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { UserProfile } from "@/lib/types";
-import { CategorySettings } from "./CategorySettings";
-import { PaymentMethodSettings } from "./PaymentMethodSettings";
-import { TagSettings } from "./TagSettings";
-import { ExpenseFieldSettings } from "./ExpenseFieldSettings";
 
 const currencies = ["USD", "EUR", "JPY", "GBP", "INR"];
 
@@ -73,36 +69,29 @@ export function UserSettings() {
     }
 
     return (
-        <div className="space-y-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline">Currency</CardTitle>
-                    <CardDescription>Set your default currency for expenses.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <div className="space-y-2">
-                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Default Currency
-                        </label>
-                        <div className="relative">
-                             <Select onValueChange={handleCurrencyChange} value={selectedCurrency} disabled={isSaving}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a currency" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            {isSaving && <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
-                        </div>
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">Currency</CardTitle>
+                <CardDescription>Set your default currency for expenses.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <div className="space-y-2">
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Default Currency
+                    </label>
+                    <div className="relative">
+                         <Select onValueChange={handleCurrencyChange} value={selectedCurrency} disabled={isSaving}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a currency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        {isSaving && <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
                     </div>
-                </CardContent>
-            </Card>
-
-            <ExpenseFieldSettings />
-            <CategorySettings />
-            <PaymentMethodSettings />
-            <TagSettings />
-        </div>
+                </div>
+            </CardContent>
+        </Card>
     );
 }

@@ -3,6 +3,10 @@
 import { PageHeader } from "@/components/PageHeader";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { UserSettings } from "@/components/profile/UserSettings";
+import { ExpenseFieldSettings } from "@/components/profile/ExpenseFieldSettings";
+import { CategorySettings } from "@/components/profile/CategorySettings";
+import { PaymentMethodSettings } from "@/components/profile/PaymentMethodSettings";
+import { TagSettings } from "@/components/profile/TagSettings";
 
 export default function ProfilePage() {
     return (
@@ -11,12 +15,19 @@ export default function ProfilePage() {
                 title="Your Profile"
                 description="Manage your account settings and preferences."
             />
-            <div className="grid gap-8 md:grid-cols-3">
-                <div className="md:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column */}
+                <div className="lg:col-span-1 space-y-8">
                     <ProfileForm />
                 </div>
-                <div>
+
+                {/* Right Column */}
+                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                     <UserSettings />
+                    <ExpenseFieldSettings />
+                    <CategorySettings />
+                    <PaymentMethodSettings />
+                    <TagSettings />
                 </div>
             </div>
         </div>

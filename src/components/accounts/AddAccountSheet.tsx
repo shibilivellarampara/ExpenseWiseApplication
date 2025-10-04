@@ -54,6 +54,7 @@ export function AddAccountSheet({ children }: AddAccountSheetProps) {
             type: 'bank',
             balance: 0,
             icon: 'Landmark',
+            limit: undefined,
         },
     });
 
@@ -181,7 +182,7 @@ export function AddAccountSheet({ children }: AddAccountSheetProps) {
                                     <FormItem>
                                         <FormLabel>Credit Limit</FormLabel>
                                         <FormControl>
-                                            <Input type="number" placeholder="50000" {...field} />
+                                            <Input type="number" placeholder="50000" {...field} value={field.value ?? ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

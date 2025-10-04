@@ -142,12 +142,12 @@ export default function DashboardPage() {
                         <CardHeader className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
                             <CardTitle className="font-headline">Expenses Overview</CardTitle>
                              <TabsList>
-                                <TabsTrigger value="week">Week</TabsTrigger>
-                                <TabsTrigger value="month">Month</TabsTrigger>
-                                <TabsTrigger value="year">Year</TabsTrigger>
+                                <TabsTrigger value="week">W</TabsTrigger>
+                                <TabsTrigger value="month">M</TabsTrigger>
+                                <TabsTrigger value="year">Y</TabsTrigger>
                             </TabsList>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pl-0">
                              {isLoading ? (
                                 <Skeleton className="h-[350px] w-full" />
                             ) : (
@@ -168,26 +168,23 @@ export default function DashboardPage() {
                 </Card>
                 <Card className="lg:col-span-3">
                      <CardHeader>
-                        <CardTitle className="font-headline">Spending by Category</CardTitle>
-                         <div className="pt-2">
-                             <Select onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)} defaultValue="category">
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Group by" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="category">Category</SelectItem>
-                                    <SelectItem value="account">Account</SelectItem>
-                                    <SelectItem value="tag">Tag</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <CardTitle className="font-headline">Spending Breakdown</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {isLoading ? (
-                            <Skeleton className="h-[350px] w-full" />
-                        ) : (
-                            <CategoryPieChart data={pieChartData} currencySymbol={currencySymbol} />
-                        )}
+                        <Tabs defaultValue="category" onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)}>
+                            <TabsList className="grid w-full grid-cols-3 mb-4">
+                                <TabsTrigger value="category">Category</TabsTrigger>
+                                <TabsTrigger value="account">Account</TabsTrigger>
+                                <TabsTrigger value="tag">Tag</TabsTrigger>
+                            </TabsList>
+                            {isLoading ? (
+                                <Skeleton className="h-[350px] w-full" />
+                            ) : (
+                                <TabsContent value={pieChartGrouping}>
+                                    <CategoryPieChart data={pieChartData} currencySymbol={currencySymbol} />
+                                </TabsContent>
+                            )}
+                        </Tabs>
                     </CardContent>
                 </Card>
             </div>

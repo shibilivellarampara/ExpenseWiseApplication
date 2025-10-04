@@ -4,7 +4,6 @@ import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { CheckCircle, BarChart, Users, FileUp } from 'lucide-react';
 import { Logo } from '@/components/Logo';
-import { auth } from '@/lib/firebase';
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -6,7 +6,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
@@ -31,7 +30,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '../ui/textarea';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
@@ -162,13 +161,13 @@ function DatePicker({ field }: { field: any }) {
   )
 }
 
-
-export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
-    const [open, setOpen] = useState(false);
+function ExpenseForm({ className }: { className?: string }) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
+    const [open, setOpen] = useState(false);
+
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
@@ -201,9 +200,9 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
 
     // Reset the form whenever the schema changes (i.e., when settings change)
     // or when the dialog is opened.
-    useState(() => {
+    useEffect(() => {
         form.reset();
-    });
+    }, [open, userProfile, form]);
 
     const resetForm = () => {
         form.reset({
@@ -259,18 +258,12 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
     const isPaymentMethodRequired = userProfile?.expenseFieldSettings?.isPaymentMethodRequired ?? true;
+    
+    const isDesktop = useMediaQuery("(min-width: 768px)");
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="font-headline">Add a New Expense</DialogTitle>
-          <DialogDescription>Fill in the details of your expense below.</DialogDescription>
-        </DialogHeader>
-        <ScrollArea className="flex-grow pr-6 -mr-6">
-            <Form {...form}>
-            <form className="space-y-4">
+    return (
+        <Form {...form}>
+            <form className={cn("grid items-start gap-4", className)}>
                 <FormField
                     control={form.control}
                     name="amount"
@@ -410,27 +403,60 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     </FormItem>
                   )}
                 />
+
+                 {isDesktop ? null : (
+                     <DrawerFooter className="pt-2">
+                        <Button 
+                            onClick={form.handleSubmit(v => handleSave(v, true))} 
+                            disabled={isLoading}
+                        >
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Expense
+                        </Button>
+                        <DrawerClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DrawerClose>
+                    </DrawerFooter>
+                 )}
             </form>
-            </Form>
-        </ScrollArea>
-        <DialogFooter className="pt-4">
-            <Button 
-                variant="outline"
-                onClick={form.handleSubmit(v => handleSave(v, false))} 
-                disabled={isLoading}
-            >
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save and Add New
-            </Button>
-            <Button 
-                onClick={form.handleSubmit(v => handleSave(v, true))} 
-                disabled={isLoading}
-            >
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Expense
-            </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+        </Form>
+    );
+}
+
+
+export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
+    const [open, setOpen] = useState(false);
+    const isDesktop = useMediaQuery("(min-width: 768px)");
+
+    if (isDesktop) {
+        return (
+            <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+                <DialogHeader>
+                <DialogTitle className="font-headline">Add a New Expense</DialogTitle>
+                <DialogDescription>Fill in the details of your expense below.</DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="flex-grow pr-6 -mr-6">
+                    <ExpenseForm />
+                </ScrollArea>
+            </DialogContent>
+            </Dialog>
+        );
+    }
+
+    return (
+        <Drawer open={open} onOpenChange={setOpen}>
+            <DrawerTrigger asChild>{children}</DrawerTrigger>
+            <DrawerContent>
+                <DrawerHeader className="text-left">
+                    <DrawerTitle>Add a New Expense</DrawerTitle>
+                    <DrawerDescription>Fill in the details of your expense below.</DrawerDescription>
+                </DrawerHeader>
+                 <ScrollArea className="overflow-y-auto">
+                    <ExpenseForm className="px-4"/>
+                </ScrollArea>
+            </DrawerContent>
+        </Drawer>
+    )
 }

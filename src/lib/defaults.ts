@@ -15,10 +15,19 @@ export const defaultPaymentMethods = [
   { name: 'Credit Card', icon: 'CreditCard' },
 ];
 
+// Default tags for new users
+export const defaultTags = [
+  { name: 'Work', icon: 'Briefcase' },
+  { name: 'Personal', icon: 'User' },
+  { name: 'Travel', icon: 'Plane' },
+  { name: 'Reimbursable', icon: 'Receipt' },
+  { name: 'Gift', icon: 'Gift' },
+];
+
 // Available icons for categories
 export const availableIcons = [
   "Utensils", "Car", "ShoppingBag", "Receipt", "PartyPopper", "HeartPulse",
   "Home", "Plane", "Book", "Gift", "Film", "Shirt", "Gamepad2", "Bus", "Train",
   "Briefcase", "Coffee", "Droplets", "Pizza", "GraduationCap", "PawPrint",
-  "Wallet", "CreditCard", "Landmark", "Tag", "Ticket"
+  "Wallet", "CreditCard", "Landmark", "Tag", "Ticket", "User",
 ];

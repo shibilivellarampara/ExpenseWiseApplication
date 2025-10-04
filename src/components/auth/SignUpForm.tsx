@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { doc, setDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
-import { defaultCategories, defaultPaymentMethods } from '@/lib/defaults';
+import { defaultCategories, defaultPaymentMethods, defaultTags } from '@/lib/defaults';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -83,6 +83,13 @@ export function SignUpForm() {
       defaultPaymentMethods.forEach(pm => {
           const pmDoc = doc(paymentMethodsRef);
           batch.set(pmDoc, { ...pm, icon: 'CreditCard', userId: user.uid });
+      });
+
+      // 4. Add default tags
+      const tagsRef = collection(firestore, `users/${user.uid}/tags`);
+      defaultTags.forEach(tag => {
+          const tagDoc = doc(tagsRef);
+          batch.set(tagDoc, { ...tag, userId: user.uid });
       });
 
       // Commit the batch

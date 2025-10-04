@@ -13,23 +13,22 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Separator } from '../ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
-import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
+import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 const formSchema = z.object({
-  loginId: z.string().min(1, { message: 'Please enter your email or phone number.' }),
+  loginId: z.string().min(1, { message: 'This field is required.' }),
   password: z.string().optional(),
 });
 
-const isEmail = (loginId: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginId);
-const isNumeric = (str: string) => /^\d+$/.test(str.replace(/\s/g, ''));
 
 export function LoginForm() {
   const { toast } = useToast();
@@ -38,7 +37,7 @@ export function LoginForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
-  const [loginMethod, setLoginMethod] = useState<'email' | 'phone' | null>(null);
+  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const auth = useAuth();
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
@@ -50,19 +49,6 @@ export function LoginForm() {
       password: '',
     },
   });
-
-  const { watch, setValue } = form;
-  const loginId = watch('loginId');
-
-  useEffect(() => {
-    if (isEmail(loginId)) {
-      setLoginMethod('email');
-    } else if (isPossiblePhoneNumber(loginId || '') || isNumeric(loginId)) {
-      setLoginMethod('phone');
-    } else {
-      setLoginMethod(null);
-    }
-  }, [loginId]);
 
   // Initialize reCAPTCHA
   useEffect(() => {
@@ -162,52 +148,72 @@ export function LoginForm() {
 
   return (
     <div className="space-y-4">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="loginId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email or Phone Number</FormLabel>
-                <FormControl>
-                    {loginMethod === 'phone' ? (
-                        <PhoneInput
-                            international
-                            defaultCountry="IN"
-                            placeholder="Enter phone number"
-                            value={field.value || ""}
-                            onChange={field.onChange}
-                        />
-                    ) : (
-                        <Input placeholder="name@example.com" {...field} />
-                    )}
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {loginMethod === 'email' && (
-            <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-          )}
-          <Button type="submit" className="w-full" disabled={isLoading || !auth}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {loginMethod === 'phone' ? 'Send Verification Code' : 'Sign In'}
-          </Button>
-        </form>
-      </Form>
+      <Tabs defaultValue="email" className="w-full" onValueChange={(value) => setLoginMethod(value as 'email' | 'phone')}>
+        <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="email">Email</TabsTrigger>
+            <TabsTrigger value="phone">Phone</TabsTrigger>
+        </TabsList>
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+                <TabsContent value="email" className="space-y-4 m-0">
+                    <FormField
+                        control={form.control}
+                        name="loginId"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                                <Input placeholder="name@example.com" {...field} type="email"/>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                            <Input type="password" placeholder="••••••••" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </TabsContent>
+
+                <TabsContent value="phone" className="space-y-4 m-0">
+                    <FormField
+                        control={form.control}
+                        name="loginId"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                                <PhoneInput
+                                    international
+                                    defaultCountry="IN"
+                                    placeholder="Enter phone number"
+                                    value={field.value || ""}
+                                    onChange={field.onChange}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </TabsContent>
+
+                <Button type="submit" className="w-full" disabled={isLoading || !auth}>
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {loginMethod === 'phone' ? 'Send Verification Code' : 'Sign In'}
+                </Button>
+            </form>
+        </Form>
+      </Tabs>
+
       <div className="relative my-4">
         <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />

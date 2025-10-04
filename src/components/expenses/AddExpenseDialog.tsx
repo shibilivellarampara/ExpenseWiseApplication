@@ -201,7 +201,9 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
     // Reset the form whenever the schema changes (i.e., when settings change)
     // or when the dialog is opened.
     useEffect(() => {
-        resetForm();
+        if(setOpen) {
+            resetForm();
+        }
     }, [open, userProfile, form]);
 
     const resetForm = () => {
@@ -288,13 +290,13 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
                             className="grid grid-cols-2 gap-4"
                             >
                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'expense' ? "border-red-500 text-red-500" : "")}>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'expense' ? "border-red-500 text-red-500" : "border-muted")}>
                                         <RadioGroupItem value="expense" className="sr-only" />
-                                        <span>Cashout</span>
+                                        <span>Cash Out</span>
                                     </Label>
                                 </FormItem>
                                  <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'income' ? "border-green-500 text-green-500" : "")}>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'income' ? "border-green-500 text-green-500" : "border-muted")}>
                                         <RadioGroupItem value="income" className="sr-only" />
                                         <span>Cash In</span>
                                     </Label>

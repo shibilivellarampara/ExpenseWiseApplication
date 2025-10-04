@@ -50,7 +50,7 @@ export function ProfileForm() {
         if (userProfile) {
             setNameInput(userProfile.name ?? '');
             setTempDisplayPhotoUrl(userProfile.photoURL ?? null);
-            setSelectedCurrency(userProfile.defaultCurrency || 'USD');
+            setSelectedCurrency(userProfile.defaultCurrency || 'INR');
         }
     }, [userProfile]);
 

@@ -69,7 +69,7 @@ export function SignUpForm() {
         photoURL: user.photoURL,
         phoneNumber: user.phoneNumber,
         createdAt: serverTimestamp() as any, // Cast because serverTimestamp is a sentinel value
-        defaultCurrency: 'USD',
+        defaultCurrency: 'INR',
         expenseFieldSettings: {
           isCategoryRequired: true,
           isDescriptionRequired: false,

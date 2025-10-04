@@ -3,7 +3,7 @@
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Suspense, useMemo } from 'react';
+import { useMemo } from 'react';
 import { CategoryPieChart } from '@/components/dashboard/CategoryPieChart';
 import { ExpensesBarChart } from '@/components/dashboard/ExpensesBarChart';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,11 +16,14 @@ export default function DashboardPage() {
     const { user } = useUser();
     const firestore = useFirestore();
 
-    const now = new Date();
-    const currentMonthStart = startOfMonth(now);
-    const currentMonthEnd = endOfMonth(now);
-    const lastMonthStart = startOfMonth(subMonths(now, 1));
-    const lastMonthEnd = endOfMonth(subMonths(now, 1));
+    const { currentMonthStart, currentMonthEnd, lastMonthStart, lastMonthEnd } = useMemo(() => {
+        const now = new Date();
+        const currentMonthStart = startOfMonth(now);
+        const currentMonthEnd = endOfMonth(now);
+        const lastMonthStart = startOfMonth(subMonths(now, 1));
+        const lastMonthEnd = endOfMonth(subMonths(now, 1));
+        return { currentMonthStart, currentMonthEnd, lastMonthStart, lastMonthEnd };
+    }, []);
 
     // A query for all expenses in the current and previous month
     const expensesQuery = useMemoFirebase(() => {
@@ -43,7 +46,7 @@ export default function DashboardPage() {
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
 
     const enrichedExpenses = useMemo((): EnrichedExpense[] => {
-        if (!expenses) return [];
+        if (!expenses || !categoryMap) return [];
         return expenses.map(expense => {
             const date = expense.date instanceof Date ? expense.date : expense.date.toDate();
             return {

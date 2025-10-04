@@ -1,3 +1,26 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for all data.
+ *
+ * Data Structure:
+ * All data is nested under /users/{userId}, providing clear ownership and isolation.
+ *  - /users/{userId}: User profile information.
+ *  - /users/{userId}/expenses/{expenseId}: Expense records for each user.
+ *  - /users/{userId}/contributions/{contributionId}: Contribution records for each user.
+ *  - /users/{userId}/categories/{categoryId}: Categories for each user.
+ *  - /users/{userId}/paymentMethods/{paymentMethodId}: Payment methods for each user.
+ *  - /users/{userId}/tags/{tagId}: Tags for each user.
+ *
+ * Key Security Decisions:
+ *  - Users can only access their own data.
+ *  - Listing of users is disallowed.
+ *  - All write operations require authentication.
+ *  - No schema validation is performed beyond what is necessary for authorization.
+ *
+ * Denormalization for Authorization:
+ *  - Each document under a user's path implicitly has the userId as its owner. This is enforced
+ *    during creation and update to ensure data consistency.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -5,182 +28,193 @@ service cloud.firestore {
     /**
      * @description Controls access to user profile documents.
      * @path /users/{userId}
-     * @allow (create) - If the user ID in the request matches the authenticated user's ID.
-     * @allow (get, update, delete) - If the requested user ID matches the authenticated user's ID.
-     * @deny (list) - Listing all users is not permitted.
-     * @deny (create) - If the user ID in the request does not match the authenticated user's ID.
-     * @deny (update, delete) - If the requested user ID does not match the authenticated user's ID or if the document does not exist.
-     * @principle Enforces document ownership and prevents unauthorized data access.
+     * @allow (create) User with ID 'user123' can create their profile. (auth.uid == 'user123')
+     * @allow (get) User with ID 'user123' can get their profile. (auth.uid == 'user123')
+     * @allow (update) User with ID 'user123' can update their profile. (auth.uid == 'user123')
+     * @allow (delete) User with ID 'user123' can delete their profile. (auth.uid == 'user123')
+     * @deny (create) User with ID 'user456' cannot create a profile for 'user123'.
+     * @deny (get) User with ID 'user456' cannot get the profile of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the profile of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the profile of 'user123'.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
-      //function
       function isSignedIn() {
         return request.auth != null;
       }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
-
       function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
+        return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
+      allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
      * @description Controls access to expense documents under a user's profile.
      * @path /users/{userId}/expenses/{expenseId}
-     * @allow (create) - If the user ID matches the authenticated user's ID.
-     * @allow (get, list, update, delete) - If the user ID matches the authenticated user's ID.
-     * @deny (create) - If the user ID does not match the authenticated user's ID.
-     * @deny (update, delete) - If the user ID does not match the authenticated user's ID or if the document does not exist.
-     * @principle Enforces document ownership and prevents unauthorized data access.
+     * @allow (create) User with ID 'user123' can create an expense. (auth.uid == 'user123')
+     * @allow (get) User with ID 'user123' can get their expense. (auth.uid == 'user123')
+     * @allow (update) User with ID 'user123' can update their expense. (auth.uid == 'user123')
+     * @allow (delete) User with ID 'user123' can delete their expense. (auth.uid == 'user123')
+     * @deny (create) User with ID 'user456' cannot create an expense for 'user123'.
+     * @deny (get) User with ID 'user456' cannot get the expense of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the expense of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the expense of 'user123'.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/expenses/{expenseId} {
-      //function
       function isSignedIn() {
         return request.auth != null;
       }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
-
       function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
+        return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
      * @description Controls access to contribution documents under a user's profile.
      * @path /users/{userId}/contributions/{contributionId}
-     * @allow (create) - If the user ID matches the authenticated user's ID.
-     * @allow (get, list, update, delete) - If the user ID matches the authenticated user's ID.
-     * @deny (create) - If the user ID does not match the authenticated user's ID.
-     * @deny (update, delete) - If the user ID does not match the authenticated user's ID or if the document does not exist.
-     * @principle Enforces document ownership and prevents unauthorized data access.
+     * @allow (create) User with ID 'user123' can create a contribution. (auth.uid == 'user123')
+     * @allow (get) User with ID 'user123' can get their contribution. (auth.uid == 'user123')
+     * @allow (update) User with ID 'user123' can update their contribution. (auth.uid == 'user123')
+     * @allow (delete) User with ID 'user123' can delete their contribution. (auth.uid == 'user123')
+     * @deny (create) User with ID 'user456' cannot create a contribution for 'user123'.
+     * @deny (get) User with ID 'user456' cannot get the contribution of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the contribution of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the contribution of 'user123'.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/contributions/{contributionId} {
-      //function
       function isSignedIn() {
         return request.auth != null;
       }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
-
       function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
+        return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
      * @description Controls access to category documents under a user's profile.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) - If the user ID matches the authenticated user's ID.
-     * @allow (get, list, update, delete) - If the user ID matches the authenticated user's ID.
-     * @deny (create) - If the user ID does not match the authenticated user's ID.
-     * @deny (update, delete) - If the user ID does not match the authenticated user's ID or if the document does not exist.
-     * @principle Enforces document ownership and prevents unauthorized data access.
+     * @allow (create) User with ID 'user123' can create a category. (auth.uid == 'user123')
+     * @allow (get) User with ID 'user123' can get their category. (auth.uid == 'user123')
+     * @allow (update) User with ID 'user123' can update their category. (auth.uid == 'user123')
+     * @allow (delete) User with ID 'user123' can delete their category. (auth.uid == 'user123')
+     * @deny (create) User with ID 'user456' cannot create a category for 'user123'.
+     * @deny (get) User with ID 'user456' cannot get the category of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the category of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the category of 'user123'.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/categories/{categoryId} {
-      //function
       function isSignedIn() {
         return request.auth != null;
       }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
-
       function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
+        return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
      * @description Controls access to payment method documents under a user's profile.
      * @path /users/{userId}/paymentMethods/{paymentMethodId}
-     * @allow (create) - If the user ID matches the authenticated user's ID.
-     * @allow (get, list, update, delete) - If the user ID matches the authenticated user's ID.
-     * @deny (create) - If the user ID does not match the authenticated user's ID.
-     * @deny (update, delete) - If the user ID does not match the authenticated user's ID or if the document does not exist.
-     * @principle Enforces document ownership and prevents unauthorized data access.
+     * @allow (create) User with ID 'user123' can create a payment method. (auth.uid == 'user123')
+     * @allow (get) User with ID 'user123' can get their payment method. (auth.uid == 'user123')
+     * @allow (update) User with ID 'user123' can update their payment method. (auth.uid == 'user123')
+     * @allow (delete) User with ID 'user123' can delete their payment method. (auth.uid == 'user123')
+     * @deny (create) User with ID 'user456' cannot create a payment method for 'user123'.
+     * @deny (get) User with ID 'user456' cannot get the payment method of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the payment method of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the payment method of 'user123'.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/paymentMethods/{paymentMethodId} {
-      //function
       function isSignedIn() {
         return request.auth != null;
       }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
-
       function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
+        return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
      * @description Controls access to tag documents under a user's profile.
      * @path /users/{userId}/tags/{tagId}
-     * @allow (create) - If the user ID matches the authenticated user's ID.
-     * @allow (get, list, update, delete) - If the user ID matches the authenticated user's ID.
-     * @deny (create) - If the user ID does not match the authenticated user's ID.
-     * @deny (update, delete) - If the user ID does not match the authenticated user's ID or if the document does not exist.
-     * @principle Enforces document ownership and prevents unauthorized data access.
+     * @allow (create) User with ID 'user123' can create a tag. (auth.uid == 'user123')
+     * @allow (get) User with ID 'user123' can get their tag. (auth.uid == 'user123')
+     * @allow (update) User with ID 'user123' can update their tag. (auth.uid == 'user123')
+     * @allow (delete) User with ID 'user123' can delete their tag. (auth.uid == 'user123')
+     * @deny (create) User with ID 'user456' cannot create a tag for 'user123'.
+     * @deny (get) User with ID 'user456' cannot get the tag of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the tag of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the tag of 'user123'.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/tags/{tagId} {
-      //function
       function isSignedIn() {
         return request.auth != null;
       }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
-
       function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
+        return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
   }
 }

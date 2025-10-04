@@ -9,12 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Loader2, Upload } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { updateProfile, RecaptchaVerifier, updatePhoneNumber, PhoneAuthProvider, updateEmail, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { doc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { AvatarPlaceholders } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -23,6 +22,7 @@ import { UserProfile } from "@/lib/types";
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { AvatarList } from "./Avatars";
 
 const currencies = ["USD", "EUR", "JPY", "GBP", "INR"];
 
@@ -42,8 +42,8 @@ export function ProfileForm() {
     const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
 
     const [nameInput, setNameInput] = useState('');
+    const [selectedCurrency, setSelectedCurrency] = useState<string>('');
     const [tempDisplayPhotoUrl, setTempDisplayPhotoUrl] = useState<string | null>(null);
-    const [selectedCurrency, setSelectedCurrency] = useState<string | undefined>(undefined);
 
 
     useEffect(() => {
@@ -58,7 +58,7 @@ export function ProfileForm() {
     // State for phone number update
     const [showPhoneDialog, setShowPhoneDialog] = useState(false);
     const [showOtpDialog, setShowOtpDialog] = useState(false);
-    const [newPhoneNumber, setNewPhoneNumber] = useState<string | undefined>("+91");
+    const [newPhoneNumber, setNewPhoneNumber] = useState<string | undefined>("");
     const [otp, setOtp] = useState('');
     const [confirmationResult, setConfirmationResult] = useState<any>(null);
     const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
@@ -97,9 +97,10 @@ export function ProfileForm() {
         setNewAvatarFile(file);
     };
 
-    const handleAvatarSelect = (url: string) => {
-        setTempDisplayPhotoUrl(url);
-        setNewAvatarFile(null); // Clear file if a pre-designed avatar is selected
+    const handleAvatarSelect = (svgString: string) => {
+        const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
+        setTempDisplayPhotoUrl(dataUrl);
+        setNewAvatarFile(null);
     }
 
     const handleProfileSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -126,7 +127,7 @@ export function ProfileForm() {
                     return;
                 }
                 setIsUploading(false);
-            } else {
+            } else if(tempDisplayPhotoUrl.startsWith('data:image/svg+xml')) {
                  finalPhotoURL = tempDisplayPhotoUrl;
             }
         }
@@ -193,7 +194,7 @@ export function ProfileForm() {
 
             toast({ title: "Phone Number Updated!" });
             setShowOtpDialog(false);
-            setNewPhoneNumber('+91');
+            setNewPhoneNumber('');
             setOtp('');
 
         } catch (error: any) {
@@ -296,24 +297,19 @@ export function ProfileForm() {
                                     <Separator />
                                      <p className="text-sm text-muted-foreground">Or choose a pre-designed avatar</p>
                                     <div className="grid grid-cols-4 gap-2 mt-2">
-                                        {AvatarPlaceholders.map(avatar => (
+                                        {AvatarList.map((AvatarComponent, index) => (
                                             <button
-                                                key={avatar.id}
+                                                key={index}
                                                 type="button"
-                                                onClick={() => handleAvatarSelect(avatar.imageUrl)}
+                                                onClick={() => handleAvatarSelect(AvatarComponent.svgString)}
                                                 className={cn(
                                                     "rounded-full ring-2 ring-transparent hover:ring-primary focus:ring-primary focus:outline-none transition-all",
-                                                    currentPhoto === avatar.imageUrl && "ring-primary"
+                                                    currentPhoto === `data:image/svg+xml;base64,${btoa(AvatarComponent.svgString)}` && "ring-primary"
                                                 )}
                                             >
-                                                <Image
-                                                    src={avatar.imageUrl}
-                                                    alt={avatar.description}
-                                                    width={60}
-                                                    height={60}
-                                                    className="rounded-full aspect-square object-cover"
-                                                    data-ai-hint={avatar.imageHint}
-                                                />
+                                               <div className="w-16 h-16 rounded-full overflow-hidden">
+                                                    <AvatarComponent.component />
+                                               </div>
                                             </button>
                                         ))}
                                     </div>

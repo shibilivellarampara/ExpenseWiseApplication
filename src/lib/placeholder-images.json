@@ -5,50 +5,7 @@
       "description": "A dashboard interface showing charts and graphs for financial data.",
       "imageUrl": "https://images.unsplash.com/photo-1748439146117-31978164865d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkYXNoYm9hcmQlMjBjaGFydHxlbnwwfHx8fDE3NTk0ODExMzd8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "dashboard chart"
-    },
-    {
-      "id": "avatar",
-      "description": "Default user avatar.",
-      "imageUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTk1MDY2MzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "person portrait"
     }
   ],
-  "avatarPlaceholders": [
-    {
-      "id": "avatar-1",
-      "description": "Illustrated avatar of a woman with short dark hair.",
-      "imageUrl": "https://picsum.photos/seed/ava-f1/200/200",
-      "imageHint": "illustrated avatar"
-    },
-    {
-      "id": "avatar-2",
-      "description": "Illustrated avatar of a man with a beard.",
-      "imageUrl": "https://picsum.photos/seed/ava-m1/200/200",
-      "imageHint": "illustrated avatar"
-    },
-    {
-      "id": "avatar-3",
-      "description": "Illustrated avatar of a woman with red hair.",
-      "imageUrl": "https://picsum.photos/seed/ava-f2/200/200",
-      "imageHint": "illustrated avatar"
-    },
-    {
-      "id": "avatar-4",
-      "description": "Illustrated avatar of a man wearing a turban.",
-      "imageUrl": "https://picsum.photos/seed/ava-m2/200/200",
-      "imageHint": "illustrated avatar"
-    },
-    {
-      "id": "avatar-5",
-      "description": "Illustrated avatar of a woman wearing a hijab.",
-      "imageUrl": "https://picsum.photos/seed/ava-f3/200/200",
-      "imageHint": "illustrated avatar"
-    },
-    {
-      "id": "avatar-6",
-      "description": "Illustrated avatar of a man with glasses and a beard.",
-      "imageUrl": "https://picsum.photos/seed/ava-m3/200/200",
-      "imageHint": "illustrated avatar"
-    }
-  ]
+  "avatarPlaceholders": []
 }

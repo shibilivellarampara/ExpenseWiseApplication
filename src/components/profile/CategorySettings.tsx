@@ -2,7 +2,7 @@
 
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { Category } from '@/lib/types';
-import { collection, doc, writeBatch, addDoc } from 'firebase/firestore';
+import { collection, doc, writeBatch, addDoc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -93,9 +93,9 @@ export function CategorySettings() {
                 ) : (
                     <div className="space-y-2">
                         {categories?.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                            <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
                                 {editingItem?.id === item.id ? (
-                                    <div className="flex-1 flex items-center gap-2">
+                                    <>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
@@ -111,36 +111,30 @@ export function CategorySettings() {
                                         <Input
                                             value={editingItem.name}
                                             onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                            className="flex-1"
                                             autoFocus
                                         />
-                                    </div>
+                                        <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
+                                            <Check className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </>
                                 ) : (
-                                    <div className="flex items-center">
-                                      {renderIcon(item.icon)}
-                                      <span>{item.name}</span>
-                                    </div>
+                                    <>
+                                        <div className="flex items-center flex-1">
+                                            {renderIcon(item.icon)}
+                                            <span>{item.name}</span>
+                                        </div>
+                                        <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </>
                                 )}
-                                <div className="flex items-center">
-                                    {editingItem?.id === item.id ? (
-                                        <>
-                                            <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
-                                                <Check className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
                             </div>
                         ))}
                     </div>

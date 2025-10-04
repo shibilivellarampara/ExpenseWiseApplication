@@ -82,8 +82,8 @@ export function PaymentMethodSettings() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline">Payment Methods</CardTitle>
-                <CardDescription>Manage your payment options.</CardDescription>
+                <CardTitle className="font-headline">Legacy Payment Methods</CardTitle>
+                <CardDescription>This is now managed under Accounts.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 {isLoading ? (

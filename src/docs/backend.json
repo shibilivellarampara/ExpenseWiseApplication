@@ -18,8 +18,7 @@
           "properties": {
             "isDescriptionRequired": { "type": "boolean", "default": false },
             "isTagRequired": { "type": "boolean", "default": false },
-            "isCategoryRequired": { "type": "boolean", "default": true },
-            "isPaymentMethodRequired": { "type": "boolean", "default": true }
+            "isCategoryRequired": { "type": "boolean", "default": true }
           }
         }
       },
@@ -29,19 +28,36 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Expense",
       "type": "object",
-      "description": "Represents an expense record.",
+      "description": "Represents a transaction record, which can be an expense or income.",
       "properties": {
-        "id": { "type": "string", "description": "Unique identifier for the Expense entity." },
-        "userId": { "type": "string", "description": "The UID of the user this expense belongs to." },
-        "amount": { "type": "number", "description": "Amount of the expense." },
-        "description": { "type": "string", "description": "Description of the expense." },
-        "date": { "type": "string", "description": "Date of the expense.", "format": "date-time" },
-        "createdAt": { "type": "string", "description": "Timestamp of when the expense was created.", "format": "date-time" },
-        "categoryId": { "type": "string", "description": "Reference to the Category document ID." },
-        "paymentMethodId": { "type": "string", "description": "Reference to the PaymentMethod document ID." },
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["expense", "income"], "description": "Type of the transaction." },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "accountId": { "type": "string", "description": "Reference to the Account document ID." },
+        "categoryId": { "type": "string", "description": "Reference to the Category document ID (for expenses)." },
         "tagId": { "type": "string", "description": "Reference to the Tag document ID." }
       },
-      "required": ["id", "userId", "amount", "date"]
+      "required": ["id", "userId", "type", "amount", "date", "accountId"]
+    },
+    "Account": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Account",
+      "type": "object",
+      "description": "Represents a user-defined financial account.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["bank", "credit_card", "wallet", "cash"] },
+        "balance": { "type": "number", "description": "Current balance or available credit." },
+        "limit": { "type": "number", "description": "Credit limit for credit cards." },
+        "icon": { "type": "string", "description": "Name of the lucide-react icon." }
+      },
+      "required": ["id", "userId", "name", "type", "balance", "icon"]
     },
     "Contribution": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -49,13 +65,12 @@
       "type": "object",
       "description": "Represents a contribution record for shared expenses.",
       "properties": {
-        "id": { "type": "string", "description": "Unique identifier for the Contribution entity." },
-        "totalAmount": { "type": "number", "description": "Total amount of the shared expense." },
-        "description": { "type": "string", "description": "Description of the shared expense." },
-        "userId": { "type": "string", "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Contribution)" },
+        "id": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "description": { "type": "string" },
+        "userId": { "type": "string" },
         "contributorShares": {
           "type": "array",
-          "description": "List of contributors and their shares.",
           "items": {
             "type": "object",
             "properties": {
@@ -72,19 +87,6 @@
       "title": "Category",
       "type": "object",
       "description": "Represents a user-defined expense category.",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "userId": { "type": "string" }
-      },
-      "required": ["name", "icon", "userId"]
-    },
-    "PaymentMethod": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PaymentMethod",
-      "type": "object",
-      "description": "Represents a user-defined payment method.",
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
@@ -121,16 +123,16 @@
         "definition": { "entityName": "Expense", "schema": { "$ref": "#/entities/Expense" } }
       },
       {
+        "path": "/users/{userId}/accounts/{accountId}",
+        "definition": { "entityName": "Account", "schema": { "$ref": "#/entities/Account" } }
+      },
+      {
         "path": "/users/{userId}/contributions/{contributionId}",
         "definition": { "entityName": "Contribution", "schema": { "$ref": "#/entities/Contribution" } }
       },
       {
         "path": "/users/{userId}/categories/{categoryId}",
         "definition": { "entityName": "Category", "schema": { "$ref": "#/entities/Category" } }
-      },
-      {
-        "path": "/users/{userId}/paymentMethods/{paymentMethodId}",
-        "definition": { "entityName": "PaymentMethod", "schema": { "$ref": "#/entities/PaymentMethod" } }
       },
       {
         "path": "/users/{userId}/tags/{tagId}",

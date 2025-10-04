@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { doc, setDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
-import { defaultCategories, defaultPaymentMethods, defaultTags } from '@/lib/defaults';
+import { defaultCategories, defaultAccounts, defaultTags } from '@/lib/defaults';
 import { UserProfile } from '@/lib/types';
 
 const formSchema = z.object({
@@ -73,7 +73,6 @@ export function SignUpForm() {
         expenseFieldSettings: {
           isCategoryRequired: true,
           isDescriptionRequired: false,
-          isPaymentMethodRequired: true,
           isTagRequired: false,
         }
       };
@@ -86,10 +85,10 @@ export function SignUpForm() {
           batch.set(categoryDoc, { ...category, userId: user.uid });
       });
 
-      // 3. Add default payment methods
-      const paymentMethodsRef = collection(firestore, `users/${user.uid}/paymentMethods`);
-      defaultPaymentMethods.forEach(pm => {
-          const pmDoc = doc(paymentMethodsRef);
+      // 3. Add default accounts
+      const accountsRef = collection(firestore, `users/${user.uid}/accounts`);
+      defaultAccounts.forEach(pm => {
+          const pmDoc = doc(accountsRef);
           batch.set(pmDoc, { ...pm, userId: user.uid });
       });
 

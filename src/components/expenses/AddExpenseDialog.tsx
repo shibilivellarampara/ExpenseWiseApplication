@@ -35,26 +35,25 @@ import { useState, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '../ui/textarea';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { addDoc, collection, doc, serverTimestamp } from 'firebase/firestore';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { UserProfile, Category, PaymentMethod, Tag } from '@/lib/types';
+import { addDoc, collection, doc, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
+import { UserProfile, Category, Tag, Account } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import * as LucideIcons from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
   return z.object({
+    type: z.enum(['expense', 'income']).default('expense'),
     amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
     date: z.date({ required_error: 'A date is required.' }),
     
+    accountId: z.string().min(1, 'Please select an account.'),
+
     categoryId: settings?.isCategoryRequired
       ? z.string().min(1, 'Please select a category.')
-      : z.string().optional(),
-    
-    paymentMethodId: settings?.isPaymentMethodRequired
-      ? z.string().min(1, 'Please select a payment method.')
       : z.string().optional(),
     
     description: settings?.isDescriptionRequired
@@ -135,7 +134,7 @@ function DatePicker({ field }: { field: any }) {
         <DrawerHeader className="text-left">
             <DrawerTitle>Select Date</DrawerTitle>
             <DrawerDescription>
-                Choose the date when the expense occurred.
+                Choose the date when the transaction occurred.
             </DrawerDescription>
         </DrawerHeader>
         <div className="p-4">
@@ -162,13 +161,11 @@ function DatePicker({ field }: { field: any }) {
   )
 }
 
-function ExpenseForm({ className }: { className?: string }) {
+function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (open: boolean) => void }) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
-    const [open, setOpen] = useState(false);
-
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
@@ -179,22 +176,23 @@ function ExpenseForm({ className }: { className?: string }) {
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
         defaultValues: {
+            type: 'expense',
             amount: 0,
+            accountId: '',
             categoryId: '',
             description: '',
             date: new Date(),
-            paymentMethodId: '',
             tagId: '',
         },
     });
      
     // Fetch relational data for dropdowns
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [user, firestore]);
-    const paymentMethodsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/paymentMethods`) : null, [user, firestore]);
+    const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
     const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [user, firestore]);
     
     const { data: categories } = useCollection<Category>(categoriesQuery);
-    const { data: paymentMethods } = useCollection<PaymentMethod>(paymentMethodsQuery);
+    const { data: accounts } = useCollection<Account>(accountsQuery);
     const { data: tags } = useCollection<Tag>(tagsQuery);
     
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
@@ -207,42 +205,52 @@ function ExpenseForm({ className }: { className?: string }) {
 
     const resetForm = () => {
         form.reset({
+            type: 'expense',
             amount: 0,
+            accountId: '',
             categoryId: '',
             description: '',
             date: new Date(),
-            paymentMethodId: '',
             tagId: '',
         });
     }
 
-    const handleSave = async (values: z.infer<typeof expenseSchema>, shouldClose: boolean) => {
+    const handleSave = async (values: z.infer<typeof expenseSchema>) => {
         setIsLoading(true);
         if (!firestore || !user) {
-            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to add an expense.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to add a transaction.' });
             setIsLoading(false);
             return;
         }
 
-        const expenseData = {
-          ...values,
-          userId: user.uid,
-          createdAt: serverTimestamp(),
-          tagId: values.tagId === 'no-tag' ? '' : values.tagId,
-        };
-
         try {
-            const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
-            addDocumentNonBlocking(expensesCol, expenseData);
+            const batch = writeBatch(firestore);
+
+            // 1. Add the expense/income document
+            const expenseCol = collection(firestore, `users/${user.uid}/expenses`);
+            const newExpenseRef = doc(expenseCol);
+            const expenseData = {
+              ...values,
+              id: newExpenseRef.id,
+              userId: user.uid,
+              createdAt: serverTimestamp(),
+              tagId: values.tagId === 'no-tag' ? '' : values.tagId,
+            };
+            batch.set(newExpenseRef, expenseData);
+
+            // 2. Update the account balance
+            const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+            const amountToUpdate = values.type === 'income' ? values.amount : -values.amount;
+            batch.update(accountRef, { balance: increment(amountToUpdate) });
+
+            await batch.commit();
             
-            toast({ title: 'Expense Added!', description: `Your expense has been recorded.` });
+            toast({ title: 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
             
             resetForm();
-            if (shouldClose) {
-                setOpen(false);
-            }
+            setOpen(false);
         } catch (error: any) {
-             toast({ variant: 'destructive', title: 'Uh oh! Something went wrong.', description: error.message || 'Could not save expense.' });
+             toast({ variant: 'destructive', title: 'Uh oh! Something went wrong.', description: error.message || 'Could not save transaction.' });
         } finally {
             setIsLoading(false);
         }
@@ -258,13 +266,45 @@ function ExpenseForm({ className }: { className?: string }) {
     const isDescriptionRequired = userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false;
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
-    const isPaymentMethodRequired = userProfile?.expenseFieldSettings?.isPaymentMethodRequired ?? true;
     
     const isDesktop = useMediaQuery("(min-width: 768px)");
+    const transactionType = form.watch('type');
 
     return (
         <Form {...form}>
-            <form className={cn("grid items-start gap-4", className)}>
+            <form onSubmit={form.handleSubmit(handleSave)} className={cn("grid items-start gap-4", className)}>
+                
+                <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3">
+                        <FormLabel>Transaction Type</FormLabel>
+                        <FormControl>
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-4"
+                            >
+                                <FormItem>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'expense' && "border-primary")}>
+                                        <RadioGroupItem value="expense" className="sr-only" />
+                                        <span>Expense / Cash Out</span>
+                                    </Label>
+                                </FormItem>
+                                 <FormItem>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'income' && "border-primary")}>
+                                        <RadioGroupItem value="income" className="sr-only" />
+                                        <span>Income / Cash In</span>
+                                    </Label>
+                                </FormItem>
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+
                 <FormField
                     control={form.control}
                     name="amount"
@@ -283,99 +323,100 @@ function ExpenseForm({ className }: { className?: string }) {
                         </FormItem>
                     )}
                     />
+
+                 <FormField
+                    control={form.control}
+                    name="accountId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Account</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select an account" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {accounts?.map(acc => (
+                                <SelectItem key={acc.id} value={acc.id}>
+                                    <div className="flex items-center">
+                                        {renderIcon(acc.icon)}
+                                        {acc.name}
+                                    </div>
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />    
                 
-                <FormField
-                    control={form.control}
-                    name="categoryId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>
-                          Category {isCategoryRequired ? '' : '(Optional)'}
-                        </FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {!isCategoryRequired && <SelectItem value="">No Category</SelectItem>}
-                            {categories?.map(cat => (
-                                <SelectItem key={cat.id} value={cat.id}>
-                                    <div className="flex items-center">
-                                        {renderIcon(cat.icon)}
-                                        {cat.name}
-                                    </div>
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                {transactionType === 'expense' && (
+                    <FormField
+                        control={form.control}
+                        name="categoryId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>
+                              Category {isCategoryRequired ? '' : '(Optional)'}
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {!isCategoryRequired && <SelectItem value="">No Category</SelectItem>}
+                                {categories?.map(cat => (
+                                    <SelectItem key={cat.id} value={cat.id}>
+                                        <div className="flex items-center">
+                                            {renderIcon(cat.icon)}
+                                            {cat.name}
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
 
-                <FormField
-                    control={form.control}
-                    name="paymentMethodId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>
-                          Payment Method {isPaymentMethodRequired ? '' : '(Optional)'}
-                        </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a payment method" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {!isPaymentMethodRequired && <SelectItem value="">No Payment Method</SelectItem>}
-                            {paymentMethods?.map(method => (
-                                <SelectItem key={method.id} value={method.id}>
-                                <div className="flex items-center">
-                                        {renderIcon(method.icon)}
-                                        {method.name}
-                                    </div>
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="tagId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>
-                            Tag / Label {isTagRequired ? '' : '(Optional)'}
-                        </FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a tag" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {!isTagRequired && <SelectItem value="no-tag">No Tag</SelectItem>}
-                            {tags?.map(tag => (
-                                <SelectItem key={tag.id} value={tag.id}>
-                                    <div className="flex items-center">
-                                        {renderIcon(tag.icon)}
-                                        {tag.name}
-                                    </div>
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                {transactionType === 'expense' && (
+                    <FormField
+                        control={form.control}
+                        name="tagId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>
+                                Tag / Label {isTagRequired ? '' : '(Optional)'}
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a tag" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {!isTagRequired && <SelectItem value="no-tag">No Tag</SelectItem>}
+                                {tags?.map(tag => (
+                                    <SelectItem key={tag.id} value={tag.id}>
+                                        <div className="flex items-center">
+                                            {renderIcon(tag.icon)}
+                                            {tag.name}
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
 
                 <FormField
                     control={form.control}
@@ -386,7 +427,7 @@ function ExpenseForm({ className }: { className?: string }) {
                             Description {isDescriptionRequired ? '' : '(Optional)'}
                         </FormLabel>
                         <FormControl>
-                            <Textarea placeholder="e.g., Groceries from Walmart" {...field} />
+                            <Textarea placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -398,21 +439,28 @@ function ExpenseForm({ className }: { className?: string }) {
                   name="date"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Date of Expense</FormLabel>
+                      <FormLabel>Date of Transaction</FormLabel>
                       <DatePicker field={field} />
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                 {isDesktop ? null : (
+                 {isDesktop ? (
+                    <DialogFooter>
+                         <Button type="submit" disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Transaction
+                        </Button>
+                    </DialogFooter>
+                 ) : (
                      <DrawerFooter className="pt-2">
                         <Button 
-                            onClick={form.handleSubmit(v => handleSave(v, true))} 
+                            type="submit"
                             disabled={isLoading}
                         >
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Expense
+                            Save Transaction
                         </Button>
                         <DrawerClose asChild>
                             <Button variant="outline">Cancel</Button>
@@ -435,11 +483,11 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
                 <DialogHeader>
-                <DialogTitle className="font-headline">Add a New Expense</DialogTitle>
-                <DialogDescription>Fill in the details of your expense below.</DialogDescription>
+                <DialogTitle className="font-headline">Add a New Transaction</DialogTitle>
+                <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="flex-grow pr-6 -mr-6">
-                    <ExpenseForm />
+                    <ExpenseForm setOpen={setOpen}/>
                 </ScrollArea>
             </DialogContent>
             </Dialog>
@@ -451,11 +499,11 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
             <DrawerTrigger asChild>{children}</DrawerTrigger>
             <DrawerContent>
                 <DrawerHeader className="text-left">
-                    <DrawerTitle>Add a New Expense</DrawerTitle>
-                    <DrawerDescription>Fill in the details of your expense below.</DrawerDescription>
+                    <DrawerTitle>Add a New Transaction</DrawerTitle>
+                    <DrawerDescription>Fill in the details of your income or expense below.</DrawerDescription>
                 </DrawerHeader>
                  <ScrollArea className="overflow-y-auto">
-                    <ExpenseForm className="px-4"/>
+                    <ExpenseForm className="px-4" setOpen={setOpen} />
                 </ScrollArea>
             </DrawerContent>
         </Drawer>

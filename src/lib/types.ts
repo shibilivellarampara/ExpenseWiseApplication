@@ -12,7 +12,6 @@ export type UserProfile = {
     isDescriptionRequired?: boolean;
     isTagRequired?: boolean;
     isCategoryRequired?: boolean;
-    isPaymentMethodRequired?: boolean;
   };
   createdAt?: Timestamp;
 };
@@ -24,9 +23,12 @@ export type Category = {
   userId: string;
 };
 
-export type PaymentMethod = {
+export type Account = {
   id: string;
-  name:string;
+  name: string;
+  type: 'bank' | 'credit_card' | 'wallet' | 'cash';
+  balance: number;
+  limit?: number; // For credit cards
   icon: string; // lucide-react icon name
   userId: string;
 }
@@ -41,19 +43,20 @@ export type Tag = {
 export type Expense = {
   id: string;
   userId: string;
+  type: 'expense' | 'income';
   amount: number;
   description?: string;
   date: Timestamp | Date; // Firestore Timestamp on read, Date on write
   createdAt: Timestamp;
-  categoryId?: string;
-  paymentMethodId?: string;
+  accountId: string;
+  categoryId?: string; // Only for expenses
   tagId?: string;
 };
 
-export type EnrichedExpense = Omit<Expense, 'categoryId' | 'paymentMethodId' | 'tagId'> & {
+export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagId'> & {
   id: string;
   category?: Category;
-  paymentMethod?: PaymentMethod;
+  account?: Account;
   tag?: Tag;
   date: Date; // Ensure date is always a Date object for the UI
 };
@@ -77,4 +80,12 @@ export type EnrichedContribution = Omit<Contribution, 'date'> & {
   date: Date;
   paidBy?: UserProfile;
   contributors?: (UserProfile & { share: number })[];
+}
+
+// This is a legacy type, replaced by Account
+export type PaymentMethod = {
+  id: string;
+  name:string;
+  icon: string; // lucide-react icon name
+  userId: string;
 }

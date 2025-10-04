@@ -9,13 +9,10 @@ export const defaultCategories = [
   { name: 'Other', icon: 'MoreHorizontal' },
 ];
 
-// Default payment methods for new users
-export const defaultPaymentMethods = [
-  { name: 'Cash', icon: 'Wallet' },
-  { name: 'Credit Card', icon: 'CreditCard' },
-  { name: 'Debit Card', icon: 'Contact' },
-  { name: 'UPI', icon: 'IndianRupee' },
-  { name: 'Bank Transfer', icon: 'Landmark' },
+// Default accounts for new users
+export const defaultAccounts = [
+  { name: 'Cash', icon: 'Wallet', type: 'cash', balance: 0 },
+  { name: 'Primary Bank', icon: 'Landmark', type: 'bank', balance: 0 },
 ];
 
 // Default tags for new users
@@ -34,5 +31,14 @@ export const availableIcons = [
   "Home", "Plane", "Book", "Gift", "Film", "Shirt", "Gamepad2", "Bus", "Train",
   "Briefcase", "Coffee", "Droplets", "Pizza", "GraduationCap", "PawPrint",
   "Wallet", "CreditCard", "Landmark", "Tag", "Ticket", "User", "IndianRupee",
-  "Contact", "Undo2", "Repeat", "MoreHorizontal"
+  "Contact", "Undo2", "Repeat", "MoreHorizontal", "Banknote", "Coins"
+];
+
+// This is a legacy export and can be removed in the future
+export const defaultPaymentMethods = [
+  { name: 'Cash', icon: 'Wallet' },
+  { name: 'Credit Card', icon: 'CreditCard' },
+  { name: 'Debit Card', icon: 'Contact' },
+  { name: 'UPI', icon: 'IndianRupee' },
+  { name: 'Bank Transfer', icon: 'Landmark' },
 ];

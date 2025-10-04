@@ -16,12 +16,14 @@ import {
   Users,
   FileUp,
   CircleUser,
+  ArrowRightLeft
 } from 'lucide-react';
 import { Logo } from '../Logo';
 
 const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard />, label: 'Dashboard' },
-  { href: '/expenses', icon: <Wallet />, label: 'Expenses' },
+  { href: '/expenses', icon: <ArrowRightLeft />, label: 'Transactions' },
+  { href: '/accounts', icon: <Wallet />, label: 'Accounts' },
   { href: '/contributions', icon: <Users />, label: 'Contributions' },
   { href: '/import', icon: <FileUp />, label: 'Import' },
   { href: '/profile', icon: <CircleUser />, label: 'Profile' },
@@ -41,7 +43,7 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} passHref>
                 <SidebarMenuButton
-                  isActive={pathname === item.href}
+                  isActive={pathname.startsWith(item.href)}
                   className="w-full"
                 >
                   {item.icon}

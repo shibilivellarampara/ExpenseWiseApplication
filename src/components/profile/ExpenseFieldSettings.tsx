@@ -38,8 +38,6 @@ export function ExpenseFieldSettings() {
     const isDescriptionRequired = userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false;
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
-    const isPaymentMethodRequired = userProfile?.expenseFieldSettings?.isPaymentMethodRequired ?? true;
-
 
     return (
         <Card>
@@ -58,18 +56,6 @@ export function ExpenseFieldSettings() {
                     <Switch
                         checked={isCategoryRequired}
                         onCheckedChange={(value) => handleSettingChange('isCategoryRequired', value)}
-                    />
-                </div>
-                 <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                        <Label>Require Payment Method</Label>
-                         <p className="text-[0.8rem] text-muted-foreground">
-                            Make the payment method field mandatory.
-                        </p>
-                    </div>
-                    <Switch
-                        checked={isPaymentMethodRequired}
-                        onCheckedChange={(value) => handleSettingChange('isPaymentMethodRequired', value)}
                     />
                 </div>
                 <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">

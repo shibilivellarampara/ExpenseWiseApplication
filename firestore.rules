@@ -1,0 +1,96 @@
+/**
+ * @file Firebase Security Rules for ExpenseWise Application
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Each user has full control over their own profile and associated expenses and contributions.
+ *
+ * Data Structure:
+ * - User profiles are stored in `/users/{userId}`.
+ * - Expenses are stored in `/users/{userId}/expenses/{expenseId}`.
+ * - Contributions are stored in `/users/{userId}/contributions/{contributionId}`.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own data.
+ * - Data consistency between the path and the document's internal fields is enforced.
+ * - No public listing of expenses or contributions is allowed.
+ *
+ * Denormalization for Authorization:
+ * The `userId` is present in both the path and the document data for expenses and contributions, allowing for efficient ownership checks.
+ *
+ * Structural Segregation:
+ * User profiles and associated data are segregated under the `/users/{userId}` path, ensuring that users can only access their own data.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Allows users to read and write their own profile data.
+     * @path /users/{userId}
+     * @allow (create) User with UID 'user_abc' can create a profile with id: 'user_abc'.
+     * @allow (get) User with UID 'user_abc' can read their profile at /users/user_abc.
+     * @allow (update) User with UID 'user_abc' can update their profile at /users/user_abc.
+     * @allow (delete) User with UID 'user_abc' can delete their profile at /users/user_abc.
+     * @deny (create) User with UID 'user_xyz' cannot create a profile with id: 'user_abc'.
+     * @deny (get) User with UID 'user_xyz' cannot read the profile at /users/user_abc.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && resource.data.id == request.resource.data.id;
+      allow delete: if isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Allows users to manage their own expense records.
+     * @path /users/{userId}/expenses/{expenseId}
+     * @allow (create) User with UID 'user_abc' can create an expense under /users/user_abc/expenses.
+     * @allow (get) User with UID 'user_abc' can read their expense at /users/user_abc/expenses/{expenseId}.
+     * @allow (update) User with UID 'user_abc' can update their expense at /users/user_abc/expenses/{expenseId}.
+     * @allow (delete) User with UID 'user_abc' can delete their expense at /users/user_abc/expenses/{expenseId}.
+     * @deny (create) User with UID 'user_xyz' cannot create an expense under /users/user_abc/expenses.
+     * @deny (get) User with UID 'user_xyz' cannot read the expense at /users/user_abc/expenses/{expenseId}.
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId}/expenses/{expenseId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId && request.resource.data.id == expenseId;
+      allow update: if isOwner(userId) && resource != null && resource.data.userId == userId && resource.data.id == request.resource.data.id;
+      allow delete: if isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Allows users to manage their own contribution records.
+     * @path /users/{userId}/contributions/{contributionId}
+     * @allow (create) User with UID 'user_abc' can create a contribution under /users/user_abc/contributions.
+     * @allow (get) User with UID 'user_abc' can read their contribution at /users/user_abc/contributions/{contributionId}.
+     * @allow (update) User with UID 'user_abc' can update their contribution at /users/user_abc/contributions/{contributionId}.
+     * @allow (delete) User with UID 'user_abc' can delete their contribution at /users/user_abc/contributions/{contributionId}.
+     * @deny (create) User with UID 'user_xyz' cannot create a contribution under /users/user_abc/contributions.
+     * @deny (get) User with UID 'user_xyz' cannot read the contribution at /users/user_abc/contributions/{contributionId}.
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId}/contributions/{contributionId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId && request.resource.data.id == contributionId;
+      allow update: if isOwner(userId) && resource != null && resource.data.userId == userId && resource.data.id == request.resource.data.id;
+      allow delete: if isOwner(userId) && resource != null;
+    }
+  }
+}

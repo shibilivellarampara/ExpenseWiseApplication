@@ -1,0 +1,180 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "profilePictureUrl": {
+          "type": "string",
+          "description": "URL of the user's profile picture.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email"
+      ]
+    },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Represents an expense record.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Expense entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Expense)"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the expense (e.g., Food, Transportation)."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the expense."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the expense."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the expense.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "category",
+        "amount",
+        "date"
+      ]
+    },
+    "Contribution": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Contribution",
+      "type": "object",
+      "description": "Represents a contribution record for shared expenses.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Contribution entity."
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "Total amount of the shared expense."
+        },
+        "contributorShares": {
+          "type": "array",
+          "description": "List of contributors and their shares.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the shared expense."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Contribution)"
+        }
+      },
+      "required": [
+        "id",
+        "totalAmount",
+        "contributorShares",
+        "description",
+        "userId"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information. The userId parameter corresponds to the Firebase Auth UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Auth UID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/expenses/{expenseId}",
+        "definition": {
+          "entityName": "Expense",
+          "schema": {
+            "$ref": "#/backend/entities/Expense"
+          },
+          "description": "Stores expense records for a specific user. The userId parameter corresponds to the Firebase Auth UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Auth UID of the user."
+            },
+            {
+              "name": "expenseId",
+              "description": "Unique identifier for the expense record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/contributions/{contributionId}",
+        "definition": {
+          "entityName": "Contribution",
+          "schema": {
+            "$ref": "#/backend/entities/Contribution"
+          },
+          "description": "Stores contribution records for a specific user. The userId parameter corresponds to the Firebase Auth UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Auth UID of the user."
+            },
+            {
+              "name": "contributionId",
+              "description": "Unique identifier for the contribution record."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure secure and efficient data management for the ExpenseWise application, adhering to the principles of Authorization Independence, Structural Segregation, Access Modeling, and Data Clarity. It uses path-based ownership for user-specific data and denormalization where necessary to avoid complex security rules and `get()` calls. User profiles are stored at the root level, while expenses and contributions are stored under user-specific subcollections to enforce ownership. This structure is highly scalable and secure, making the security rules simple and efficient.\n\n**Authorization Independence:** Expenses and contributions are stored as subcollections of the `users/{userId}` document. This structure inherently provides authorization independence because access control can be enforced based solely on the `userId` in `request.auth.uid`, eliminating the need for `get()` calls to parent documents. Each user can only access data under their own `userId`.\n\n**Structural Segregation:** Each collection (e.g., `users`, `users/{userId}/expenses`, `users/{userId}/contributions`) contains documents of the same entity type, ensuring a homogeneous security posture within each collection.\n\n**Access Modeling:** The design emphasizes path-based ownership. Expenses and contributions related to a user are stored under the respective user's document (`/users/{userId}/expenses/{expenseId}` and `/users/{userId}/contributions/{contributionId}`). This approach simplifies security rules because access is implicitly granted to the user identified by `{userId}`.\n\n**QAPs (Rules are not Filters):** The path-based structure (`/users/{userId}/expenses`) allows for secure `list` operations. A user can only list expenses under their `userId`, preventing unauthorized access to other users' data. Since there's no filtering required at the rule level (rules are not filters), listing is straightforward and efficient."
+  }
+}

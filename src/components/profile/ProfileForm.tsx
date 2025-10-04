@@ -20,9 +20,11 @@ import Image from "next/image";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Separator } from "../ui/separator";
 import { UserProfile } from "@/lib/types";
-import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
+import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
+const currencies = ["USD", "EUR", "JPY", "GBP", "INR"];
 
 export function ProfileForm() {
     const { user } = useUser();
@@ -41,11 +43,14 @@ export function ProfileForm() {
 
     const [nameInput, setNameInput] = useState('');
     const [tempDisplayPhotoUrl, setTempDisplayPhotoUrl] = useState<string | null>(null);
+    const [selectedCurrency, setSelectedCurrency] = useState('');
+
 
     useEffect(() => {
         if (userProfile) {
             setNameInput(userProfile.name ?? '');
             setTempDisplayPhotoUrl(userProfile.photoURL ?? null);
+            setSelectedCurrency(userProfile.defaultCurrency || 'USD');
         }
     }, [userProfile]);
 
@@ -129,8 +134,9 @@ export function ProfileForm() {
 
         try {
             // Data to be saved in Firestore
-            const userProfileData: { name: string; photoURL?: string | null } = {
+            const userProfileData: { name: string; photoURL?: string | null, defaultCurrency: string } = {
                 name: nameInput,
+                defaultCurrency: selectedCurrency,
             };
             if (finalPhotoURL !== null) {
                 userProfileData.photoURL = finalPhotoURL;
@@ -316,6 +322,17 @@ export function ProfileForm() {
                     <div className="space-y-2">
                         <Label htmlFor="name">Name</Label>
                         <Input id="name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} disabled={isLoading} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="defaultCurrency">Default Currency</Label>
+                        <Select onValueChange={setSelectedCurrency} value={selectedCurrency} disabled={isLoading}>
+                            <SelectTrigger id="defaultCurrency">
+                                <SelectValue placeholder="Select a currency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>

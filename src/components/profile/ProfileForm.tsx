@@ -134,10 +134,11 @@ export function ProfileForm() {
 
         try {
             // Data to be saved in Firestore
-            const userProfileData: { name: string; photoURL?: string | null, defaultCurrency: string } = {
+            const userProfileData: Partial<UserProfile> = {
                 name: nameInput,
                 defaultCurrency: selectedCurrency,
             };
+
             if (finalPhotoURL !== null) {
                 userProfileData.photoURL = finalPhotoURL;
             }
@@ -250,7 +251,7 @@ export function ProfileForm() {
     }
 
     return (
-        <Card>
+        <Card className="h-fit">
              <form onSubmit={handleProfileSubmit}>
                 <CardHeader>
                     <CardTitle className="font-headline">Profile Details</CardTitle>

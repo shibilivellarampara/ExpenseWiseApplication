@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { doc, setDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
 import { defaultCategories, defaultPaymentMethods, defaultTags } from '@/lib/defaults';
+import { UserProfile } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -61,15 +62,22 @@ export function SignUpForm() {
 
       // 1. Create user profile document
       const userDocRef = doc(firestore, 'users', user.uid);
-      batch.set(userDocRef, {
+      const newUserProfile: Partial<UserProfile> = {
         id: user.uid,
         name: values.name,
         email: values.email.toLowerCase(),
         photoURL: user.photoURL,
         phoneNumber: user.phoneNumber,
-        createdAt: serverTimestamp(),
+        createdAt: serverTimestamp() as any, // Cast because serverTimestamp is a sentinel value
         defaultCurrency: 'USD',
-      });
+        expenseFieldSettings: {
+          isCategoryRequired: true,
+          isDescriptionRequired: false,
+          isPaymentMethodRequired: true,
+          isTagRequired: false,
+        }
+      };
+      batch.set(userDocRef, newUserProfile);
       
       // 2. Add default categories
       const categoriesRef = collection(firestore, `users/${user.uid}/categories`);

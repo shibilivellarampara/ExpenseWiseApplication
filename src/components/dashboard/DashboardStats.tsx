@@ -5,14 +5,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EnrichedExpense } from "@/lib/types";
 import { DollarSign, TrendingUp, Tag, TrendingDown, Minus } from "lucide-react";
 import { useMemo } from "react";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 interface DashboardStatsProps {
     currentMonthExpenses: EnrichedExpense[];
     lastMonthExpenses: EnrichedExpense[];
     isLoading?: boolean;
+    currency?: string;
 }
 
-export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoading }: DashboardStatsProps) {
+export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoading, currency }: DashboardStatsProps) {
+
+    const currencySymbol = getCurrencySymbol(currency);
 
     const stats = useMemo(() => {
         const totalCurrent = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -55,7 +59,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${stats.totalExpense.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">{currencySymbol}{stats.totalExpense.toFixed(2)}</div>
                     <p className="text-xs text-muted-foreground">in the last 30 days</p>
                 </CardContent>
             </Card>

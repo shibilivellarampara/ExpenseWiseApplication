@@ -3,16 +3,16 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
 import { useMemo, useState } from 'react';
 import { EnrichedExpense } from '@/lib/types';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { PieChart as PieChartIcon } from 'lucide-react';
 
 interface CategoryPieChartProps {
   expenses: EnrichedExpense[];
+  currencySymbol: string;
 }
 
 const COLORS = ['#64B5F6', '#81C784', '#FFB74D', '#E57373', '#9575CD', '#4DB6AC', '#FF8A65', '#A1887F', '#F06292'];
 
-const renderActiveShape = (props: any) => {
+const renderActiveShape = (props: any, currencySymbol: string) => {
   const RADIAN = Math.PI / 180;
   const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
   const sin = Math.sin(-RADIAN * midAngle);
@@ -50,7 +50,7 @@ const renderActiveShape = (props: any) => {
       />
       <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
       <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="hsl(var(--foreground))" className="text-sm">{`$${value.toFixed(2)}`}</text>
+      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="hsl(var(--foreground))" className="text-sm">{`${currencySymbol}${value.toFixed(2)}`}</text>
       <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="hsl(var(--muted-foreground))" className="text-xs">
         {`(${(percent * 100).toFixed(2)}%)`}
       </text>
@@ -59,7 +59,7 @@ const renderActiveShape = (props: any) => {
 };
 
 
-export function CategoryPieChart({ expenses }: CategoryPieChartProps) {
+export function CategoryPieChart({ expenses, currencySymbol }: CategoryPieChartProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const onPieEnter = (_: any, index: number) => {
@@ -92,7 +92,7 @@ export function CategoryPieChart({ expenses }: CategoryPieChartProps) {
       <PieChart>
         <Pie
           activeIndex={activeIndex}
-          activeShape={renderActiveShape}
+          activeShape={(props) => renderActiveShape(props, currencySymbol)}
           data={categoryData}
           cx="50%"
           cy="50%"
@@ -113,7 +113,7 @@ export function CategoryPieChart({ expenses }: CategoryPieChartProps) {
             border: "1px solid hsl(var(--border))",
             borderRadius: "var(--radius)"
           }}
-          formatter={(value: number) => `$${value.toFixed(2)}`}
+          formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
         />
       </PieChart>
     </ResponsiveContainer>

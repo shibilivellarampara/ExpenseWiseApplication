@@ -43,7 +43,7 @@ export function ProfileForm() {
 
     const [nameInput, setNameInput] = useState('');
     const [tempDisplayPhotoUrl, setTempDisplayPhotoUrl] = useState<string | null>(null);
-    const [selectedCurrency, setSelectedCurrency] = useState('');
+    const [selectedCurrency, setSelectedCurrency] = useState<string | undefined>(undefined);
 
 
     useEffect(() => {
@@ -236,6 +236,8 @@ export function ProfileForm() {
     };
 
     const currentPhoto = tempDisplayPhotoUrl ?? userProfile?.photoURL;
+    
+    const displayCurrency = selectedCurrency || userProfile?.defaultCurrency;
 
     if (isProfileLoading) {
         return (
@@ -326,7 +328,7 @@ export function ProfileForm() {
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="defaultCurrency">Default Currency</Label>
-                        <Select onValueChange={setSelectedCurrency} value={selectedCurrency} disabled={isLoading}>
+                        <Select onValueChange={setSelectedCurrency} value={displayCurrency} disabled={isLoading}>
                             <SelectTrigger id="defaultCurrency">
                                 <SelectValue placeholder="Select a currency" />
                             </SelectTrigger>

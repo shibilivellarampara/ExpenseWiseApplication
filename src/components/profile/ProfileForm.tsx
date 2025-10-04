@@ -19,7 +19,6 @@ export function ProfileForm() {
     const firestore = useFirestore();
     const storage = useStorage();
     const auth = useAuth();
-    const avatarImage = PlaceHolderImages.find((img) => img.id === 'avatar');
     
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -35,11 +34,7 @@ export function ProfileForm() {
 
     const getInitials = (name?: string | null) => {
         if (!name) return 'U';
-        const names = name.split(' ');
-        if (names.length > 1 && names[1]) {
-            return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
-        }
-        return name.substring(0, 2).toUpperCase();
+        return name.charAt(0).toUpperCase();
     };
     
     // Updated to show an instant preview
@@ -112,7 +107,9 @@ export function ProfileForm() {
                 <CardContent className="space-y-6 flex-grow">
                     <div className="flex items-center gap-6">
                         <Avatar className="h-24 w-24">
-                            <AvatarImage src={photoURL || avatarImage?.imageUrl} alt={name || 'User'} />
+                             {newAvatarFile || photoURL ? (
+                                <AvatarImage src={photoURL} alt={name || 'User'} />
+                             ) : null}
                             <AvatarFallback>{getInitials(name)}</AvatarFallback>
                         </Avatar>
                         <div className="space-y-2">
@@ -155,5 +152,3 @@ export function ProfileForm() {
         </Card>
     );
 }
-
-    

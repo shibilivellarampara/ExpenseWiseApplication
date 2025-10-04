@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -288,7 +289,7 @@ function ExpenseForm({
                             Description {isDescriptionRequired ? '' : '(Optional)'}
                         </FormLabel>
                         <FormControl>
-                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} />
+                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -335,19 +336,19 @@ export function AddExpenseDialog({
                 amount: expenseToEdit.amount,
                 date: expenseToEdit.date,
                 accountId: expenseToEdit.account?.id || '',
-                categoryId: expenseToEdit.category?.id || '',
+                categoryId: expenseToEdit.category?.id || 'no-category',
                 description: expenseToEdit.description || '',
-                tagId: expenseToEdit.tag?.id || '',
+                tagId: expenseToEdit.tag?.id || 'no-tag',
             });
         } else {
             form.reset({
                 type: 'expense',
-                amount: undefined,
+                amount: 0,
                 date: new Date(),
                 accountId: '',
-                categoryId: '',
+                categoryId: 'no-category',
                 description: '',
-                tagId: '',
+                tagId: 'no-tag',
             });
         }
     };
@@ -465,7 +466,7 @@ export function AddExpenseDialog({
     // Mobile Drawer
     return (
         <Drawer open={open} onOpenChange={setOpen}>
-            <DrawerTrigger asChild>{children}</DrawerTrigger>
+            <DrawerTrigger asChild>{children}</DialogTrigger>
             <DrawerContent>
                 <DrawerHeader className="text-left">
                     <DrawerTitle>{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DrawerTitle>
@@ -490,3 +491,5 @@ export function AddExpenseDialog({
         </Drawer>
     )
 }
+
+    

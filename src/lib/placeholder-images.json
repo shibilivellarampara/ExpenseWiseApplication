@@ -16,39 +16,39 @@
   "avatarPlaceholders": [
     {
       "id": "avatar-1",
-      "description": "Cartoon avatar of a person with glasses",
-      "imageUrl": "https://picsum.photos/seed/p-avatar1/200/200",
-      "imageHint": "cartoon avatar"
+      "description": "Illustrated avatar of a woman with short dark hair.",
+      "imageUrl": "https://picsum.photos/seed/ava-f1/200/200",
+      "imageHint": "illustrated avatar"
     },
     {
       "id": "avatar-2",
-      "description": "Cartoon avatar of a person with a hat",
-      "imageUrl": "https://picsum.photos/seed/p-avatar2/200/200",
-      "imageHint": "cartoon avatar"
+      "description": "Illustrated avatar of a man with a beard.",
+      "imageUrl": "https://picsum.photos/seed/ava-m1/200/200",
+      "imageHint": "illustrated avatar"
     },
     {
       "id": "avatar-3",
-      "description": "Cartoon avatar of a person smiling",
-      "imageUrl": "https://picsum.photos/seed/p-avatar3/200/200",
-      "imageHint": "cartoon avatar"
+      "description": "Illustrated avatar of a woman with red hair.",
+      "imageUrl": "https://picsum.photos/seed/ava-f2/200/200",
+      "imageHint": "illustrated avatar"
     },
     {
       "id": "avatar-4",
-      "description": "Colorful cartoon avatar of a character",
-      "imageUrl": "https://picsum.photos/seed/p-avatar4/200/200",
-      "imageHint": "cartoon character"
+      "description": "Illustrated avatar of a man wearing a turban.",
+      "imageUrl": "https://picsum.photos/seed/ava-m2/200/200",
+      "imageHint": "illustrated avatar"
     },
     {
       "id": "avatar-5",
-      "description": "Minimalist cartoon avatar",
-      "imageUrl": "https://picsum.photos/seed/p-avatar5/200/200",
-      "imageHint": "minimalist avatar"
+      "description": "Illustrated avatar of a woman wearing a hijab.",
+      "imageUrl": "https://picsum.photos/seed/ava-f3/200/200",
+      "imageHint": "illustrated avatar"
     },
     {
       "id": "avatar-6",
-      "description": "Cute cartoon animal avatar",
-      "imageUrl": "https://picsum.photos/seed/p-avatar6/200/200",
-      "imageHint": "animal avatar"
+      "description": "Illustrated avatar of a man with glasses and a beard.",
+      "imageUrl": "https://picsum.photos/seed/ava-m3/200/200",
+      "imageHint": "illustrated avatar"
     }
   ]
 }

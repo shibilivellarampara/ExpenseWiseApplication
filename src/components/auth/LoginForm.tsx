@@ -44,7 +44,7 @@ export function LoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      loginId: '',
+      loginId: '+91',
       password: '',
     },
   });
@@ -118,7 +118,7 @@ export function LoginForm() {
             setIsLoading(false);
         }
     } else {
-        toast({ variant: 'destructive', title: 'Invalid Input', description: 'Please enter a valid email or phone number with country code (e.g., +1234567890).' });
+        toast({ variant: 'destructive', title: 'Invalid Input', description: 'Please enter a valid email or phone number with country code (e.g., +919876543210).' });
         setIsLoading(false);
     }
   }
@@ -169,7 +169,7 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Email or Phone Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="name@example.com or +1234567890" {...field} />
+                  <Input placeholder="name@example.com or +919876543210" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

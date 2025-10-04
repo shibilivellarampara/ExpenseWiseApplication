@@ -43,7 +43,7 @@ export function ProfileForm() {
     // State for phone number update
     const [showPhoneDialog, setShowPhoneDialog] = useState(false);
     const [showOtpDialog, setShowOtpDialog] = useState(false);
-    const [newPhoneNumber, setNewPhoneNumber] = useState('');
+    const [newPhoneNumber, setNewPhoneNumber] = useState('+91');
     const [otp, setOtp] = useState('');
     const [confirmationResult, setConfirmationResult] = useState<any>(null);
     const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
@@ -185,7 +185,7 @@ export function ProfileForm() {
 
             toast({ title: "Phone Number Updated!" });
             setShowOtpDialog(false);
-            setNewPhoneNumber('');
+            setNewPhoneNumber('+91');
             setOtp('');
 
         } catch (error: any) {
@@ -255,7 +255,7 @@ export function ProfileForm() {
                             <PopoverTrigger asChild>
                                 <button type="button" className="relative h-24 w-24 rounded-full">
                                     <Avatar className="h-24 w-24">
-                                        <AvatarImage src={displayPhotoUrl || undefined} alt={name || 'User'} />
+                                        <AvatarImage src={displayPhotoUrl ?? undefined} alt={name || 'User'} />
                                         <AvatarFallback>{getInitials(name)}</AvatarFallback>
                                     </Avatar>
                                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs font-semibold rounded-full opacity-0 hover:opacity-100 transition-opacity">
@@ -366,7 +366,7 @@ export function ProfileForm() {
                                         <DialogDescription>Enter your new phone number with country code. A verification code will be sent.</DialogDescription>
                                     </DialogHeader>
                                     <Input 
-                                        placeholder="+1 123 456 7890" 
+                                        placeholder="+91 987 654 3210" 
                                         value={newPhoneNumber} 
                                         onChange={(e) => setNewPhoneNumber(e.target.value)}
                                     />

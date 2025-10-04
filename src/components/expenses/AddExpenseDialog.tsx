@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogFooter,
   DialogTrigger,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   Drawer,
@@ -15,7 +16,7 @@ import {
   DrawerDescription,
   DrawerFooter,
   DrawerHeader,
-  DrawerTitle,
+  DrawerTitle as VaulTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
 import { useForm, UseFormReturn } from 'react-hook-form';
@@ -40,7 +41,6 @@ import * as LucideIcons from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
-import { ScrollArea } from '../ui/scroll-area';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -165,7 +165,7 @@ function DateTimePicker({ field }: { field: any }) {
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="text-left">
-            <DrawerTitle>Select Date & Time</DrawerTitle>
+            <VaulTitle>Select Date & Time</VaulTitle>
             <DrawerDescription>
                 Choose the date and time when the transaction occurred.
             </DrawerDescription>
@@ -255,7 +255,7 @@ function ExpenseForm({
                         </FormItem>
                     )}
                     />
-                 <FormField
+                <FormField
                     control={form.control}
                     name="date"
                     render={({ field }) => (
@@ -266,7 +266,7 @@ function ExpenseForm({
                         </FormItem>
                     )}
                 />
-                <FormField
+                 <FormField
                     control={form.control}
                     name="amount"
                     render={({ field }) => (
@@ -495,7 +495,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                         <DialogTitle className="font-headline">Add a New Transaction</DialogTitle>
                         <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                     </DialogHeader>
-                     <div className="flex-1 overflow-y-auto -mx-6 px-6">
+                    <div className="flex-1 overflow-y-auto -mx-6 px-6">
                         <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} />
                     </div>
                     <DialogFooter>
@@ -520,8 +520,8 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
             <DrawerTrigger asChild>{children}</DrawerTrigger>
             <DrawerContent>
                 <DrawerHeader className="text-left">
-                    <DialogTitle>Add a New Transaction</DialogTitle>
-                    <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
+                    <VaulTitle>Add a New Transaction</VaulTitle>
+                    <DrawerDescription>Fill in the details of your income or expense below.</DrawerDescription>
                 </DrawerHeader>
                  <div className="overflow-y-auto px-4">
                     <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} />

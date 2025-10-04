@@ -1,3 +1,4 @@
+
 'use client';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ export default function AccountsPage() {
     const { data: accounts, isLoading } = useCollection<Account>(accountsQuery);
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 w-full">
             <PageHeader title="Accounts" description="Manage your financial accounts.">
                 <AddAccountSheet>
                      <Button>

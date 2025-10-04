@@ -68,7 +68,8 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
 };
 
 
-function DatePicker({ field, open: isDatePickerOpen, setOpen: setDatePickerOpen }: { field: any, open: boolean, setOpen: (open: boolean) => void }) {
+function DatePicker({ field }: { field: any }) {
+  const [isDatePickerOpen, setDatePickerOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   if (isDesktop) {
@@ -161,16 +162,22 @@ function DatePicker({ field, open: isDatePickerOpen, setOpen: setDatePickerOpen 
   )
 }
 
-function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (open: boolean) => void }) {
-    const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
+function ExpenseForm({
+  className,
+  setOpen,
+  onFormSubmit,
+  isLoading,
+}: {
+  className?: string;
+  setOpen: (open: boolean) => void;
+  onFormSubmit: (values: any) => Promise<void>;
+  isLoading: boolean;
+}) {
     const { user } = useUser();
     const firestore = useFirestore();
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-
-    const [isDatePickerOpen, setDatePickerOpen] = useState(false);
 
     // Memoize the schema so it only changes when settings do
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
@@ -179,7 +186,7 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
         resolver: zodResolver(expenseSchema),
         defaultValues: {
             type: 'expense',
-            amount: 0,
+            amount: undefined,
             accountId: '',
             categoryId: '',
             description: '',
@@ -203,12 +210,12 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
     // or when the dialog is opened.
     useEffect(() => {
         resetForm();
-    }, [open, userProfile]);
+    }, [userProfile]);
 
     const resetForm = () => {
         form.reset({
             type: 'expense',
-            amount: 0,
+            amount: undefined,
             accountId: '',
             categoryId: '',
             description: '',
@@ -217,48 +224,6 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
         });
     }
 
-    const handleSave = async (values: z.infer<typeof expenseSchema>) => {
-        setIsLoading(true);
-        if (!firestore || !user) {
-            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to add a transaction.' });
-            setIsLoading(false);
-            return;
-        }
-
-        try {
-            const batch = writeBatch(firestore);
-
-            // 1. Add the expense/income document
-            const expenseCol = collection(firestore, `users/${user.uid}/expenses`);
-            const newExpenseRef = doc(expenseCol);
-            const expenseData = {
-              ...values,
-              id: newExpenseRef.id,
-              userId: user.uid,
-              createdAt: serverTimestamp(),
-              tagId: values.tagId === 'no-tag' || !values.tagId ? '' : values.tagId,
-              categoryId: values.type === 'income' ? '' : values.categoryId,
-            };
-            batch.set(newExpenseRef, expenseData);
-
-            // 2. Update the account balance
-            const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-            const amountToUpdate = values.type === 'income' ? values.amount : -values.amount;
-            batch.update(accountRef, { balance: increment(amountToUpdate) });
-
-            await batch.commit();
-            
-            toast({ title: 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
-            
-            resetForm();
-            setOpen(false);
-        } catch (error: any) {
-             toast({ variant: 'destructive', title: 'Uh oh! Something went wrong.', description: error.message || 'Could not save transaction.' });
-        } finally {
-            setIsLoading(false);
-        }
-    }
-    
     const renderIcon = (iconName: string | undefined) => {
         if (!iconName) return <Pilcrow className="mr-2 h-4 w-4" />;
         const IconComponent = (LucideIcons as any)[iconName];
@@ -275,8 +240,7 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSave)} className={cn("grid items-start gap-4", className)}>
-                
+            <form id="expense-form" onSubmit={form.handleSubmit(onFormSubmit)} className={cn("grid items-start gap-4", className)}>
                 <FormField
                     control={form.control}
                     name="type"
@@ -307,7 +271,6 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
                         </FormItem>
                     )}
                     />
-
                 <FormField
                     control={form.control}
                     name="amount"
@@ -326,7 +289,6 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
                         </FormItem>
                     )}
                     />
-
                  <FormField
                     control={form.control}
                     name="accountId"
@@ -443,23 +405,17 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Date of Transaction</FormLabel>
-                      <DatePicker field={field} open={isDatePickerOpen} setOpen={setDatePickerOpen} />
+                      <DatePicker field={field} />
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                 {isDesktop ? (
-                    <DialogFooter>
-                         <Button type="submit" disabled={isLoading}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Transaction
-                        </Button>
-                    </DialogFooter>
-                 ) : (
-                     <DrawerFooter className="pt-2">
+                 {!isDesktop && (
+                     <DrawerFooter className="pt-2 px-0">
                         <Button 
                             type="submit"
+                            form="expense-form"
                             disabled={isLoading}
                         >
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -479,20 +435,72 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
 export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
     const [open, setOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
+    const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(false);
+    const { user } = useUser();
+    const firestore = useFirestore();
+
+    const handleSave = async (values: z.infer<any>) => {
+        setIsLoading(true);
+        if (!firestore || !user) {
+            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to add a transaction.' });
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const batch = writeBatch(firestore);
+
+            // 1. Add the expense/income document
+            const expenseCol = collection(firestore, `users/${user.uid}/expenses`);
+            const newExpenseRef = doc(expenseCol);
+            const expenseData = {
+              ...values,
+              id: newExpenseRef.id,
+              userId: user.uid,
+              createdAt: serverTimestamp(),
+              tagId: values.tagId === 'no-tag' || !values.tagId ? '' : values.tagId,
+              categoryId: values.type === 'income' ? '' : values.categoryId,
+            };
+            batch.set(newExpenseRef, expenseData);
+
+            // 2. Update the account balance
+            const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+            const amountToUpdate = values.type === 'income' ? values.amount : -values.amount;
+            batch.update(accountRef, { balance: increment(amountToUpdate) });
+
+            await batch.commit();
+            
+            toast({ title: 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
+            
+            setOpen(false);
+        } catch (error: any) {
+             toast({ variant: 'destructive', title: 'Uh oh! Something went wrong.', description: error.message || 'Could not save transaction.' });
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
 
     if (isDesktop) {
         return (
             <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
-                <DialogHeader>
-                <DialogTitle className="font-headline">Add a New Transaction</DialogTitle>
-                <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
-                </DialogHeader>
-                <ScrollArea className="flex-grow pr-6 -mr-6">
-                    <ExpenseForm setOpen={setOpen}/>
-                </ScrollArea>
-            </DialogContent>
+                <DialogTrigger asChild>{children}</DialogTrigger>
+                <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+                    <DialogHeader>
+                    <DialogTitle className="font-headline">Add a New Transaction</DialogTitle>
+                    <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
+                    </DialogHeader>
+                    <ScrollArea className="pr-6 -mr-6">
+                        <ExpenseForm setOpen={setOpen} onFormSubmit={handleSave} isLoading={isLoading} />
+                    </ScrollArea>
+                    <DialogFooter>
+                         <Button type="submit" form="expense-form" disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Transaction
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
             </Dialog>
         );
     }
@@ -505,8 +513,8 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     <DialogTitle>Add a New Transaction</DialogTitle>
                     <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                 </DrawerHeader>
-                 <ScrollArea className="overflow-y-auto">
-                    <ExpenseForm className="px-4" setOpen={setOpen} />
+                 <ScrollArea className="overflow-y-auto px-4">
+                    <ExpenseForm setOpen={setOpen} onFormSubmit={handleSave} isLoading={isLoading}/>
                 </ScrollArea>
             </DrawerContent>
         </Drawer>

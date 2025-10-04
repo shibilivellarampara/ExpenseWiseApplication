@@ -8,11 +8,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { useAuth, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { doc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -56,11 +56,12 @@ export function SignUpForm() {
       });
 
       const userDocRef = doc(firestore, 'users', user.uid);
-      setDocumentNonBlocking(userDocRef, {
+      await setDoc(userDocRef, {
         name: values.name,
-        email: values.email,
+        email: values.email.toLowerCase(), // Use consistent casing for email
         photoURL: user.photoURL,
-      }, { merge: true });
+        createdAt: new Date(),
+      });
 
       toast({
         title: 'Account created!',

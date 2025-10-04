@@ -5,7 +5,6 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { useLoading } from '@/context/LoadingProvider';
 import { Suspense } from 'react';
 import { PageLoader } from '@/components/PageLoader';
 

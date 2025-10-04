@@ -194,6 +194,7 @@ export function LoginForm() {
                             <FormControl>
                                 <PhoneInput
                                     international
+                                    countryCallingCodeEditable={false}
                                     defaultCountry="IN"
                                     placeholder="Enter phone number"
                                     value={field.value || ""}

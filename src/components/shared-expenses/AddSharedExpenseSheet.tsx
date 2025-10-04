@@ -27,6 +27,16 @@ const sharedExpenseSchema = z.object({
     memberEmails: z.array(z.string().email()).min(1, 'At least one member is required.'),
 });
 
+// Function to generate a random 6-character alphanumeric string
+const generateJoinId = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
 interface AddSharedExpenseSheetProps {
     children: React.ReactNode;
 }
@@ -109,17 +119,12 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
                 name: values.name,
                 ownerId: user.uid,
                 memberIds,
+                joinId: generateJoinId(),
                 createdAt: serverTimestamp(),
             });
 
-            // 3. Add the shared expense ID to each member's user profile
-            for (const userDoc of userDocsToUpdate) {
-                const currentProfile = (await userDoc.ref.get())?.data();
-                const existingIds = currentProfile?.sharedExpenseIds || [];
-                batch.update(userDoc.ref, {
-                    sharedExpenseIds: [...existingIds, newSharedExpenseRef.id]
-                });
-            }
+            // 3. Add the shared expense ID to each member's user profile (optional, can be denormalized)
+            // This part is removed to simplify logic and reduce writes. The main query will be on the shared_expenses collection.
             
             await batch.commit();
             
@@ -145,7 +150,7 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
                 <SheetHeader>
                     <SheetTitle className="font-headline">Create New Shared Space</SheetTitle>
                     <SheetDescription>
-                        Invite members by email to share expenses in this new space.
+                        Invite members by email to share expenses. A unique join code will be generated.
                     </SheetDescription>
                 </SheetHeader>
                 <Form {...form}>

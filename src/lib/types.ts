@@ -1,3 +1,4 @@
+
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -69,6 +70,7 @@ export type SharedExpense = {
   name: string;
   ownerId: string;
   memberIds: string[];
+  joinId?: string; // 6-character unique code for joining
   createdAt: Timestamp;
   members?: UserProfile[]; // populated on the client
 }

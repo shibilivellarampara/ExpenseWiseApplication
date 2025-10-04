@@ -105,9 +105,10 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "joinId": { "type": "string", "description": "6-character unique code for joining." },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "name", "ownerId", "memberIds"]
+      "required": ["id", "name", "ownerId", "memberIds", "joinId"]
     }
   },
   "auth": {

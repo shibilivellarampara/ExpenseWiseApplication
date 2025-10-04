@@ -5,24 +5,14 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 
-let firebaseApp: FirebaseApp | undefined;
-let auth: Auth | undefined;
-let firestore: Firestore | undefined;
+let firebaseApp: FirebaseApp;
+let auth: Auth;
+let firestore: Firestore;
 
 export function initializeFirebase() {
   if (typeof window !== 'undefined') {
     if (!getApps().length) {
-      try {
-        firebaseApp = initializeApp();
-      } catch (e) {
-        if (process.env.NODE_ENV === 'production') {
-          console.warn(
-            'Automatic initialization failed. Falling back to firebase config object.',
-            e
-          );
-        }
-        firebaseApp = initializeApp(firebaseConfig);
-      }
+      firebaseApp = initializeApp(firebaseConfig);
       auth = getAuth(firebaseApp);
       firestore = getFirestore(firebaseApp);
     } else {
@@ -31,20 +21,11 @@ export function initializeFirebase() {
       firestore = getFirestore(firebaseApp);
     }
   }
-
+  // On the server, these will be undefined, which is handled by the client-provider
+  // @ts-ignore
   return { firebaseApp, auth, firestore };
 }
 
-export function getSdks() {
-  if (!firebaseApp || !auth || !firestore) {
-    initializeFirebase();
-  }
-  return {
-    firebaseApp: firebaseApp!,
-    auth: auth!,
-    firestore: firestore!,
-  };
-}
 
 export * from './provider';
 export * from './client-provider';

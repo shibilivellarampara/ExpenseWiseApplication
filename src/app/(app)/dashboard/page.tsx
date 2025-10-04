@@ -147,7 +147,7 @@ export default function DashboardPage() {
                                 <TabsTrigger value="year">Y</TabsTrigger>
                             </TabsList>
                         </CardHeader>
-                        <CardContent className="pl-2">
+                        <CardContent>
                              {isLoading ? (
                                 <Skeleton className="h-[350px] w-full" />
                             ) : (

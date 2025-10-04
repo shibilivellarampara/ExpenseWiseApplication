@@ -1,11 +1,8 @@
+
 'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
@@ -16,10 +13,6 @@ import { UserProfile } from "@/lib/types";
 import { CategorySettings } from "./CategorySettings";
 import { PaymentMethodSettings } from "./PaymentMethodSettings";
 import { TagSettings } from "./TagSettings";
-
-const currencySchema = z.object({
-  defaultCurrency: z.string().min(3, "Must be a 3-letter code").max(3, "Must be a 3-letter code"),
-});
 
 const currencies = ["USD", "EUR", "JPY", "GBP", "INR"];
 
@@ -35,33 +28,30 @@ export function UserSettings() {
 
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
     const [isSaving, setIsSaving] = useState(false);
-    
-    const form = useForm<z.infer<typeof currencySchema>>({
-        resolver: zodResolver(currencySchema),
-        values: { // Use `values` instead of `defaultValues` for re-initialization
-            defaultCurrency: userProfile?.defaultCurrency || 'USD'
-        }
-    });
+    const [selectedCurrency, setSelectedCurrency] = useState(userProfile?.defaultCurrency || 'USD');
 
-    // Effect to reset form when user profile loads/changes
+    // Effect to update local state when user profile loads
     useEffect(() => {
         if (userProfile?.defaultCurrency) {
-            form.reset({ defaultCurrency: userProfile.defaultCurrency });
+            setSelectedCurrency(userProfile.defaultCurrency);
         }
-    }, [userProfile, form]);
+    }, [userProfile]);
     
-    async function onSubmit(data: z.infer<typeof currencySchema>) {
-        if (!userProfileRef || data.defaultCurrency === userProfile?.defaultCurrency) {
+    const handleCurrencyChange = async (newCurrency: string) => {
+        if (!userProfileRef || newCurrency === selectedCurrency) {
             return;
         }
         setIsSaving(true);
+        setSelectedCurrency(newCurrency);
         try {
             await setDoc(userProfileRef, {
-                defaultCurrency: data.defaultCurrency,
+                defaultCurrency: newCurrency,
             }, { merge: true });
-            toast({ title: "Currency Saved", description: `Your default currency is now ${data.defaultCurrency}.` });
+            toast({ title: "Currency Saved", description: `Your default currency is now ${newCurrency}.` });
         } catch (error: any) {
             toast({ variant: "destructive", title: "Error", description: error.message });
+            // Revert on failure
+            setSelectedCurrency(userProfile?.defaultCurrency || 'USD');
         } finally {
             setIsSaving(false);
         }
@@ -85,44 +75,28 @@ export function UserSettings() {
     return (
         <div className="space-y-8">
             <Card>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
-                        <CardHeader>
-                            <CardTitle className="font-headline">Currency</CardTitle>
-                            <CardDescription>Set your default currency for expenses.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <FormField
-                                control={form.control}
-                                name="defaultCurrency"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Default Currency</FormLabel>
-                                        <div className="relative">
-                                            <Select onValueChange={field.onChange} value={field.value} disabled={isSaving}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a currency" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </CardContent>
-                        <CardFooter className="border-t pt-6 flex justify-end">
-                           <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
-                             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                             Save Currency
-                           </Button>
-                        </CardFooter>
-                    </form>
-                </Form>
+                <CardHeader>
+                    <CardTitle className="font-headline">Currency</CardTitle>
+                    <CardDescription>Set your default currency for expenses.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <div className="space-y-2">
+                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Default Currency
+                        </label>
+                        <div className="relative">
+                             <Select onValueChange={handleCurrencyChange} value={selectedCurrency} disabled={isSaving}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a currency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            {isSaving && <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+                        </div>
+                    </div>
+                </CardContent>
             </Card>
 
             <CategorySettings />
@@ -131,5 +105,3 @@ export function UserSettings() {
         </div>
     );
 }
-
-    

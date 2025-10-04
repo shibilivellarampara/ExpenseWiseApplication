@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,18 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
   return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
 };
 
+// Function to generate a color from a string
+const generateColorFromString = (str: string): { backgroundColor: string, textColor: string } => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = hash % 360;
+    const backgroundColor = `hsl(${hue}, 70%, 90%)`; // Lighter background
+    const textColor = `hsl(${hue}, 70%, 25%)`; // Darker text
+    return { backgroundColor, textColor };
+};
+
 function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedExpense[], currencySymbol: string }) {
     const [editingExpense, setEditingExpense] = useState<EnrichedExpense | undefined>(undefined);
 
@@ -48,7 +61,10 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                         {new Date(date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </h3>
                     <div className="divide-y">
-                        {groupedExpenses[date].map(expense => (
+                        {groupedExpenses[date].map(expense => {
+                            const categoryColor = expense.category ? generateColorFromString(expense.category.name) : null;
+                            const tagColor = expense.tag ? generateColorFromString(expense.tag.name) : null;
+                            return (
                             <div key={expense.id} className="p-4 flex items-start gap-4 group">
                                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center mt-1">
                                     {expense.type === 'income' ?
@@ -71,14 +87,20 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                         </div>
                                     </div>
                                     <div className="col-span-2 flex items-center gap-2 mt-1">
-                                        {expense.category && (
-                                            <Badge variant="outline" className="flex items-center gap-1">
+                                        {expense.category && categoryColor && (
+                                            <Badge 
+                                                style={{ backgroundColor: categoryColor.backgroundColor, color: categoryColor.textColor }}
+                                                className="flex items-center gap-1 border-transparent"
+                                            >
                                                 {renderIcon(expense.category.icon, "h-3 w-3")}
                                                 {expense.category.name}
                                             </Badge>
                                         )}
-                                        {expense.tag && (
-                                            <Badge variant="secondary" className="flex items-center gap-1">
+                                        {expense.tag && tagColor && (
+                                            <Badge 
+                                                style={{ backgroundColor: tagColor.backgroundColor, color: tagColor.textColor }}
+                                                className="flex items-center gap-1 border-transparent"
+                                            >
                                                 {renderIcon(expense.tag.icon, "h-3 w-3")}
                                                 {expense.tag.name}
                                             </Badge>
@@ -94,7 +116,7 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                     </AddExpenseDialog>
                                 </div>
                             </div>
-                        ))}
+                        )})}
                     </div>
                 </div>
             ))}

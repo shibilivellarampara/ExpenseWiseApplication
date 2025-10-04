@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -17,7 +16,7 @@ export default function SharedExpensesPage() {
     const firestore = useFirestore();
 
     const sharedExpensesQuery = useMemoFirebase(() =>
-        user ? query(collection(firestore, 'shared_expenses'), where('memberIds', 'array-contains', user.uid)) : null
+        user ? query(collection(firestore, `users/${user.uid}/shared_expenses`), where('memberIds', 'array-contains', user.uid)) : null
     , [user, firestore]);
 
     const { data: sharedExpenses, isLoading } = useCollection<SharedExpense>(sharedExpensesQuery);

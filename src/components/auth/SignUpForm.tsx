@@ -82,7 +82,7 @@ export function SignUpForm() {
       const paymentMethodsRef = collection(firestore, `users/${user.uid}/paymentMethods`);
       defaultPaymentMethods.forEach(pm => {
           const pmDoc = doc(paymentMethodsRef);
-          batch.set(pmDoc, { ...pm, icon: 'CreditCard', userId: user.uid });
+          batch.set(pmDoc, { ...pm, userId: user.uid });
       });
 
       // 4. Add default tags

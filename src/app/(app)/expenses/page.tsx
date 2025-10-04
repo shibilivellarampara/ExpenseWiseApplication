@@ -48,45 +48,55 @@ export default function ExpensesPage() {
 
     // Enrich expenses with relational data and running balances
     const enrichedExpenses = useMemo((): EnrichedExpense[] => {
-        if (!expenses || !accounts) return [];
-
-        // Create a mutable copy of accounts to track running balances
-        const currentAccountBalances = new Map(accounts.map(acc => [acc.id, acc.balance]));
-
-        // The `expenses` are already sorted by date descending from the query.
-        // We need to process them in chronological order (oldest first) to calculate running balance correctly.
-        const sortedExpenses = [...expenses].reverse(); 
-
+        if (!expenses || !accounts || !accountMap.size) return [];
+    
+        // The `expenses` are sorted by date descending from the query. For our calculation, we need them ascending.
+        const sortedExpensesChronological = [...expenses].reverse();
+    
+        // Group expenses by account
+        const expensesByAccount = new Map<string, Expense[]>();
+        for (const expense of sortedExpensesChronological) {
+            if (!expensesByAccount.has(expense.accountId)) {
+                expensesByAccount.set(expense.accountId, []);
+            }
+            expensesByAccount.get(expense.accountId)!.push(expense);
+        }
+    
         const processedExpenses: EnrichedExpense[] = [];
-
-        sortedExpenses.forEach(expense => {
-            const accountBalance = currentAccountBalances.get(expense.accountId);
-
-            if (accountBalance !== undefined) {
-                // The balance *after* this transaction is the current running balance.
-                const balanceAfter = accountBalance;
-
-                // To get the balance *before* this transaction, we reverse the operation.
-                const amountChange = expense.type === 'income' ? -expense.amount : expense.amount;
-                const balanceBefore = balanceAfter + amountChange;
-
+    
+        // For each account, calculate the running balance
+        for (const account of accounts) {
+            const accountExpenses = expensesByAccount.get(account.id) || [];
+            if (accountExpenses.length === 0) continue;
+    
+            // Calculate the total change from all transactions for this account
+            const totalChange = accountExpenses.reduce((sum, expense) => {
+                const amount = expense.type === 'income' ? expense.amount : -expense.amount;
+                return sum + amount;
+            }, 0);
+    
+            // Determine the starting balance (balance before the first transaction)
+            let runningBalance = account.balance - totalChange;
+    
+            for (const expense of accountExpenses) {
+                // Apply the transaction to the running balance
+                const amountChange = expense.type === 'income' ? expense.amount : -expense.amount;
+                runningBalance += amountChange;
+    
                 processedExpenses.push({
                     ...expense,
                     date: expense.date.toDate(),
                     category: categoryMap.get(expense.categoryId),
                     account: accountMap.get(expense.accountId),
                     tag: expense.tagId ? tagMap.get(expense.tagId) : undefined,
-                    balanceAfterTransaction: balanceAfter,
+                    balanceAfterTransaction: runningBalance,
                 });
-                
-                // Update the running balance for the next (older) transaction.
-                currentAccountBalances.set(expense.accountId, balanceBefore);
             }
-        });
-
-        // Return the expenses in the original descending order for display
-        return processedExpenses.reverse();
-
+        }
+    
+        // Sort the final combined list by date descending for display
+        return processedExpenses.sort((a, b) => b.date.getTime() - a.date.getTime());
+    
     }, [expenses, accounts, categoryMap, accountMap, tagMap]);
 
     return (

@@ -20,6 +20,9 @@ import Image from "next/image";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Separator } from "../ui/separator";
 import { UserProfile } from "@/lib/types";
+import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
+import 'react-phone-number-input/style.css'
+
 
 export function ProfileForm() {
     const { user } = useUser();
@@ -34,16 +37,24 @@ export function ProfileForm() {
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
 
-    // Use local state for form inputs that can be edited
-    const [name, setName] = useState('');
-    // Use a separate state for the displayed photo URL, which can be a local blob or a remote URL
-    const [displayPhotoUrl, setDisplayPhotoUrl] = useState<string | null>(null);
+    // Use derived state for form inputs that can be edited
+    const name = userProfile?.name ?? '';
+    const displayPhotoUrl = userProfile?.photoURL ?? null;
+    
+    const [nameInput, setNameInput] = useState(name);
+    useEffect(() => {
+        if (userProfile) {
+            setNameInput(userProfile.name || '');
+        }
+    }, [userProfile]);
+
     const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
+    const [tempDisplayPhotoUrl, setTempDisplayPhotoUrl] = useState<string | null>(null);
 
     // State for phone number update
     const [showPhoneDialog, setShowPhoneDialog] = useState(false);
     const [showOtpDialog, setShowOtpDialog] = useState(false);
-    const [newPhoneNumber, setNewPhoneNumber] = useState('+91');
+    const [newPhoneNumber, setNewPhoneNumber] = useState<string | undefined>("+91");
     const [otp, setOtp] = useState('');
     const [confirmationResult, setConfirmationResult] = useState<any>(null);
     const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
@@ -67,18 +78,6 @@ export function ProfileForm() {
         }
     }, [showPhoneDialog, auth]);
 
-    // Effect to populate form when userProfile data loads from Firestore
-    useEffect(() => {
-        if (userProfile) {
-            setName(userProfile.name || '');
-            setDisplayPhotoUrl(userProfile.photoURL || null);
-        } else if (user) {
-            // Fallback to auth data if firestore profile is not available yet
-            setName(user.displayName || '');
-            setDisplayPhotoUrl(user.photoURL || null);
-        }
-    }, [userProfile, user]);
-
 
     const getInitials = (name?: string | null) => {
         if (!name) return 'U';
@@ -90,12 +89,12 @@ export function ProfileForm() {
         if (!file || !user) return;
 
         const localImageUrl = URL.createObjectURL(file);
-        setDisplayPhotoUrl(localImageUrl);
+        setTempDisplayPhotoUrl(localImageUrl);
         setNewAvatarFile(file);
     };
 
     const handleAvatarSelect = (url: string) => {
-        setDisplayPhotoUrl(url);
+        setTempDisplayPhotoUrl(url);
         setNewAvatarFile(null); // Clear file if a pre-designed avatar is selected
     }
 
@@ -107,27 +106,32 @@ export function ProfileForm() {
         
         let finalPhotoURL = displayPhotoUrl;
 
-        // If a new file was uploaded, handle the upload process
-        if (newAvatarFile) {
-            setIsUploading(true);
-            try {
-                const storageRef = ref(storage, `avatars/${user.uid}/${newAvatarFile.name}`);
-                const uploadResult = await uploadBytes(storageRef, newAvatarFile);
-                finalPhotoURL = await getDownloadURL(uploadResult.ref);
-                setNewAvatarFile(null); 
-            } catch (error: any) {
-                toast({ variant: "destructive", title: "Upload Failed", description: error.message });
-                setIsLoading(false);
+        if (tempDisplayPhotoUrl && tempDisplayPhotoUrl !== displayPhotoUrl) {
+            // If a new file was uploaded, handle the upload process
+            if (newAvatarFile) {
+                setIsUploading(true);
+                try {
+                    const storageRef = ref(storage, `avatars/${user.uid}/${newAvatarFile.name}`);
+                    const uploadResult = await uploadBytes(storageRef, newAvatarFile);
+                    finalPhotoURL = await getDownloadURL(uploadResult.ref);
+                    setNewAvatarFile(null); 
+                } catch (error: any) {
+                    toast({ variant: "destructive", title: "Upload Failed", description: error.message });
+                    setIsLoading(false);
+                    setIsUploading(false);
+                    return;
+                }
                 setIsUploading(false);
-                return;
+            } else {
+                 finalPhotoURL = tempDisplayPhotoUrl;
             }
-            setIsUploading(false);
         }
+
 
         try {
             // Data to be saved in Firestore
             const userProfileData: { name: string; photoURL?: string | null } = {
-                name: name,
+                name: nameInput,
             };
             if (finalPhotoURL !== null) {
                 userProfileData.photoURL = finalPhotoURL;
@@ -135,15 +139,15 @@ export function ProfileForm() {
 
             // Update Firebase Auth profile
             await updateProfile(auth.currentUser, {
-                displayName: name,
+                displayName: nameInput,
                 photoURL: finalPhotoURL,
             });
 
             // Update Firestore document
             const userDocRef = doc(firestore, 'users', user.uid);
             await setDoc(userDocRef, userProfileData, { merge: true });
-
-            setDisplayPhotoUrl(finalPhotoURL);
+            
+            setTempDisplayPhotoUrl(null);
             
             toast({ title: "Profile Updated", description: "Your changes have been saved." });
         } catch (error: any) {
@@ -227,6 +231,7 @@ export function ProfileForm() {
         }
     };
 
+    const currentPhoto = tempDisplayPhotoUrl || displayPhotoUrl;
 
     if (isProfileLoading) {
         return (
@@ -255,7 +260,7 @@ export function ProfileForm() {
                             <PopoverTrigger asChild>
                                 <button type="button" className="relative h-24 w-24 rounded-full">
                                     <Avatar className="h-24 w-24">
-                                        <AvatarImage src={displayPhotoUrl ?? undefined} alt={name || 'User'} />
+                                        <AvatarImage src={currentPhoto ?? undefined} alt={name || 'User'} />
                                         <AvatarFallback>{getInitials(name)}</AvatarFallback>
                                     </Avatar>
                                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs font-semibold rounded-full opacity-0 hover:opacity-100 transition-opacity">
@@ -292,7 +297,7 @@ export function ProfileForm() {
                                                 onClick={() => handleAvatarSelect(avatar.imageUrl)}
                                                 className={cn(
                                                     "rounded-full ring-2 ring-transparent hover:ring-primary focus:ring-primary focus:outline-none transition-all",
-                                                    displayPhotoUrl === avatar.imageUrl && "ring-primary"
+                                                    currentPhoto === avatar.imageUrl && "ring-primary"
                                                 )}
                                             >
                                                 <Image
@@ -313,7 +318,7 @@ export function ProfileForm() {
 
                     <div className="space-y-2">
                         <Label htmlFor="name">Name</Label>
-                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading} />
+                        <Input id="name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} disabled={isLoading} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
@@ -365,10 +370,13 @@ export function ProfileForm() {
                                         <DialogTitle>Update Phone Number</DialogTitle>
                                         <DialogDescription>Enter your new phone number with country code. A verification code will be sent.</DialogDescription>
                                     </DialogHeader>
-                                    <Input 
-                                        placeholder="+91 987 654 3210" 
-                                        value={newPhoneNumber} 
-                                        onChange={(e) => setNewPhoneNumber(e.target.value)}
+                                     <PhoneInput
+                                        international
+                                        defaultCountry="IN"
+                                        placeholder="Enter phone number"
+                                        value={newPhoneNumber}
+                                        onChange={setNewPhoneNumber}
+                                        className="mt-2"
                                     />
                                     <DialogFooter>
                                         <Button onClick={handleSendPhoneVerification} disabled={isLoading}>

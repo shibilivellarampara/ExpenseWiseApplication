@@ -19,6 +19,8 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
+import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
+import 'react-phone-number-input/style.css'
 
 
 const formSchema = z.object({
@@ -27,7 +29,7 @@ const formSchema = z.object({
 });
 
 const isEmail = (loginId: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginId);
-const isPhone = (loginId: string) => /^\+?[1-9]\d{1,14}$/.test(loginId);
+
 
 export function LoginForm() {
   const { toast } = useToast();
@@ -44,18 +46,18 @@ export function LoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      loginId: '+91',
+      loginId: '',
       password: '',
     },
   });
 
-  const { watch } = form;
+  const { watch, setValue } = form;
   const loginId = watch('loginId');
 
   useEffect(() => {
     if (isEmail(loginId)) {
       setLoginMethod('email');
-    } else if (isPhone(loginId)) {
+    } else if (isPossiblePhoneNumber(loginId || '')) {
       setLoginMethod('phone');
     } else {
       setLoginMethod(null);
@@ -118,7 +120,7 @@ export function LoginForm() {
             setIsLoading(false);
         }
     } else {
-        toast({ variant: 'destructive', title: 'Invalid Input', description: 'Please enter a valid email or phone number with country code (e.g., +919876543210).' });
+        toast({ variant: 'destructive', title: 'Invalid Input', description: 'Please enter a valid email or phone number.' });
         setIsLoading(false);
     }
   }
@@ -169,7 +171,17 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Email or Phone Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="name@example.com or +919876543210" {...field} />
+                    {loginMethod === 'phone' || field.value.startsWith('+') ? (
+                        <PhoneInput
+                            international
+                            defaultCountry="IN"
+                            placeholder="Enter phone number"
+                            value={field.value}
+                            onChange={field.onChange}
+                        />
+                    ) : (
+                        <Input placeholder="name@example.com" {...field} />
+                    )}
                 </FormControl>
                 <FormMessage />
               </FormItem>

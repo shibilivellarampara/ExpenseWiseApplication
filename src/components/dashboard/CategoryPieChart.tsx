@@ -22,9 +22,9 @@ const renderActiveShape = (props: any, currencySymbol: string) => {
   const cos = Math.cos(-RADIAN * midAngle);
   const sx = cx + (outerRadius + 10) * cos;
   const sy = cy + (outerRadius + 10) * sin;
-  const mx = cx + (outerRadius + 30) * cos;
-  const my = cy + (outerRadius + 30) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+  const mx = cx + (outerRadius + 20) * cos;
+  const my = cy + (outerRadius + 20) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
   const ey = my;
   const textAnchor = cos >= 0 ? 'start' : 'end';
 
@@ -91,7 +91,7 @@ export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps
           cx="50%"
           cy="50%"
           innerRadius={80}
-          outerRadius={110}
+          outerRadius={120}
           fill="hsl(var(--primary))"
           dataKey="value"
           nameKey="name"

@@ -67,120 +67,33 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
 
 
 function DateTimePicker({ field }: { field: any }) {
-  const [isDatePickerOpen, setDatePickerOpen] = useState(false);
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const dateValue = e.target.value;
+        // The input gives a string, so we convert it to a Date object
+        field.onChange(new Date(dateValue));
+    };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date || !field.value) return;
-    const newDate = setHours(setMinutes(date, getMinutes(field.value)), getHours(field.value));
-    field.onChange(newDate);
-    if (!isDesktop) {
-        setDatePickerOpen(false);
-    }
-  };
+    // Format the date from the form state into 'YYYY-MM-DDTHH:mm' for the input
+    const formatForInput = (date: Date): string => {
+        if (!date) return '';
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
 
-  const handleTimeChange = (part: 'hours' | 'minutes', value: string) => {
-    const numberValue = parseInt(value, 10);
-    if (!field.value) return;
-    const newDate = part === 'hours' ? setHours(field.value, numberValue) : setMinutes(field.value, numberValue);
-    field.onChange(newDate);
-  }
-
-  const calendar = (
-     <div className="space-y-2">
-      <Calendar
-        mode="single"
-        selected={field.value}
-        onSelect={handleDateSelect}
-        disabled={(date) =>
-          date > new Date() || date < new Date('1900-01-01')
-        }
-        initialFocus
-        className="mx-auto"
-      />
-      <div className="flex gap-2 justify-center px-4">
-          <Select onValueChange={(value) => handleTimeChange('hours', value)} value={String(getHours(field.value))}>
-              <SelectTrigger><SelectValue/></SelectTrigger>
-              <SelectContent>
-                  {Array.from({length: 24}, (_, i) => <SelectItem key={i} value={String(i)}>{String(i).padStart(2, '0')}</SelectItem>)}
-              </SelectContent>
-          </Select>
-           <Select onValueChange={(value) => handleTimeChange('minutes', value)} value={String(getMinutes(field.value))}>
-              <SelectTrigger><SelectValue/></SelectTrigger>
-              <SelectContent>
-                  {Array.from({length: 60}, (_, i) => <SelectItem key={i} value={String(i)}>{String(i).padStart(2, '0')}</SelectItem>)}
-              </SelectContent>
-          </Select>
-      </div>
-    </div>
-  )
-
-  if (isDesktop) {
     return (
-      <Popover open={isDatePickerOpen} onOpenChange={setDatePickerOpen}>
-        <PopoverTrigger asChild>
-          <FormControl>
-            <Button
-              variant={'outline'}
-              className={cn(
-                'w-[240px] pl-3 text-left font-normal',
-                !field.value && 'text-muted-foreground'
-              )}
-            >
-              {field.value ? (
-                format(field.value, 'PPP, hh:mm a')
-              ) : (
-                <span>Pick a date</span>
-              )}
-              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-            </Button>
-          </FormControl>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          {calendar}
-        </PopoverContent>
-      </Popover>
-    );
-  }
-
-  return (
-    <Drawer open={isDatePickerOpen} onOpenChange={setDatePickerOpen}>
-      <DrawerTrigger asChild>
         <FormControl>
-            <Button
-              variant={'outline'}
-              className={cn(
-                'w-full pl-3 text-left font-normal',
-                !field.value && 'text-muted-foreground'
-              )}
-            >
-              {field.value ? (
-                format(field.value, 'PPP, hh:mm a')
-              ) : (
-                <span>Pick a date</span>
-              )}
-              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-            </Button>
-          </FormControl>
-      </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader className="text-left">
-            <VaulTitle>Select Date & Time</VaulTitle>
-            <DrawerDescription>
-                Choose the date and time when the transaction occurred.
-            </DrawerDescription>
-        </DrawerHeader>
-        <div className="p-4">
-         {calendar}
-        </div>
-        <DrawerFooter className="pt-2">
-            <DrawerClose asChild>
-                <Button variant="outline">Done</Button>
-            </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
-  )
+            <Input
+                type="datetime-local"
+                className="w-[240px]"
+                value={formatForInput(field.value)}
+                onChange={handleDateChange}
+            />
+        </FormControl>
+    );
 }
 
 function ExpenseForm({
@@ -421,7 +334,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
     const resetForm = () => {
         form.reset({
             type: 'expense',
-            amount: '' as any, // Reset as empty string to avoid uncontrolled to controlled error
+            amount: '',
             accountId: '',
             categoryId: '',
             description: '',

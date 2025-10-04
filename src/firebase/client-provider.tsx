@@ -1,23 +1,39 @@
 'use client';
 
-import React, { useMemo, type ReactNode } from 'react';
+import React, { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
-import { initializeFirebase } from '@/firebase'; // Use the initialization function
+import { initializeFirebase } from '@/firebase';
+import type { FirebaseApp } from 'firebase/app';
+import type { Auth } from 'firebase/auth';
+import type { Firestore } from 'firebase/firestore';
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
 }
 
-export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
-  // useMemo ensures that Firebase is initialized only once per client session.
-  const sdks = useMemo(() => initializeFirebase(), []);
+interface FirebaseSDKs {
+  firebaseApp: FirebaseApp;
+  auth: Auth;
+  firestore: Firestore;
+}
 
-  // We are now sure that sdks contains the initialized services if on the client.
-  // The check for window object is inside initializeFirebase.
-  if (!sdks.firebaseApp || !sdks.auth || !sdks.firestore) {
-    // This can happen during server-side rendering, which is expected.
-    // The components will not attempt to use firebase on the server.
-    return <>{children}</>;
+export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
+  const [sdks, setSdks] = useState<FirebaseSDKs | null>(null);
+
+  useEffect(() => {
+    // initializeFirebase now runs only on the client after mount.
+    const firebaseSdks = initializeFirebase();
+    if (firebaseSdks.firebaseApp && firebaseSdks.auth && firebaseSdks.firestore) {
+        setSdks(firebaseSdks as FirebaseSDKs);
+    }
+  }, []);
+
+
+  // While the SDKs are initializing, we can show a loading state or return null.
+  // This prevents children from rendering and trying to access a null context.
+  if (!sdks) {
+    // You can replace this with a proper loading spinner component if you have one
+    return null; 
   }
 
   return (

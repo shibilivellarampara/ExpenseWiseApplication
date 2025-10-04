@@ -5,24 +5,25 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 
-let firebaseApp: FirebaseApp;
-let auth: Auth;
-let firestore: Firestore;
-
 export function initializeFirebase() {
-  if (typeof window !== 'undefined') {
-    if (!getApps().length) {
-      firebaseApp = initializeApp(firebaseConfig);
-      auth = getAuth(firebaseApp);
-      firestore = getFirestore(firebaseApp);
-    } else {
-      firebaseApp = getApp();
-      auth = getAuth(firebaseApp);
-      firestore = getFirestore(firebaseApp);
-    }
+  if (typeof window === 'undefined') {
+    // On the server, return null placeholders
+    return { firebaseApp: null, auth: null, firestore: null };
   }
-  // On the server, these will be undefined, which is handled by the client-provider
-  // @ts-ignore
+
+  if (getApps().length) {
+    const app = getApp();
+    return { 
+      firebaseApp: app, 
+      auth: getAuth(app), 
+      firestore: getFirestore(app) 
+    };
+  }
+  
+  const firebaseApp = initializeApp(firebaseConfig);
+  const auth = getAuth(firebaseApp);
+  const firestore = getFirestore(firebaseApp);
+  
   return { firebaseApp, auth, firestore };
 }
 

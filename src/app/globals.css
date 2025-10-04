@@ -24,8 +24,8 @@
     --border: 210 20% 91%;
     --input: 210 20% 91%;
     --ring: 207 82% 71%;
-    --radius: 0.5rem;
     --sidebar-background: 206 90% 94%;
+    --sidebar-accent: hsl(207, 82%, 85%);
   }
 
   .dark {
@@ -49,6 +49,7 @@
     --input: 217 27% 22%;
     --ring: 207 82% 71%;
     --sidebar-background: 215 28% 17%;
+    --sidebar-accent: hsl(217, 27%, 22%);
   }
 }
 

@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogFooter,
   DialogTrigger,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   Drawer,

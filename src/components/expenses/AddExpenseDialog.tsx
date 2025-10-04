@@ -164,10 +164,8 @@ function DatePicker({ field }: { field: any }) {
 }
 
 function ExpenseForm({
-  className,
   form,
 }: {
-  className?: string;
   form: UseFormReturn<any>;
 }) {
     const { user } = useUser();
@@ -202,7 +200,7 @@ function ExpenseForm({
 
     return (
         <Form {...form}>
-            <form id="expense-form" className={cn("grid items-start gap-4", className)}>
+            <form id="expense-form" className="grid items-start gap-4">
                 <FormField
                     control={form.control}
                     name="type"
@@ -398,7 +396,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
     const resetForm = () => {
         form.reset({
             type: 'expense',
-            amount: undefined,
+            amount: '',
             accountId: '',
             categoryId: '',
             description: '',

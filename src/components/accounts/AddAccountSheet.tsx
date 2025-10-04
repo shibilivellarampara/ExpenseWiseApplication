@@ -79,10 +79,14 @@ export function AddAccountSheet({ children }: AddAccountSheetProps) {
              return;
         }
 
-        const accountData = {
+        const accountData: any = {
             ...values,
             userId: user.uid,
         };
+
+        if (isNaN(accountData.limit) || accountData.limit === undefined) {
+            delete accountData.limit;
+        }
 
         try {
             const accountsCol = collection(firestore, `users/${user.uid}/accounts`);

@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from 'next-themes';
+import { LoadingProvider } from '@/context/LoadingProvider';
 
 export const metadata: Metadata = {
   title: 'ExpenseWise',
@@ -26,9 +27,11 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased min-h-screen')}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <FirebaseClientProvider>
-            {children}
-          </FirebaseClientProvider>
+          <LoadingProvider>
+            <FirebaseClientProvider>
+              {children}
+            </FirebaseClientProvider>
+          </LoadingProvider>
           <Toaster />
         </ThemeProvider>
       </body>

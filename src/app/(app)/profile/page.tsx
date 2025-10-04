@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -8,7 +9,7 @@ import { TagSettings } from "@/components/profile/TagSettings";
 
 export default function ProfilePage() {
     return (
-        <div className="space-y-8 w-full">
+        <div className="w-full space-y-8">
             <PageHeader
                 title="Your Profile"
                 description="Manage your account settings and preferences."

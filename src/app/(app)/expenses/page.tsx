@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -100,7 +101,7 @@ export default function ExpensesPage() {
     }, [expenses, accounts, categoryMap, accountMap, tagMap]);
 
     return (
-        <div className="space-y-8 w-full">
+        <div className="w-full space-y-8">
             <PageHeader title="Transactions" description="A detailed list of your recent income and expenses.">
                 <AddExpenseDialog>
                     <Button>

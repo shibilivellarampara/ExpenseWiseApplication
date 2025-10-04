@@ -20,7 +20,7 @@ export default function AccountsPage() {
     const { data: accounts, isLoading } = useCollection<Account>(accountsQuery);
 
     return (
-        <div className="space-y-8 w-full">
+        <div className="w-full space-y-8">
             <PageHeader title="Accounts" description="Manage your financial accounts.">
                 <AddAccountSheet>
                      <Button>

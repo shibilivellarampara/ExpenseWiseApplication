@@ -107,7 +107,7 @@ export default function ContributionsPage() {
     const userListForForm = useMemo(() => Object.values(userMap), [userMap]);
 
     return (
-        <div className="space-y-8 w-full">
+        <div className="w-full space-y-8">
             <PageHeader title="Shared Expenses" description="Track expenses shared with friends and family.">
                 <AddContributionSheet users={userListForForm}>
                     <Button>

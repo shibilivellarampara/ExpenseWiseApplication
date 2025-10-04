@@ -2,9 +2,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Expense } from "@/lib/types";
+import { Skeleton } from "../ui/skeleton";
 
 interface ExpensesTableProps {
   expenses: Expense[];
+  isLoading?: boolean;
 }
 
 const categoryColors: { [key: string]: string } = {
@@ -13,10 +15,12 @@ const categoryColors: { [key: string]: string } = {
     Shopping: 'bg-yellow-100 text-yellow-800',
     Utilities: 'bg-purple-100 text-purple-800',
     Entertainment: 'bg-pink-100 text-pink-800',
+    Health: 'bg-red-100 text-red-800',
+    Other: 'bg-gray-100 text-gray-800',
 };
 
 
-export function ExpensesTable({ expenses }: ExpensesTableProps) {
+export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
   return (
     <Card>
       <CardContent className="pt-6">
@@ -30,9 +34,18 @@ export function ExpensesTable({ expenses }: ExpensesTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {expenses.length > 0 ? expenses.map((expense) => (
+            {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                    </TableRow>
+                ))
+            ) : expenses.length > 0 ? expenses.map((expense) => (
               <TableRow key={expense.id}>
-                <TableCell>{expense.date.toLocaleDateString()}</TableCell>
+                <TableCell>{expense.date instanceof Date ? expense.date.toLocaleDateString() : ''}</TableCell>
                 <TableCell>
                   <Badge variant="secondary" className={categoryColors[expense.category] || 'bg-gray-100 text-gray-800'}>
                     {expense.category}
@@ -44,7 +57,7 @@ export function ExpensesTable({ expenses }: ExpensesTableProps) {
             )) : (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
-                  No expenses found.
+                  No expenses found. Click "Add Expense" to get started!
                 </TableCell>
               </TableRow>
             )}

@@ -23,6 +23,9 @@ import { format } from 'date-fns';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '../ui/textarea';
+import { useFirestore, useUser } from '@/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const expenseSchema = z.object({
   amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
@@ -37,6 +40,8 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const { user } = useUser();
+    const firestore = useFirestore();
 
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
@@ -50,16 +55,42 @@ export function AddExpenseSheet({ children }: { children: React.ReactNode }) {
 
     async function onSubmit(values: z.infer<typeof expenseSchema>) {
         setIsLoading(true);
-        // Here you would call a server action to save the expense
-        console.log(values);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast({
-            title: 'Expense Added!',
-            description: `Your expense of $${values.amount} has been recorded.`,
-        });
-        setIsLoading(false);
-        setOpen(false);
-        form.reset();
+        if (!firestore || !user) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'You must be logged in to add an expense.',
+            });
+            setIsLoading(false);
+            return;
+        }
+
+        const expenseData = {
+          ...values,
+          userId: user.uid,
+          createdAt: serverTimestamp(),
+        };
+
+        try {
+            const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
+            addDocumentNonBlocking(expensesCol, expenseData);
+            
+            toast({
+                title: 'Expense Added!',
+                description: `Your expense of $${values.amount} has been recorded.`,
+            });
+            
+            setOpen(false);
+            form.reset();
+        } catch (error: any) {
+             toast({
+                variant: 'destructive',
+                title: 'Uh oh! Something went wrong.',
+                description: error.message || 'Could not save expense.',
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
   return (

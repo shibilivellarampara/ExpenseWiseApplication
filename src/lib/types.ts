@@ -12,8 +12,9 @@ export type Expense = {
   category: string;
   amount: number;
   description: string;
-  date: Date;
+  date: Timestamp | Date; // Allow both Timestamp from Firestore and Date object for forms
   createdAt: Timestamp;
+  userId: string;
 };
 
 export type Contribution = {

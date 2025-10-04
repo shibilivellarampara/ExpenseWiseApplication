@@ -115,31 +115,29 @@
     "providers": ["password", "anonymous", "phone", "google.com"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": { "entityName": "UserProfile", "schema": { "$ref": "#/entities/UserProfile" } }
-      },
-      {
-        "path": "/users/{userId}/expenses/{expenseId}",
-        "definition": { "entityName": "Expense", "schema": { "$ref": "#/entities/Expense" } }
-      },
-      {
-        "path": "/users/{userId}/accounts/{accountId}",
-        "definition": { "entityName": "Account", "schema": { "$ref": "#/entities/Account" } }
-      },
-      {
-        "path": "/users/{userId}/categories/{categoryId}",
-        "definition": { "entityName": "Category", "schema": { "$ref": "#/entities/Category" } }
-      },
-      {
-        "path": "/users/{userId}/tags/{tagId}",
-        "definition": { "entityName": "Tag", "schema": { "$ref": "#/entities/Tag" } }
-      },
-       {
-        "path": "/shared_expenses/{sharedExpenseId}",
-        "definition": { "entityName": "SharedExpense", "schema": { "$ref": "#/entities/SharedExpense" } }
-      }
-    ]
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores user profile information."
+    },
+    "/users/{userId}/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/Expense" },
+      "description": "Stores individual expense records for a user."
+    },
+    "/users/{userId}/accounts/{accountId}": {
+      "schema": { "$ref": "#/entities/Account" },
+      "description": "Stores user's financial accounts."
+    },
+    "/users/{userId}/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Stores user-defined expense categories."
+    },
+    "/users/{userId}/tags/{tagId}": {
+      "schema": { "$ref": "#/entities/Tag" },
+      "description": "Stores user-defined expense tags."
+    },
+    "/shared_expenses/{sharedExpenseId}": {
+      "schema": { "$ref": "#/entities/SharedExpense" },
+      "description": "Stores shared expense spaces, accessible by multiple users."
+    }
   }
 }

@@ -74,11 +74,3 @@ export type SharedExpense = {
   createdAt: Timestamp;
   members?: UserProfile[]; // populated on the client
 }
-
-// This is a legacy type, replaced by Account
-export type PaymentMethod = {
-  id: string;
-  name:string;
-  icon: string; // lucide-react icon name
-  userId: string;
-}

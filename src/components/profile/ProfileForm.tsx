@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Loader2, Upload } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { updateProfile } from "firebase/auth";
+import { updateProfile, RecaptchaVerifier, updatePhoneNumber, PhoneAuthProvider } from "firebase/auth";
 import { doc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { AvatarPlaceholders } from "@/lib/placeholder-images";
@@ -32,7 +34,28 @@ export function ProfileForm() {
     const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
     const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
 
+    // State for phone number update
+    const [showPhoneDialog, setShowPhoneDialog] = useState(false);
+    const [showOtpDialog, setShowOtpDialog] = useState(false);
+    const [newPhoneNumber, setNewPhoneNumber] = useState('');
+    const [otp, setOtp] = useState('');
+    const [confirmationResult, setConfirmationResult] = useState<any>(null);
+    const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
+    const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+
+
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+     // Initialize reCAPTCHA for phone update
+    useEffect(() => {
+        if (showPhoneDialog && auth && recaptchaContainerRef.current && !recaptchaVerifier.current) {
+            recaptchaVerifier.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+                'size': 'invisible',
+            });
+            recaptchaVerifier.current.render();
+        }
+    }, [showPhoneDialog, auth]);
+
 
     const getInitials = (name?: string | null) => {
         if (!name) return 'U';
@@ -53,7 +76,7 @@ export function ProfileForm() {
         setNewAvatarFile(null); // Clear file if a pre-designed avatar is selected
     }
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleProfileSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!user || !firestore || !auth?.currentUser) return;
 
@@ -100,6 +123,48 @@ export function ProfileForm() {
         }
     }
 
+    const handleSendPhoneVerification = async () => {
+        if (!auth?.currentUser || !recaptchaVerifier.current || !newPhoneNumber) return;
+        setIsLoading(true);
+        try {
+            const phoneProvider = new PhoneAuthProvider(auth);
+            const verificationId = await phoneProvider.verifyPhoneNumber(
+                newPhoneNumber,
+                recaptchaVerifier.current
+            );
+            setConfirmationResult({ verificationId });
+            setShowPhoneDialog(false);
+            setShowOtpDialog(true);
+            toast({ title: "Verification code sent!" });
+        } catch (error: any) {
+             toast({ variant: "destructive", title: "Failed to send code", description: error.message });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerifyOtpAndUpdatePhone = async () => {
+        if (!auth?.currentUser || !confirmationResult || !otp) return;
+        setIsLoading(true);
+        try {
+            const credential = PhoneAuthProvider.credential(confirmationResult.verificationId, otp);
+            await updatePhoneNumber(auth.currentUser, credential);
+            
+            const userDocRef = doc(firestore, 'users', user.uid);
+            await setDoc(userDocRef, { phoneNumber: newPhoneNumber }, { merge: true });
+
+            toast({ title: "Phone Number Updated!" });
+            setShowOtpDialog(false);
+            setNewPhoneNumber('');
+            setOtp('');
+
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Phone Update Failed", description: error.message });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     // Effect to reset form state when user changes (e.g., on logout/login)
     useEffect(() => {
         setName(user?.displayName || '');
@@ -109,7 +174,7 @@ export function ProfileForm() {
 
     return (
         <Card className="h-full">
-             <form onSubmit={handleSubmit} className="flex flex-col h-full">
+             <form onSubmit={handleProfileSubmit} className="flex flex-col h-full">
                 <CardHeader>
                     <CardTitle className="font-headline">Profile Details</CardTitle>
                     <CardDescription>Update your personal information here.</CardDescription>
@@ -187,7 +252,31 @@ export function ProfileForm() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
-                        <Input id="phone" type="tel" value={user?.phoneNumber || 'Not provided'} disabled />
+                        <div className="flex items-center gap-2">
+                            <Input id="phone" type="tel" value={user?.phoneNumber || 'Not provided'} disabled />
+                            <Dialog open={showPhoneDialog} onOpenChange={setShowPhoneDialog}>
+                                <DialogTrigger asChild>
+                                    <Button type="button" variant="outline">Edit</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Update Phone Number</DialogTitle>
+                                        <DialogDescription>Enter your new phone number with country code. A verification code will be sent.</DialogDescription>
+                                    </DialogHeader>
+                                    <Input 
+                                        placeholder="+1 123 456 7890" 
+                                        value={newPhoneNumber} 
+                                        onChange={(e) => setNewPhoneNumber(e.target.value)}
+                                    />
+                                    <DialogFooter>
+                                        <Button onClick={handleSendPhoneVerification} disabled={isLoading}>
+                                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Send Code
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
                     </div>
                 </CardContent>
                 <CardFooter className="border-t pt-6 flex justify-end">
@@ -197,6 +286,33 @@ export function ProfileForm() {
                     </Button>
                 </CardFooter>
             </form>
+             <Dialog open={showOtpDialog} onOpenChange={setShowOtpDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Enter Verification Code</DialogTitle>
+                        <DialogDescription>Please enter the 6-digit code sent to {newPhoneNumber}.</DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-center">
+                        <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+                            <InputOTPGroup>
+                                <InputOTPSlot index={0} />
+                                <InputOTPSlot index={1} />
+                                <InputOTPSlot index={2} />
+                                <InputOTPSlot index={3} />
+                                <InputOTPSlot index={4} />
+                                <InputOTPSlot index={5} />
+                            </InputOTPGroup>
+                        </InputOTP>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleVerifyOtpAndUpdatePhone} disabled={isLoading || otp.length < 6}>
+                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                             Verify and Update
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <div ref={recaptchaContainerRef}></div>
         </Card>
     );
 }

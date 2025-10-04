@@ -22,45 +22,50 @@ import {
 
 
 const formSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  loginId: z.string().min(1, { message: 'Please enter your email or phone number.' }),
+  password: z.string().optional(),
 });
 
-const phoneSchema = z.object({
-    phone: z.string().min(10, { message: 'Please enter a valid phone number with country code.'}),
-});
+const isEmail = (loginId: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginId);
+const isPhone = (loginId: string) => /^\+?[1-9]\d{1,14}$/.test(loginId);
 
 export function LoginForm() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isPhoneLoading, setIsPhoneLoading] = useState(false);
-  const [showPhoneInput, setShowPhoneInput] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [loginMethod, setLoginMethod] = useState<'email' | 'phone' | null>(null);
   const auth = useAuth();
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
+      loginId: '',
       password: '',
     },
   });
 
-  const phoneForm = useForm<z.infer<typeof phoneSchema>>({
-    resolver: zodResolver(phoneSchema),
-    defaultValues: {
-        phone: '',
-    },
-  });
+  const { watch } = form;
+  const loginId = watch('loginId');
+
+  useEffect(() => {
+    if (isEmail(loginId)) {
+      setLoginMethod('email');
+    } else if (isPhone(loginId)) {
+      setLoginMethod('phone');
+    } else {
+      setLoginMethod(null);
+    }
+  }, [loginId]);
 
   // Initialize reCAPTCHA
   useEffect(() => {
-    if (auth && !recaptchaVerifier.current) {
-      recaptchaVerifier.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    if (auth && recaptchaContainerRef.current && !recaptchaVerifier.current) {
+      recaptchaVerifier.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
         'size': 'invisible',
         'callback': () => {
           // reCAPTCHA solved, allow sign-in
@@ -72,29 +77,49 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     if (!auth) {
-        toast({
-            variant: 'destructive',
-            title: 'Uh oh! Something went wrong.',
-            description: 'Firebase is not configured correctly.',
-        });
+        toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.' });
         setIsLoading(false);
         return;
     }
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({
-        title: 'Success!',
-        description: 'You are now signed in.',
-      });
-      router.push('/dashboard');
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'There was a problem with your request.',
-      });
-    } finally {
-      setIsLoading(false);
+
+    if (loginMethod === 'email') {
+        if (!values.password) {
+            form.setError('password', { type: 'manual', message: 'Password is required for email login.' });
+            setIsLoading(false);
+            return;
+        }
+        try {
+            await signInWithEmailAndPassword(auth, values.loginId, values.password);
+            toast({ title: 'Success!', description: 'You are now signed in.' });
+            router.push('/dashboard');
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Login Failed', description: error.message });
+        } finally {
+            setIsLoading(false);
+        }
+    } else if (loginMethod === 'phone') {
+        if (!recaptchaVerifier.current) {
+            toast({ variant: 'destructive', title: 'Error', description: 'reCAPTCHA not initialized.' });
+            setIsLoading(false);
+            return;
+        }
+        try {
+            const result = await signInWithPhoneNumber(auth, values.loginId, recaptchaVerifier.current);
+            setConfirmationResult(result);
+            setShowOtpInput(true);
+            toast({ title: 'Verification code sent!', description: `A code has been sent to ${values.loginId}.` });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Phone Sign-In Failed', description: error.message });
+             if (recaptchaVerifier.current) {
+                // @ts-ignore
+                grecaptcha.reset(recaptchaVerifier.current.widgetId);
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    } else {
+        toast({ variant: 'destructive', title: 'Invalid Input', description: 'Please enter a valid email or phone number with country code (e.g., +1234567890).' });
+        setIsLoading(false);
     }
   }
 
@@ -114,33 +139,6 @@ export function LoginForm() {
       toast({ variant: 'destructive', title: 'Google Sign-In Failed', description: error.message || 'Could not sign in with Google.' });
     } finally {
       setIsGoogleLoading(false);
-    }
-  }
-
-  async function onPhoneSubmit(values: z.infer<typeof phoneSchema>) {
-    setIsPhoneLoading(true);
-    if (!auth || !recaptchaVerifier.current) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.' });
-        setIsPhoneLoading(false);
-        return;
-    }
-    try {
-        const result = await signInWithPhoneNumber(auth, values.phone, recaptchaVerifier.current);
-        setConfirmationResult(result);
-        setShowPhoneInput(false);
-        setShowOtpInput(true);
-        toast({ title: 'Verification code sent!', description: `A code has been sent to ${values.phone}.` });
-    } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Phone Sign-In Failed', description: error.message });
-        // Reset reCAPTCHA if it fails
-        if (recaptchaVerifier.current) {
-            recaptchaVerifier.current.render().then((widgetId) => {
-                // @ts-ignore
-                grecaptcha.reset(widgetId);
-            });
-        }
-    } finally {
-        setIsPhoneLoading(false);
     }
   }
 
@@ -166,33 +164,35 @@ export function LoginForm() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="email"
+            name="loginId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Email or Phone Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="name@example.com" {...field} />
+                  <Input placeholder="name@example.com or +1234567890" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {loginMethod === 'email' && (
+            <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+          )}
           <Button type="submit" className="w-full" disabled={isLoading || !auth}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign In with Email
+            {loginMethod === 'phone' ? 'Send Verification Code' : 'Sign In'}
           </Button>
         </form>
       </Form>
@@ -204,47 +204,12 @@ export function LoginForm() {
             <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2">
        <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || !auth}>
           {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 74.8C307.7 99.8 280.7 86 248 86c-84.3 0-152.3 67.8-152.3 151.4s68 151.4 152.3 151.4c99.2 0 129.1-81.5 133.7-118.8H248v-94.2h239.1c2.3 12.7 3.9 26.1 3.9 40.2z"></path></svg>}
           Google
         </Button>
-        <Button variant="outline" className="w-full" onClick={() => setShowPhoneInput(true)} disabled={isPhoneLoading || !auth}>
-            Sign in with Phone
-        </Button>
         </div>
-
-        <Dialog open={showPhoneInput} onOpenChange={setShowPhoneInput}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Sign in with Phone Number</DialogTitle>
-                    <DialogDescription>Enter your phone number with country code to receive a verification code.</DialogDescription>
-                </DialogHeader>
-                <Form {...phoneForm}>
-                    <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
-                         <FormField
-                            control={phoneForm.control}
-                            name="phone"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Phone Number</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="+1 123 456 7890" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <DialogFooter>
-                            <Button type="submit" className="w-full" disabled={isPhoneLoading}>
-                                {isPhoneLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Send Code
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
         
         <Dialog open={showOtpInput} onOpenChange={setShowOtpInput}>
             <DialogContent>
@@ -268,7 +233,7 @@ export function LoginForm() {
             </DialogContent>
         </Dialog>
 
-        <div id="recaptcha-container"></div>
+        <div ref={recaptchaContainerRef}></div>
     </div>
   );
 }

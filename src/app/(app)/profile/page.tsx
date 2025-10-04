@@ -4,7 +4,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ExpenseFieldSettings } from "@/components/profile/ExpenseFieldSettings";
 import { CategorySettings } from "@/components/profile/CategorySettings";
-import { PaymentMethodSettings } from "@/components/profile/PaymentMethodSettings";
 import { TagSettings } from "@/components/profile/TagSettings";
 
 export default function ProfilePage() {
@@ -24,7 +23,6 @@ export default function ProfilePage() {
                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                     <ExpenseFieldSettings />
                     <CategorySettings />
-                    <PaymentMethodSettings />
                     <TagSettings />
                 </div>
             </div>

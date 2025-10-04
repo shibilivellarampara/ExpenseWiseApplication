@@ -33,13 +33,11 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useState, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Textarea } from '../ui/textarea';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { addDoc, collection, doc, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import * as LucideIcons from 'lucide-react';
-import { ScrollArea } from '../ui/scroll-area';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
@@ -333,7 +331,7 @@ function ExpenseForm({
                             Description {isDescriptionRequired ? '' : '(Optional)'}
                         </FormLabel>
                         <FormControl>
-                            <Textarea placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} />
+                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -518,5 +516,3 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
         </Drawer>
     )
 }
-
-    

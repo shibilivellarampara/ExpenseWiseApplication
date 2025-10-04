@@ -171,12 +171,12 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Email or Phone Number</FormLabel>
                 <FormControl>
-                    {loginMethod === 'phone' || field.value.startsWith('+') ? (
+                    {loginMethod === 'phone' || (field.value && field.value.startsWith('+')) ? (
                         <PhoneInput
                             international
                             defaultCountry="IN"
                             placeholder="Enter phone number"
-                            value={field.value}
+                            value={field.value || ""}
                             onChange={field.onChange}
                         />
                     ) : (

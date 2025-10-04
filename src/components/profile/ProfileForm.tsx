@@ -37,11 +37,11 @@ export function ProfileForm() {
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
     
-    const [tempDisplayPhotoUrl, setTempDisplayPhotoUrl] = useState<string | null>(null);
     const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
 
     const [nameInput, setNameInput] = useState('');
-    
+    const [tempDisplayPhotoUrl, setTempDisplayPhotoUrl] = useState<string | null>(null);
+
     useEffect(() => {
         if (userProfile) {
             setNameInput(userProfile.name ?? '');
@@ -146,8 +146,6 @@ export function ProfileForm() {
             const userDocRef = doc(firestore, 'users', user.uid);
             await setDoc(userDocRef, userProfileData, { merge: true });
             
-            setTempDisplayPhotoUrl(null);
-            
             toast({ title: "Profile Updated", description: "Your changes have been saved." });
         } catch (error: any) {
             toast({ variant: "destructive", title: "Error updating profile", description: error.message });
@@ -246,13 +244,13 @@ export function ProfileForm() {
     }
 
     return (
-        <Card className="h-full">
-             <form onSubmit={handleProfileSubmit} className="flex flex-col h-full">
+        <Card>
+             <form onSubmit={handleProfileSubmit}>
                 <CardHeader>
                     <CardTitle className="font-headline">Profile Details</CardTitle>
                     <CardDescription>Update your personal information here.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4 flex-grow">
+                <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label>Profile Picture</Label>
                         <Popover>

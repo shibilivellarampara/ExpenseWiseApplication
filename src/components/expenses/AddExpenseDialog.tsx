@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   Drawer,
+  DrawerTrigger,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,

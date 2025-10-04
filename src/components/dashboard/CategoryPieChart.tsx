@@ -2,11 +2,14 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
 import { useMemo, useState } from 'react';
-import { EnrichedExpense } from '@/lib/types';
 import { PieChart as PieChartIcon } from 'lucide-react';
 
+interface PieChartDataPoint {
+  name: string;
+  value: number;
+}
 interface CategoryPieChartProps {
-  expenses: EnrichedExpense[];
+  data: PieChartDataPoint[];
   currencySymbol: string;
 }
 
@@ -59,23 +62,14 @@ const renderActiveShape = (props: any, currencySymbol: string) => {
 };
 
 
-export function CategoryPieChart({ expenses, currencySymbol }: CategoryPieChartProps) {
+export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
   };
     
-  const categoryData = useMemo(() => {
-    const categoryMap = new Map<string, number>();
-    expenses.forEach(item => {
-        const categoryName = item.category?.name || 'Uncategorized';
-        categoryMap.set(categoryName, (categoryMap.get(categoryName) || 0) + item.amount);
-    });
-    return Array.from(categoryMap, ([name, value]) => ({ name, value }));
-  }, [expenses]);
-
-  if (categoryData.length === 0) {
+  if (data.length === 0) {
     return (
         <div className="flex h-[350px] w-full items-center justify-center rounded-lg border-2 border-dashed">
             <div className="flex flex-col items-center text-center text-muted-foreground">
@@ -93,7 +87,7 @@ export function CategoryPieChart({ expenses, currencySymbol }: CategoryPieChartP
         <Pie
           activeIndex={activeIndex}
           activeShape={(props) => renderActiveShape(props, currencySymbol)}
-          data={categoryData}
+          data={data}
           cx="50%"
           cy="50%"
           innerRadius={80}
@@ -103,7 +97,7 @@ export function CategoryPieChart({ expenses, currencySymbol }: CategoryPieChartP
           nameKey="name"
           onMouseEnter={onPieEnter}
         >
-          {categoryData.map((entry, index) => (
+          {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>

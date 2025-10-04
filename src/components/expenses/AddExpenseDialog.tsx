@@ -226,7 +226,7 @@ function ExpenseForm({
                         <FormLabel>
                             Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
                         </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select onValueChange={field.onChange} value={field.value || 'no-category'}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a category" />
@@ -257,7 +257,7 @@ function ExpenseForm({
                         <FormLabel>
                             Tag {isTagRequired ? '' : '(Optional)'}
                         </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select onValueChange={field.onChange} value={field.value || 'no-tag'}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a tag" />
@@ -301,7 +301,6 @@ function ExpenseForm({
     );
 }
 
-
 export function AddExpenseDialog({ 
     children, 
     expenseToEdit 
@@ -311,6 +310,109 @@ export function AddExpenseDialog({
 }) {
     const [open, setOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
+
+    if (isDesktop) {
+        return (
+            <DesktopAddExpenseDialog open={open} setOpen={setOpen} expenseToEdit={expenseToEdit}>
+                {children}
+            </DesktopAddExpenseDialog>
+        );
+    }
+
+    return (
+        <MobileAddExpenseDrawer open={open} setOpen={setOpen} expenseToEdit={expenseToEdit}>
+            {children}
+        </MobileAddExpenseDrawer>
+    );
+}
+
+
+function DesktopAddExpenseDialog({ 
+    children, 
+    open, 
+    setOpen,
+    expenseToEdit 
+}: { 
+    children: React.ReactNode, 
+    open: boolean, 
+    setOpen: (open: boolean) => void,
+    expenseToEdit?: EnrichedExpense 
+}) {
+    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(expenseToEdit, setOpen);
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]">
+                <DialogHeader>
+                    <DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle>
+                    <DialogDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 overflow-y-auto -mx-6 px-6">
+                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType} />
+                </div>
+                <DialogFooter>
+                     <Button type="button" variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
+                     {!isEditMode && (
+                         <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save and Add New
+                        </Button>
+                     )}
+                     <Button type="submit" form={formId} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isEditMode ? 'Save Changes' : 'Save Transaction'}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function MobileAddExpenseDrawer({ 
+    children, 
+    open, 
+    setOpen,
+    expenseToEdit 
+}: { 
+    children: React.ReactNode, 
+    open: boolean, 
+    setOpen: (open: boolean) => void,
+    expenseToEdit?: EnrichedExpense 
+}) {
+    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(expenseToEdit, setOpen);
+    
+    return (
+        <Drawer open={open} onOpenChange={setOpen}>
+            <DrawerTrigger asChild>{children}</DrawerTrigger>
+            <DrawerContent>
+                <DrawerHeader className="text-left">
+                    <DrawerTitle>{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DrawerTitle>
+                    <DrawerDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DrawerDescription>
+                </DrawerHeader>
+                 <div className="overflow-y-auto px-4">
+                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType}/>
+                </div>
+                 <DrawerFooter className="pt-2 flex-row gap-2">
+                    {!isEditMode && (
+                         <Button variant="secondary" className="flex-1" onClick={onSaveAndNewSubmit} disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Add New
+                        </Button>
+                    )}
+                    <Button type="submit" form={formId} className="flex-1" disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isEditMode ? 'Save Changes' : 'Save'}
+                    </Button>
+                </DrawerFooter>
+            </DrawerContent>
+        </Drawer>
+    );
+}
+
+
+// Shared hook for form logic
+function useExpenseForm(expenseToEdit?: EnrichedExpense, setOpen?: (open: boolean) => void) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
@@ -353,12 +455,10 @@ export function AddExpenseDialog({
         }
     };
     
-    // Using `useEffect` to handle both opening the dialog and switching between add/edit modes
+    // Reset form when expenseToEdit changes
     useEffect(() => {
-        if (open) {
-            resetAndPopulateForm();
-        }
-    }, [open, expenseToEdit, userProfile]);
+        resetAndPopulateForm();
+    }, [expenseToEdit, userProfile]);
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
         if (!firestore || !user) {
@@ -419,7 +519,7 @@ export function AddExpenseDialog({
 
     const onFinalSubmit = form.handleSubmit(async (values) => {
         const success = await handleTransactionSave(values);
-        if (success) {
+        if (success && setOpen) {
             setOpen(false);
         }
     });
@@ -432,64 +532,5 @@ export function AddExpenseDialog({
         }
     });
 
-
-    if (isDesktop) {
-        return (
-            <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>{children}</DialogTrigger>
-                <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]">
-                    <DialogHeader>
-                        <DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle>
-                        <DialogDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DialogDescription>
-                    </DialogHeader>
-                    <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                        <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType} />
-                    </div>
-                    <DialogFooter>
-                         <Button type="button" variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
-                         {!isEditMode && (
-                             <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading}>
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save and Add New
-                            </Button>
-                         )}
-                         <Button type="submit" form={formId} disabled={isLoading}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditMode ? 'Save Changes' : 'Save Transaction'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        );
-    }
-
-    // Mobile Drawer
-    return (
-        <Drawer open={open} onOpenChange={setOpen}>
-            <DrawerTrigger asChild>{children}</DialogTrigger>
-            <DrawerContent>
-                <DrawerHeader className="text-left">
-                    <DrawerTitle>{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DrawerTitle>
-                    <DrawerDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DrawerDescription>
-                </DrawerHeader>
-                 <div className="overflow-y-auto px-4">
-                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType}/>
-                </div>
-                 <DrawerFooter className="pt-2 flex-row gap-2">
-                    {!isEditMode && (
-                         <Button variant="secondary" className="flex-1" onClick={onSaveAndNewSubmit} disabled={isLoading}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Add New
-                        </Button>
-                    )}
-                    <Button type="submit" form={formId} className="flex-1" disabled={isLoading}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {isEditMode ? 'Save Changes' : 'Save'}
-                    </Button>
-                </DrawerFooter>
-            </DrawerContent>
-        </Drawer>
-    )
+    return { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId };
 }
-
-    

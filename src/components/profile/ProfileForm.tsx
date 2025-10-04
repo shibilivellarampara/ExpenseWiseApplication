@@ -11,7 +11,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Loader2, Upload } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { updateProfile, RecaptchaVerifier, updatePhoneNumber, PhoneAuthProvider } from "firebase/auth";
+import { updateProfile, RecaptchaVerifier, updatePhoneNumber, PhoneAuthProvider, updateEmail, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { doc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { AvatarPlaceholders } from "@/lib/placeholder-images";
@@ -48,6 +48,11 @@ export function ProfileForm() {
     const [confirmationResult, setConfirmationResult] = useState<any>(null);
     const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
     const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+    
+    // State for email update
+    const [showEmailDialog, setShowEmailDialog] = useState(false);
+    const [newEmail, setNewEmail] = useState('');
+    const [currentPassword, setCurrentPassword] = useState('');
 
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -189,6 +194,38 @@ export function ProfileForm() {
             setIsLoading(false);
         }
     };
+    
+    const handleEmailUpdate = async () => {
+        if (!user || !auth?.currentUser || !newEmail || !currentPassword) {
+            toast({ variant: "destructive", title: "Missing fields", description: "Please enter new email and current password." });
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            // Re-authenticate the user
+            const credential = EmailAuthProvider.credential(user.email!, currentPassword);
+            await reauthenticateWithCredential(auth.currentUser, credential);
+
+            // Update email in Firebase Auth
+            await updateEmail(auth.currentUser, newEmail);
+
+            // Update email in Firestore
+            const userDocRef = doc(firestore, 'users', user.uid);
+            await setDoc(userDocRef, { email: newEmail }, { merge: true });
+            
+            toast({ title: "Email Updated", description: "Your email has been successfully updated." });
+            setShowEmailDialog(false);
+            setNewEmail('');
+            setCurrentPassword('');
+
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Email Update Failed", description: error.message });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
 
     if (isProfileLoading) {
@@ -280,7 +317,40 @@ export function ProfileForm() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" value={userProfile?.email || ''} disabled />
+                         <div className="flex items-center gap-2">
+                            <Input id="email" type="email" value={userProfile?.email || ''} disabled />
+                            <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+                                <DialogTrigger asChild>
+                                    <Button type="button" variant="outline">Edit</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Update Email</DialogTitle>
+                                        <DialogDescription>Enter a new email and your current password to make this change.</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                        <Input 
+                                            placeholder="New email address" 
+                                            type="email"
+                                            value={newEmail} 
+                                            onChange={(e) => setNewEmail(e.target.value)}
+                                        />
+                                        <Input 
+                                            placeholder="Current password" 
+                                            type="password"
+                                            value={currentPassword} 
+                                            onChange={(e) => setCurrentPassword(e.target.value)}
+                                        />
+                                    </div>
+                                    <DialogFooter>
+                                        <Button onClick={handleEmailUpdate} disabled={isLoading}>
+                                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Save Changes
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>

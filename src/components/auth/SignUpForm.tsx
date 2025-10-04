@@ -66,6 +66,7 @@ export function SignUpForm() {
         name: values.name,
         email: values.email.toLowerCase(),
         photoURL: user.photoURL,
+        phoneNumber: user.phoneNumber,
         createdAt: serverTimestamp(),
         defaultCurrency: 'USD',
       });

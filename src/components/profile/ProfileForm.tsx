@@ -15,6 +15,8 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { AvatarPlaceholders } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Separator } from "../ui/separator";
 
 export function ProfileForm() {
     const { user } = useUser();
@@ -113,55 +115,68 @@ export function ProfileForm() {
                     <CardDescription>Update your personal information here.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6 flex-grow">
-                    <div className="flex items-center gap-6">
-                        <Avatar className="h-24 w-24">
-                            <AvatarImage src={photoURL} alt={name || 'User'} />
-                            <AvatarFallback>{getInitials(name)}</AvatarFallback>
-                        </Avatar>
-                         <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isLoading}
-                        >
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload from Gallery
-                         </Button>
-                         <Input 
-                            type="file" 
-                            ref={fileInputRef} 
-                            onChange={handleFileChange}
-                            className="hidden" 
-                            accept="image/*"
-                         />
-                    </div>
-                    
-                    <div>
-                        <Label>Or choose an avatar</Label>
-                        <div className="grid grid-cols-4 md:grid-cols-6 gap-2 mt-2">
-                            {AvatarPlaceholders.map(avatar => (
-                                <button
-                                    key={avatar.id}
-                                    type="button"
-                                    onClick={() => handleAvatarSelect(avatar.imageUrl)}
-                                    className={cn(
-                                        "rounded-full ring-2 ring-transparent hover:ring-primary focus:ring-primary focus:outline-none transition-all",
-                                        photoURL === avatar.imageUrl && "ring-primary"
-                                    )}
-                                >
-                                    <Image
-                                        src={avatar.imageUrl}
-                                        alt={avatar.description}
-                                        width={80}
-                                        height={80}
-                                        className="rounded-full aspect-square object-cover"
-                                        data-ai-hint={avatar.imageHint}
-                                    />
+                    <div className="space-y-2">
+                        <Label>Profile Picture</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <button type="button" className="relative h-24 w-24 rounded-full">
+                                    <Avatar className="h-24 w-24">
+                                        <AvatarImage src={photoURL} alt={name || 'User'} />
+                                        <AvatarFallback>{getInitials(name)}</AvatarFallback>
+                                    </Avatar>
+                                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs font-semibold rounded-full opacity-0 hover:opacity-100 transition-opacity">
+                                        Change
+                                    </div>
                                 </button>
-                            ))}
-                        </div>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                                <div className="grid gap-4">
+                                    <h4 className="font-medium leading-none">Change Avatar</h4>
+                                    <Button 
+                                        type="button" 
+                                        variant="outline" 
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isLoading}
+                                    >
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        Upload from Gallery
+                                    </Button>
+                                    <Input 
+                                        type="file" 
+                                        ref={fileInputRef} 
+                                        onChange={handleFileChange}
+                                        className="hidden" 
+                                        accept="image/*"
+                                    />
+                                    <Separator />
+                                     <p className="text-sm text-muted-foreground">Or choose a pre-designed avatar</p>
+                                    <div className="grid grid-cols-4 gap-2 mt-2">
+                                        {AvatarPlaceholders.map(avatar => (
+                                            <button
+                                                key={avatar.id}
+                                                type="button"
+                                                onClick={() => handleAvatarSelect(avatar.imageUrl)}
+                                                className={cn(
+                                                    "rounded-full ring-2 ring-transparent hover:ring-primary focus:ring-primary focus:outline-none transition-all",
+                                                    photoURL === avatar.imageUrl && "ring-primary"
+                                                )}
+                                            >
+                                                <Image
+                                                    src={avatar.imageUrl}
+                                                    alt={avatar.description}
+                                                    width={60}
+                                                    height={60}
+                                                    className="rounded-full aspect-square object-cover"
+                                                    data-ai-hint={avatar.imageHint}
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                     </div>
-                    
+
                     <div className="space-y-2">
                         <Label htmlFor="name">Name</Label>
                         <Input id="name" value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading} />
@@ -169,6 +184,10 @@ export function ProfileForm() {
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <Input id="email" type="email" value={user?.email || ''} disabled />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input id="phone" type="tel" value={user?.phoneNumber || 'Not provided'} disabled />
                     </div>
                 </CardContent>
                 <CardFooter className="border-t pt-6 flex justify-end">

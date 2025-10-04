@@ -3,7 +3,6 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export default function AppLayout({
   children,
@@ -11,7 +10,6 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <FirebaseClientProvider>
       <AuthGuard>
         <SidebarProvider>
           <div className="flex min-h-screen">
@@ -25,6 +23,5 @@ export default function AppLayout({
           </div>
         </SidebarProvider>
       </AuthGuard>
-    </FirebaseClientProvider>
   );
 }

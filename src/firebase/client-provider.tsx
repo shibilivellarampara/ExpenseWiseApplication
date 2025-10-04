@@ -9,13 +9,17 @@ interface FirebaseClientProviderProps {
 }
 
 export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
-  const { firebaseApp, auth, firestore } = useMemo(() => getSdks(), []);
+  const sdks = useMemo(() => getSdks(), []);
+
+  if (!sdks.firebaseApp || !sdks.auth || !sdks.firestore) {
+    return <>{children}</>;
+  }
 
   return (
     <FirebaseProvider
-      firebaseApp={firebaseApp}
-      auth={auth}
-      firestore={firestore}
+      firebaseApp={sdks.firebaseApp}
+      auth={sdks.auth}
+      firestore={sdks.firestore}
     >
       {children}
     </FirebaseProvider>

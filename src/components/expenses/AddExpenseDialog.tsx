@@ -36,12 +36,20 @@ import { ScrollArea } from '../ui/scroll-area';
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
   return z.object({
     amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
-    categoryId: z.string().min(1, { message: 'Please select a category.' }),
+    date: z.date({ required_error: 'A date is required.' }),
+    
+    categoryId: settings?.isCategoryRequired
+      ? z.string().min(1, 'Please select a category.')
+      : z.string().optional(),
+    
+    paymentMethodId: settings?.isPaymentMethodRequired
+      ? z.string().min(1, 'Please select a payment method.')
+      : z.string().optional(),
+    
     description: settings?.isDescriptionRequired
       ? z.string().min(1, 'Description is required.')
       : z.string().optional(),
-    date: z.date({ required_error: 'A date is required.' }),
-    paymentMethodId: z.string().min(1, { message: 'Please select a payment method.' }),
+
     tagId: settings?.isTagRequired
       ? z.string().min(1, 'Please select a tag.')
       : z.string().optional(),
@@ -143,6 +151,8 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
     // Determine if fields are required for UI cues
     const isDescriptionRequired = userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false;
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
+    const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
+    const isPaymentMethodRequired = userProfile?.expenseFieldSettings?.isPaymentMethodRequired ?? true;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -179,7 +189,9 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     name="categoryId"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Category</FormLabel>
+                        <FormLabel>
+                          Category {isCategoryRequired ? '' : '(Optional)'}
+                        </FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                             <SelectTrigger>
@@ -187,6 +199,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                            {!isCategoryRequired && <SelectItem value="">No Category</SelectItem>}
                             {categories?.map(cat => (
                                 <SelectItem key={cat.id} value={cat.id}>
                                     <div className="flex items-center">
@@ -207,7 +220,9 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     name="paymentMethodId"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
+                        <FormLabel>
+                          Payment Method {isPaymentMethodRequired ? '' : '(Optional)'}
+                        </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
@@ -215,6 +230,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                            {!isPaymentMethodRequired && <SelectItem value="">No Payment Method</SelectItem>}
                             {paymentMethods?.map(method => (
                                 <SelectItem key={method.id} value={method.id}>
                                 <div className="flex items-center">

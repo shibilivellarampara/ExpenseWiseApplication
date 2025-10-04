@@ -11,6 +11,8 @@ export type UserProfile = {
   expenseFieldSettings?: {
     isDescriptionRequired?: boolean;
     isTagRequired?: boolean;
+    isCategoryRequired?: boolean;
+    isPaymentMethodRequired?: boolean;
   };
   createdAt?: Timestamp;
 };
@@ -40,11 +42,11 @@ export type Expense = {
   id: string;
   userId: string;
   amount: number;
-  description: string;
+  description?: string;
   date: Timestamp | Date; // Firestore Timestamp on read, Date on write
   createdAt: Timestamp;
-  categoryId: string;
-  paymentMethodId: string;
+  categoryId?: string;
+  paymentMethodId?: string;
   tagId?: string;
 };
 

@@ -17,7 +17,9 @@
           "description": "User preferences for which expense fields are mandatory.",
           "properties": {
             "isDescriptionRequired": { "type": "boolean", "default": false },
-            "isTagRequired": { "type": "boolean", "default": false }
+            "isTagRequired": { "type": "boolean", "default": false },
+            "isCategoryRequired": { "type": "boolean", "default": true },
+            "isPaymentMethodRequired": { "type": "boolean", "default": true }
           }
         }
       },
@@ -39,7 +41,7 @@
         "paymentMethodId": { "type": "string", "description": "Reference to the PaymentMethod document ID." },
         "tagId": { "type": "string", "description": "Reference to the Tag document ID." }
       },
-      "required": ["id", "userId", "amount", "date", "categoryId", "paymentMethodId"]
+      "required": ["id", "userId", "amount", "date"]
     },
     "Contribution": {
       "$schema": "http://json-schema.org/draft-07/schema#",

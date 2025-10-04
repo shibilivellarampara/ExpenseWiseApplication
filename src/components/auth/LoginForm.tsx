@@ -29,7 +29,7 @@ const formSchema = z.object({
 });
 
 const isEmail = (loginId: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginId);
-
+const isNumeric = (str: string) => /^\d+$/.test(str.replace(/\s/g, ''));
 
 export function LoginForm() {
   const { toast } = useToast();
@@ -57,7 +57,7 @@ export function LoginForm() {
   useEffect(() => {
     if (isEmail(loginId)) {
       setLoginMethod('email');
-    } else if (isPossiblePhoneNumber(loginId || '')) {
+    } else if (isPossiblePhoneNumber(loginId || '') || isNumeric(loginId)) {
       setLoginMethod('phone');
     } else {
       setLoginMethod(null);
@@ -171,7 +171,7 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Email or Phone Number</FormLabel>
                 <FormControl>
-                    {loginMethod === 'phone' || (field.value && field.value.startsWith('+')) ? (
+                    {loginMethod === 'phone' ? (
                         <PhoneInput
                             international
                             defaultCountry="IN"

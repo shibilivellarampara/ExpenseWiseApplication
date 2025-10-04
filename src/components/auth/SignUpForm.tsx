@@ -106,9 +106,9 @@ export function SignUpForm() {
 
       toast({
         title: 'Account created!',
-        description: "You're all set. Welcome to ExpenseWise.",
+        description: "You're all set. Please log in to continue.",
       });
-      router.push('/dashboard');
+      router.push('/login');
     } catch (error: any) {
       toast({
         variant: 'destructive',

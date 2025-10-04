@@ -9,6 +9,7 @@ import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { useMemo } from "react";
+import { cn } from "@/lib/utils";
 
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];

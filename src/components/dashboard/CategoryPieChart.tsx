@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
@@ -20,10 +21,10 @@ const renderActiveShape = (props: any, currencySymbol: string) => {
   const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
   const sin = Math.sin(-RADIAN * midAngle);
   const cos = Math.cos(-RADIAN * midAngle);
-  const sx = cx + (outerRadius + 10) * cos;
-  const sy = cy + (outerRadius + 10) * sin;
-  const mx = cx + (outerRadius + 20) * cos;
-  const my = cy + (outerRadius + 20) * sin;
+  const sx = cx + (outerRadius + 6) * cos;
+  const sy = cy + (outerRadius + 6) * sin;
+  const mx = cx + (outerRadius + 15) * cos;
+  const my = cy + (outerRadius + 15) * sin;
   const ex = mx + (cos >= 0 ? 1 : -1) * 12;
   const ey = my;
   const textAnchor = cos >= 0 ? 'start' : 'end';
@@ -47,14 +48,14 @@ const renderActiveShape = (props: any, currencySymbol: string) => {
         cy={cy}
         startAngle={startAngle}
         endAngle={endAngle}
-        innerRadius={outerRadius + 6}
-        outerRadius={outerRadius + 10}
+        innerRadius={outerRadius + 4}
+        outerRadius={outerRadius + 8}
         fill={fill}
       />
       <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
       <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="hsl(var(--foreground))" className="text-sm">{`${currencySymbol}${value.toFixed(2)}`}</text>
-      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="hsl(var(--muted-foreground))" className="text-xs">
+      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} textAnchor={textAnchor} fill="hsl(var(--foreground))" className="text-sm">{`${currencySymbol}${value.toFixed(2)}`}</text>
+      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} dy={18} textAnchor={textAnchor} fill="hsl(var(--muted-foreground))" className="text-xs">
         {`(${(percent * 100).toFixed(2)}%)`}
       </text>
     </g>
@@ -91,7 +92,7 @@ export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps
           cx="50%"
           cy="50%"
           innerRadius={80}
-          outerRadius={120}
+          outerRadius={110}
           fill="hsl(var(--primary))"
           dataKey="value"
           nameKey="name"
@@ -102,6 +103,7 @@ export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps
           ))}
         </Pie>
         <Tooltip
+          cursor={null}
           contentStyle={{
             background: "hsl(var(--background))",
             border: "1px solid hsl(var(--border))",

@@ -30,7 +30,7 @@ export function CategorySettings() {
 
     const renderIcon = (iconName: string) => {
         const IconComponent = (LucideIcons as any)[iconName];
-        return IconComponent ? <IconComponent className="h-5 w-5 mr-3" /> : <Pilcrow className="h-5 w-5 mr-3" />;
+        return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
     };
 
     const handleAddItem = async () => {
@@ -55,8 +55,6 @@ export function CategorySettings() {
             const batch = writeBatch(firestore);
             const itemRef = doc(firestore, `users/${user.uid}/categories`, itemId);
             batch.delete(itemRef);
-            // Note: This does not delete associated expenses, only the category.
-            // A more robust solution might re-assign expenses to an "Uncategorized" category.
             await batch.commit();
             toast({ title: 'Category Removed' });
         } catch (error: any) {
@@ -123,7 +121,7 @@ export function CategorySettings() {
                                     </>
                                 ) : (
                                     <>
-                                        <div className="flex items-center flex-1">
+                                        <div className="flex items-center flex-1 gap-2">
                                             {renderIcon(item.icon)}
                                             <span>{item.name}</span>
                                         </div>

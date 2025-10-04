@@ -30,7 +30,7 @@ export function PaymentMethodSettings() {
     
     const renderIcon = (iconName: string) => {
         const IconComponent = (LucideIcons as any)[iconName];
-        return IconComponent ? <IconComponent className="h-5 w-5 mr-3" /> : <Pilcrow className="h-5 w-5 mr-3" />;
+        return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
     };
 
     const handleAddItem = async () => {
@@ -121,7 +121,7 @@ export function PaymentMethodSettings() {
                                     </>
                                 ) : (
                                     <>
-                                        <div className="flex items-center flex-1">
+                                        <div className="flex items-center flex-1 gap-2">
                                           {renderIcon(item.icon)}
                                           <span>{item.name}</span>
                                         </div>

@@ -12,5 +12,43 @@
       "imageUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTk1MDY2MzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "person portrait"
     }
+  ],
+  "avatarPlaceholders": [
+    {
+      "id": "avatar-1",
+      "description": "Abstract avatar with blue and purple tones",
+      "imageUrl": "https://picsum.photos/seed/avatar1/200/200",
+      "imageHint": "abstract avatar"
+    },
+    {
+      "id": "avatar-2",
+      "description": "Abstract avatar with green and yellow tones",
+      "imageUrl": "https://picsum.photos/seed/avatar2/200/200",
+      "imageHint": "abstract avatar"
+    },
+    {
+      "id": "avatar-3",
+      "description": "Abstract avatar with red and orange tones",
+      "imageUrl": "https://picsum.photos/seed/avatar3/200/200",
+      "imageHint": "abstract avatar"
+    },
+    {
+      "id": "avatar-4",
+      "description": "Abstract avatar with geometric patterns",
+      "imageUrl": "https://picsum.photos/seed/avatar4/200/200",
+      "imageHint": "geometric avatar"
+    },
+    {
+      "id": "avatar-5",
+      "description": "Minimalist avatar with a single color",
+      "imageUrl": "https://picsum.photos/seed/avatar5/200/200",
+      "imageHint": "minimalist avatar"
+    },
+    {
+      "id": "avatar-6",
+      "description": "Abstract avatar with watercolor effect",
+      "imageUrl": "https://picsum.photos/seed/avatar6/200/200",
+      "imageHint": "watercolor avatar"
+    }
   ]
 }

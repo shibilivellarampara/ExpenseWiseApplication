@@ -35,7 +35,7 @@ export function ProfileForm() {
     const { toast } = useToast();
 
     const [name, setName] = useState('');
-    const [photoURL, setPhotoURL] = useState('');
+    const [photoURL, setPhotoURL] = useState<string | null>(null);
     const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
 
     // State for phone number update
@@ -173,10 +173,10 @@ export function ProfileForm() {
     useEffect(() => {
         if (userProfile) {
             setName(userProfile.name || '');
-            setPhotoURL(userProfile.photoURL || '');
+            setPhotoURL(userProfile.photoURL || null);
         } else if (user) {
             setName(user.displayName || '');
-            setPhotoURL(user.photoURL || '');
+            setPhotoURL(user.photoURL || null);
         }
         setNewAvatarFile(null);
     }, [userProfile, user]);
@@ -208,7 +208,7 @@ export function ProfileForm() {
                             <PopoverTrigger asChild>
                                 <button type="button" className="relative h-24 w-24 rounded-full">
                                     <Avatar className="h-24 w-24">
-                                        <AvatarImage src={photoURL} alt={name || 'User'} />
+                                        <AvatarImage src={photoURL || undefined} alt={name || 'User'} />
                                         <AvatarFallback>{getInitials(name)}</AvatarFallback>
                                     </Avatar>
                                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs font-semibold rounded-full opacity-0 hover:opacity-100 transition-opacity">

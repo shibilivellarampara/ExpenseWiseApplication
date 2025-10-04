@@ -14,6 +14,7 @@ export type UserProfile = {
     isCategoryRequired?: boolean;
   };
   createdAt?: Timestamp;
+  sharedExpenseIds?: string[];
 };
 
 export type Category = {
@@ -51,6 +52,7 @@ export type Expense = {
   accountId: string;
   categoryId?: string;
   tagId?: string;
+  sharedExpenseId?: string;
 };
 
 export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagId'> & {
@@ -62,25 +64,13 @@ export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagId'
   balanceAfterTransaction?: number;
 };
 
-
-export type Contribution = {
+export type SharedExpense = {
   id: string;
-  userId: string; // User who created this entry
-  totalAmount: number;
-  description: string;
-  date: Timestamp | Date;
-  paidById: string; // UID of the user who paid
-  contributorShares: {
-    userId: string;
-    share: number;
-  }[];
+  name: string;
+  ownerId: string;
+  memberIds: string[];
   createdAt: Timestamp;
-};
-
-export type EnrichedContribution = Omit<Contribution, 'date'> & {
-  date: Date;
-  paidBy?: UserProfile;
-  contributors?: (UserProfile & { share: number })[];
+  members?: UserProfile[]; // populated on the client
 }
 
 // This is a legacy type, replaced by Account

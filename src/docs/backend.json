@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -11,7 +12,7 @@
         "email": { "type": "string", "description": "The user's email address.", "format": "email" },
         "photoURL": { "type": "string", "description": "URL of the user's profile picture.", "format": "uri" },
         "phoneNumber": { "type": "string", "description": "The user's phone number." },
-        "defaultCurrency": { "type": "string", "description": "The user's default currency code (e.g., 'USD', 'INR').", "default": "USD" },
+        "defaultCurrency": { "type": "string", "description": "The user's default currency code (e.g., 'USD', 'INR').", "default": "INR" },
         "expenseFieldSettings": {
           "type": "object",
           "description": "User preferences for which expense fields are mandatory.",
@@ -20,6 +21,11 @@
             "isTagRequired": { "type": "boolean", "default": false },
             "isCategoryRequired": { "type": "boolean", "default": true }
           }
+        },
+        "sharedExpenseIds": {
+          "type": "array",
+          "description": "A list of IDs of the shared expenses this user is a member of.",
+          "items": { "type": "string" }
         }
       },
       "required": ["id", "name", "email"]
@@ -39,7 +45,8 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "accountId": { "type": "string", "description": "Reference to the Account document ID." },
         "categoryId": { "type": "string", "description": "Reference to the Category document ID (for expenses)." },
-        "tagId": { "type": "string", "description": "Reference to the Tag document ID." }
+        "tagId": { "type": "string", "description": "Reference to the Tag document ID." },
+        "sharedExpenseId": { "type": "string", "description": "Reference to the SharedExpense this transaction belongs to." }
       },
       "required": ["id", "userId", "type", "amount", "date", "accountId"]
     },
@@ -53,34 +60,11 @@
         "userId": { "type": "string" },
         "name": { "type": "string" },
         "type": { "type": "string", "enum": ["bank", "credit_card", "wallet", "cash"] },
-        "balance": { "type": "number", "description": "Current balance or available credit." },
+        "balance": { "type": "number", "description": "Current balance or outstanding amount." },
         "limit": { "type": "number", "description": "Credit limit for credit cards." },
         "icon": { "type": "string", "description": "Name of the lucide-react icon." }
       },
       "required": ["id", "userId", "name", "type", "balance", "icon"]
-    },
-    "Contribution": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Contribution",
-      "type": "object",
-      "description": "Represents a contribution record for shared expenses.",
-      "properties": {
-        "id": { "type": "string" },
-        "totalAmount": { "type": "number" },
-        "description": { "type": "string" },
-        "userId": { "type": "string" },
-        "contributorShares": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "userId": { "type": "string" },
-              "share": { "type": "number" }
-            }
-          }
-        }
-      },
-      "required": ["id", "totalAmount", "description", "userId"]
     },
     "Category": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -107,10 +91,27 @@
         "userId": { "type": "string" }
       },
       "required": ["name", "icon", "userId"]
+    },
+    "SharedExpense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SharedExpense",
+      "type": "object",
+      "description": "Represents a shared expense space where multiple users can add transactions.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "memberIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "ownerId", "memberIds"]
     }
   },
   "auth": {
-    "providers": ["password", "anonymous", "phone"]
+    "providers": ["password", "anonymous", "phone", "google.com"]
   },
   "firestore": {
     "structure": [
@@ -127,16 +128,16 @@
         "definition": { "entityName": "Account", "schema": { "$ref": "#/entities/Account" } }
       },
       {
-        "path": "/users/{userId}/contributions/{contributionId}",
-        "definition": { "entityName": "Contribution", "schema": { "$ref": "#/entities/Contribution" } }
-      },
-      {
         "path": "/users/{userId}/categories/{categoryId}",
         "definition": { "entityName": "Category", "schema": { "$ref": "#/entities/Category" } }
       },
       {
         "path": "/users/{userId}/tags/{tagId}",
         "definition": { "entityName": "Tag", "schema": { "$ref": "#/entities/Tag" } }
+      },
+       {
+        "path": "/shared_expenses/{sharedExpenseId}",
+        "definition": { "entityName": "SharedExpense", "schema": { "$ref": "#/entities/SharedExpense" } }
       }
     ]
   }

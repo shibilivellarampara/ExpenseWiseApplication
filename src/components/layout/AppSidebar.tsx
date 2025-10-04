@@ -17,7 +17,8 @@ import {
   Users,
   FileUp,
   CircleUser,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Briefcase,
 } from 'lucide-react';
 import { Logo } from '../Logo';
 
@@ -25,7 +26,7 @@ const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard />, label: 'Dashboard' },
   { href: '/expenses', icon: <ArrowRightLeft />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet />, label: 'Accounts' },
-  { href: '/contributions', icon: <Users />, label: 'Contributions' },
+  { href: '/shared-expenses', icon: <Briefcase />, label: 'Shared Expenses' },
   { href: '/import', icon: <FileUp />, label: 'Import' },
   { href: '/profile', icon: <CircleUser />, label: 'Profile' },
 ];

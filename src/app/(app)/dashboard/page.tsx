@@ -126,7 +126,7 @@ export default function DashboardPage() {
 
 
     return (
-        <div className="space-y-8">
+        <div className="w-full max-w-7xl mx-auto space-y-8">
             <PageHeader title="Welcome to your Dashboard" description="Here's a summary of your financial activity." />
       
             <DashboardStats 

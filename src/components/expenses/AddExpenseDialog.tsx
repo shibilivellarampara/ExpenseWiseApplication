@@ -9,6 +9,16 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -31,6 +41,7 @@ import { UserProfile, Category, PaymentMethod, Tag } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import * as LucideIcons from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -55,6 +66,101 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
       : z.string().optional(),
   });
 };
+
+
+function DatePicker({ field }: { field: any }) {
+  const [open, setOpen] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+
+  if (isDesktop) {
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <FormControl>
+            <Button
+              variant={'outline'}
+              className={cn(
+                'w-full pl-3 text-left font-normal',
+                !field.value && 'text-muted-foreground'
+              )}
+            >
+              {field.value ? (
+                format(field.value, 'PPP')
+              ) : (
+                <span>Pick a date</span>
+              )}
+              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+            </Button>
+          </FormControl>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={field.value}
+            onSelect={(date) => {
+              field.onChange(date);
+              setOpen(false);
+            }}
+            disabled={(date) =>
+              date > new Date() || date < new Date('1900-01-01')
+            }
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={setOpen}>
+      <DrawerTrigger asChild>
+        <FormControl>
+            <Button
+              variant={'outline'}
+              className={cn(
+                'w-full pl-3 text-left font-normal',
+                !field.value && 'text-muted-foreground'
+              )}
+            >
+              {field.value ? (
+                format(field.value, 'PPP')
+              ) : (
+                <span>Pick a date</span>
+              )}
+              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+            </Button>
+          </FormControl>
+      </DrawerTrigger>
+      <DrawerContent>
+        <DrawerHeader className="text-left">
+            <DrawerTitle>Select Date</DrawerTitle>
+            <DrawerDescription>
+                Choose the date when the expense occurred.
+            </DrawerDescription>
+        </DrawerHeader>
+        <div className="p-4">
+        <Calendar
+          mode="single"
+          selected={field.value}
+          onSelect={(date) => {
+            field.onChange(date);
+            setOpen(false);
+          }}
+          disabled={(date) =>
+            date > new Date() || date < new Date('1900-01-01')
+          }
+          initialFocus
+        />
+        </div>
+        <DrawerFooter>
+            <DrawerClose asChild>
+                <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  )
+}
 
 
 export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
@@ -294,45 +400,15 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                 />
 
                 <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
                     <FormItem className="flex flex-col">
-                    <FormLabel>Date of Expense</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button
-                            variant={'outline'}
-                            className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                            )}
-                            >
-                            {field.value ? (
-                                format(field.value, 'PPP')
-                            ) : (
-                                <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                        </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                            date > new Date() || date < new Date('1900-01-01')
-                            }
-                            initialFocus
-                        />
-                        </PopoverContent>
-                    </Popover>
-                    <FormMessage />
+                      <FormLabel>Date of Expense</FormLabel>
+                      <DatePicker field={field} />
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
             </form>
             </Form>

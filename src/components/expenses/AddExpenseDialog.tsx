@@ -138,20 +138,20 @@ function DatePicker({ field }: { field: any }) {
                 Choose the date when the transaction occurred.
             </DrawerDescription>
         </DrawerHeader>
-        <div className="p-4 flex justify-center">
-        <Calendar
-          mode="single"
-          selected={field.value}
-          onSelect={(date) => {
-            field.onChange(date);
-            setDatePickerOpen(false);
-          }}
-          disabled={(date) =>
-            date > new Date() || date < new Date('1900-01-01')
-          }
-          initialFocus
-          className="mx-auto"
-        />
+        <div className="p-4">
+          <Calendar
+            mode="single"
+            selected={field.value}
+            onSelect={(date) => {
+              field.onChange(date);
+              setDatePickerOpen(false);
+            }}
+            disabled={(date) =>
+              date > new Date() || date < new Date('1900-01-01')
+            }
+            initialFocus
+            className="mx-auto"
+          />
         </div>
         <DrawerFooter className="pt-2">
             <DrawerClose asChild>

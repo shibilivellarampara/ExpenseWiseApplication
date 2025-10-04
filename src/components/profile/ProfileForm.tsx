@@ -278,6 +278,9 @@ export function ProfileForm() {
                             <PopoverContent className="w-80">
                                 <div className="grid gap-4">
                                     <h4 className="font-medium leading-none">Change Avatar</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                        Upload a custom photo or select a pre-designed avatar.
+                                    </p>
                                     <Button 
                                         type="button" 
                                         variant="outline" 
@@ -295,20 +298,19 @@ export function ProfileForm() {
                                         accept="image/*"
                                     />
                                     <Separator />
-                                     <p className="text-sm text-muted-foreground">Or choose a pre-designed avatar</p>
-                                    <div className="grid grid-cols-4 gap-2 mt-2">
-                                        {AvatarList.map((AvatarComponent, index) => (
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {AvatarList.map((AvatarItem, index) => (
                                             <button
                                                 key={index}
                                                 type="button"
-                                                onClick={() => handleAvatarSelect(AvatarComponent.svgString)}
+                                                onClick={() => handleAvatarSelect(AvatarItem.svgString)}
                                                 className={cn(
-                                                    "rounded-full ring-2 ring-transparent hover:ring-primary focus:ring-primary focus:outline-none transition-all",
-                                                    currentPhoto === `data:image/svg+xml;base64,${btoa(AvatarComponent.svgString)}` && "ring-primary"
+                                                    "rounded-full p-1 ring-2 ring-transparent hover:ring-primary focus:ring-primary focus:outline-none transition-all",
+                                                    currentPhoto === `data:image/svg+xml;base64,${btoa(AvatarItem.svgString)}` && "ring-primary ring-offset-2"
                                                 )}
                                             >
                                                <div className="w-16 h-16 rounded-full overflow-hidden">
-                                                    <AvatarComponent.component />
+                                                    <AvatarItem.component />
                                                </div>
                                             </button>
                                         ))}

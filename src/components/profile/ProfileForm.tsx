@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useFirestore, useStorage, useAuth } from "@/firebase";
+import { useUser, useFirestore, useStorage, useAuth, useDoc, useMemoFirebase } from "@/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,19 +19,23 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Separator } from "../ui/separator";
+import { UserProfile } from "@/lib/types";
 
 export function ProfileForm() {
     const { user } = useUser();
     const firestore = useFirestore();
     const storage = useStorage();
     const auth = useAuth();
+
+    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+    const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
     
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
 
-    const [name, setName] = useState(user?.displayName || '');
-    const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
+    const [name, setName] = useState('');
+    const [photoURL, setPhotoURL] = useState('');
     const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
 
     // State for phone number update
@@ -165,12 +169,30 @@ export function ProfileForm() {
         }
     };
 
-    // Effect to reset form state when user changes (e.g., on logout/login)
+    // Effect to reset form state when user profile from Firestore is loaded
     useEffect(() => {
-        setName(user?.displayName || '');
-        setPhotoURL(user?.photoURL || '');
+        if (userProfile) {
+            setName(userProfile.name || '');
+            setPhotoURL(userProfile.photoURL || '');
+        } else if (user) {
+            setName(user.displayName || '');
+            setPhotoURL(user.photoURL || '');
+        }
         setNewAvatarFile(null);
-    }, [user]);
+    }, [userProfile, user]);
+
+    if (isProfileLoading) {
+        return (
+            <Card>
+                <CardHeader>
+                  <CardTitle className="font-headline">Profile Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 flex items-center justify-center py-10">
+                    <Loader2 className="mx-auto animate-spin" />
+                </CardContent>
+            </Card>
+        )
+    }
 
     return (
         <Card className="h-full">
@@ -248,12 +270,12 @@ export function ProfileForm() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" value={user?.email || ''} disabled />
+                        <Input id="email" type="email" value={userProfile?.email || ''} disabled />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
                         <div className="flex items-center gap-2">
-                            <Input id="phone" type="tel" value={user?.phoneNumber || 'Not provided'} disabled />
+                            <Input id="phone" type="tel" value={userProfile?.phoneNumber || 'Not provided'} disabled />
                             <Dialog open={showPhoneDialog} onOpenChange={setShowPhoneDialog}>
                                 <DialogTrigger asChild>
                                     <Button type="button" variant="outline">Edit</Button>

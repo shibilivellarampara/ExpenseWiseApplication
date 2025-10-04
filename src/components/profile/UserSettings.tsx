@@ -38,7 +38,7 @@ export function UserSettings() {
     
     const form = useForm<z.infer<typeof currencySchema>>({
         resolver: zodResolver(currencySchema),
-        defaultValues: {
+        values: { // Use `values` instead of `defaultValues` for re-initialization
             defaultCurrency: userProfile?.defaultCurrency || 'USD'
         }
     });
@@ -46,7 +46,7 @@ export function UserSettings() {
     // Effect to reset form when user profile loads/changes
     useEffect(() => {
         if (userProfile?.defaultCurrency) {
-            form.setValue('defaultCurrency', userProfile.defaultCurrency);
+            form.reset({ defaultCurrency: userProfile.defaultCurrency });
         }
     }, [userProfile, form]);
     
@@ -131,3 +131,5 @@ export function UserSettings() {
         </div>
     );
 }
+
+    

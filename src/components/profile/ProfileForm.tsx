@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useFirestore, updateDocumentNonBlocking, useStorage } from "@/firebase";
+import { useUser, useFirestore, useStorage } from "@/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Loader2, Upload } from "lucide-react";
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { updateProfile } from "firebase/auth";
-import { doc } from "firebase/firestore";
+import { doc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export function ProfileForm() {
@@ -19,11 +19,17 @@ export function ProfileForm() {
     const firestore = useFirestore();
     const storage = useStorage();
     const avatarImage = PlaceHolderImages.find((img) => img.id === 'avatar');
+    
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
+
     const [name, setName] = useState(user?.displayName || '');
+    // photoURL state now holds the local preview or the remote URL
     const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
+    // This new state will hold the file object to be uploaded
+    const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const getInitials = (name?: string | null) => {
@@ -35,24 +41,15 @@ export function ProfileForm() {
         return name.substring(0, 2).toUpperCase();
     };
     
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Updated to show an instant preview
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file || !user) return;
 
-        setIsUploading(true);
-        try {
-            const storageRef = ref(storage, `avatars/${user.uid}/${file.name}`);
-            const uploadResult = await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(uploadResult.ref);
-            
-            setPhotoURL(downloadURL);
-            toast({ title: "Image Uploaded", description: "Your new profile picture is ready. Click 'Save Changes' to apply it." });
-
-        } catch (error: any) {
-             toast({ variant: "destructive", title: "Upload Failed", description: error.message });
-        } finally {
-            setIsUploading(false);
-        }
+        // Create a local URL for instant preview
+        const localImageUrl = URL.createObjectURL(file);
+        setPhotoURL(localImageUrl);
+        setNewAvatarFile(file); // Store the file for later upload
     };
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -60,25 +57,45 @@ export function ProfileForm() {
         if (!user || !firestore) return;
 
         setIsLoading(true);
+        
+        let finalPhotoURL = user.photoURL || '';
+
+        // Check if a new avatar file was selected
+        if (newAvatarFile) {
+            setIsUploading(true);
+            try {
+                const storageRef = ref(storage, `avatars/${user.uid}/${newAvatarFile.name}`);
+                const uploadResult = await uploadBytes(storageRef, newAvatarFile);
+                finalPhotoURL = await getDownloadURL(uploadResult.ref);
+                setNewAvatarFile(null); // Clear the file after upload
+            } catch (error: any) {
+                toast({ variant: "destructive", title: "Upload Failed", description: error.message });
+                setIsLoading(false);
+                setIsUploading(false);
+                return; // Stop if upload fails
+            }
+            setIsUploading(false);
+        }
+
         try {
-            // Use current state values for update
-            const newName = name;
-            const newPhotoURL = photoURL;
-            
             await updateProfile(user, {
-                displayName: newName,
-                photoURL: newPhotoURL,
+                displayName: name,
+                photoURL: finalPhotoURL,
             });
 
             const userDocRef = doc(firestore, 'users', user.uid);
-            updateDocumentNonBlocking(userDocRef, {
-                name: newName,
-                photoURL: newPhotoURL,
-            });
+            // Use setDoc with merge to be safe
+            await setDoc(userDocRef, {
+                name: name,
+                photoURL: finalPhotoURL,
+            }, { merge: true });
 
+            // Update the local state to the final URL
+            if(finalPhotoURL) setPhotoURL(finalPhotoURL);
+            
             toast({ title: "Profile Updated", description: "Your changes have been saved." });
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Error", description: error.message });
+            toast({ variant: "destructive", title: "Error updating profile", description: error.message });
         } finally {
             setIsLoading(false);
         }
@@ -110,13 +127,9 @@ export function ProfileForm() {
                                 type="button" 
                                 variant="outline" 
                                 onClick={() => fileInputRef.current?.click()}
-                                disabled={isUploading}
+                                disabled={isLoading}
                             >
-                                 {isUploading ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                 ) : (
-                                    <Upload className="mr-2 h-4 w-4" />
-                                 )}
+                                <Upload className="mr-2 h-4 w-4" />
                                 Upload from Gallery
                              </Button>
                              <p className="text-xs text-muted-foreground">Recommended: Square image, under 2MB.</p>
@@ -124,7 +137,7 @@ export function ProfileForm() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="name">Name</Label>
-                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
@@ -132,9 +145,9 @@ export function ProfileForm() {
                     </div>
                 </CardContent>
                 <CardFooter className="border-t pt-6 flex justify-end">
-                    <Button type="submit" disabled={isLoading || isUploading}>
-                        {(isLoading || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save Changes
+                    <Button type="submit" disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isUploading ? 'Uploading...' : 'Save Changes'}
                     </Button>
                 </CardFooter>
             </form>

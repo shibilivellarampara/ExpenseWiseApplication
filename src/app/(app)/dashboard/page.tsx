@@ -1,3 +1,4 @@
+
 'use client';
 
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
@@ -106,9 +107,9 @@ export default function DashboardPage() {
                         <CardHeader className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
                             <CardTitle className="font-headline">Expenses Overview</CardTitle>
                              <TabsList>
-                                <TabsTrigger value="week">This Week</TabsTrigger>
-                                <TabsTrigger value="month">This Month</TabsTrigger>
-                                <TabsTrigger value="year">This Year</TabsTrigger>
+                                <TabsTrigger value="week">W</TabsTrigger>
+                                <TabsTrigger value="month">M</TabsTrigger>
+                                <TabsTrigger value="year">Y</TabsTrigger>
                             </TabsList>
                         </CardHeader>
                         <CardContent className="pl-2">

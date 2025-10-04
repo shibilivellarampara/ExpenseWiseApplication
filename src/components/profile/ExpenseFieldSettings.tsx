@@ -3,8 +3,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
+import { doc } from "firebase/firestore";
 import { UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,20 +20,19 @@ export function ExpenseFieldSettings() {
 
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-    const handleSettingChange = async (key: keyof NonNullable<UserProfile['expenseFieldSettings']>, value: boolean) => {
+    const handleSettingChange = (key: keyof NonNullable<UserProfile['expenseFieldSettings']>, value: boolean) => {
         if (!userProfileRef) return;
+        
+        const settingsData = {
+            expenseFieldSettings: {
+                ...userProfile?.expenseFieldSettings,
+                [key]: value,
+            }
+        };
 
-        try {
-            await setDoc(userProfileRef, {
-                expenseFieldSettings: {
-                    ...userProfile?.expenseFieldSettings,
-                    [key]: value,
-                }
-            }, { merge: true });
-            toast({ title: "Settings Updated" });
-        } catch (error: any) {
-            toast({ variant: "destructive", title: "Error", description: "Could not save your setting." });
-        }
+        setDocumentNonBlocking(userProfileRef, settingsData, { merge: true });
+
+        toast({ title: "Settings Updated" });
     }
 
     const isDescriptionRequired = userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false;

@@ -13,5 +13,5 @@ const currencySymbols: { [key: string]: string } = {
 };
   
 export function getCurrencySymbol(currencyCode: string = 'INR'): string {
-    return currencySymbols[currencyCode] || '₹';
+    return currencySymbols[currencyCode] || '\u20B9';
 }

@@ -29,7 +29,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, setHours, setMinutes, getHours, getMinutes } from 'date-fns';
 import { Checkbox } from '../ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +39,7 @@ import { collection, serverTimestamp } from 'firebase/firestore';
 import { UserProfile } from '@/lib/types';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 
 const contributionSchema = z.object({
@@ -50,13 +51,58 @@ const contributionSchema = z.object({
 });
 
 
-function DatePicker({ field }: { field: any }) {
-  const [open, setOpen] = useState(false);
+function DateTimePicker({ field }: { field: any }) {
+  const [isDatePickerOpen, setDatePickerOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date || !field.value) return;
+    const newDate = setHours(setMinutes(date, getMinutes(field.value)), getHours(field.value));
+    field.onChange(newDate);
+     if (!isDesktop) {
+        setDatePickerOpen(false);
+    }
+  };
+
+  const handleTimeChange = (part: 'hours' | 'minutes', value: string) => {
+    const numberValue = parseInt(value, 10);
+    if (!field.value) return;
+    const newDate = part === 'hours' ? setHours(field.value, numberValue) : setMinutes(field.value, numberValue);
+    field.onChange(newDate);
+  }
+
+  const calendar = (
+     <div className="space-y-2">
+      <Calendar
+        mode="single"
+        selected={field.value}
+        onSelect={handleDateSelect}
+        disabled={(date) =>
+          date > new Date() || date < new Date('1900-01-01')
+        }
+        initialFocus
+        className="mx-auto"
+      />
+      <div className="flex gap-2 justify-center px-4">
+          <Select onValueChange={(value) => handleTimeChange('hours', value)} value={String(getHours(field.value))}>
+              <SelectTrigger><SelectValue/></SelectTrigger>
+              <SelectContent>
+                  {Array.from({length: 24}, (_, i) => <SelectItem key={i} value={String(i)}>{String(i).padStart(2, '0')}</SelectItem>)}
+              </SelectContent>
+          </Select>
+           <Select onValueChange={(value) => handleTimeChange('minutes', value)} value={String(getMinutes(field.value))}>
+              <SelectTrigger><SelectValue/></SelectTrigger>
+              <SelectContent>
+                  {Array.from({length: 60}, (_, i) => <SelectItem key={i} value={String(i)}>{String(i).padStart(2, '0')}</SelectItem>)}
+              </SelectContent>
+          </Select>
+      </div>
+    </div>
+  )
 
   if (isDesktop) {
     return (
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={isDatePickerOpen} onOpenChange={setDatePickerOpen}>
         <PopoverTrigger asChild>
           <FormControl>
             <Button
@@ -67,7 +113,7 @@ function DatePicker({ field }: { field: any }) {
               )}
             >
               {field.value ? (
-                format(field.value, 'PPP')
+                format(field.value, 'PPP, hh:mm a')
               ) : (
                 <span>Pick a date</span>
               )}
@@ -76,25 +122,14 @@ function DatePicker({ field }: { field: any }) {
           </FormControl>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={field.value}
-            onSelect={(date) => {
-              field.onChange(date);
-              setOpen(false);
-            }}
-            disabled={(date) =>
-              date > new Date() || date < new Date('1900-01-01')
-            }
-            initialFocus
-          />
+          {calendar}
         </PopoverContent>
       </Popover>
     );
   }
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <Drawer open={isDatePickerOpen} onOpenChange={setDatePickerOpen}>
       <DrawerTrigger asChild>
         <FormControl>
             <Button
@@ -105,7 +140,7 @@ function DatePicker({ field }: { field: any }) {
               )}
             >
               {field.value ? (
-                format(field.value, 'PPP')
+                format(field.value, 'PPP, hh:mm a')
               ) : (
                 <span>Pick a date</span>
               )}
@@ -115,29 +150,17 @@ function DatePicker({ field }: { field: any }) {
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="text-left">
-            <DrawerTitle>Select Date</DrawerTitle>
+            <DrawerTitle>Select Date & Time</DrawerTitle>
             <DrawerDescription>
-                Choose the date when the expense occurred.
+                Choose the date and time when the expense occurred.
             </DrawerDescription>
         </DrawerHeader>
         <div className="p-4">
-          <Calendar
-            mode="single"
-            selected={field.value}
-            onSelect={(date) => {
-              field.onChange(date);
-              setOpen(false);
-            }}
-            disabled={(date) =>
-              date > new Date() || date < new Date('1900-01-01')
-            }
-            initialFocus
-            className="mx-auto"
-          />
+          {calendar}
         </div>
         <DrawerFooter className="pt-2">
             <DrawerClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline">Done</Button>
             </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -264,7 +287,7 @@ export function AddContributionSheet({ children, users }: AddContributionSheetPr
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
                             <FormLabel>Date</FormLabel>
-                            <DatePicker field={field} />
+                            <DateTimePicker field={field} />
                             <FormMessage />
                         </FormItem>
                     )}
@@ -354,5 +377,3 @@ export function AddContributionSheet({ children, users }: AddContributionSheetPr
     </Sheet>
   );
 }
-
-    

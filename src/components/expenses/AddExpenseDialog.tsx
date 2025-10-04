@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
@@ -30,7 +29,7 @@ import { CalendarIcon, Loader2, Pilcrow } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, setHours, setMinutes, getHours, getMinutes } from 'date-fns';
 import { useState, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
@@ -67,9 +66,54 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
 };
 
 
-function DatePicker({ field }: { field: any }) {
+function DateTimePicker({ field }: { field: any }) {
   const [isDatePickerOpen, setDatePickerOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date || !field.value) return;
+    const newDate = setHours(setMinutes(date, getMinutes(field.value)), getHours(field.value));
+    field.onChange(newDate);
+    if (!isDesktop) {
+        setDatePickerOpen(false);
+    }
+  };
+
+  const handleTimeChange = (part: 'hours' | 'minutes', value: string) => {
+    const numberValue = parseInt(value, 10);
+    if (!field.value) return;
+    const newDate = part === 'hours' ? setHours(field.value, numberValue) : setMinutes(field.value, numberValue);
+    field.onChange(newDate);
+  }
+
+  const calendar = (
+     <div className="space-y-2">
+      <Calendar
+        mode="single"
+        selected={field.value}
+        onSelect={handleDateSelect}
+        disabled={(date) =>
+          date > new Date() || date < new Date('1900-01-01')
+        }
+        initialFocus
+        className="mx-auto"
+      />
+      <div className="flex gap-2 justify-center px-4">
+          <Select onValueChange={(value) => handleTimeChange('hours', value)} value={String(getHours(field.value))}>
+              <SelectTrigger><SelectValue/></SelectTrigger>
+              <SelectContent>
+                  {Array.from({length: 24}, (_, i) => <SelectItem key={i} value={String(i)}>{String(i).padStart(2, '0')}</SelectItem>)}
+              </SelectContent>
+          </Select>
+           <Select onValueChange={(value) => handleTimeChange('minutes', value)} value={String(getMinutes(field.value))}>
+              <SelectTrigger><SelectValue/></SelectTrigger>
+              <SelectContent>
+                  {Array.from({length: 60}, (_, i) => <SelectItem key={i} value={String(i)}>{String(i).padStart(2, '0')}</SelectItem>)}
+              </SelectContent>
+          </Select>
+      </div>
+    </div>
+  )
 
   if (isDesktop) {
     return (
@@ -84,7 +128,7 @@ function DatePicker({ field }: { field: any }) {
               )}
             >
               {field.value ? (
-                format(field.value, 'PPP')
+                format(field.value, 'PPP, hh:mm a')
               ) : (
                 <span>Pick a date</span>
               )}
@@ -93,18 +137,7 @@ function DatePicker({ field }: { field: any }) {
           </FormControl>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={field.value}
-            onSelect={(date) => {
-              field.onChange(date);
-              setDatePickerOpen(false);
-            }}
-            disabled={(date) =>
-              date > new Date() || date < new Date('1900-01-01')
-            }
-            initialFocus
-          />
+          {calendar}
         </PopoverContent>
       </Popover>
     );
@@ -122,7 +155,7 @@ function DatePicker({ field }: { field: any }) {
               )}
             >
               {field.value ? (
-                format(field.value, 'PPP')
+                format(field.value, 'PPP, hh:mm a')
               ) : (
                 <span>Pick a date</span>
               )}
@@ -132,29 +165,17 @@ function DatePicker({ field }: { field: any }) {
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="text-left">
-            <DrawerTitle>Select Date</DrawerTitle>
+            <DrawerTitle>Select Date & Time</DrawerTitle>
             <DrawerDescription>
-                Choose the date when the transaction occurred.
+                Choose the date and time when the transaction occurred.
             </DrawerDescription>
         </DrawerHeader>
         <div className="p-4">
-          <Calendar
-            mode="single"
-            selected={field.value}
-            onSelect={(date) => {
-              field.onChange(date);
-              setDatePickerOpen(false);
-            }}
-            disabled={(date) =>
-              date > new Date() || date < new Date('1900-01-01')
-            }
-            initialFocus
-            className="mx-auto"
-          />
+         {calendar}
         </div>
         <DrawerFooter className="pt-2">
             <DrawerClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline">Done</Button>
             </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -240,7 +261,7 @@ function ExpenseForm({
                     render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between">
                             <FormLabel>Date:</FormLabel>
-                            <DatePicker field={field} />
+                            <DateTimePicker field={field} />
                             <FormMessage />
                         </FormItem>
                     )}
@@ -400,7 +421,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
     const resetForm = () => {
         form.reset({
             type: 'expense',
-            amount: '',
+            amount: '' as any, // Reset as empty string to avoid uncontrolled to controlled error
             accountId: '',
             categoryId: '',
             description: '',
@@ -474,7 +495,7 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                         <DialogTitle className="font-headline">Add a New Transaction</DialogTitle>
                         <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                     </DialogHeader>
-                    <div className="flex-1 overflow-y-auto -mx-6 px-6">
+                     <div className="flex-1 overflow-y-auto -mx-6 px-6">
                         <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} />
                     </div>
                     <DialogFooter>
@@ -502,9 +523,9 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     <DialogTitle>Add a New Transaction</DialogTitle>
                     <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                 </DrawerHeader>
-                 <ScrollArea className="overflow-y-auto px-4">
+                 <div className="overflow-y-auto px-4">
                     <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} />
-                </ScrollArea>
+                </div>
                  <DrawerFooter className="pt-2 flex-row gap-2">
                     <Button variant="secondary" className="flex-1" onClick={onSaveAndNewSubmit} disabled={isLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -13,7 +13,18 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+let app;
+if (getApps().length === 0) {
+  if (!firebaseConfig.projectId) {
+    console.error('Firebase config not loaded');
+    // You can return a dummy app or throw an error
+  } else {
+    app = initializeApp(firebaseConfig);
+  }
+} else {
+  app = getApp();
+}
+
 const auth = getAuth(app);
 const firestore = getFirestore(app);
 

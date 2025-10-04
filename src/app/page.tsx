@@ -18,7 +18,8 @@ async function getUser() {
   // For this example, we'll assume a cookie indicates a logged-in user.
   // A more robust solution would involve server-side session validation with Firebase Admin SDK.
   try {
-    const userCookie = cookies().get('user-session');
+    const cookieStore = cookies();
+    const userCookie = cookieStore.get('user-session');
     if (!userCookie) return null;
     // In a real app you would verify the token here
     return JSON.parse(userCookie.value);

@@ -11,9 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { UserProfile } from "@/lib/types";
-import { Separator } from "../ui/separator";
 import { CategorySettings } from "./CategorySettings";
 import { PaymentMethodSettings } from "./PaymentMethodSettings";
 import { TagSettings } from "./TagSettings";
@@ -36,31 +35,50 @@ export function UserSettings() {
 
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
     const [isSaving, setIsSaving] = useState(false);
+    const isInitialLoad = useRef(true);
 
     const form = useForm<z.infer<typeof currencySchema>>({
         resolver: zodResolver(currencySchema),
     });
 
+    const { watch, setValue } = form;
+    const selectedCurrency = watch('defaultCurrency');
+
+    // Set initial form value from profile
     useEffect(() => {
-        if (userProfile) {
-            form.setValue('defaultCurrency', userProfile.defaultCurrency || 'USD');
+        if (userProfile && isInitialLoad.current) {
+            setValue('defaultCurrency', userProfile.defaultCurrency || 'USD');
         }
-    }, [userProfile, form]);
+    }, [userProfile, setValue]);
     
-    const onSubmit = async (values: z.infer<typeof currencySchema>) => {
-        if (!userProfileRef) return;
-        setIsSaving(true);
-        try {
-            await setDoc(userProfileRef, {
-                defaultCurrency: values.defaultCurrency,
-            }, { merge: true });
-            toast({ title: "Preferences Saved", description: "Your currency preference has been updated." });
-        } catch (error: any) {
-            toast({ variant: "destructive", title: "Error", description: error.message });
-        } finally {
-            setIsSaving(false);
+    // Auto-save on currency change
+    useEffect(() => {
+        if (isInitialLoad.current) {
+            isInitialLoad.current = false;
+            return;
         }
-    };
+
+        if (!userProfileRef || !selectedCurrency || selectedCurrency === userProfile?.defaultCurrency) {
+            return;
+        }
+
+        const saveCurrency = async () => {
+            setIsSaving(true);
+            try {
+                await setDoc(userProfileRef, {
+                    defaultCurrency: selectedCurrency,
+                }, { merge: true });
+                toast({ title: "Currency Saved", description: `Your default currency is now ${selectedCurrency}.` });
+            } catch (error: any) {
+                toast({ variant: "destructive", title: "Error", description: error.message });
+            } finally {
+                setIsSaving(false);
+            }
+        };
+
+        saveCurrency();
+    }, [selectedCurrency, userProfileRef, toast, userProfile?.defaultCurrency]);
+
 
     if (isProfileLoading) {
         return (
@@ -80,7 +98,7 @@ export function UserSettings() {
         <div className="space-y-8">
             <Card>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <form>
                         <CardHeader>
                             <CardTitle className="font-headline">Currency</CardTitle>
                             <CardDescription>Set your default currency for expenses.</CardDescription>
@@ -92,27 +110,24 @@ export function UserSettings() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Default Currency</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select a currency" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="relative">
+                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSaving}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select a currency" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                            {isSaving && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         </CardContent>
-                        <CardFooter className="border-t pt-6">
-                            <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
-                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save Currency
-                            </Button>
-                        </CardFooter>
                     </form>
                 </Form>
             </Card>

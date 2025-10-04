@@ -41,6 +41,7 @@ import * as LucideIcons from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
+import { ScrollArea } from '../ui/scroll-area';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -163,9 +164,11 @@ function DatePicker({ field }: { field: any }) {
 
 function ExpenseForm({
   form,
+  onSubmit,
   id,
 }: {
   form: UseFormReturn<any>;
+  onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
   id: string;
 }) {
     const { user } = useUser();
@@ -200,7 +203,7 @@ function ExpenseForm({
 
     return (
         <Form {...form}>
-            <form id={id} className="grid items-start gap-4">
+            <form id={id} onSubmit={onSubmit} className="grid items-start gap-4">
                 <FormField
                     control={form.control}
                     name="type"
@@ -231,6 +234,17 @@ function ExpenseForm({
                         </FormItem>
                     )}
                     />
+                 <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between">
+                            <FormLabel>Date:</FormLabel>
+                            <DatePicker field={field} />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="amount"
@@ -310,34 +324,6 @@ function ExpenseForm({
                     />
                 )}
                 
-                <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between">
-                            <FormLabel>Date:</FormLabel>
-                            <DatePicker field={field} />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>
-                            Description {isDescriptionRequired ? '' : '(Optional)'}
-                        </FormLabel>
-                        <FormControl>
-                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
                 {transactionType === 'expense' && (
                     <FormField
                         control={form.control}
@@ -370,6 +356,22 @@ function ExpenseForm({
                         )}
                     />
                 )}
+
+                 <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>
+                            Description {isDescriptionRequired ? '' : '(Optional)'}
+                        </FormLabel>
+                        <FormControl>
+                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
             </form>
         </Form>
@@ -473,16 +475,17 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                         <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                     </DialogHeader>
                     <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                        <ExpenseForm form={form} id={formId} />
+                        <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} />
                     </div>
                     <DialogFooter>
-                         <Button type="button" variant="secondary" onClick={onSaveAndNewSubmit} disabled={isLoading}>
+                         <Button type="button" variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
+                         <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Add New
+                            Save and Add New
                         </Button>
-                         <Button type="button" form={formId} onClick={onFinalSubmit} disabled={isLoading}>
+                         <Button type="submit" form={formId} disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save
+                            Save Transaction
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -499,15 +502,15 @@ export function AddExpenseDialog({ children }: { children: React.ReactNode }) {
                     <DialogTitle>Add a New Transaction</DialogTitle>
                     <DialogDescription>Fill in the details of your income or expense below.</DialogDescription>
                 </DrawerHeader>
-                 <div className="overflow-y-auto px-4">
-                    <ExpenseForm form={form} id={formId} />
-                </div>
+                 <ScrollArea className="overflow-y-auto px-4">
+                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} />
+                </ScrollArea>
                  <DrawerFooter className="pt-2 flex-row gap-2">
                     <Button variant="secondary" className="flex-1" onClick={onSaveAndNewSubmit} disabled={isLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Add New
                     </Button>
-                    <Button className="flex-1" onClick={onFinalSubmit} disabled={isLoading}>
+                    <Button type="submit" form={formId} className="flex-1" disabled={isLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save
                     </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useFirestore, useStorage, useAuth, useDoc, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useStorage, useAuth, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,6 +133,12 @@ export function ProfileForm() {
 
 
         try {
+             // Update Firebase Auth profile
+            await updateProfile(auth.currentUser, {
+                displayName: nameInput,
+                photoURL: finalPhotoURL,
+            });
+
             // Data to be saved in Firestore
             const userProfileData: Partial<UserProfile> = {
                 name: nameInput,
@@ -143,15 +149,9 @@ export function ProfileForm() {
                 userProfileData.photoURL = finalPhotoURL;
             }
 
-            // Update Firebase Auth profile
-            await updateProfile(auth.currentUser, {
-                displayName: nameInput,
-                photoURL: finalPhotoURL,
-            });
-
-            // Update Firestore document
+            // Update Firestore document non-blockingly
             const userDocRef = doc(firestore, 'users', user.uid);
-            await setDoc(userDocRef, userProfileData, { merge: true });
+            setDocumentNonBlocking(userDocRef, userProfileData, { merge: true });
             
             toast({ title: "Profile Updated", description: "Your changes have been saved." });
         } catch (error: any) {

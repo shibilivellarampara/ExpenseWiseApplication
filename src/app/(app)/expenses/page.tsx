@@ -100,7 +100,7 @@ export default function ExpensesPage() {
     }, [expenses, accounts, categoryMap, accountMap, tagMap]);
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 w-full">
             <PageHeader title="Transactions" description="A detailed list of your recent income and expenses.">
                 <AddExpenseDialog>
                     <Button>

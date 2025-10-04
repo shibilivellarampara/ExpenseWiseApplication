@@ -9,11 +9,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { doc, setDoc } from "firebase/firestore";
-import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { useDoc, useFirestore, useUser, useMemoFirebase, useCollection } from "@/firebase";
+import { doc, setDoc, writeBatch, collection, query, where, getDocs } from "firebase/firestore";
+import { Loader2, PlusCircle, Trash2, Edit, Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { UserProfile } from "@/lib/types";
+import { Expense, UserProfile } from "@/lib/types";
 import { Separator } from "../ui/separator";
 
 const currencySchema = z.object({
@@ -28,7 +28,7 @@ export function UserSettings() {
     const { toast } = useToast();
     
     const userProfileRef = useMemoFirebase(() => {
-        if (!user) return null;
+        if (!user || !firestore) return null;
         return doc(firestore, `users/${user.uid}`);
     }, [user, firestore]);
 
@@ -36,9 +36,12 @@ export function UserSettings() {
 
     const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
     const [newPaymentMethod, setNewPaymentMethod] = useState("");
+    const [editingMethod, setEditingMethod] = useState<{ old: string; new: string } | null>(null);
     
     const [tags, setTags] = useState<string[]>([]);
     const [newTag, setNewTag] = useState("");
+    const [editingTag, setEditingTag] = useState<{ old: string; new: string } | null>(null);
+
 
     const [isSaving, setIsSaving] = useState(false);
 
@@ -74,6 +77,82 @@ export function UserSettings() {
 
     const handleRemoveTag = (tagToRemove: string) => {
         setTags(tags.filter(tag => tag !== tagToRemove));
+    };
+
+    const handleSaveEditedMethod = async () => {
+        if (!editingMethod || !user || !firestore) return;
+
+        const { old: oldMethod, new: newMethod } = editingMethod;
+
+        if (!newMethod || newMethod === oldMethod) {
+            setEditingMethod(null);
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            // Update expenses
+            const expensesRef = collection(firestore, `users/${user.uid}/expenses`);
+            const q = query(expensesRef, where("paymentMethod", "==", oldMethod));
+            const querySnapshot = await getDocs(q);
+
+            const batch = writeBatch(firestore);
+            querySnapshot.forEach((doc) => {
+                batch.update(doc.ref, { paymentMethod: newMethod });
+            });
+
+            // Update user profile
+            const updatedMethods = paymentMethods.map(p => p === oldMethod ? newMethod : p);
+            batch.update(userProfileRef, { paymentMethods: updatedMethods });
+
+            await batch.commit();
+
+            setPaymentMethods(updatedMethods);
+            toast({ title: "Payment Method Updated", description: "Your settings and expenses have been updated." });
+
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Update Failed", description: error.message });
+        } finally {
+            setEditingMethod(null);
+            setIsSaving(false);
+        }
+    };
+
+    const handleSaveEditedTag = async () => {
+        if (!editingTag || !user || !firestore) return;
+        const { old: oldTag, new: newTag } = editingTag;
+
+        if (!newTag || newTag === oldTag) {
+            setEditingTag(null);
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            // Update expenses
+            const expensesRef = collection(firestore, `users/${user.uid}/expenses`);
+            const q = query(expensesRef, where("tag", "==", oldTag));
+            const querySnapshot = await getDocs(q);
+            
+            const batch = writeBatch(firestore);
+            querySnapshot.forEach((doc) => {
+                batch.update(doc.ref, { tag: newTag });
+            });
+
+            // Update user profile
+            const updatedTags = tags.map(t => t === oldTag ? newTag : t);
+            batch.update(userProfileRef, { tags: updatedTags });
+
+            await batch.commit();
+
+            setTags(updatedTags);
+            toast({ title: "Tag Updated", description: "Your settings and expenses have been updated." });
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Update Failed", description: error.message });
+        } finally {
+            setEditingTag(null);
+            setIsSaving(false);
+        }
     };
 
     const onSubmit = async (values: z.infer<typeof currencySchema>) => {
@@ -143,10 +222,36 @@ export function UserSettings() {
                             <div className="space-y-2">
                                 {paymentMethods.map((method) => (
                                     <div key={method} className="flex items-center justify-between">
-                                        <span>{method}</span>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => handleRemovePaymentMethod(method)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        {editingMethod?.old === method ? (
+                                            <Input
+                                                value={editingMethod.new}
+                                                onChange={(e) => setEditingMethod({ ...editingMethod, new: e.target.value })}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            <span>{method}</span>
+                                        )}
+                                        <div className="flex items-center">
+                                            {editingMethod?.old === method ? (
+                                                <>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={handleSaveEditedMethod} disabled={isSaving}>
+                                                        <Check className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={() => setEditingMethod(null)}>
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={() => setEditingMethod({ old: method, new: method })}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={() => handleRemovePaymentMethod(method)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -169,11 +274,37 @@ export function UserSettings() {
                             <FormLabel>Expense Tags</FormLabel>
                              <div className="space-y-2">
                                 {tags.map((tag) => (
-                                    <div key={tag} className="flex items-center justify-between">
-                                        <span>{tag}</span>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveTag(tag)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                     <div key={tag} className="flex items-center justify-between">
+                                        {editingTag?.old === tag ? (
+                                            <Input
+                                                value={editingTag.new}
+                                                onChange={(e) => setEditingTag({ ...editingTag, new: e.target.value })}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            <span>{tag}</span>
+                                        )}
+                                        <div className="flex items-center">
+                                            {editingTag?.old === tag ? (
+                                                <>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={handleSaveEditedTag} disabled={isSaving}>
+                                                        <Check className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={() => setEditingTag(null)}>
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={() => setEditingTag({ old: tag, new: tag })}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveTag(tag)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -200,4 +331,3 @@ export function UserSettings() {
         </Card>
     );
 }
-    

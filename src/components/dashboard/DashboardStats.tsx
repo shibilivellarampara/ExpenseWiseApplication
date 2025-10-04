@@ -1,21 +1,51 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, TrendingUp, Tag } from "lucide-react";
+import { EnrichedExpense } from "@/lib/types";
+import { DollarSign, TrendingUp, Tag, TrendingDown, Minus } from "lucide-react";
+import { useMemo } from "react";
 
-// This will fetch real data in a real implementation
-async function getStats() {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return {
-        totalExpense: 1250.75,
-        topCategory: "Groceries",
-        monthOverMonthChange: 12.5
-    };
+interface DashboardStatsProps {
+    currentMonthExpenses: EnrichedExpense[];
+    lastMonthExpenses: EnrichedExpense[];
+    isLoading?: boolean;
 }
 
+export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoading }: DashboardStatsProps) {
 
-export async function DashboardStats() {
-    const stats = await getStats();
+    const stats = useMemo(() => {
+        const totalCurrent = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const totalLast = lastMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+        let momChange = 0;
+        if (totalLast > 0) {
+            momChange = ((totalCurrent - totalLast) / totalLast) * 100;
+        } else if (totalCurrent > 0) {
+            momChange = 100; // Infinite increase if last month was 0
+        }
+
+        const categorySpending = new Map<string, number>();
+        currentMonthExpenses.forEach(e => {
+            const categoryName = e.category?.name || 'Uncategorized';
+            categorySpending.set(categoryName, (categorySpending.get(categoryName) || 0) + e.amount);
+        });
+
+        let topCategory = 'None';
+        if (categorySpending.size > 0) {
+           topCategory = [...categorySpending.entries()].reduce((a, b) => b[1] > a[1] ? b : a)[0];
+        }
+
+        return {
+            totalExpense: totalCurrent,
+            topCategory: topCategory,
+            monthOverMonthChange: momChange
+        }
+    }, [currentMonthExpenses, lastMonthExpenses]);
+
+    if (isLoading) {
+        return <DashboardStatsSkeleton />;
+    }
 
     return (
         <div className="grid gap-4 md:grid-cols-3">
@@ -42,10 +72,18 @@ export async function DashboardStats() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Month-over-Month</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                     {stats.monthOverMonthChange > 0 ? (
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                    ) : stats.monthOverMonthChange < 0 ? (
+                        <TrendingDown className="h-4 w-4 text-red-500" />
+                    ) : (
+                        <Minus className="h-4 w-4 text-muted-foreground" />
+                    )}
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">+{stats.monthOverMonthChange}%</div>
+                     <div className={`text-2xl font-bold ${stats.monthOverMonthChange > 0 ? 'text-green-500' : stats.monthOverMonthChange < 0 ? 'text-red-500' : ''}`}>
+                        {stats.monthOverMonthChange.toFixed(1)}%
+                    </div>
                     <p className="text-xs text-muted-foreground">vs. last month</p>
                 </CardContent>
             </Card>
@@ -53,7 +91,7 @@ export async function DashboardStats() {
     );
 }
 
-DashboardStats.Skeleton = function DashboardStatsSkeleton() {
+function DashboardStatsSkeleton() {
     return (
         <div className="grid gap-4 md:grid-cols-3">
             <Card>

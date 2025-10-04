@@ -3,12 +3,12 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { useMemo } from 'react';
 import { EnrichedExpense } from '@/lib/types';
-import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachWeekOfInterval, getDay } from 'date-fns';
+import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, eachMonthOfInterval, startOfYear, endOfYear } from 'date-fns';
 import { BarChart as BarChartIcon } from 'lucide-react';
 
 interface ExpensesBarChartProps {
   expenses: EnrichedExpense[];
-  timeRange: 'week' | 'month';
+  timeRange: 'week' | 'month' | 'year';
   currencySymbol: string;
 }
 
@@ -41,7 +41,7 @@ export function ExpensesBarChart({ expenses, timeRange, currencySymbol }: Expens
             amount,
         }));
 
-    } else { // timeRange === 'month'
+    } else if (timeRange === 'month') { 
         const start = startOfMonth(now);
         const end = endOfMonth(now);
         const weeks = eachWeekOfInterval({ start, end });
@@ -61,6 +61,27 @@ export function ExpensesBarChart({ expenses, timeRange, currencySymbol }: Expens
 
         return Array.from(weeklyExpenses.entries()).map(([date, amount]) => ({
             name: `Week of ${format(new Date(date), 'MMM d')}`,
+            amount,
+        }));
+    } else { // timeRange === 'year'
+        const start = startOfYear(now);
+        const end = endOfYear(now);
+        const intervalMonths = eachMonthOfInterval({ start, end });
+        
+        const monthlyExpenses = new Map<string, number>();
+        intervalMonths.forEach(month => {
+            monthlyExpenses.set(format(month, 'yyyy-MM'), 0);
+        });
+
+        expenses.forEach(expense => {
+            const monthKey = format(expense.date, 'yyyy-MM');
+            if (monthlyExpenses.has(monthKey)) {
+                monthlyExpenses.set(monthKey, monthlyExpenses.get(monthKey)! + expense.amount);
+            }
+        });
+
+        return Array.from(monthlyExpenses.entries()).map(([date, amount]) => ({
+            name: format(new Date(date), 'MMM'),
             amount,
         }));
     }

@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { Expense, Category, EnrichedExpense, UserProfile } from '@/lib/types';
 import { collection, query, where, Timestamp, doc } from 'firebase/firestore';
-import { startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
+import { startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, format, startOfYear, endOfYear } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCurrencySymbol } from '@/lib/currencies';
 
@@ -18,7 +18,7 @@ import { getCurrencySymbol } from '@/lib/currencies';
 export default function DashboardPage() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
+    const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
 
     const dateRanges = useMemo(() => {
         const now = new Date();
@@ -29,17 +29,21 @@ export default function DashboardPage() {
             lastMonthEnd: endOfMonth(subMonths(now, 1)),
             currentWeekStart: startOfWeek(now),
             currentWeekEnd: endOfWeek(now),
+            currentYearStart: startOfYear(now),
+            currentYearEnd: endOfYear(now),
         };
     }, []);
 
     // A query for all expenses in the current and previous month to cover all cases
     const expensesQuery = useMemoFirebase(() => {
         if (!user) return null;
+        // Fetch expenses from the start of the year if year view is possible, else from last month
+        const startDate = timeRange === 'year' ? dateRanges.currentYearStart : dateRanges.lastMonthStart;
         return query(
             collection(firestore, `users/${user.uid}/expenses`),
-            where('date', '>=', Timestamp.fromDate(dateRanges.lastMonthStart))
+            where('date', '>=', Timestamp.fromDate(startDate))
         );
-    }, [user, firestore, dateRanges.lastMonthStart]);
+    }, [user, firestore, dateRanges.lastMonthStart, dateRanges.currentYearStart, timeRange]);
     
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [firestore, user]);
@@ -77,8 +81,13 @@ export default function DashboardPage() {
     const currentWeekExpenses = useMemo(() =>
         enrichedExpenses.filter(e => e.date >= dateRanges.currentWeekStart && e.date <= dateRanges.currentWeekEnd)
     , [enrichedExpenses, dateRanges.currentWeekStart, dateRanges.currentWeekEnd]);
+    
+    const currentYearExpenses = useMemo(() =>
+        enrichedExpenses.filter(e => e.date >= dateRanges.currentYearStart && e.date <= dateRanges.currentYearEnd)
+    , [enrichedExpenses, dateRanges.currentYearStart, dateRanges.currentYearEnd]);
 
-    const chartData = timeRange === 'week' ? currentWeekExpenses : currentMonthExpenses;
+
+    const chartData = timeRange === 'year' ? currentYearExpenses : (timeRange === 'week' ? currentWeekExpenses : currentMonthExpenses);
 
     return (
         <div className="space-y-8">
@@ -93,21 +102,30 @@ export default function DashboardPage() {
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="lg:col-span-4">
-                    <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as 'week' | 'month')}>
+                    <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as 'week' | 'month' | 'year')}>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle className="font-headline">Expenses Overview</CardTitle>
                              <TabsList>
                                 <TabsTrigger value="week">This Week</TabsTrigger>
                                 <TabsTrigger value="month">This Month</TabsTrigger>
+                                <TabsTrigger value="year">This Year</TabsTrigger>
                             </TabsList>
                         </CardHeader>
                         <CardContent className="pl-2">
                              {isLoading ? (
                                 <Skeleton className="h-[350px] w-full" />
                             ) : (
-                                <TabsContent value={timeRange}>
-                                    <ExpensesBarChart expenses={chartData} timeRange={timeRange} currencySymbol={currencySymbol}/>
-                                </TabsContent>
+                                <>
+                                    <TabsContent value="week">
+                                        <ExpensesBarChart expenses={chartData} timeRange="week" currencySymbol={currencySymbol}/>
+                                    </TabsContent>
+                                    <TabsContent value="month">
+                                        <ExpensesBarChart expenses={chartData} timeRange="month" currencySymbol={currencySymbol}/>
+                                    </TabsContent>
+                                    <TabsContent value="year">
+                                        <ExpensesBarChart expenses={chartData} timeRange="year" currencySymbol={currencySymbol}/>
+                                    </TabsContent>
+                                </>
                             )}
                         </CardContent>
                     </Tabs>

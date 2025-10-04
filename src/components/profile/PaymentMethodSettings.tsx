@@ -44,9 +44,10 @@ export function PaymentMethodSettings() {
         if (!user || !firestore) return;
         setIsSaving(true);
         try {
-            await setDoc(doc(firestore, `users/${user.uid}/paymentMethods`, itemId), {}, { merge: true });
             const itemRef = doc(firestore, `users/${user.uid}/paymentMethods`, itemId);
-            await writeBatch(firestore).delete(itemRef).commit();
+            const batch = writeBatch(firestore);
+            batch.delete(itemRef);
+            await batch.commit();
             toast({ title: 'Payment Method Removed' });
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });

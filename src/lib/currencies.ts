@@ -12,6 +12,6 @@ const currencySymbols: { [key: string]: string } = {
     NZD: 'NZ$', // New Zealand Dollar
 };
   
-export function getCurrencySymbol(currencyCode: string = 'USD'): string {
-    return currencySymbols[currencyCode] || '$';
+export function getCurrencySymbol(currencyCode: string = 'INR'): string {
+    return currencySymbols[currencyCode] || '₹';
 }

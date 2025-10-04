@@ -23,7 +23,7 @@ export default function AppLayout({
             <main className="flex-1 flex flex-col">
               <AppHeader />
               <div className="flex-1 overflow-y-auto">
-                <div className="mx-auto w-full p-4 md:p-6 lg:p-8">
+                <div className="mx-auto w-full px-4 py-4 md:p-6 lg:p-8">
                   <Suspense fallback={<PageLoader />}>
                     {children}
                   </Suspense>

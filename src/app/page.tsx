@@ -13,17 +13,17 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cookies } from 'next/headers';
 import { UserProfile } from '@/lib/types';
-import { getCookie } from 'cookies-next';
 
 async function getUser(): Promise<UserProfile | null> {
   // This is a simplified example. In a real app, you'd verify the session.
   // For this example, we'll assume a cookie indicates a logged-in user.
   // A more robust solution would involve server-side session validation with Firebase Admin SDK.
   try {
-    const userCookie = getCookie('user-session', { cookies });
+    const cookieStore = cookies();
+    const userCookie = cookieStore.get('user-session');
     if (!userCookie) return null;
     // In a real app you would verify the token here
-    return JSON.parse(userCookie);
+    return JSON.parse(userCookie.value);
   } catch (error) {
     return null;
   }

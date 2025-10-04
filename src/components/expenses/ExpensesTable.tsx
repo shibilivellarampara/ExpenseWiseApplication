@@ -81,14 +81,10 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                         renderIcon(expense.category?.icon)
                                     }
                                 </div>
-                                <div className="flex-grow grid grid-cols-2 gap-x-4 gap-y-1">
+                                <div className="flex-grow space-y-1">
                                     <div className="font-semibold truncate">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
-                                    <div className={`font-bold text-lg text-right ${expense.type === 'income' ? 'text-green-600' : ''}`}>
-                                        {expense.type === 'income' ? '+' : '-'}{currencySymbol}{expense.amount.toFixed(2)}
-                                    </div>
-
-                                    {/* Middle section for details */}
-                                    <div className="col-span-2 text-xs text-muted-foreground flex items-center gap-4">
+                                    
+                                    <div className="text-xs text-muted-foreground flex items-center gap-4">
                                         <div className="flex items-center gap-1">
                                             {renderIcon(expense.account?.icon, "h-3 w-3")}
                                             <span>{expense.account?.name}</span>
@@ -98,7 +94,7 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                         </div>
                                     </div>
                                     
-                                     <div className="col-span-2 flex items-center gap-2 mt-1">
+                                     <div className="flex items-center gap-2 pt-1">
                                         {expense.category && categoryColor && (
                                             <Badge 
                                                 style={{ backgroundColor: categoryColor.backgroundColor, color: categoryColor.textColor }}
@@ -119,13 +115,18 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                         )}
                                     </div>
                                 </div>
-                                <div className="text-right flex-shrink-0 w-32 flex flex-col justify-between items-end h-full">
-                                    <AddExpenseDialog expenseToEdit={expense}>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                    </AddExpenseDialog>
-                                    <p className="text-xs text-muted-foreground mt-auto">
+                                <div className="text-right flex-shrink-0 w-32 flex flex-col items-end">
+                                     <div className="flex items-center">
+                                        <AddExpenseDialog expenseToEdit={expense}>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                        </AddExpenseDialog>
+                                        <div className={`font-bold text-lg ${expense.type === 'income' ? 'text-green-600' : ''}`}>
+                                            {expense.type === 'income' ? '+' : '-'}{currencySymbol}{expense.amount.toFixed(2)}
+                                        </div>
+                                     </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
                                         Balance: {currencySymbol}{expense.balanceAfterTransaction?.toFixed(2)}
                                     </p>
                                 </div>

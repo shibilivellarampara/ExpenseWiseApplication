@@ -68,13 +68,12 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
 };
 
 
-function DatePicker({ field }: { field: any }) {
-  const [open, setOpen] = useState(false);
+function DatePicker({ field, open: isDatePickerOpen, setOpen: setDatePickerOpen }: { field: any, open: boolean, setOpen: (open: boolean) => void }) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   if (isDesktop) {
     return (
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={isDatePickerOpen} onOpenChange={setDatePickerOpen}>
         <PopoverTrigger asChild>
           <FormControl>
             <Button
@@ -99,7 +98,7 @@ function DatePicker({ field }: { field: any }) {
             selected={field.value}
             onSelect={(date) => {
               field.onChange(date);
-              setOpen(false);
+              setDatePickerOpen(false);
             }}
             disabled={(date) =>
               date > new Date() || date < new Date('1900-01-01')
@@ -112,7 +111,7 @@ function DatePicker({ field }: { field: any }) {
   }
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <Drawer open={isDatePickerOpen} onOpenChange={setDatePickerOpen}>
       <DrawerTrigger asChild>
         <FormControl>
             <Button
@@ -138,13 +137,13 @@ function DatePicker({ field }: { field: any }) {
                 Choose the date when the transaction occurred.
             </DrawerDescription>
         </DrawerHeader>
-        <div className="p-4">
+        <div className="p-4 flex justify-center">
         <Calendar
           mode="single"
           selected={field.value}
           onSelect={(date) => {
             field.onChange(date);
-            setOpen(false);
+            setDatePickerOpen(false);
           }}
           disabled={(date) =>
             date > new Date() || date < new Date('1900-01-01')
@@ -170,6 +169,8 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+    const [isDatePickerOpen, setDatePickerOpen] = useState(false);
 
     // Memoize the schema so it only changes when settings do
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
@@ -201,10 +202,8 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
     // Reset the form whenever the schema changes (i.e., when settings change)
     // or when the dialog is opened.
     useEffect(() => {
-        if(setOpen) {
-            resetForm();
-        }
-    }, [open, userProfile, form]);
+        resetForm();
+    }, [open, userProfile]);
 
     const resetForm = () => {
         form.reset({
@@ -237,7 +236,8 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
               id: newExpenseRef.id,
               userId: user.uid,
               createdAt: serverTimestamp(),
-              tagId: values.tagId === 'no-tag' ? '' : values.tagId,
+              tagId: values.tagId === 'no-tag' || !values.tagId ? '' : values.tagId,
+              categoryId: values.type === 'income' ? '' : values.categoryId,
             };
             batch.set(newExpenseRef, expenseData);
 
@@ -397,7 +397,7 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
                             <FormLabel>
                                 Tag / Label {isTagRequired ? '' : '(Optional)'}
                             </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a tag" />
@@ -443,7 +443,7 @@ function ExpenseForm({ className, setOpen }: { className?: string, setOpen: (ope
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Date of Transaction</FormLabel>
-                      <DatePicker field={field} />
+                      <DatePicker field={field} open={isDatePickerOpen} setOpen={setDatePickerOpen} />
                       <FormMessage />
                     </FormItem>
                   )}

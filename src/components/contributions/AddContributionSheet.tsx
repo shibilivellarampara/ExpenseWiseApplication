@@ -120,7 +120,7 @@ function DatePicker({ field }: { field: any }) {
                 Choose the date when the expense occurred.
             </DrawerDescription>
         </DrawerHeader>
-        <div className="p-4">
+        <div className="p-4 flex justify-center">
         <Calendar
           mode="single"
           selected={field.value}

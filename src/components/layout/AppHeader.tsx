@@ -13,4 +13,22 @@ function getPageTitle(path: string): string {
 
 export function AppHeader() {
   const pathname = usePathname();
-  const title = getPageT
+  const title = getPageTitle(pathname);
+  const { isUserLoading } = useUser();
+
+  return (
+    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
+        <SidebarTrigger className="md:hidden" />
+        
+        <div className="flex-1">
+            <h1 className="font-semibold text-lg md:text-xl">{title}</h1>
+        </div>
+        
+        {isUserLoading ? (
+            <Skeleton className="h-10 w-10 rounded-full" />
+        ) : (
+            <UserNav />
+        )}
+    </header>
+  );
+}

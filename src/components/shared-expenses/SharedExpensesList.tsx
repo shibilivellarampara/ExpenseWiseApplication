@@ -50,8 +50,8 @@ const MemberAvatars = ({ memberIds }: { memberIds: string[] }) => {
     return (
         <div className="flex -space-x-2 overflow-hidden">
             {members.map(member => (
-                 <TooltipProvider>
-                    <Tooltip key={member.id}>
+                 <TooltipProvider key={member.id}>
+                    <Tooltip>
                         <TooltipTrigger asChild>
                             <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
                                 <AvatarImage src={member.photoURL || undefined} />

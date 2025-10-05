@@ -2,156 +2,165 @@
  * @fileoverview Firestore Security Rules for Expense Tracker App
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for all data.  Each user has a private data tree rooted at `/users/{userId}`.
- * Only the authenticated user matching the `userId` segment has read and write access to the data within that tree.
+ * This ruleset enforces a strict user-ownership model. Users can only access
+ * and modify data that belongs to them. All data is nested under /users/{userId},
+ * ensuring clear ownership.
  *
  * Data Structure:
- * - /users/{userId}: User profile information.
- * - /users/{userId}/expenses/{expenseId}: Individual expense records.
- * - /users/{userId}/accounts/{accountId}: User's financial accounts.
- * - /users/{userId}/contributions/{contributionId}: Contribution records.
- * - /users/{userId}/categories/{categoryId}: Expense categories.
- * - /users/{userId}/tags/{tagId}: Expense tags.
+ * - /users/{userId}: User profiles, accessible only to the owner.
+ * - /users/{userId}/expenses/{expenseId}: Expenses for a specific user.
+ * - /users/{userId}/accounts/{accountId}: Accounts for a specific user.
+ * - /users/{userId}/contributions/{contributionId}: Contributions for a specific user.
+ * - /users/{userId}/categories/{categoryId}: Categories for a specific user.
+ * - /users/{userId}/tags/{tagId}: Tags for a specific user.
  *
  * Key Security Decisions:
- * - User profiles can only be created by themselves (self-creation).  Updates are allowed, but the userId cannot be changed.
- * - No user listing is allowed.
- * - Ambiguous relationships default to strict owner-only access.
- *
- * Denormalization for Authorization:
- * To avoid `get()` calls in rules, all documents within a user's data tree should include a `userId` field that matches the `userId` segment of the path.
+ * - User profiles are only readable and writable by the owning user.
+ * - Listing of user profiles is explicitly denied.
+ * - All subcollections under /users/{userId} follow the same ownership model.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secure user profiles. Only the user themselves can read and write their profile.
+     * @description Checks if the user is signed in.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the user is the owner of the resource.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the user is the owner of the existing resource.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description User profile access control.
      * @path /users/{userId}
-     * @allow (create) User 'user123' can create their own profile with matching ID.
-     * @allow (get, update, delete) User 'user123' can read, update and delete their own profile.
-     * @deny (create) User 'user456' cannot create a profile for 'user123'.
-     * @deny (get, update, delete) User 'user456' cannot read, update or delete 'user123' profile.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data.
+     * @allow (create) User 'user_abc' can create their profile with matching ID.
+     * @allow (get, update, delete) User 'user_abc' can get, update, or delete their own profile.
+     * @deny (create) User 'user_abc' cannot create a profile with ID 'user_xyz'.
+     * @deny (get, update, delete) User 'user_abc' cannot access profile 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && resource.data.id == request.resource.data.id;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secure user expenses. Only the user themselves can manage their expenses.
+     * @description Expense access control.
      * @path /users/{userId}/expenses/{expenseId}
-     * @allow (create) User 'user123' can create an expense with matching userId.
-     * @allow (get, list, update, delete) User 'user123' can read, list, update, and delete their own expenses.
-     * @deny (create) User 'user456' cannot create an expense for 'user123'.
-     * @deny (get, list, update, delete) User 'user456' cannot read, list, update or delete 'user123' expenses.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User 'user_abc' can create an expense under their profile.
+     * @allow (get, update, delete, list) User 'user_abc' can manage their own expenses.
+     * @deny (create) User 'user_abc' cannot create an expense under profile 'user_xyz'.
+     * @deny (get, update, delete, list) User 'user_abc' cannot access expenses of 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/expenses/{expenseId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secure user accounts. Only the user themselves can manage their accounts.
+     * @description Account access control.
      * @path /users/{userId}/accounts/{accountId}
-     * @allow (create) User 'user123' can create an account with matching userId.
-     * @allow (get, list, update, delete) User 'user123' can read, list, update, and delete their own accounts.
-     * @deny (create) User 'user456' cannot create an account for 'user123'.
-     * @deny (get, list, update, delete) User 'user456' cannot read, list, update or delete 'user123' accounts.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User 'user_abc' can create an account under their profile.
+     * @allow (get, update, delete, list) User 'user_abc' can manage their own accounts.
+     * @deny (create) User 'user_abc' cannot create an account under profile 'user_xyz'.
+     * @deny (get, update, delete, list) User 'user_abc' cannot access accounts of 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/accounts/{accountId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secure user contributions. Only the user themselves can manage their contributions.
+     * @description Contribution access control.
      * @path /users/{userId}/contributions/{contributionId}
-     * @allow (create) User 'user123' can create a contribution with matching userId.
-     * @allow (get, list, update, delete) User 'user123' can read, list, update, and delete their own contributions.
-     * @deny (create) User 'user456' cannot create a contribution for 'user123'.
-     * @deny (get, list, update, delete) User 'user456' cannot read, list, update or delete 'user123' contributions.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User 'user_abc' can create a contribution under their profile.
+     * @allow (get, update, delete, list) User 'user_abc' can manage their own contributions.
+     * @deny (create) User 'user_abc' cannot create a contribution under profile 'user_xyz'.
+     * @deny (get, update, delete, list) User 'user_abc' cannot access contributions of 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/contributions/{contributionId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secure user categories. Only the user themselves can manage their categories.
+     * @description Category access control.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) User 'user123' can create a category with matching userId.
-     * @allow (get, list, update, delete) User 'user123' can read, list, update, and delete their own categories.
-     * @deny (create) User 'user456' cannot create a category for 'user123'.
-     * @deny (get, list, update, delete) User 'user456' cannot read, list, update or delete 'user123' categories.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User 'user_abc' can create a category under their profile.
+     * @allow (get, update, delete, list) User 'user_abc' can manage their own categories.
+     * @deny (create) User 'user_abc' cannot create a category under profile 'user_xyz'.
+     * @deny (get, update, delete, list) User 'user_abc' cannot access categories of 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/categories/{categoryId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secure user tags. Only the user themselves can manage their tags.
+     * @description Tag access control.
      * @path /users/{userId}/tags/{tagId}
-     * @allow (create) User 'user123' can create a tag with matching userId.
-     * @allow (get, list, update, delete) User 'user123' can read, list, update, and delete their own tags.
-     * @deny (create) User 'user456' cannot create a tag for 'user123'.
-     * @deny (get, list, update, delete) User 'user456' cannot read, list, update or delete 'user123' tags.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User 'user_abc' can create a tag under their profile.
+     * @allow (get, update, delete, list) User 'user_abc' can manage their own tags.
+     * @deny (create) User 'user_abc' cannot create a tag under profile 'user_xyz'.
+     * @deny (get, update, delete, list) User 'user_abc' cannot access tags of 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/tags/{tagId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
-    
-    /**
-     * @description Allow public read-only access to the shared_expenses collection
-     * @path /shared_expenses
-     * @allow (get, list) Any user can read the documents in this collection
-     * @deny (create, update, delete) No user can create, update, or delete documents in this collection
-     * @principle Allow public read, deny all writes.
-     */
-    match /shared_expenses {
-        allow get, list: if true;
-        allow create, update, delete: if false;
-    }
-  }
-
-  // Helper function to determine if the current user is the owner of the resource.
-  function isOwner(userId) {
-    return isSignedIn() && request.auth.uid == userId;
-  }
-
-    // Helper function to determine if the current user is the owner of the resource and the resource exists.
-  function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
-  }
-
-  // Helper function to determine if a user is signed in.
-  function isSignedIn() {
-    return request.auth != null;
+      /**
+       * @description Public read access to shared_expenses collection is not allowed.
+       * @path /shared_expenses
+       * @allow  (get) no one allowed.
+       * @allow (list) no one allowed.
+       * @allow (create) no one allowed.
+       * @allow (update) no one allowed.
+       * @allow (delete) no one allowed.
+       * @principle The shared_expenses collection should not be publicly accessible.
+       */
+      match /shared_expenses/{sharedExpenseId} {
+        allow get: if false;
+        allow list: if false;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
   }
 }

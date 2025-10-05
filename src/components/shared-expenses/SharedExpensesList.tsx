@@ -38,7 +38,8 @@ const MemberAvatars = ({ memberIds }: { memberIds: string[] }) => {
                         return userDoc.data() as UserProfile;
                     })
                 );
-                setMembers(memberProfiles.filter(p => p));
+                // Ensure we only have valid members with IDs
+                setMembers(memberProfiles.filter(p => p && p.id));
             } catch (error) {
                 console.error("Error fetching member profiles:", error);
                 setMembers([]);
@@ -48,16 +49,26 @@ const MemberAvatars = ({ memberIds }: { memberIds: string[] }) => {
     }, [firestore, memberIds]);
 
     return (
-        <div className="flex -space-x-2 overflow-hidden">
-            {members.map(member => (
-                <Avatar key={member.id} className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                    <AvatarImage src={member.photoURL || undefined} />
-                    <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-                </Avatar>
-            ))}
-        </div>
+        <TooltipProvider>
+            <div className="flex -space-x-2 overflow-hidden">
+                {members.map((member, index) => (
+                    <Tooltip key={member.id || index}>
+                        <TooltipTrigger asChild>
+                            <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
+                                <AvatarImage src={member.photoURL || undefined} />
+                                <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                            </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{member.name}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                ))}
+            </div>
+        </TooltipProvider>
     );
 }
+
 
 export function SharedExpensesList({ sharedExpenses, isLoading }: SharedExpensesListProps) {
     const { toast } = useToast();

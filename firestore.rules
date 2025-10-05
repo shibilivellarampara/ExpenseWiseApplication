@@ -1,167 +1,166 @@
 /**
- * @fileoverview Firestore Security Rules for the Expense Tracker application.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Each user has full control
- * over their own data, which is stored under their respective user ID. No data is
- * shared between users unless explicitly designed so via a Shared Access pattern.
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for managing personal finance data.
  *
  * Data Structure:
- * All data is nested under /users/{userId}, ensuring data isolation.
- *  - /users/{userId} (UserProfile)
- *  - /users/{userId}/expenses/{expenseId} (Expense)
- *  - /users/{userId}/accounts/{accountId} (Account)
- *  - /users/{userId}/contributions/{contributionId} (Contribution)
- *  - /users/{userId}/categories/{categoryId} (Category)
- *  - /users/{userId}/tags/{tagId} (Tag)
+ * - User profiles are stored in `/users/{userId}`.
+ * - All user-specific data (expenses, accounts, categories, tags, and contributions) are nested under their respective `/users/{userId}` document.
  *
  * Key Security Decisions:
- * - User listing is disallowed to protect privacy.
- * - All write operations are validated against the authenticated user's ID.
- * - No schema validation is performed beyond authorization-critical fields, to allow for rapid prototyping.
+ * - Users can only access their own data.
+ * - Listing of other users' data is disallowed.
+ *
+ * Authorization:
+ * - All access control is based on the authenticated user's UID (`request.auth.uid`).
+ * - Helper functions (e.g., `isOwner(userId)`) are used to encapsulate and simplify security checks.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to UserProfile documents.
+     * @description Allows a user to read and write their own UserProfile.
      * @path /users/{userId}
-     * @allow (create) User with matching UID can create their profile.
-     * @allow (get, update, delete) User with matching UID can access and modify their profile.
-     * @deny (list) User listing is not allowed.
-     * @deny (create) User cannot create profile with non-matching UID.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user with UID 'user123' can create their profile at /users/user123 if request.auth.uid == 'user123'.
+     * @allow (get) A user with UID 'user123' can read their profile at /users/user123.
+     * @allow (update) A user with UID 'user123' can update their profile at /users/user123.
+     * @allow (delete) A user with UID 'user123' can delete their profile at /users/user123.
+     * @deny (create) A user with UID 'user456' cannot create a profile at /users/user123.
+     * @deny (get) A user with UID 'user456' cannot read the profile at /users/user123.
+     * @principle Enforces user-ownership for UserProfile.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if false;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow update: if isOwner(userId) && resource.data.id == request.resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to Expense documents.
+     * @description Allows a user to manage their expenses.
      * @path /users/{userId}/expenses/{expenseId}
-     * @allow (create, get, update, delete, list) User with matching UID can manage their expenses.
-     * @deny User cannot access or modify expenses of other users.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user with UID 'user123' can create an expense under /users/user123/expenses/{expenseId} if request.auth.uid == 'user123'.
+     * @allow (get) A user with UID 'user123' can read their expense at /users/user123/expenses/{expenseId}.
+     * @allow (list) A user with UID 'user123' can list expenses under /users/user123/expenses.
+     * @allow (update) A user with UID 'user123' can update their expense at /users/user123/expenses/{expenseId}.
+     * @allow (delete) A user with UID 'user123' can delete their expense at /users/user123/expenses/{expenseId}.
+     * @deny (create) A user with UID 'user456' cannot create an expense under /users/user123/expenses/{expenseId}.
+     * @deny (get) A user with UID 'user456' cannot read the expense at /users/user123/expenses/{expenseId}.
+     * @principle Enforces user-ownership for Expense.
      */
     match /users/{userId}/expenses/{expenseId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to Account documents.
+     * @description Allows a user to manage their accounts.
      * @path /users/{userId}/accounts/{accountId}
-     * @allow (create, get, update, delete, list) User with matching UID can manage their accounts.
-     * @deny User cannot access or modify accounts of other users.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user with UID 'user123' can create an account under /users/user123/accounts/{accountId} if request.auth.uid == 'user123'.
+     * @allow (get) A user with UID 'user123' can read their account at /users/user123/accounts/{accountId}.
+     * @allow (list) A user with UID 'user123' can list accounts under /users/user123/accounts.
+     * @allow (update) A user with UID 'user123' can update their account at /users/user123/accounts/{accountId}.
+     * @allow (delete) A user with UID 'user123' can delete their account at /users/user123/accounts/{accountId}.
+     * @deny (create) A user with UID 'user456' cannot create an account under /users/user123/accounts/{accountId}.
+     * @deny (get) A user with UID 'user456' cannot read the account at /users/user123/accounts/{accountId}.
+     * @principle Enforces user-ownership for Account.
      */
     match /users/{userId}/accounts/{accountId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to Contribution documents.
+     * @description Allows a user to manage their contributions.
      * @path /users/{userId}/contributions/{contributionId}
-     * @allow (create, get, update, delete, list) User with matching UID can manage their contributions.
-     * @deny User cannot access or modify contributions of other users.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user with UID 'user123' can create a contribution under /users/user123/contributions/{contributionId} if request.auth.uid == 'user123'.
+     * @allow (get) A user with UID 'user123' can read their contribution at /users/user123/contributions/{contributionId}.
+     * @allow (list) A user with UID 'user123' can list contributions under /users/user123/contributions.
+     * @allow (update) A user with UID 'user123' can update their contribution at /users/user123/contributions/{contributionId}.
+     * @allow (delete) A user with UID 'user123' can delete their contribution at /users/user123/contributions/{contributionId}.
+     * @deny (create) A user with UID 'user456' cannot create a contribution under /users/user123/contributions/{contributionId}.
+     * @deny (get) A user with UID 'user456' cannot read the contribution at /users/user123/contributions/{contributionId}.
+     * @principle Enforces user-ownership for Contribution.
      */
     match /users/{userId}/contributions/{contributionId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to Category documents.
+     * @description Allows a user to manage their categories.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create, get, update, delete, list) User with matching UID can manage their categories.
-     * @deny User cannot access or modify categories of other users.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user with UID 'user123' can create a category under /users/user123/categories/{categoryId} if request.auth.uid == 'user123'.
+     * @allow (get) A user with UID 'user123' can read their category at /users/user123/categories/{categoryId}.
+     * @allow (list) A user with UID 'user123' can list categories under /users/user123/categories.
+     * @allow (update) A user with UID 'user123' can update their category at /users/user123/categories/{categoryId}.
+     * @allow (delete) A user with UID 'user123' can delete their category at /users/user123/categories/{categoryId}.
+     * @deny (create) A user with UID 'user456' cannot create a category under /users/user123/categories/{categoryId}.
+     * @deny (get) A user with UID 'user456' cannot read the category at /users/user123/categories/{categoryId}.
+     * @principle Enforces user-ownership for Category.
      */
     match /users/{userId}/categories/{categoryId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to Tag documents.
+     * @description Allows a user to manage their tags.
      * @path /users/{userId}/tags/{tagId}
-     * @allow (create, get, update, delete, list) User with matching UID can manage their tags.
-     * @deny User cannot access or modify tags of other users.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user with UID 'user123' can create a tag under /users/user123/tags/{tagId} if request.auth.uid == 'user123'.
+     * @allow (get) A user with UID 'user123' can read their tag at /users/user123/tags/{tagId}.
+     * @allow (list) A user with UID 'user123' can list tags under /users/user123/tags.
+     * @allow (update) A user with UID 'user123' can update their tag at /users/user123/tags/{tagId}.
+     * @allow (delete) A user with UID 'user123' can delete their tag at /users/user123/tags/{tagId}.
+     * @deny (create) A user with UID 'user456' cannot create a tag under /users/user123/tags/{tagId}.
+     * @deny (get) A user with UID 'user456' cannot read the tag at /users/user123/tags/{tagId}.
+     * @principle Enforces user-ownership for Tag.
      */
     match /users/{userId}/tags/{tagId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Denies all access to the /shared_expenses collection.
+     * @path /shared_expenses
+     * @deny (get, list, create, update, delete) No one can access the /shared_expenses collection.
+     * @principle Denies all access to a collection.
+     */
+      match /shared_expenses {
+        allow get: if false;
+        allow list: if false;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
     }
   }
 }

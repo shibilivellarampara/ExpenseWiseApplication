@@ -107,7 +107,9 @@ export function SharedExpensesList({ sharedExpenses, isLoading }: SharedExpenses
                 <Card key={item.id} className="flex flex-col">
                     <CardHeader>
                         <CardTitle>{item.name}</CardTitle>
-                        <CardDescription>Created on {item.createdAt.toDate().toLocaleDateString()}</CardDescription>
+                        {item.createdAt && (
+                            <CardDescription>Created on {item.createdAt.toDate().toLocaleDateString()}</CardDescription>
+                        )}
                     </CardHeader>
                     <CardContent className="space-y-4 flex-grow">
                         <div>

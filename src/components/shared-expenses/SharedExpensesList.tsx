@@ -48,24 +48,15 @@ const MemberAvatars = ({ memberIds }: { memberIds: string[] }) => {
     }, [firestore, memberIds]);
 
     return (
-        <TooltipProvider>
-            <div className="flex -space-x-2 overflow-hidden">
-                {members.map(member => (
-                    <Tooltip key={member.id}>
-                        <TooltipTrigger asChild>
-                            <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                                <AvatarImage src={member.photoURL || undefined} />
-                                <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-                            </Avatar>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{member.name}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                ))}
-            </div>
-        </TooltipProvider>
-    )
+        <div className="flex -space-x-2 overflow-hidden">
+            {members.map(member => (
+                <Avatar key={member.id} className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
+                    <AvatarImage src={member.photoURL || undefined} />
+                    <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                </Avatar>
+            ))}
+        </div>
+    );
 }
 
 export function SharedExpensesList({ sharedExpenses, isLoading }: SharedExpensesListProps) {

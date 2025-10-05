@@ -1,172 +1,157 @@
 /**
- * @fileoverview Firestore Security Rules for Expense Tracker
+ * @fileoverview Firestore Security Rules for Expense Tracker App
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for personal finance data. Each user has exclusive access to their own profile, expenses, accounts, contributions, categories, and tags. Public access is not permitted.
+ * This ruleset enforces a strict user-ownership model for all data.  Each user has a private data tree rooted at `/users/{userId}`.
+ * Only the authenticated user matching the `userId` segment has read and write access to the data within that tree.
  *
  * Data Structure:
- * All data is nested under /users/{userId}, creating a clear ownership hierarchy.  The user ID in the path MUST match the userId field within the documents.
+ * - /users/{userId}: User profile information.
+ * - /users/{userId}/expenses/{expenseId}: Individual expense records.
+ * - /users/{userId}/accounts/{accountId}: User's financial accounts.
+ * - /users/{userId}/contributions/{contributionId}: Contribution records.
+ * - /users/{userId}/categories/{categoryId}: Expense categories.
+ * - /users/{userId}/tags/{tagId}: Expense tags.
  *
  * Key Security Decisions:
- * - User listing is explicitly disallowed.
- * - Strict ownership is enforced on all write operations to prevent unauthorized data modification or deletion.
+ * - User profiles can only be created by themselves (self-creation).  Updates are allowed, but the userId cannot be changed.
+ * - No user listing is allowed.
+ * - Ambiguous relationships default to strict owner-only access.
+ *
+ * Denormalization for Authorization:
+ * To avoid `get()` calls in rules, all documents within a user's data tree should include a `userId` field that matches the `userId` segment of the path.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile information.
+     * @description Secure user profiles. Only the user themselves can read and write their profile.
      * @path /users/{userId}
-     * @allow (create) - If the user's ID matches the userId in the path.
-     * @allow (get) - If the user's ID matches the userId in the path.
-     * @allow (update) - If the user's ID matches the userId in the path and the document exists.
-     * @allow (delete) - If the user's ID matches the userId in the path and the document exists.
-     * @deny (list) - Listing users is not allowed.
-     * @deny (create) - If the user's ID does not match the userId in the path.
-     * @deny (update) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @deny (delete) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User 'user123' can create their own profile with matching ID.
+     * @allow (get, update, delete) User 'user123' can read, update and delete their own profile.
+     * @deny (create) User 'user456' cannot create a profile for 'user123'.
+     * @deny (get, update, delete) User 'user456' cannot read, update or delete 'user123' profile.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if false;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow update: if isOwner(userId) && resource.data.id == request.resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user expenses.
+     * @description Secure user expenses. Only the user themselves can manage their expenses.
      * @path /users/{userId}/expenses/{expenseId}
-     * @allow (create) - If the user's ID matches the userId in the path.
-     * @allow (get) - If the user's ID matches the userId in the path.
-     * @allow (list) - If the user's ID matches the userId in the path.
-     * @allow (update) - If the user's ID matches the userId in the path and the document exists.
-     * @allow (delete) - If the user's ID matches the userId in the path and the document exists.
-     * @deny (create) - If the user's ID does not match the userId in the path.
-     * @deny (update) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @deny (delete) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create) User 'user123' can create an expense with matching userId.
+     * @allow (get, list, update, delete) User 'user123' can read, list, update, and delete their own expenses.
+     * @deny (create) User 'user456' cannot create an expense for 'user123'.
+     * @deny (get, list, update, delete) User 'user456' cannot read, list, update or delete 'user123' expenses.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/expenses/{expenseId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user accounts.
+     * @description Secure user accounts. Only the user themselves can manage their accounts.
      * @path /users/{userId}/accounts/{accountId}
-     * @allow (create) - If the user's ID matches the userId in the path.
-     * @allow (get) - If the user's ID matches the userId in the path.
-     * @allow (list) - If the user's ID matches the userId in the path.
-     * @allow (update) - If the user's ID matches the userId in the path and the document exists.
-     * @allow (delete) - If the user's ID matches the userId in the path and the document exists.
-     * @deny (create) - If the user's ID does not match the userId in the path.
-     * @deny (update) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @deny (delete) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create) User 'user123' can create an account with matching userId.
+     * @allow (get, list, update, delete) User 'user123' can read, list, update, and delete their own accounts.
+     * @deny (create) User 'user456' cannot create an account for 'user123'.
+     * @deny (get, list, update, delete) User 'user456' cannot read, list, update or delete 'user123' accounts.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/accounts/{accountId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user contributions.
+     * @description Secure user contributions. Only the user themselves can manage their contributions.
      * @path /users/{userId}/contributions/{contributionId}
-     * @allow (create) - If the user's ID matches the userId in the path.
-     * @allow (get) - If the user's ID matches the userId in the path.
-     * @allow (list) - If the user's ID matches the userId in the path.
-     * @allow (update) - If the user's ID matches the userId in the path and the document exists.
-     * @allow (delete) - If the user's ID matches the userId in the path and the document exists.
-     * @deny (create) - If the user's ID does not match the userId in the path.
-     * @deny (update) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @deny (delete) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create) User 'user123' can create a contribution with matching userId.
+     * @allow (get, list, update, delete) User 'user123' can read, list, update, and delete their own contributions.
+     * @deny (create) User 'user456' cannot create a contribution for 'user123'.
+     * @deny (get, list, update, delete) User 'user456' cannot read, list, update or delete 'user123' contributions.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/contributions/{contributionId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user categories.
+     * @description Secure user categories. Only the user themselves can manage their categories.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) - If the user's ID matches the userId in the path.
-     * @allow (get) - If the user's ID matches the userId in the path.
-     * @allow (list) - If the user's ID matches the userId in the path.
-     * @allow (update) - If the user's ID matches the userId in the path and the document exists.
-     * @allow (delete) - If the user's ID matches the userId in the path and the document exists.
-     * @deny (create) - If the user's ID does not match the userId in the path.
-     * @deny (update) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @deny (delete) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create) User 'user123' can create a category with matching userId.
+     * @allow (get, list, update, delete) User 'user123' can read, list, update, and delete their own categories.
+     * @deny (create) User 'user456' cannot create a category for 'user123'.
+     * @deny (get, list, update, delete) User 'user456' cannot read, list, update or delete 'user123' categories.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/categories/{categoryId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user tags.
+     * @description Secure user tags. Only the user themselves can manage their tags.
      * @path /users/{userId}/tags/{tagId}
-     * @allow (create) - If the user's ID matches the userId in the path.
-     * @allow (get) - If the user's ID matches the userId in the path.
-     * @allow (list) - If the user's ID matches the userId in the path.
-     * @allow (update) - If the user's ID matches the userId in the path and the document exists.
-     * @allow (delete) - If the user's ID matches the userId in the path and the document exists.
-     * @deny (create) - If the user's ID does not match the userId in the path.
-     * @deny (update) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @deny (delete) - If the user's ID does not match the userId in the path or the document does not exist.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create) User 'user123' can create a tag with matching userId.
+     * @allow (get, list, update, delete) User 'user123' can read, list, update, and delete their own tags.
+     * @deny (create) User 'user456' cannot create a tag for 'user123'.
+     * @deny (get, list, update, delete) User 'user456' cannot read, list, update or delete 'user123' tags.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/tags/{tagId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == request.resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
     
-     /**
-      * @description Denies access to the shared_expenses collection.  This collection is not defined in the data model.
-      * @path /shared_expenses
-      * @allow N/A
-      * @deny (get, list, create, update, delete) - Always deny access.
-      * @principle Prevents accidental access to undefined collections
-      */
+    /**
+     * @description Allow public read-only access to the shared_expenses collection
+     * @path /shared_expenses
+     * @allow (get, list) Any user can read the documents in this collection
+     * @deny (create, update, delete) No user can create, update, or delete documents in this collection
+     * @principle Allow public read, deny all writes.
+     */
     match /shared_expenses {
-      allow get: if false;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+        allow get, list: if true;
+        allow create, update, delete: if false;
     }
   }
 
-  // Helper Functions
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
+  // Helper function to determine if the current user is the owner of the resource.
   function isOwner(userId) {
     return isSignedIn() && request.auth.uid == userId;
   }
 
+    // Helper function to determine if the current user is the owner of the resource and the resource exists.
   function isExistingOwner(userId) {
     return isOwner(userId) && resource != null;
+  }
+
+  // Helper function to determine if a user is signed in.
+  function isSignedIn() {
+    return request.auth != null;
   }
 }

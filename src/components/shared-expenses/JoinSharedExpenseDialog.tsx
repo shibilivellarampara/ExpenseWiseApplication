@@ -59,6 +59,7 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
             if (spaceData.memberIds.includes(user.uid)) {
                 toast({ title: "Already a member", description: `You are already a member of "${spaceData.name}".` });
                 setOpen(false);
+                form.reset();
                 return;
             }
 
@@ -71,6 +72,7 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
 
             toast({ title: 'Successfully Joined!', description: `You are now a member of "${spaceData.name}".` });
             setOpen(false);
+            form.reset();
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Failed to Join', description: error.message });
         } finally {
@@ -119,4 +121,3 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
         </Dialog>
     );
 }
-

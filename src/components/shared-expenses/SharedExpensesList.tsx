@@ -30,14 +30,19 @@ const MemberAvatars = ({ memberIds }: { memberIds: string[] }) => {
 
     useEffect(() => {
         const fetchMembers = async () => {
-            if (!firestore) return;
-            const memberProfiles = await Promise.all(
-                memberIds.map(async (id) => {
-                    const userDoc = await getDoc(doc(firestore, 'users', id));
-                    return userDoc.data() as UserProfile;
-                })
-            );
-            setMembers(memberProfiles.filter(p => p));
+            if (!firestore || !memberIds) return;
+            try {
+                const memberProfiles = await Promise.all(
+                    memberIds.map(async (id) => {
+                        const userDoc = await getDoc(doc(firestore, 'users', id));
+                        return userDoc.data() as UserProfile;
+                    })
+                );
+                setMembers(memberProfiles.filter(p => p));
+            } catch (error) {
+                console.error("Error fetching member profiles:", error);
+                setMembers([]);
+            }
         };
         fetchMembers();
     }, [firestore, memberIds]);
@@ -45,8 +50,8 @@ const MemberAvatars = ({ memberIds }: { memberIds: string[] }) => {
     return (
         <div className="flex -space-x-2 overflow-hidden">
             {members.map(member => (
-                 <TooltipProvider key={member.id}>
-                    <Tooltip>
+                 <TooltipProvider>
+                    <Tooltip key={member.id}>
                         <TooltipTrigger asChild>
                             <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
                                 <AvatarImage src={member.photoURL || undefined} />

@@ -1,62 +1,70 @@
 /**
- * @file Firestore Security Rules
- * @core_philosophy This ruleset enforces a strict user-ownership model for most data,
- * ensuring that users can only access their own data. Public read access is granted
- * to the `shared_expenses` collection. Data validation is relaxed for prototyping,
- * focusing on authorization and relational integrity.
- * @data_structure
- * - /users/{userId}: User profiles, accessible only by the owner.
- * - /users/{userId}/expenses/{expenseId}: Expenses owned by the user.
- * - /users/{userId}/accounts/{accountId}: Accounts owned by the user.
- * - /users/{userId}/contributions/{contributionId}: Contributions owned by the user.
- * - /users/{userId}/categories/{categoryId}: Categories owned by the user.
- * - /users/{userId}/tags/{tagId}: Tags owned by the user.
- * - /shared_expenses: Publicly readable collection. Owner-only writes are intended but not yet implemented due to missing schema information.
- * @key_security_decisions
- * - User listing is disallowed.
- * - The `shared_expenses` collection is intended for public read access, but write access requires an ownership field to be present in the schema.
+ * @fileoverview Firestore Security Rules for the Expense Tracker application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Each user has full control
+ * over their own data, which is stored under their respective user ID. No data is
+ * shared between users unless explicitly designed so via a Shared Access pattern.
+ *
+ * Data Structure:
+ * All data is nested under /users/{userId}, ensuring data isolation.
+ *  - /users/{userId} (UserProfile)
+ *  - /users/{userId}/expenses/{expenseId} (Expense)
+ *  - /users/{userId}/accounts/{accountId} (Account)
+ *  - /users/{userId}/contributions/{contributionId} (Contribution)
+ *  - /users/{userId}/categories/{categoryId} (Category)
+ *  - /users/{userId}/tags/{tagId} (Tag)
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed to protect privacy.
+ * - All write operations are validated against the authenticated user's ID.
+ * - No schema validation is performed beyond authorization-critical fields, to allow for rapid prototyping.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secure user profiles. Only the user can read and write their own profile.
+     * @description Controls access to UserProfile documents.
      * @path /users/{userId}
-     * @allow (create) User 'user_abc' can create their profile if request.auth.uid == 'user_abc'.
-     * @allow (get, update, delete) User 'user_abc' can read/update/delete their profile.
-     * @deny (create) User 'user_xyz' cannot create a profile with ID 'user_abc'.
-     * @deny (get, update, delete) User 'user_xyz' cannot read/update/delete 'user_abc' profile.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User with matching UID can create their profile.
+     * @allow (get, update, delete) User with matching UID can access and modify their profile.
+     * @deny (list) User listing is not allowed.
+     * @deny (create) User cannot create profile with non-matching UID.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
 
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secure user-owned expenses.
+     * @description Controls access to Expense documents.
      * @path /users/{userId}/expenses/{expenseId}
-     * @allow (create) User 'user_abc' can create an expense under their profile.
-     * @allow (get, update, delete) User 'user_abc' can read/update/delete their expenses.
-     * @deny (create) User 'user_xyz' cannot create an expense under 'user_abc' profile.
-     * @deny (get, update, delete) User 'user_xyz' cannot read/update/delete 'user_abc' expenses.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create, get, update, delete, list) User with matching UID can manage their expenses.
+     * @deny User cannot access or modify expenses of other users.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/expenses/{expenseId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
-        function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
       }
+
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
@@ -65,20 +73,19 @@ service cloud.firestore {
     }
 
     /**
-     * @description Secure user-owned accounts.
+     * @description Controls access to Account documents.
      * @path /users/{userId}/accounts/{accountId}
-     * @allow (create) User 'user_abc' can create an account under their profile.
-     * @allow (get, update, delete) User 'user_abc' can read/update/delete their accounts.
-     * @deny (create) User 'user_xyz' cannot create an account under 'user_abc' profile.
-     * @deny (get, update, delete) User 'user_xyz' cannot read/update/delete 'user_abc' accounts.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create, get, update, delete, list) User with matching UID can manage their accounts.
+     * @deny User cannot access or modify accounts of other users.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/accounts/{accountId} {
-       function isOwner(userId) {
+      function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
-        function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
       }
 
       allow get: if isOwner(userId);
@@ -89,20 +96,19 @@ service cloud.firestore {
     }
 
     /**
-     * @description Secure user-owned contributions.
+     * @description Controls access to Contribution documents.
      * @path /users/{userId}/contributions/{contributionId}
-     * @allow (create) User 'user_abc' can create a contribution under their profile.
-     * @allow (get, update, delete) User 'user_abc' can read/update/delete their contributions.
-     * @deny (create) User 'user_xyz' cannot create a contribution under 'user_abc' profile.
-     * @deny (get, update, delete) User 'user_xyz' cannot read/update/delete 'user_abc' contributions.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create, get, update, delete, list) User with matching UID can manage their contributions.
+     * @deny User cannot access or modify contributions of other users.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/contributions/{contributionId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
-        function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
       }
 
       allow get: if isOwner(userId);
@@ -113,20 +119,19 @@ service cloud.firestore {
     }
 
     /**
-     * @description Secure user-owned categories.
+     * @description Controls access to Category documents.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) User 'user_abc' can create a category under their profile.
-     * @allow (get, update, delete) User 'user_abc' can read/update/delete their categories.
-     * @deny (create) User 'user_xyz' cannot create a category under 'user_abc' profile.
-     * @deny (get, update, delete) User 'user_xyz' cannot read/update/delete 'user_abc' categories.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create, get, update, delete, list) User with matching UID can manage their categories.
+     * @deny User cannot access or modify categories of other users.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/categories/{categoryId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
-        function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
       }
 
       allow get: if isOwner(userId);
@@ -137,20 +142,19 @@ service cloud.firestore {
     }
 
     /**
-     * @description Secure user-owned tags.
+     * @description Controls access to Tag documents.
      * @path /users/{userId}/tags/{tagId}
-     * @allow (create) User 'user_abc' can create a tag under their profile.
-     * @allow (get, update, delete) User 'user_abc' can read/update/delete their tags.
-     * @deny (create) User 'user_xyz' cannot create a tag under 'user_abc' profile.
-     * @deny (get, update, delete) User 'user_xyz' cannot read/update/delete 'user_abc' tags.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create, get, update, delete, list) User with matching UID can manage their tags.
+     * @deny User cannot access or modify tags of other users.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/tags/{tagId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
-       function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
       }
 
       allow get: if isOwner(userId);
@@ -158,18 +162,6 @@ service cloud.firestore {
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Publicly readable collection with owner-only writes.
-     * @path /shared_expenses
-     * @allow (get, list) Any user can read the documents.
-     * @deny (create, update, delete) Writes are currently disallowed.
-     * @principle Allows public read access but intends to restrict writes to owners.
-     */
-    match /shared_expenses/{sharedExpenseId} {
-      allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
     }
   }
 }

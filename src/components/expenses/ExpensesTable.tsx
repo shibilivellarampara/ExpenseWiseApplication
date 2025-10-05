@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Pilcrow, TrendingUp, Edit } from "lucide-react";
+import { Pilcrow, TrendingUp, Edit, User as UserIcon } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -13,16 +13,24 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "../ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Tooltip, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];
   isLoading?: boolean;
+  isShared?: boolean;
 }
 
 const renderIcon = (iconName: string | undefined, className?: string) => {
   if (!iconName) return <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
   const IconComponent = (LucideIcons as any)[iconName];
   return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
+};
+
+const getInitials = (name?: string | null) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 };
 
 // Function to generate a color from a string
@@ -46,8 +54,7 @@ const generateColorFromString = (str: string): { backgroundColor: string, textCo
 };
 
 
-function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedExpense[], currencySymbol: string }) {
-    const [editingExpense, setEditingExpense] = useState<EnrichedExpense | undefined>(undefined);
+function GroupedExpenseList({ expenses, currencySymbol, isShared }: { expenses: EnrichedExpense[], currencySymbol: string, isShared?: boolean }) {
 
     const groupedExpenses = useMemo(() => {
         return expenses.reduce((acc, expense) => {
@@ -86,8 +93,27 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                     
                                     <div className="text-xs text-muted-foreground flex items-center gap-4">
                                         <div className="flex items-center gap-1">
-                                            {renderIcon(expense.account?.icon, "h-3 w-3")}
-                                            <span>{expense.account?.name}</span>
+                                            {isShared && expense.user ? (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger className="flex items-center gap-1">
+                                                             <Avatar className="h-4 w-4">
+                                                                <AvatarImage src={expense.user.photoURL || ''} alt={expense.user.name || 'user'}/>
+                                                                <AvatarFallback>{getInitials(expense.user.name)}</AvatarFallback>
+                                                            </Avatar>
+                                                            <span>{expense.user.name}</span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Transaction added by {expense.user.name}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            ) : (
+                                                <>
+                                                    {renderIcon(expense.account?.icon, "h-3 w-3")}
+                                                    <span>{expense.account?.name}</span>
+                                                </>
+                                            )}
                                         </div>
                                         <div>
                                             {expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -117,7 +143,7 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                 </div>
                                 <div className="text-right flex-shrink-0 w-32 flex flex-col items-end">
                                      <div className="flex items-center">
-                                        <AddExpenseDialog expenseToEdit={expense}>
+                                        <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId}>
                                             <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Edit className="h-4 w-4" />
                                             </Button>
@@ -126,9 +152,11 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
                                             {expense.type === 'income' ? '+' : '-'}{currencySymbol}{expense.amount.toFixed(2)}
                                         </div>
                                      </div>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Balance: {currencySymbol}{expense.balanceAfterTransaction?.toFixed(2)}
-                                    </p>
+                                    {!isShared && expense.balanceAfterTransaction !== undefined && (
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Balance: {currencySymbol}{expense.balanceAfterTransaction?.toFixed(2)}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         )})}
@@ -139,7 +167,7 @@ function GroupedExpenseList({ expenses, currencySymbol }: { expenses: EnrichedEx
     )
 }
 
-export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
+export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTableProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -189,7 +217,7 @@ export function ExpensesTable({ expenses, isLoading }: ExpensesTableProps) {
   return (
     <Card>
         <CardContent className="p-0">
-            <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} />
+            <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} isShared={isShared} />
         </CardContent>
     </Card>
   )

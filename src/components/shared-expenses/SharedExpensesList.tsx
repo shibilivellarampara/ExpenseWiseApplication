@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 interface SharedExpensesListProps {
     sharedExpenses: SharedExpense[];
@@ -135,7 +136,9 @@ export function SharedExpensesList({ sharedExpenses, isLoading }: SharedExpenses
                         )}
                     </CardContent>
                     <CardFooter>
-                        <Button variant="outline" className="w-full">View Details</Button>
+                        <Button asChild variant="outline" className="w-full">
+                            <Link href={`/shared-expenses/${item.id}`}>View Details</Link>
+                        </Button>
                     </CardFooter>
                 </Card>
             ))}

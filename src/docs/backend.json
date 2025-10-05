@@ -138,6 +138,10 @@
     "/shared_expenses/{sharedExpenseId}": {
       "schema": { "$ref": "#/entities/SharedExpense" },
       "description": "Stores shared expense spaces, accessible by multiple users."
+    },
+    "/shared_expenses/{sharedExpenseId}/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/Expense"},
+      "description": "Stores expense records for a specific shared space."
     }
   }
 }

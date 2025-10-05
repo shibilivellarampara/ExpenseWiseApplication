@@ -44,7 +44,7 @@ export type Tag = {
 
 export type Expense = {
   id: string;
-  userId: string;
+  userId: string; // The user who created the expense
   type: 'expense' | 'income';
   amount: number;
   description?: string;
@@ -56,8 +56,9 @@ export type Expense = {
   sharedExpenseId?: string;
 };
 
-export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagId'> & {
+export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagId' | 'userId'> & {
   id: string;
+  user?: UserProfile; // The user who created the expense
   category?: Category;
   account?: Account;
   tag?: Tag;

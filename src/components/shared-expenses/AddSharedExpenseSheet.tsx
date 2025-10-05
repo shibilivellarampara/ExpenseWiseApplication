@@ -18,13 +18,11 @@ import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc, query, where, getDocs, writeBatch, serverTimestamp, doc } from 'firebase/firestore';
-import { Loader2, X } from 'lucide-react';
-import { Badge } from '../ui/badge';
+import { collection, addDoc, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
 
 const sharedExpenseSchema = z.object({
     name: z.string().min(1, 'Space name is required.'),
-    memberEmails: z.array(z.string().email()).min(1, 'At least one member is required.'),
 });
 
 // Function to generate a random 6-character alphanumeric string
@@ -47,40 +45,19 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
-    const [emailInput, setEmailInput] = useState('');
 
     const form = useForm<z.infer<typeof sharedExpenseSchema>>({
         resolver: zodResolver(sharedExpenseSchema),
         defaultValues: {
             name: '',
-            memberEmails: user?.email ? [user.email] : [],
         },
     });
     
-    // Reset form when sheet opens/closes and user is available
     useEffect(() => {
-        if (user?.email) {
-            form.reset({
-                name: '',
-                memberEmails: [user.email],
-            });
+        if(open) {
+            form.reset({ name: '' });
         }
-    }, [open, user, form]);
-
-    const handleAddEmail = () => {
-        if (emailInput && z.string().email().safeParse(emailInput).success) {
-            const currentEmails = form.getValues('memberEmails');
-            if (!currentEmails.includes(emailInput)) {
-                form.setValue('memberEmails', [...currentEmails, emailInput]);
-                setEmailInput('');
-            }
-        }
-    };
-
-    const handleRemoveEmail = (emailToRemove: string) => {
-        const currentEmails = form.getValues('memberEmails');
-        form.setValue('memberEmails', currentEmails.filter(email => email !== emailToRemove));
-    };
+    }, [open, form]);
 
 
     async function onSubmit(values: z.infer<typeof sharedExpenseSchema>) {
@@ -94,23 +71,7 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
         try {
             const batch = writeBatch(firestore);
             
-            // 1. Find user profiles for all member emails
-            const usersRef = collection(firestore, 'users');
-            const memberIds: string[] = [];
-            const userDocsToUpdate: {ref: any, id: string}[] = [];
-
-            for (const email of values.memberEmails) {
-                const q = query(usersRef, where('email', '==', email));
-                const querySnapshot = await getDocs(q);
-                if (querySnapshot.empty) {
-                    throw new Error(`User with email ${email} not found.`);
-                }
-                const userDoc = querySnapshot.docs[0];
-                memberIds.push(userDoc.id);
-                userDocsToUpdate.push({ref: userDoc.ref, id: userDoc.id});
-            }
-
-            // 2. Create the new shared_expense document in the root collection
+            // Create the new shared_expense document in the root collection
             const sharedExpensesCol = collection(firestore, `shared_expenses`);
             const newSharedExpenseRef = doc(sharedExpensesCol);
             
@@ -118,7 +79,7 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
                 id: newSharedExpenseRef.id,
                 name: values.name,
                 ownerId: user.uid,
-                memberIds,
+                memberIds: [user.uid], // Creator is the first member
                 joinId: generateJoinId(),
                 createdAt: serverTimestamp(),
             });
@@ -127,7 +88,7 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
             
             toast({
                 title: 'Shared Space Created!',
-                description: `${values.name} has been created.`,
+                description: `${values.name} has been created. Share the join code with others.`,
             });
             setOpen(false);
 
@@ -138,8 +99,6 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
         }
     }
     
-    const memberEmails = form.watch('memberEmails');
-
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>{children}</SheetTrigger>
@@ -147,7 +106,7 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
                 <SheetHeader>
                     <SheetTitle className="font-headline">Create New Shared Space</SheetTitle>
                     <SheetDescription>
-                        Invite members by email to share expenses. A unique join code will be generated.
+                        A unique 6-character join code will be generated for others to join.
                     </SheetDescription>
                 </SheetHeader>
                 <Form {...form}>
@@ -161,44 +120,6 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
                                     <FormControl>
                                         <Input placeholder="e.g., Goa Trip 2024" {...field} />
                                     </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        
-                        <FormItem>
-                            <FormLabel>Invite Members</FormLabel>
-                             <div className="flex gap-2">
-                                <Input 
-                                    placeholder="friend@example.com" 
-                                    value={emailInput}
-                                    onChange={e => setEmailInput(e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); }}}
-                                />
-                                <Button type="button" onClick={handleAddEmail}>Add</Button>
-                            </div>
-                        </FormItem>
-
-                        <FormField
-                            control={form.control}
-                            name="memberEmails"
-                            render={() => (
-                                <FormItem>
-                                    <div className="space-y-2">
-                                        <FormLabel>Members</FormLabel>
-                                        <div className="flex flex-wrap gap-2">
-                                            {memberEmails.map(email => (
-                                                <Badge key={email} variant="secondary">
-                                                    {email}
-                                                     {email !== user?.email && (
-                                                        <button type="button" onClick={() => handleRemoveEmail(email)} className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2">
-                                                            <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                                                        </button>
-                                                    )}
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}

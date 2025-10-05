@@ -30,7 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useState, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, serverTimestamp, writeBatch, increment, updateDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import * as LucideIcons from 'lucide-react';
@@ -303,24 +303,26 @@ function ExpenseForm({
 
 export function AddExpenseDialog({ 
     children, 
-    expenseToEdit 
+    expenseToEdit,
+    sharedExpenseId,
 }: { 
     children: React.ReactNode, 
-    expenseToEdit?: EnrichedExpense 
+    expenseToEdit?: EnrichedExpense,
+    sharedExpenseId?: string;
 }) {
     const [open, setOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
     if (isDesktop) {
         return (
-            <DesktopAddExpenseDialog open={open} setOpen={setOpen} expenseToEdit={expenseToEdit}>
+            <DesktopAddExpenseDialog open={open} setOpen={setOpen} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId}>
                 {children}
             </DesktopAddExpenseDialog>
         );
     }
 
     return (
-        <MobileAddExpenseDrawer open={open} setOpen={setOpen} expenseToEdit={expenseToEdit}>
+        <MobileAddExpenseDrawer open={open} setOpen={setOpen} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId}>
             {children}
         </MobileAddExpenseDrawer>
     );
@@ -331,14 +333,16 @@ function DesktopAddExpenseDialog({
     children, 
     open, 
     setOpen,
-    expenseToEdit 
+    expenseToEdit,
+    sharedExpenseId,
 }: { 
     children: React.ReactNode, 
     open: boolean, 
     setOpen: (open: boolean) => void,
-    expenseToEdit?: EnrichedExpense 
+    expenseToEdit?: EnrichedExpense,
+    sharedExpenseId?: string,
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(expenseToEdit, setOpen);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -373,14 +377,16 @@ function MobileAddExpenseDrawer({
     children, 
     open, 
     setOpen,
-    expenseToEdit 
+    expenseToEdit,
+    sharedExpenseId,
 }: { 
     children: React.ReactNode, 
     open: boolean, 
     setOpen: (open: boolean) => void,
-    expenseToEdit?: EnrichedExpense 
+    expenseToEdit?: EnrichedExpense,
+    sharedExpenseId?: string;
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(expenseToEdit, setOpen);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId);
     
     return (
         <Drawer open={open} onOpenChange={setOpen}>
@@ -412,7 +418,11 @@ function MobileAddExpenseDrawer({
 
 
 // Shared hook for form logic
-function useExpenseForm(expenseToEdit?: EnrichedExpense, setOpen?: (open: boolean) => void) {
+function useExpenseForm(
+    setOpen: (open: boolean) => void,
+    expenseToEdit?: EnrichedExpense, 
+    sharedExpenseId?: string,
+) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
@@ -455,10 +465,10 @@ function useExpenseForm(expenseToEdit?: EnrichedExpense, setOpen?: (open: boolea
         }
     };
     
-    // Reset form when expenseToEdit changes
+    // Reset form when dialog opens
     useEffect(() => {
         resetAndPopulateForm();
-    }, [expenseToEdit, userProfile]);
+    }, [expenseToEdit, userProfile, isEditMode]);
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
         if (!firestore || !user) {
@@ -468,20 +478,24 @@ function useExpenseForm(expenseToEdit?: EnrichedExpense, setOpen?: (open: boolea
         setIsLoading(true);
         try {
             const batch = writeBatch(firestore);
+            const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
 
             if (isEditMode && expenseToEdit) {
                 // --- EDIT LOGIC ---
-                const expenseRef = doc(firestore, `users/${user.uid}/expenses`, expenseToEdit.id);
+                const expenseRef = doc(firestore, collectionPath, expenseToEdit.id);
                 
-                // Reverse old transaction amount
-                const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
-                const oldAmount = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
-                batch.update(oldAccountRef, { balance: increment(oldAmount) });
+                // For non-shared expenses, update account balance
+                if (!sharedExpenseId) {
+                    // Reverse old transaction amount
+                    const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
+                    const oldAmount = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
+                    batch.update(oldAccountRef, { balance: increment(oldAmount) });
 
-                // Apply new transaction amount
-                const newAccountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                const newAmount = values.type === 'income' ? values.amount : -values.amount;
-                batch.update(newAccountRef, { balance: increment(newAmount) });
+                    // Apply new transaction amount
+                    const newAccountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+                    const newAmount = values.type === 'income' ? values.amount : -values.amount;
+                    batch.update(newAccountRef, { balance: increment(newAmount) });
+                }
                 
                 // Update expense document
                 const updatedData = { ...values, tagId: values.tagId === 'no-tag' ? '' : values.tagId, categoryId: values.categoryId === 'no-category' ? '' : values.categoryId };
@@ -489,21 +503,25 @@ function useExpenseForm(expenseToEdit?: EnrichedExpense, setOpen?: (open: boolea
 
             } else {
                 // --- ADD LOGIC ---
-                const expenseCol = collection(firestore, `users/${user.uid}/expenses`);
+                const expenseCol = collection(firestore, collectionPath);
                 const newExpenseRef = doc(expenseCol);
                 const expenseData = {
                   ...values,
                   id: newExpenseRef.id,
                   userId: user.uid,
                   createdAt: serverTimestamp(),
+                  sharedExpenseId: sharedExpenseId || '',
                   tagId: values.tagId === 'no-tag' || !values.tagId ? '' : values.tagId,
                   categoryId: values.categoryId === 'no-category' || !values.categoryId ? '' : values.categoryId,
                 };
                 batch.set(newExpenseRef, expenseData);
     
-                const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                const amountToUpdate = values.type === 'income' ? values.amount : -values.amount;
-                batch.update(accountRef, { balance: increment(amountToUpdate) });
+                // For non-shared expenses, update account balance
+                if (!sharedExpenseId) {
+                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+                    const amountToUpdate = values.type === 'income' ? values.amount : -values.amount;
+                    batch.update(accountRef, { balance: increment(amountToUpdate) });
+                }
             }
 
             await batch.commit();
@@ -519,16 +537,21 @@ function useExpenseForm(expenseToEdit?: EnrichedExpense, setOpen?: (open: boolea
 
     const onFinalSubmit = form.handleSubmit(async (values) => {
         const success = await handleTransactionSave(values);
-        if (success && setOpen) {
+        if (success) {
             setOpen(false);
         }
     });
 
-    // Not applicable in edit mode
     const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
         const success = await handleTransactionSave(values);
         if (success) {
-            resetAndPopulateForm();
+            // Reset form for a new entry, keeping some fields if sensible
+            form.reset({
+                ...values, // keep account, type, etc.
+                amount: 0,
+                description: '',
+                date: new Date(),
+            });
         }
     });
 

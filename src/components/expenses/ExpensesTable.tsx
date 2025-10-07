@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -152,7 +153,7 @@ function GroupedExpenseList({ expenses, isShared }: { expenses: EnrichedExpense[
                                             </AddExpenseDialog>
                                             <div className={cn(
                                                 'font-bold text-lg',
-                                                expense.type === 'income' ? 'text-green-600' : 'text-red-600'
+                                                expense.type === 'income' ? 'text-green-600' : 'text-red-500'
                                             )}>
                                                 {expense.amount.toFixed(2)}
                                             </div>

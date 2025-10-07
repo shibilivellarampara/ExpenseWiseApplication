@@ -165,7 +165,7 @@ export default function ExpensesPage() {
 
             <ExpensesTable expenses={enrichedAndBalancedExpenses} isLoading={isLoading} />
 
-            <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4 z-40 md:hidden">
+            <div className="fixed bottom-0 left-0 right-0 p-4 z-40 md:hidden">
                  <div className="container mx-auto flex justify-around gap-2">
                     <AddExpenseDialog initialType="income">
                         <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg text-base font-semibold py-6">
@@ -174,7 +174,7 @@ export default function ExpensesPage() {
                         </Button>
                     </AddExpenseDialog>
                     <AddExpenseDialog initialType="expense">
-                        <Button className="w-full bg-red-600 hover:bg-red-700 text-white shadow-lg text-base font-semibold py-6">
+                        <Button className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg text-base font-semibold py-6">
                             <Minus className="mr-2 h-5 w-5" />
                             CASH OUT
                         </Button>
@@ -190,7 +190,7 @@ export default function ExpensesPage() {
                     </Button>
                 </AddExpenseDialog>
                 <AddExpenseDialog initialType="expense">
-                     <Button size="icon" className="h-14 w-14 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg">
+                     <Button size="icon" className="h-14 w-14 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg">
                         <Minus className="h-6 w-6" />
                         <span className="sr-only">Add Expense</span>
                     </Button>

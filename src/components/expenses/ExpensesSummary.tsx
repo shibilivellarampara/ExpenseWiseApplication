@@ -55,21 +55,21 @@ export function ExpensesSummary({ expenses, isLoading, currency }: ExpensesSumma
     }
 
     return (
-        <Card>
+        <Card className="bg-card">
             <CardContent className="p-4">
                 <div className="flex justify-between items-center text-sm">
                     <div>
                         <p className="text-muted-foreground">Net Balance</p>
                         <p className="text-lg font-bold">
-                            {currencySymbol}{summary.netBalance.toFixed(2)}
+                            {summary.netBalance.toFixed(2)}
                         </p>
                     </div>
                     <div className="text-right">
                         <p className="text-green-600">
-                           <span className="text-muted-foreground">In:</span> {currencySymbol}{summary.totalIncome.toFixed(2)}
+                           <span className="text-muted-foreground">In:</span> {summary.totalIncome.toFixed(2)}
                         </p>
-                         <p className="text-red-600">
-                           <span className="text-muted-foreground">Out:</span> {currencySymbol}{summary.totalExpense.toFixed(2)}
+                         <p className="text-red-500">
+                           <span className="text-muted-foreground">Out:</span> {summary.totalExpense.toFixed(2)}
                         </p>
                     </div>
                 </div>

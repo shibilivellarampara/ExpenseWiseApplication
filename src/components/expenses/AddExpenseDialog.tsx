@@ -549,7 +549,8 @@ function DesktopAddExpenseDialog({
         setOpen, 
         expenseToEdit, 
         sharedExpenseId, 
-        initialType
+        initialType,
+        open
     });
 
     return (
@@ -627,7 +628,8 @@ function MobileAddExpenseDrawer({
         setOpen,
         expenseToEdit,
         sharedExpenseId,
-        initialType
+        initialType,
+        open
     });
     
     return (
@@ -689,6 +691,7 @@ interface UseExpenseFormProps {
     expenseToEdit?: EnrichedExpense; 
     sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
+    open: boolean;
 }
 
 // Shared hook for form logic
@@ -697,6 +700,7 @@ function useExpenseForm({
     expenseToEdit,
     sharedExpenseId,
     initialType,
+    open
 }: UseExpenseFormProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
@@ -725,11 +729,11 @@ function useExpenseForm({
             amount: '' as any,
             date: new Date(),
             accountId: '',
-            categoryId: userProfile?.expenseFieldSettings?.isCategoryRequired ? '' : 'no-category',
+            categoryId: 'no-category',
             description: '',
             tagIds: [],
         }
-    }, [initialType, userProfile]);
+    }, [initialType]);
     
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
@@ -738,20 +742,22 @@ function useExpenseForm({
     
     // Effect to reset the form when the dialog opens or when editing a different expense
     useEffect(() => {
-        if (isEditMode && expenseToEdit) {
-            form.reset({
-                type: expenseToEdit.type,
-                amount: expenseToEdit.amount,
-                date: expenseToEdit.date,
-                accountId: expenseToEdit.account?.id || '',
-                categoryId: expenseToEdit.category?.id || 'no-category',
-                description: expenseToEdit.description || '',
-                tagIds: expenseToEdit.tags?.map(t => t.id) || [],
-            });
-        } else {
-            form.reset(getNewFormValues());
+        if (open) {
+            if (isEditMode && expenseToEdit) {
+                form.reset({
+                    type: expenseToEdit.type,
+                    amount: expenseToEdit.amount,
+                    date: expenseToEdit.date,
+                    accountId: expenseToEdit.account?.id || '',
+                    categoryId: expenseToEdit.category?.id || 'no-category',
+                    description: expenseToEdit.description || '',
+                    tagIds: expenseToEdit.tags?.map(t => t.id) || [],
+                });
+            } else {
+                form.reset(getNewFormValues());
+            }
         }
-    }, [isEditMode, expenseToEdit, form, getNewFormValues]);
+    }, [open, isEditMode, expenseToEdit, form, getNewFormValues]);
 
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
@@ -785,10 +791,10 @@ function useExpenseForm({
                 categoryId: values.categoryId === 'no-category' ? null : values.categoryId,
             };
 
+            // Remove sharedExpenseId if it's undefined to avoid Firestore error
             if (sharedExpenseId) {
                 expenseData.sharedExpenseId = sharedExpenseId;
             } else {
-                // Ensure sharedExpenseId is not present for personal expenses
                 delete expenseData.sharedExpenseId;
             }
 

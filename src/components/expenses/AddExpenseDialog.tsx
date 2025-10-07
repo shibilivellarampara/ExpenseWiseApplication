@@ -52,7 +52,6 @@ import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
 import ReactSelect, { StylesConfig } from 'react-select';
-import { Separator } from '../ui/separator';
 import { availableIcons } from '@/lib/defaults';
 
 // Function to create a dynamic schema
@@ -63,9 +62,7 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
     amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
     
-    categoryId: settings?.isCategoryRequired
-      ? z.string().min(1, 'Please select a category.')
-      : z.string().optional(),
+    categoryId: z.string().optional(),
     
     description: settings?.isDescriptionRequired
       ? z.string().min(1, 'Description is required.')
@@ -186,7 +183,6 @@ function ExpenseForm({
   form,
   onSubmit,
   id,
-  transactionType,
   accounts,
   categories,
   tags
@@ -194,7 +190,6 @@ function ExpenseForm({
   form: UseFormReturn<any>;
   onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
   id: string;
-  transactionType: 'expense' | 'income';
   accounts: Account[];
   categories: Category[];
   tags: Tag[];
@@ -202,14 +197,13 @@ function ExpenseForm({
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const transactionType = form.watch('type');
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
      
     const activeAccounts = useMemo(() => accounts?.filter(acc => acc.status === 'active' || acc.status === undefined) || [], [accounts]);
     
-    const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
-
     const [isSuggesting, startSuggestionTransition] = useTransition();
 
     const handleSuggestion = useCallback(() => {
@@ -271,12 +265,19 @@ function ExpenseForm({
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
     
-    const tagOptions = useMemo(() => tags.map(tag => ({ value: tag.id, label: tag.name })), [tags]);
+    const tagOptions = useMemo(() => tags.map(tag => ({ value: tag.id, label: tag.name, icon: tag.icon })), [tags]);
     const selectedTagValues = form.watch('tagIds') || [];
     const selectedTags = useMemo(() => 
         tagOptions.filter(option => selectedTagValues.includes(option.value)),
     [tagOptions, selectedTagValues]);
 
+    const formatOptionLabel = ({ label, icon }: { label: string, icon: string }) => (
+        <div className="flex items-center gap-2">
+            {renderIcon(icon)}
+            <span>{label}</span>
+        </div>
+    );
+    
     const selectStyles: StylesConfig = {
         control: (base) => ({
             ...base,
@@ -291,8 +292,9 @@ function ExpenseForm({
             ...base,
             background: 'hsl(var(--popover))',
             color: 'hsl(var(--popover-foreground))',
-            zIndex: 51,
+            zIndex: 51, // Needs to be higher than dialog/drawer
         }),
+        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
         multiValue: (base) => ({
             ...base,
             background: 'hsl(var(--muted))',
@@ -346,11 +348,9 @@ function ExpenseForm({
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                         <FormItem className="flex flex-row items-center justify-between">
+                         <FormItem className="flex flex-col space-y-2">
                             <FormLabel>Date & Time</FormLabel>
-                            <div className="w-[240px]">
-                                <DateTimePicker field={field} />
-                            </div>
+                            <DateTimePicker field={field} />
                             <FormMessage />
                         </FormItem>
                     )}
@@ -408,7 +408,7 @@ function ExpenseForm({
                             render={({ field }) => (
                                 <Select onValueChange={field.onChange} value={field.value || ''}>
                                     <FormControl>
-                                    <SelectTrigger>
+                                    <SelectTrigger className="w-full">
                                         {field.value ? (
                                             <div className="flex items-center">
                                                 {renderIcon(categories.find(c => c.id === field.value)?.icon)}
@@ -435,7 +435,7 @@ function ExpenseForm({
                             <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
                         </QuickAddItemDialog>
                     </div>
-                     <FormMessage />
+                     <FormMessage className="col-span-2" />
                 </FormItem>
                 
                  <FormItem>
@@ -456,7 +456,9 @@ function ExpenseForm({
                                         const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
                                         field.onChange(selectedValues);
                                     }}
+                                    formatOptionLabel={formatOptionLabel}
                                     styles={selectStyles}
+                                    menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
                                     className="w-full"
                                     classNamePrefix="select"
                                 />
@@ -509,16 +511,20 @@ export function AddExpenseDialog({
     const [open, setOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen(newOpen);
+    }
+    
     if (isDesktop) {
         return (
-            <DesktopAddExpenseDialog open={open} setOpen={setOpen} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType}>
+            <DesktopAddExpenseDialog open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType}>
                 {children}
             </DesktopAddExpenseDialog>
         );
     }
 
     return (
-        <MobileAddExpenseDrawer open={open} setOpen={setOpen} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType}>
+        <MobileAddExpenseDrawer open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType}>
             {children}
         </MobileAddExpenseDrawer>
     );
@@ -540,7 +546,7 @@ function DesktopAddExpenseDialog({
     sharedExpenseId?: string,
     initialType?: 'income' | 'expense';
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, transactionType, isEditMode, formId, accounts, categories, tags } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -551,7 +557,7 @@ function DesktopAddExpenseDialog({
                     <DialogDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType} accounts={accounts} categories={categories} tags={tags} />
+                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} />
                 </div>
                 <DialogFooter className="flex-row justify-between w-full">
                     <div>
@@ -613,7 +619,7 @@ function MobileAddExpenseDrawer({
     sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, transactionType, isEditMode, formId, accounts, categories, tags } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
     
     return (
         <Drawer open={open} onOpenChange={setOpen}>
@@ -624,7 +630,7 @@ function MobileAddExpenseDrawer({
                     <DrawerDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DrawerDescription>
                 </DrawerHeader>
                  <div className="overflow-y-auto px-4">
-                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType} accounts={accounts} categories={categories} tags={tags}/>
+                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags}/>
                 </div>
                  <DrawerFooter className="pt-2">
                     <div className="flex w-full gap-2">
@@ -709,31 +715,26 @@ function useExpenseForm(
     
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
-        defaultValues: isEditMode && expenseToEdit ? {
-            type: expenseToEdit.type,
-            amount: expenseToEdit.amount,
-            date: expenseToEdit.date,
-            accountId: expenseToEdit.account?.id || '',
-            categoryId: expenseToEdit.category?.id || '',
-            description: expenseToEdit.description || '',
-            tagIds: expenseToEdit.tags?.map(t => t.id) || [],
-        } : getNewFormValues(),
+        defaultValues: getNewFormValues(),
     });
 
-    const transactionType = form.watch('type');
-
     useEffect(() => {
-        const defaultValues = isEditMode && expenseToEdit ? {
-            type: expenseToEdit.type,
-            amount: expenseToEdit.amount,
-            date: expenseToEdit.date,
-            accountId: expenseToEdit.account?.id || '',
-            categoryId: expenseToEdit.category?.id || '',
-            description: expenseToEdit.description || '',
-            tagIds: expenseToEdit.tags?.map(t => t.id) || [],
-        } : getNewFormValues();
-        form.reset(defaultValues);
-    }, [expenseToEdit, isEditMode, form, getNewFormValues]);
+        if (open) { // Use the open state passed to the hook
+            if (isEditMode && expenseToEdit) {
+                form.reset({
+                    type: expenseToEdit.type,
+                    amount: expenseToEdit.amount,
+                    date: expenseToEdit.date,
+                    accountId: expenseToEdit.account?.id || '',
+                    categoryId: expenseToEdit.category?.id || '',
+                    description: expenseToEdit.description || '',
+                    tagIds: expenseToEdit.tags?.map(t => t.id) || [],
+                });
+            } else {
+                form.reset(getNewFormValues());
+            }
+        }
+    }, [open, isEditMode, expenseToEdit, form, getNewFormValues]);
 
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
@@ -769,6 +770,8 @@ function useExpenseForm(
 
             if (sharedExpenseId) {
                 expenseData.sharedExpenseId = sharedExpenseId;
+            } else {
+                delete expenseData.sharedExpenseId;
             }
 
             // Logic for "Credit Limit Upgrade"
@@ -911,7 +914,6 @@ function useExpenseForm(
       onSaveAndNewSubmit, 
       handleDelete, 
       isLoading, 
-      transactionType, 
       isEditMode, 
       formId,
       accounts: accounts || [],
@@ -919,3 +921,5 @@ function useExpenseForm(
       tags: tags || []
     };
 }
+
+    

@@ -1,35 +1,27 @@
 /**
- * @file Firestore Security Rules
- * @core_philosophy This ruleset enforces a strict user-ownership model.  Each user has full control over their own data (profile, expenses, accounts, etc.).  No cross-user access is permitted except where explicitly allowed via shared collections.
- * @data_structure Data is organized hierarchically under `/users/{userId}`. Each user has their own collections for expenses, accounts, categories, and tags.
- * @key_security_decisions
- *   - Users can only access their own data.
- *   - Users cannot list all users (no `list` on `/users`).
- *   - Data validation is minimized to allow for rapid prototyping, focusing only on ownership and relational integrity.
+ * @description This ruleset enforces a strict user-ownership model for personal finance data. Users can only access their own data.
+ * @dataStructure All data is nested under /users/{userId}, ensuring that each user has a private data tree.
+ * @keySecurityDecisions
+ *   - Listing of all users is disallowed.
+ *   - Shared expenses are disallowed.
+ *   - Strict ownership is enforced on all resources to prevent unauthorized access or modification.
+ * @denormalizationForAuthorization Not applicable, as the data structure inherently enforces ownership via the /users/{userId} path.
+ * @structuralSegregation Not applicable, as the model focuses on private user data.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profiles.
+     * @description Enforces access control for user profiles. Only the user can read or modify their own profile.
      * @path /users/{userId}
-     * @allow (create) User 'testUser' can create their profile if request.auth.uid == userId
-     * @allow (get) User 'testUser' can read their profile.
-     * @allow (update) User 'testUser' can update their profile.
-     * @allow (delete) User 'testUser' can delete their profile.
-     * @deny (create) User 'anotherUser' cannot create a profile with userId 'testUser'.
+     * @allow (create) - Authenticated user can create their own profile if the userId matches their auth UID.
+     * @allow (get, update, delete) - Authenticated user can access their own profile if the userId matches their auth UID.
+     * @deny (create) - User cannot create a profile with a userId that does not match their auth UID.
+     * @deny (get, update, delete) - User cannot access or modify a profile with a userId that does not match their auth UID.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if false;
       allow create: if isOwner(userId);
@@ -38,25 +30,15 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to expenses for a specific user.
+     * @description Enforces access control for expenses. Only the user can read, create, update, or delete their own expenses.
      * @path /users/{userId}/expenses/{expenseId}
-     * @allow (create) User 'testUser' can create an expense in their own expenses collection.
-     * @allow (get) User 'testUser' can read an expense from their own expenses collection.
-     * @allow (list) User 'testUser' can list expenses in their own expenses collection.
-     * @allow (update) User 'testUser' can update an expense in their own expenses collection.
-     * @allow (delete) User 'testUser' can delete an expense from their own expenses collection.
-     * @deny (create) User 'anotherUser' cannot create an expense in 'testUser' expenses collection.
+     * @allow (create) - Authenticated user can create an expense under their userId.
+     * @allow (get, list, update, delete) - Authenticated user can access their own expenses if the userId matches their auth UID.
+     * @deny (create) - User cannot create an expense under a userId that does not match their auth UID.
+     * @deny (get, list, update, delete) - User cannot access or modify expenses under a userId that does not match their auth UID.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/expenses/{expenseId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId);
@@ -65,25 +47,15 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to accounts for a specific user.
+     * @description Enforces access control for accounts. Only the user can read, create, update, or delete their own accounts.
      * @path /users/{userId}/accounts/{accountId}
-     * @allow (create) User 'testUser' can create an account in their own accounts collection.
-     * @allow (get) User 'testUser' can read an account from their own accounts collection.
-     * @allow (list) User 'testUser' can list accounts in their own accounts collection.
-     * @allow (update) User 'testUser' can update an account in their own accounts collection.
-     * @allow (delete) User 'testUser' can delete an account from their own accounts collection.
-     * @deny (create) User 'anotherUser' cannot create an account in 'testUser' accounts collection.
+     * @allow (create) - Authenticated user can create an account under their userId.
+     * @allow (get, list, update, delete) - Authenticated user can access their own accounts if the userId matches their auth UID.
+     * @deny (create) - User cannot create an account under a userId that does not match their auth UID.
+     * @deny (get, list, update, delete) - User cannot access or modify accounts under a userId that does not match their auth UID.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/accounts/{accountId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId);
@@ -92,25 +64,15 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to contributions for a specific user.
+     * @description Enforces access control for contributions. Only the user can read, create, update, or delete their own contributions.
      * @path /users/{userId}/contributions/{contributionId}
-     * @allow (create) User 'testUser' can create a contribution in their own contributions collection.
-     * @allow (get) User 'testUser' can read a contribution from their own contributions collection.
-     * @allow (list) User 'testUser' can list contributions in their own contributions collection.
-     * @allow (update) User 'testUser' can update a contribution in their own contributions collection.
-     * @allow (delete) User 'testUser' can delete a contribution from their own contributions collection.
-     * @deny (create) User 'anotherUser' cannot create a contribution in 'testUser' contributions collection.
+     * @allow (create) - Authenticated user can create a contribution under their userId.
+     * @allow (get, list, update, delete) - Authenticated user can access their own contributions if the userId matches their auth UID.
+     * @deny (create) - User cannot create a contribution under a userId that does not match their auth UID.
+     * @deny (get, list, update, delete) - User cannot access or modify contributions under a userId that does not match their auth UID.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/contributions/{contributionId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId);
@@ -119,25 +81,15 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to categories for a specific user.
+     * @description Enforces access control for categories. Only the user can read, create, update, or delete their own categories.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) User 'testUser' can create a category in their own categories collection.
-     * @allow (get) User 'testUser' can read a category from their own categories collection.
-     * @allow (list) User 'testUser' can list categories in their own categories collection.
-     * @allow (update) User 'testUser' can update a category in their own categories collection.
-     * @allow (delete) User 'testUser' can delete a category from their own categories collection.
-     * @deny (create) User 'anotherUser' cannot create a category in 'testUser' categories collection.
+     * @allow (create) - Authenticated user can create a category under their userId.
+     * @allow (get, list, update, delete) - Authenticated user can access their own categories if the userId matches their auth UID.
+     * @deny (create) - User cannot create a category under a userId that does not match their auth UID.
+     * @deny (get, list, update, delete) - User cannot access or modify categories under a userId that does not match their auth UID.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/categories/{categoryId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId);
@@ -146,43 +98,40 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to tags for a specific user.
+     * @description Enforces access control for tags. Only the user can read, create, update, or delete their own tags.
      * @path /users/{userId}/tags/{tagId}
-     * @allow (create) User 'testUser' can create a tag in their own tags collection.
-     * @allow (get) User 'testUser' can read a tag from their own tags collection.
-     * @allow (list) User 'testUser' can list tags in their own tags collection.
-     * @allow (update) User 'testUser' can update a tag in their own tags collection.
-     * @allow (delete) User 'testUser' can delete a tag from their own tags collection.
-     * @deny (create) User 'anotherUser' cannot create a tag in 'testUser' tags collection.
+     * @allow (create) - Authenticated user can create a tag under their userId.
+     * @allow (get, list, update, delete) - Authenticated user can access their own tags if the userId matches their auth UID.
+     * @deny (create) - User cannot create a tag under a userId that does not match their auth UID.
+     * @deny (get, list, update, delete) - User cannot access or modify tags under a userId that does not match their auth UID.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/tags/{tagId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
-   /**
-     * @description This rule intentionally denies listing of the `shared_expenses` collection.
-     * @path /shared_expenses
-     * @deny (list) Any user, regardless of authentication status, is denied listing access.
-     * @principle Restricts access to a collection.
-     */
-    match /shared_expenses {
-      allow get: if false;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+
+    match /shared_expenses/{document} {
+        allow list: if false;
+        allow get: if false;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
     }
   }
 }

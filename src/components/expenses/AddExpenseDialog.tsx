@@ -53,6 +53,8 @@ import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
 import { availableIcons } from '@/lib/defaults';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Checkbox } from '../ui/checkbox';
+import { Badge } from '../ui/badge';
+import { generateColorFromString } from '@/lib/utils';
 
 
 // Function to create a dynamic schema
@@ -268,17 +270,8 @@ function ExpenseForm({
     
     const selectedTagIds = form.watch('tagIds') || [];
 
-    const selectedTagsText = useMemo(() => {
-        if (selectedTagIds.length === 0) return 'Select tags';
-
-        const selectedNames = selectedTagIds.map(id => {
-            const tag = tags.find(t => t.id === id);
-            return tag?.name;
-        }).filter(Boolean);
-
-        if (selectedNames.length === 0) return 'Select tags';
-
-        return selectedNames.join(', ');
+    const selectedTags = useMemo(() => {
+        return selectedTagIds.map(id => tags.find(t => t.id === id)).filter(Boolean) as Tag[];
     }, [selectedTagIds, tags]);
 
 
@@ -385,7 +378,7 @@ function ExpenseForm({
                                                 {renderIcon(categories.find(c => c.id === field.value)?.icon)}
                                                 {categories.find(c => c.id === field.value)?.name || "Select a category"}
                                             </div>
-                                        ) : "Select a category"}
+                                        ) : <SelectValue placeholder="Select a category" />}
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
@@ -419,8 +412,8 @@ function ExpenseForm({
                             <div className="flex gap-2">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-start font-normal truncate">
-                                            {selectedTagsText}
+                                        <Button variant="outline" className="w-full justify-start font-normal">
+                                            Select tags...
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
@@ -450,6 +443,23 @@ function ExpenseForm({
                                 </QuickAddItemDialog>
                             </div>
                             <FormMessage />
+                            {selectedTags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 pt-2">
+                                    {selectedTags.map(tag => {
+                                        const color = generateColorFromString(tag.name);
+                                        return (
+                                            <Badge
+                                                key={tag.id}
+                                                style={{ backgroundColor: color.backgroundColor, color: color.textColor }}
+                                                className="flex items-center gap-1 border-transparent"
+                                            >
+                                                {renderIcon(tag.icon, "h-3 w-3")}
+                                                {tag.name}
+                                            </Badge>
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </FormItem>
                     )}
                 />
@@ -777,6 +787,8 @@ function useExpenseForm({
             // Only add sharedExpenseId if it exists to avoid Firestore error
             if (sharedExpenseId) {
                 expenseData.sharedExpenseId = sharedExpenseId;
+            } else {
+                delete expenseData.sharedExpenseId;
             }
 
             // Logic for "Credit Limit Upgrade"
@@ -931,5 +943,7 @@ function useExpenseForm({
       tags: tags || []
     };
 }
+
+    
 
     

@@ -138,16 +138,16 @@ export default function DashboardPage() {
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="lg:col-span-4">
-                    <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as 'week' | 'month' | 'year')}>
-                        <CardHeader className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-                            <CardTitle className="font-headline">Expenses Overview</CardTitle>
-                             <TabsList>
-                                <TabsTrigger value="week">W</TabsTrigger>
-                                <TabsTrigger value="month">M</TabsTrigger>
-                                <TabsTrigger value="year">Y</TabsTrigger>
+                     <CardHeader>
+                        <CardTitle className="font-headline">Expenses Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as 'week' | 'month' | 'year')}>
+                            <TabsList className="grid w-full grid-cols-3 mb-4">
+                                <TabsTrigger value="week">This Week</TabsTrigger>
+                                <TabsTrigger value="month">This Month</TabsTrigger>
+                                <TabsTrigger value="year">This Year</TabsTrigger>
                             </TabsList>
-                        </CardHeader>
-                        <CardContent>
                              {isLoading ? (
                                 <Skeleton className="h-[350px] w-full" />
                             ) : (
@@ -163,8 +163,8 @@ export default function DashboardPage() {
                                     </TabsContent>
                                 </>
                             )}
-                        </CardContent>
-                    </Tabs>
+                        </Tabs>
+                    </CardContent>
                 </Card>
                 <Card className="lg:col-span-3">
                      <CardHeader>

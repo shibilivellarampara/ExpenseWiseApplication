@@ -375,7 +375,7 @@ function ExpenseForm({
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Account</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select an account" />
@@ -409,16 +409,16 @@ function ExpenseForm({
                                 <Select onValueChange={field.onChange} value={field.value || ''}>
                                     <FormControl>
                                     <SelectTrigger>
-                                        {field.value && field.value !== 'no-category' ? (
+                                        {field.value ? (
                                             <div className="flex items-center">
                                                 {renderIcon(categories.find(c => c.id === field.value)?.icon)}
-                                                {categories.find(c => c.id === field.value)?.name}
+                                                {categories.find(c => c.id === field.value)?.name || "Select a category"}
                                             </div>
-                                        ) : (field.value === 'no-category' ? 'No Category' : "Select a category")}
+                                        ) : "Select a category"}
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
+                                        {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="">No Category</SelectItem>}
                                         {categories?.map(cat => (
                                             <SelectItem key={cat.id} value={cat.id}>
                                                 <div className="flex items-center">
@@ -697,13 +697,27 @@ function useExpenseForm(
     
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
 
+    const getNewFormValues = useCallback(() => {
+        return {
+            type: initialType || 'expense',
+            amount: '' as any,
+            date: new Date(),
+            accountId: '',
+            categoryId: '',
+            description: '',
+            tagIds: [],
+        }
+    }, [initialType]);
+    
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
+        defaultValues: getNewFormValues(),
     });
 
     const transactionType = form.watch('type');
 
-    const resetAndPopulateForm = useCallback(() => {
+    // Effect to populate form for editing
+    useEffect(() => {
         if (isEditMode && expenseToEdit) {
             form.reset({
                 type: expenseToEdit.type,
@@ -714,23 +728,11 @@ function useExpenseForm(
                 description: expenseToEdit.description || '',
                 tagIds: expenseToEdit.tags?.map(t => t.id) || [],
             });
-        } else {
-            form.reset({
-                type: initialType || 'expense',
-                amount: '' as any,
-                date: new Date(),
-                accountId: '',
-                categoryId: '',
-                description: '',
-                tagIds: [],
-            });
+        } else if (!isEditMode) {
+             form.reset(getNewFormValues());
         }
-    }, [form, isEditMode, expenseToEdit, initialType]);
-    
-    // Reset form when dialog opens
-    useEffect(() => {
-        resetAndPopulateForm();
-    }, [expenseToEdit, userProfile, isEditMode, initialType, resetAndPopulateForm]);
+    }, [expenseToEdit, isEditMode, form, getNewFormValues]);
+
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
         if (!firestore || !user || !categories || !accounts) {
@@ -765,8 +767,6 @@ function useExpenseForm(
 
             if (sharedExpenseId) {
                 expenseData.sharedExpenseId = sharedExpenseId;
-            } else {
-                delete expenseData.sharedExpenseId;
             }
 
             // Logic for "Credit Limit Upgrade"
@@ -852,7 +852,7 @@ function useExpenseForm(
     const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
         const success = await handleTransactionSave(values);
         if (success) {
-            resetAndPopulateForm();
+            form.reset(getNewFormValues());
         }
     });
 
@@ -917,3 +917,5 @@ function useExpenseForm(
       tags: tags || []
     };
 }
+
+    

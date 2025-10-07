@@ -67,7 +67,7 @@ export default function ExpensesPage() {
             date: expense.date.toDate(),
             category: categoryMap.get(expense.categoryId),
             account: accountMap.get(expense.accountId),
-            tag: expense.tagId ? tagMap.get(expense.tagId) : undefined,
+            tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
     }, [expenses, categoryMap, accountMap, tagMap]);
 

@@ -74,7 +74,7 @@ export default function DashboardPage() {
                 date,
                 category: categoryMap.get(expense.categoryId),
                 account: accountMap.get(expense.accountId),
-                tag: expense.tagId ? tagMap.get(expense.tagId) : undefined,
+                tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             };
         });
     }, [expenses, categoryMap, accountMap, tagMap]);
@@ -105,21 +105,27 @@ export default function DashboardPage() {
 
         expenseOnly.forEach(item => {
             let key: string | undefined;
-            switch(pieChartGrouping) {
-                case 'category':
-                    key = item.category?.name;
-                    break;
-                case 'account':
-                    key = item.account?.name;
-                    break;
-                case 'tag':
-                    key = item.tag?.name;
-                    break;
+            if (pieChartGrouping === 'tag') {
+                if (item.tags.length > 0) {
+                    item.tags.forEach(tag => {
+                         dataMap.set(tag.name, (dataMap.get(tag.name) || 0) + item.amount / item.tags.length); // Split amount for multiple tags
+                    });
+                } else {
+                     dataMap.set('Untagged', (dataMap.get('Untagged') || 0) + item.amount);
+                }
+            } else {
+                switch(pieChartGrouping) {
+                    case 'category':
+                        key = item.category?.name || 'Uncategorized';
+                        break;
+                    case 'account':
+                        key = item.account?.name;
+                        break;
+                }
+                if (key) {
+                    dataMap.set(key, (dataMap.get(key) || 0) + item.amount);
+                }
             }
-            if (!key) {
-                key = pieChartGrouping === 'tag' ? 'Untagged' : 'Uncategorized';
-            }
-            dataMap.set(key, (dataMap.get(key) || 0) + item.amount);
         });
         return Array.from(dataMap, ([name, value]) => ({ name, value }));
     }, [currentMonthExpenses, pieChartGrouping]);

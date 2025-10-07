@@ -26,14 +26,16 @@ import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
 import { Account, Category } from '@/lib/types';
 
-const accountSchema = z.object({
+const accountSchemaBase = z.object({
     name: z.string().min(1, 'Account name is required.'),
     type: z.enum(['bank', 'credit_card', 'wallet', 'cash']),
     balance: z.coerce.number(),
     limit: z.coerce.number().optional(),
     icon: z.string().min(1, "Icon is required."),
     status: z.enum(['active', 'inactive']).default('active'),
-}).refine(data => data.type !== 'credit_card' || (data.limit !== undefined && data.limit > 0), {
+});
+
+const accountSchema = accountSchemaBase.refine(data => data.type !== 'credit_card' || (data.limit !== undefined && data.limit > 0), {
     message: "Credit limit is required for credit card accounts and must be positive.",
     path: ["limit"],
 });
@@ -53,12 +55,25 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
     const firestore = useFirestore();
     const isEditMode = !!accountToEdit;
     
-    // Fetch categories to find the "Credit Limit Upgrade" category
+    const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
+    const { data: accounts } = useCollection<Account>(accountsQuery);
+
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [user, firestore]);
     const { data: categories } = useCollection<Category>(categoriesQuery);
 
     const form = useForm<AccountFormData>({
-        resolver: zodResolver(accountSchema),
+        resolver: zodResolver(accountSchema.refine(
+            (data) => {
+                if (isEditMode && accountToEdit?.name === data.name) {
+                    return true;
+                }
+                return !accounts?.some(acc => acc.name.toLowerCase() === data.name.toLowerCase());
+            },
+            {
+                message: "An account with this name already exists.",
+                path: ["name"],
+            }
+        )),
         defaultValues: {
             name: '',
             type: 'bank',
@@ -130,7 +145,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                 const newAccountRef = doc(accountsCol); // Create a reference first to get the ID
                 batch.set(newAccountRef, { ...accountData, id: newAccountRef.id });
                 
-                // If it's a new credit card with a limit, add a "Credit Limit Upgrade" transaction
                 if (values.type === 'credit_card' && values.limit && values.limit > 0) {
                     const upgradeCategory = categories?.find(c => c.name === 'Credit Limit Upgrade');
                     if (upgradeCategory) {

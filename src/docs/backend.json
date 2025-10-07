@@ -52,7 +52,7 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "accountId": { "type": "string", "description": "Reference to the Account document ID." },
         "categoryId": { "type": "string", "description": "Reference to the Category document ID (for expenses)." },
-        "tagId": { "type": "string", "description": "Reference to the Tag document ID." },
+        "tagIds": { "type": "array", "items": { "type": "string" }, "description": "Reference to the Tag document IDs." },
         "sharedExpenseId": { "type": "string", "description": "Reference to the SharedExpense this transaction belongs to." }
       },
       "required": ["id", "userId", "type", "amount", "date", "accountId"]

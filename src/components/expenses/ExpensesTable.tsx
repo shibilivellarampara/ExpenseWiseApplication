@@ -36,7 +36,6 @@ const getInitials = (name?: string | null) => {
 // Function to generate a color from a string
 const generateColorFromString = (str: string): { backgroundColor: string, textColor: string } => {
     if (!str) {
-        // Return a default color for undefined/null/empty strings
         const defaultHue = 0;
         return {
             backgroundColor: `hsl(${defaultHue}, 70%, 90%)`,
@@ -82,7 +81,6 @@ function GroupedExpenseList({ expenses, isShared }: { expenses: EnrichedExpense[
                         <div className="divide-y">
                             {groupedExpenses[date].map(expense => {
                                 const categoryColor = expense.category ? generateColorFromString(expense.category.name) : null;
-                                const tagColor = expense.tag ? generateColorFromString(expense.tag.name) : null;
                                 return (
                                 <div key={expense.id} className="p-4 flex items-start gap-4 group">
                                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center mt-1">
@@ -123,7 +121,7 @@ function GroupedExpenseList({ expenses, isShared }: { expenses: EnrichedExpense[
                                             </div>
                                         </div>
                                         
-                                        <div className="flex items-center gap-2 pt-1">
+                                        <div className="flex flex-wrap items-center gap-2 pt-1">
                                             {expense.category && categoryColor && (
                                                 <Badge 
                                                     style={{ backgroundColor: categoryColor.backgroundColor, color: categoryColor.textColor }}
@@ -133,15 +131,18 @@ function GroupedExpenseList({ expenses, isShared }: { expenses: EnrichedExpense[
                                                     {expense.category.name}
                                                 </Badge>
                                             )}
-                                            {expense.tag && tagColor && (
+                                            {expense.tags?.map(tag => {
+                                                const tagColor = generateColorFromString(tag.name);
+                                                return (
                                                 <Badge 
+                                                    key={tag.id}
                                                     style={{ backgroundColor: tagColor.backgroundColor, color: tagColor.textColor }}
                                                     className="flex items-center gap-1 border-transparent"
                                                 >
-                                                    {renderIcon(expense.tag.icon, "h-3 w-3")}
-                                                    {expense.tag.name}
+                                                    {renderIcon(tag.icon, "h-3 w-3")}
+                                                    {tag.name}
                                                 </Badge>
-                                            )}
+                                            )})}
                                         </div>
                                     </div>
                                     <div className="text-right flex-shrink-0 w-32 flex flex-col items-end">

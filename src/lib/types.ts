@@ -56,16 +56,16 @@ export type Expense = {
   createdAt: Timestamp;
   accountId: string;
   categoryId?: string;
-  tagId?: string;
+  tagIds?: string[];
   sharedExpenseId?: string;
 };
 
-export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagId' | 'userId'> & {
+export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds' | 'userId'> & {
   id: string;
   user?: UserProfile; // The user who created the expense
   category?: Category;
   account?: Account;
-  tag?: Tag;
+  tags: Tag[];
   date: Date; // Ensure date is always a Date object for the UI
   balanceAfterTransaction?: number;
 };

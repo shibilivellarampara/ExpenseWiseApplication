@@ -38,9 +38,9 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Pilcrow, Trash2 } from 'lucide-react';
+import { Loader2, Pilcrow, Trash2, Sparkles } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, serverTimestamp, writeBatch, increment, deleteDoc } from 'firebase/firestore';
@@ -51,6 +51,10 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
+import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
+import { useDebounce } from 'use-debounce';
+import ReactSelect from 'react-select';
+
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -68,9 +72,7 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
       ? z.string().min(1, 'Description is required.')
       : z.string().optional(),
 
-    tagId: settings?.isTagRequired
-      ? z.string().min(1, 'Please select a tag.')
-      : z.string().optional(),
+    tagIds: z.array(z.string()).optional(),
   });
 };
 
@@ -78,11 +80,9 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
 function DateTimePicker({ field }: { field: any }) {
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const dateValue = e.target.value;
-        // The input gives a string, so we convert it to a Date object
         field.onChange(new Date(dateValue));
     };
 
-    // Format the date from the form state into 'YYYY-MM-DDTHH:mm' for the input
     const formatForInput = (date: Date): string => {
         if (!date) return '';
         const year = date.getFullYear();
@@ -132,16 +132,48 @@ function ExpenseForm({
     
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
+    const [isSuggesting, startSuggestionTransition] = useTransition();
+
+    const descriptionValue = form.watch('description');
+    const [debouncedDescription] = useDebounce(descriptionValue, 500);
+
+    const handleSuggestion = useCallback(() => {
+        if (!debouncedDescription || categories.length === 0 || accounts.length === 0) return;
+
+        startSuggestionTransition(async () => {
+            const suggestions = await suggestExpenseDetails({
+                description: debouncedDescription,
+                categories: categories.map(({ id, name }) => ({ id, name })),
+                tags: tags.map(({ id, name }) => ({ id, name })),
+                accounts: activeAccounts.map(({ id, name }) => ({ id, name })),
+            });
+            
+            if (suggestions.categoryId) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
+            if (suggestions.accountId) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
+            if (suggestions.tagIds) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
+            if (suggestions.description) form.setValue('description', suggestions.description, { shouldValidate: true });
+        });
+    }, [debouncedDescription, form, categories, tags, activeAccounts]);
+
+    useEffect(() => {
+        if (debouncedDescription) {
+            handleSuggestion();
+        }
+    }, [debouncedDescription, handleSuggestion]);
+
+
     const renderIcon = (iconName: string | undefined) => {
         if (!iconName) return <Pilcrow className="mr-2 h-4 w-4" />;
         const IconComponent = (LucideIcons as any)[iconName];
         return IconComponent ? <IconComponent className="mr-2 h-4 w-4" /> : <Pilcrow className="mr-2 h-4 w-4" />;
     };
 
-    // Determine if fields are required for UI cues
     const isDescriptionRequired = userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false;
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
+    
+    const tagOptions = useMemo(() => tags.map(tag => ({ value: tag.id, label: tag.name })), [tags]);
+    const selectedTags = tagOptions.filter(option => form.getValues('tagIds')?.includes(option.value));
 
     return (
         <Form {...form}>
@@ -204,32 +236,25 @@ function ExpenseForm({
                     />
                  <FormField
                     control={form.control}
-                    name="accountId"
+                    name="description"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Account</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select an account" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {activeAccounts?.map(acc => (
-                                <SelectItem key={acc.id} value={acc.id}>
-                                    <div className="flex items-center">
-                                        {renderIcon(acc.icon)}
-                                        {acc.name}
-                                    </div>
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
+                            <div className="flex justify-between items-center">
+                                <FormLabel>
+                                    Description {isDescriptionRequired ? '' : '(Optional)'}
+                                </FormLabel>
+                                <Button type="button" variant="ghost" size="sm" onClick={handleSuggestion} disabled={isSuggesting}>
+                                    {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                                    <span className="sr-only">Get Suggestions</span>
+                                </Button>
+                            </div>
+                        <FormControl>
+                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
+                        </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
-                />    
-                
+                />
                 <FormField
                     control={form.control}
                     name="categoryId"
@@ -260,28 +285,24 @@ function ExpenseForm({
                         </FormItem>
                     )}
                 />
-                
                 <FormField
                     control={form.control}
-                    name="tagId"
+                    name="accountId"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>
-                            Tag {isTagRequired ? '' : '(Optional)'}
-                        </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || 'no-tag'}>
+                        <FormLabel>Account</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a tag" />
+                                <SelectValue placeholder="Select an account" />
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            {!isTagRequired && <SelectItem value="no-tag">No Tag</SelectItem>}
-                            {tags?.map(tag => (
-                                <SelectItem key={tag.id} value={tag.id}>
+                            {activeAccounts?.map(acc => (
+                                <SelectItem key={acc.id} value={acc.id}>
                                     <div className="flex items-center">
-                                        {renderIcon(tag.icon)}
-                                        {tag.name}
+                                        {renderIcon(acc.icon)}
+                                        {acc.name}
                                     </div>
                                 </SelectItem>
                             ))}
@@ -290,18 +311,38 @@ function ExpenseForm({
                         <FormMessage />
                         </FormItem>
                     )}
-                />
-
-                 <FormField
+                />    
+                
+                <FormField
                     control={form.control}
-                    name="description"
+                    name="tagIds"
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>
-                            Description {isDescriptionRequired ? '' : '(Optional)'}
+                            Tags {isTagRequired ? '' : '(Optional)'}
                         </FormLabel>
                         <FormControl>
-                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
+                           <ReactSelect
+                                isMulti
+                                name="colors"
+                                options={tagOptions}
+                                value={selectedTags}
+                                onChange={(selectedOptions) => {
+                                    const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
+                                    field.onChange(selectedValues);
+                                }}
+                                className="basic-multi-select"
+                                classNamePrefix="select"
+                                styles={{
+                                    control: (base) => ({
+                                        ...base,
+                                        background: 'transparent',
+                                        borderColor: 'hsl(var(--input))'
+                                    }),
+                                    menu: (base) => ({ ...base, background: 'hsl(var(--background))', zIndex: 50 }),
+                                    multiValue: (base) => ({ ...base, background: 'hsl(var(--muted))' }),
+                                }}
+                            />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -530,7 +571,7 @@ function useExpenseForm(
                 accountId: expenseToEdit.account?.id || '',
                 categoryId: expenseToEdit.category?.id || 'no-category',
                 description: expenseToEdit.description || '',
-                tagId: expenseToEdit.tag?.id || 'no-tag',
+                tagIds: expenseToEdit.tags?.map(t => t.id) || [],
             });
         } else {
             form.reset({
@@ -540,7 +581,7 @@ function useExpenseForm(
                 accountId: '',
                 categoryId: 'no-category',
                 description: '',
-                tagId: 'no-tag',
+                tagIds: [],
             });
         }
     };
@@ -577,7 +618,7 @@ function useExpenseForm(
                 userId: user.uid,
                 createdAt: isAddOperation ? serverTimestamp() : expenseToEdit.createdAt,
                 sharedExpenseId: sharedExpenseId || '',
-                tagId: values.tagId === 'no-tag' || !values.tagId ? '' : values.tagId,
+                tagIds: values.tagIds || [],
                 categoryId: values.categoryId === 'no-category' || !values.categoryId ? '' : values.categoryId,
             };
 
@@ -603,11 +644,9 @@ function useExpenseForm(
             // --- Adjust Account Balance (skip for shared expenses and credit limit upgrades) ---
             if (!sharedExpenseId && !isCreditLimitUpgrade) {
                 const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
-                     // For credit cards, 'expense' increases balance (debt), 'income' (payment) decreases it.
                      if (accountType === 'credit_card') {
                         return type === 'expense' ? amount : -amount;
                      }
-                     // For other accounts, 'income' increases balance, 'expense' decreases it.
                      return type === 'income' ? amount : -amount;
                 };
 
@@ -664,13 +703,12 @@ function useExpenseForm(
     const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
         const success = await handleTransactionSave(values);
         if (success) {
-            // Reset form for a new entry, keeping some fields if sensible
             form.reset({
-                ...values, // keep account, type, etc.
+                ...values,
                 amount: '' as any,
                 description: '',
                 date: new Date(),
-                tagId: 'no-tag',
+                tagIds: [],
                 categoryId: 'no-category',
             });
         }
@@ -690,10 +728,8 @@ function useExpenseForm(
             const selectedCategory = categories.find(c => c.id === expenseToEdit.categoryId);
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
             
-            // Delete the expense document
             batch.delete(expenseRef);
 
-            // Revert the balance or limit change
             if (!sharedExpenseId) {
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
                 const selectedAccount = accounts.find(acc => acc.id === expenseToEdit.accountId);
@@ -739,9 +775,3 @@ function useExpenseForm(
       tags: tags || []
     };
 }
-
-    
-
-    
-
-    

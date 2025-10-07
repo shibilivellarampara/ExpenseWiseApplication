@@ -3,133 +3,149 @@
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { useMemo } from 'react';
-import { EnrichedExpense } from '@/lib/types';
-import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, eachMonthOfInterval, startOfYear, endOfYear } from 'date-fns';
+import { EnrichedExpense, Category } from '@/lib/types';
+import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, startOfYear, endOfYear } from 'date-fns';
 import { BarChart as BarChartIcon } from 'lucide-react';
+import { generateColorFromString } from '@/lib/utils';
 
 interface ExpensesBarChartProps {
   expenses: EnrichedExpense[];
+  allCategories: Category[];
   timeRange: 'week' | 'month' | 'year';
   currencySymbol: string;
 }
 
-export function ExpensesBarChart({ expenses, timeRange, currencySymbol }: ExpensesBarChartProps) {
-  const chartData = useMemo(() => {
-    if (!expenses.length) {
-      return [];
-    }
-    const now = new Date();
+export function ExpensesBarChart({ expenses, allCategories, timeRange, currencySymbol }: ExpensesBarChartProps) {
+    const expenseOnlyData = useMemo(() => expenses.filter(e => e.type === 'expense'), [expenses]);
 
-    if (timeRange === 'week') {
-        const start = startOfWeek(now);
-        const end = endOfWeek(now);
-        const intervalDays = eachDayOfInterval({ start, end });
+    const chartData = useMemo(() => {
+        if (!expenseOnlyData.length) return [];
+        
+        const now = new Date();
+        const dataMap = new Map<string, { name: string; [key: string]: any }>();
+        let intervals: { key: string; name: string }[] = [];
 
-        const dailyExpenses = new Map<string, number>();
-        intervalDays.forEach(day => {
-            dailyExpenses.set(format(day, 'yyyy-MM-dd'), 0);
-        });
+        // 1. Initialize intervals and dataMap
+        if (timeRange === 'week') {
+            const start = startOfWeek(now);
+            const end = endOfWeek(now);
+            intervals = eachDayOfInterval({ start, end }).map(day => ({
+                key: format(day, 'yyyy-MM-dd'),
+                name: format(day, 'EEE'),
+            }));
+        } else if (timeRange === 'month') {
+            const start = startOfMonth(now);
+            const end = endOfMonth(now);
+            intervals = eachWeekOfInterval({ start, end }).map(weekStart => ({
+                key: format(weekStart, 'yyyy-MM-dd'),
+                name: `W ${format(weekStart, 'd')}`,
+            }));
+        } else { // 'year'
+            const start = startOfYear(now);
+            const end = endOfYear(now);
+            intervals = eachMonthOfInterval({ start, end }).map(month => ({
+                key: format(month, 'yyyy-MM'),
+                name: format(month, 'MMM'),
+            }));
+        }
 
-        expenses.forEach(expense => {
-            const dayKey = format(expense.date, 'yyyy-MM-dd');
-            if (dailyExpenses.has(dayKey)) {
-                dailyExpenses.set(dayKey, dailyExpenses.get(dayKey)! + expense.amount);
-            }
+        intervals.forEach(interval => {
+            const initialData: { name: string; [key: string]: any } = { name: interval.name };
+            allCategories.forEach(cat => {
+                initialData[cat.name] = 0;
+            });
+            initialData['Uncategorized'] = 0;
+            dataMap.set(interval.key, initialData);
         });
         
-        return Array.from(dailyExpenses.entries()).map(([date, amount]) => ({
-            name: format(new Date(date), 'EEE'),
-            amount,
-        }));
+        // 2. Populate dataMap with expenses
+        expenseOnlyData.forEach(expense => {
+            let key: string;
+            if (timeRange === 'week') {
+                key = format(expense.date, 'yyyy-MM-dd');
+            } else if (timeRange === 'month') {
+                key = format(startOfWeek(expense.date), 'yyyy-MM-dd');
+            } else { // 'year'
+                key = format(expense.date, 'yyyy-MM');
+            }
 
-    } else if (timeRange === 'month') { 
-        const start = startOfMonth(now);
-        const end = endOfMonth(now);
-        const weeks = eachWeekOfInterval({ start, end });
-
-        const weeklyExpenses = new Map<string, number>();
-        weeks.forEach(weekStart => {
-            weeklyExpenses.set(format(weekStart, 'yyyy-MM-dd'), 0);
-        });
-
-        expenses.forEach(expense => {
-            const weekStart = startOfWeek(expense.date);
-            const weekKey = format(weekStart, 'yyyy-MM-dd');
-            if (weeklyExpenses.has(weekKey)) {
-                weeklyExpenses.set(weekKey, weeklyExpenses.get(weekKey)! + expense.amount);
+            const categoryName = expense.category?.name || 'Uncategorized';
+            const dayData = dataMap.get(key);
+            if (dayData) {
+                dayData[categoryName] = (dayData[categoryName] || 0) + expense.amount;
             }
         });
 
-        return Array.from(weeklyExpenses.entries()).map(([date, amount]) => ({
-            name: `Week of ${format(new Date(date), 'MMM d')}`,
-            amount,
-        }));
-    } else { // timeRange === 'year'
-        const start = startOfYear(now);
-        const end = endOfYear(now);
-        const intervalMonths = eachMonthOfInterval({ start, end });
-        
-        const monthlyExpenses = new Map<string, number>();
-        intervalMonths.forEach(month => {
-            monthlyExpenses.set(format(month, 'yyyy-MM'), 0);
+        return Array.from(dataMap.values());
+    }, [expenseOnlyData, allCategories, timeRange]);
+
+    const categoryColors = useMemo(() => {
+        const colors = new Map<string, string>();
+        allCategories.forEach(cat => {
+            colors.set(cat.name, generateColorFromString(cat.name).backgroundColor);
         });
+        colors.set('Uncategorized', '#B0BEC5'); // A neutral color for uncategorized
+        return colors;
+    }, [allCategories]);
 
-        expenses.forEach(expense => {
-            const monthKey = format(expense.date, 'yyyy-MM');
-            if (monthlyExpenses.has(monthKey)) {
-                monthlyExpenses.set(monthKey, monthlyExpenses.get(monthKey)! + expense.amount);
-            }
+    const categoriesWithExpenses = useMemo(() => {
+        const activeCategories = new Set<string>();
+        expenseOnlyData.forEach(e => {
+            activeCategories.add(e.category?.name || 'Uncategorized');
         });
+        return Array.from(activeCategories);
+    }, [expenseOnlyData]);
 
-        return Array.from(monthlyExpenses.entries()).map(([date, amount]) => ({
-            name: format(new Date(date), 'MMM'),
-            amount,
-        }));
-    }
-  }, [expenses, timeRange]);
-
-  if (!expenses.length) {
-    return (
-        <div className="flex h-[350px] w-full items-center justify-center rounded-lg border-2 border-dashed">
-            <div className="flex flex-col items-center text-center text-muted-foreground">
-                <BarChartIcon className="h-12 w-12" />
-                <p className="mt-4">No expense data for this period.</p>
-                <p className="text-sm">Your spending chart will appear here.</p>
+    if (!expenseOnlyData.length) {
+        return (
+            <div className="flex h-[350px] w-full items-center justify-center rounded-lg border-2 border-dashed">
+                <div className="flex flex-col items-center text-center text-muted-foreground">
+                    <BarChartIcon className="h-12 w-12" />
+                    <p className="mt-4">No expense data for this period.</p>
+                    <p className="text-sm">Your spending chart will appear here.</p>
+                </div>
             </div>
-        </div>
-    );
-  }
+        );
+    }
 
-  return (
-    <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={chartData}>
-        <XAxis
-          dataKey="name"
-          stroke="hsl(var(--muted-foreground))"
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
-        />
-        <YAxis
-          stroke="hsl(var(--muted-foreground))"
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
-          tickFormatter={(value) => `${currencySymbol}${value}`}
-        />
-        <Tooltip
-            contentStyle={{ 
-                background: "hsl(var(--background))", 
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "var(--radius)"
-            }}
-            cursor={{ fill: 'hsl(var(--muted))' }}
-            labelFormatter={(label) => label}
-            formatter={(value: number) => [`${currencySymbol}${value.toFixed(2)}`, "Expense"]}
-        />
-        <Legend wrapperStyle={{fontSize: "14px"}}/>
-        <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Expense" />
-      </BarChart>
-    </ResponsiveContainer>
-  );
+    return (
+        <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={chartData}>
+                <XAxis
+                    dataKey="name"
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                />
+                <YAxis
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `${currencySymbol}${value}`}
+                />
+                <Tooltip
+                    contentStyle={{
+                        background: "hsl(var(--background))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "var(--radius)"
+                    }}
+                    cursor={{ fill: 'hsl(var(--muted))' }}
+                    formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
+                />
+                <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} />
+                {categoriesWithExpenses.map(categoryName => (
+                    <Bar
+                        key={categoryName}
+                        dataKey={categoryName}
+                        stackId="a"
+                        fill={categoryColors.get(categoryName) || '#8884d8'}
+                        name={categoryName}
+                        radius={[4, 4, 0, 0]}
+                    />
+                ))}
+            </BarChart>
+        </ResponsiveContainer>
+    );
 }

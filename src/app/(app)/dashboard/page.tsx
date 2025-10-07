@@ -153,13 +153,13 @@ export default function DashboardPage() {
                             ) : (
                                 <>
                                     <TabsContent value="week">
-                                        <ExpensesBarChart expenses={chartData} timeRange="week" currencySymbol={currencySymbol}/>
+                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="week" currencySymbol={currencySymbol}/>
                                     </TabsContent>
                                     <TabsContent value="month">
-                                        <ExpensesBarChart expenses={chartData} timeRange="month" currencySymbol={currencySymbol}/>
+                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="month" currencySymbol={currencySymbol}/>
                                     </TabsContent>
                                     <TabsContent value="year">
-                                        <ExpensesBarChart expenses={chartData} timeRange="year" currencySymbol={currencySymbol}/>
+                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="year" currencySymbol={currencySymbol}/>
                                     </TabsContent>
                                 </>
                             )}

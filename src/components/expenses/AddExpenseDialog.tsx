@@ -199,12 +199,13 @@ function ExpenseForm({
     const [debouncedDescription] = useDebounce(descriptionValue, 1000);
 
     const handleSuggestion = useCallback(() => {
-        if (!debouncedDescription || categories.length === 0 || accounts.length === 0 || tags.length === 0) return;
-
+        const currentDescription = form.getValues('description');
+        if (!currentDescription || categories.length === 0 || accounts.length === 0 || tags.length === 0) return;
+        
         startSuggestionTransition(async () => {
             try {
                 const suggestions = await suggestExpenseDetails({
-                    description: debouncedDescription,
+                    description: currentDescription,
                     categories: categories.map(({ id, name }) => ({ id, name })),
                     tags: tags.map(({ id, name }) => ({ id, name })),
                     accounts: activeAccounts.map(({ id, name }) => ({ id, name })),
@@ -213,20 +214,14 @@ function ExpenseForm({
                 if (suggestions.categoryId && !form.getValues('categoryId')) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
                 if (suggestions.accountId && !form.getValues('accountId')) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
                 if (suggestions.tagIds && form.getValues('tagIds')?.length === 0) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
-                if (suggestions.description && !form.getValues('description')) form.setValue('description', suggestions.description, { shouldValidate: true });
+                if (suggestions.description && suggestions.description !== currentDescription) form.setValue('description', suggestions.description, { shouldValidate: true });
 
             } catch (error) {
                 console.error("AI suggestion failed:", error);
                 // Optional: toast notification for AI failure
             }
         });
-    }, [debouncedDescription, form, categories, tags, activeAccounts]);
-
-    useEffect(() => {
-        if (debouncedDescription) {
-            handleSuggestion();
-        }
-    }, [debouncedDescription, handleSuggestion]);
+    }, [form, categories, tags, activeAccounts]);
 
     const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string) => {
         if (!user || !firestore) return;
@@ -411,7 +406,7 @@ function ExpenseForm({
                                             <PlusCircle className="h-4 w-4 mr-2" /> Add New Category
                                         </div>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.stopPropagation()}>
                                         <QuickAddItemForm type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)} />
                                     </PopoverContent>
                                 </Popover>
@@ -459,7 +454,7 @@ function ExpenseForm({
                                             <PlusCircle className="h-4 w-4" />
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.stopPropagation()}>
                                         <QuickAddItemForm type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} />
                                     </PopoverContent>
                                 </Popover>
@@ -730,7 +725,7 @@ function useExpenseForm(
     // Reset form when dialog opens
     useEffect(() => {
         resetAndPopulateForm();
-    }, [expenseToEdit, userProfile, isEditMode, initialType, open]);
+    }, [expenseToEdit, userProfile, isEditMode, initialType]);
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
         if (!firestore || !user || !categories || !accounts) {

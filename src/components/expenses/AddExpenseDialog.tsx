@@ -418,7 +418,7 @@ function ExpenseForm({
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="">No Category</SelectItem>}
+                                        {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
                                         {categories?.map(cat => (
                                             <SelectItem key={cat.id} value={cat.id}>
                                                 <div className="flex items-center">
@@ -697,40 +697,42 @@ function useExpenseForm(
     
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
 
-    const getNewFormValues = useCallback(() => {
-        return {
-            type: initialType || 'expense',
-            amount: '' as any,
-            date: new Date(),
-            accountId: '',
-            categoryId: '',
-            description: '',
-            tagIds: [],
-        }
-    }, [initialType]);
+    const getNewFormValues = useCallback(() => ({
+        type: initialType || 'expense',
+        amount: '' as any, // Use empty string for reset
+        date: new Date(),
+        accountId: '',
+        categoryId: '',
+        description: '',
+        tagIds: [],
+    }), [initialType]);
     
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
-        defaultValues: getNewFormValues(),
+        defaultValues: isEditMode && expenseToEdit ? {
+            type: expenseToEdit.type,
+            amount: expenseToEdit.amount,
+            date: expenseToEdit.date,
+            accountId: expenseToEdit.account?.id || '',
+            categoryId: expenseToEdit.category?.id || '',
+            description: expenseToEdit.description || '',
+            tagIds: expenseToEdit.tags?.map(t => t.id) || [],
+        } : getNewFormValues(),
     });
 
     const transactionType = form.watch('type');
 
-    // Effect to populate form for editing
     useEffect(() => {
-        if (isEditMode && expenseToEdit) {
-            form.reset({
-                type: expenseToEdit.type,
-                amount: expenseToEdit.amount,
-                date: expenseToEdit.date,
-                accountId: expenseToEdit.account?.id || '',
-                categoryId: expenseToEdit.category?.id || '',
-                description: expenseToEdit.description || '',
-                tagIds: expenseToEdit.tags?.map(t => t.id) || [],
-            });
-        } else if (!isEditMode) {
-             form.reset(getNewFormValues());
-        }
+        const defaultValues = isEditMode && expenseToEdit ? {
+            type: expenseToEdit.type,
+            amount: expenseToEdit.amount,
+            date: expenseToEdit.date,
+            accountId: expenseToEdit.account?.id || '',
+            categoryId: expenseToEdit.category?.id || '',
+            description: expenseToEdit.description || '',
+            tagIds: expenseToEdit.tags?.map(t => t.id) || [],
+        } : getNewFormValues();
+        form.reset(defaultValues);
     }, [expenseToEdit, isEditMode, form, getNewFormValues]);
 
 
@@ -917,5 +919,3 @@ function useExpenseForm(
       tags: tags || []
     };
 }
-
-    

@@ -139,7 +139,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                         batch.set(expenseRef, {
                             id: expenseRef.id,
                             userId: user.uid,
-                            type: 'expense', // This is just for record-keeping, logic prevents balance change
+                            type: 'income', // This makes it a "cash in" visually
                             amount: values.limit,
                             description: 'Initial Credit Limit',
                             date: new Date(),

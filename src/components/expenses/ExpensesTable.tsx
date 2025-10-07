@@ -72,7 +72,7 @@ function GroupedExpenseList({ expenses, currencySymbol, isShared }: { expenses: 
     return (
         <div className="space-y-6">
             {sortedDates.map(date => (
-                <div key={date}>
+                <div key={date} className="mb-4">
                     <h3 className="text-sm font-semibold text-muted-foreground px-4 pb-2 border-b">
                         {new Date(date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </h3>
@@ -152,7 +152,7 @@ function GroupedExpenseList({ expenses, currencySymbol, isShared }: { expenses: 
                                             'font-bold text-lg',
                                             expense.type === 'income' ? 'text-green-600' : 'text-red-600'
                                         )}>
-                                            {expense.amount.toFixed(2)}
+                                            {expense.type === 'income' ? '+' : ''}{expense.amount.toFixed(2)}
                                         </div>
                                      </div>
                                     {!isShared && expense.balanceAfterTransaction !== undefined && (

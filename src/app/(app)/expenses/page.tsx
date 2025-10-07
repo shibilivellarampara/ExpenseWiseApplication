@@ -5,13 +5,14 @@ import { PageHeader } from "@/components/PageHeader";
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, orderBy, query } from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
+import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 
 export default function ExpensesPage() {
     const { user } = useUser();
@@ -40,14 +41,18 @@ export default function ExpensesPage() {
     const tagsQuery = useMemoFirebase(() => 
         user ? collection(firestore, `users/${user.uid}/tags`) : null
     , [firestore, user]);
+    
+    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
     // Fetch all data collections
     const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
     const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
+    const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
+
     
-    const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading;
+    const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
 
     // Create maps for quick lookups
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
@@ -146,7 +151,7 @@ export default function ExpensesPage() {
     }, [filteredExpenses, accounts, accountMap, allEnrichedExpenses]);
 
     return (
-        <div className="w-full space-y-8">
+        <div className="w-full space-y-4 pb-24"> {/* Add padding-bottom */}
             <PageHeader title="Transactions" description="A detailed list of your recent income and expenses." />
 
             <ExpensesFilters 
@@ -156,19 +161,38 @@ export default function ExpensesPage() {
                 categories={categories || []}
             />
 
+            <ExpensesSummary expenses={filteredExpenses} currency={userProfile?.defaultCurrency} isLoading={isLoading} />
+
             <ExpensesTable expenses={enrichedAndBalancedExpenses} isLoading={isLoading} />
 
-            <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-40">
-                <AddExpenseDialog initialType="expense">
-                     <Button size="icon" className="h-14 w-14 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg">
-                        <Minus className="h-6 w-6" />
-                        <span className="sr-only">Add Expense</span>
-                    </Button>
-                </AddExpenseDialog>
+            <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4 z-40 md:hidden">
+                 <div className="container mx-auto flex justify-around gap-2">
+                    <AddExpenseDialog initialType="income">
+                        <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg text-base font-semibold py-6">
+                            <Plus className="mr-2 h-5 w-5" />
+                            CASH IN
+                        </Button>
+                    </AddExpenseDialog>
+                    <AddExpenseDialog initialType="expense">
+                        <Button className="w-full bg-red-600 hover:bg-red-700 text-white shadow-lg text-base font-semibold py-6">
+                            <Minus className="mr-2 h-5 w-5" />
+                            CASH OUT
+                        </Button>
+                    </AddExpenseDialog>
+                </div>
+            </div>
+
+             <div className="fixed bottom-6 right-6 z-40 hidden md:flex md:flex-col md:gap-3">
                 <AddExpenseDialog initialType="income">
                      <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
                         <Plus className="h-6 w-6" />
                         <span className="sr-only">Add Income</span>
+                    </Button>
+                </AddExpenseDialog>
+                <AddExpenseDialog initialType="expense">
+                     <Button size="icon" className="h-14 w-14 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg">
+                        <Minus className="h-6 w-6" />
+                        <span className="sr-only">Add Expense</span>
                     </Button>
                 </AddExpenseDialog>
             </div>

@@ -8,6 +8,10 @@
         {
           "fieldPath": "memberIds",
           "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
         }
       ]
     }

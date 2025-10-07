@@ -7,13 +7,22 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc } from "firebase/firestore";
+import { collection, orderBy, query } from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";
+import { endOfDay, startOfDay } from 'date-fns';
 
 export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
+
+    const [filters, setFilters] = useState({
+        dateRange: { from: undefined, to: undefined } as DateRange,
+        type: 'all' as 'all' | 'income' | 'expense',
+        categories: [] as string[],
+        accounts: [] as string[],
+    });
 
     // Memoized queries for all data collections
     const expensesQuery = useMemoFirebase(() => 
@@ -31,8 +40,6 @@ export default function ExpensesPage() {
     const tagsQuery = useMemoFirebase(() => 
         user ? collection(firestore, `users/${user.uid}/tags`) : null
     , [firestore, user]);
-    
-    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
     // Fetch all data collections
     const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
@@ -46,15 +53,47 @@ export default function ExpensesPage() {
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(accounts?.map(p => [p.id, p])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
+    
+    // Enrich all expenses first
+    const allEnrichedExpenses = useMemo((): EnrichedExpense[] => {
+        if (!expenses) return [];
+        return expenses.map(expense => ({
+            ...expense,
+            date: expense.date.toDate(),
+            category: categoryMap.get(expense.categoryId),
+            account: accountMap.get(expense.accountId),
+            tag: expense.tagId ? tagMap.get(expense.tagId) : undefined,
+        }));
+    }, [expenses, categoryMap, accountMap, tagMap]);
 
-    // Enrich expenses with relational data and running balances
-    const enrichedExpenses = useMemo((): EnrichedExpense[] => {
-        if (!expenses || !accounts || !accountMap.size) return [];
+    // Apply filters
+    const filteredExpenses = useMemo(() => {
+        return allEnrichedExpenses.filter(expense => {
+            // Date filter
+            const { from, to } = filters.dateRange;
+            if (from && expense.date < startOfDay(from)) return false;
+            if (to && expense.date > endOfDay(to)) return false;
+
+            // Type filter
+            if (filters.type !== 'all' && expense.type !== filters.type) return false;
+
+            // Category filter
+            if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) return false;
+
+            // Account filter
+            if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId)) return false;
+            
+            return true;
+        });
+    }, [allEnrichedExpenses, filters]);
+
+
+    // Calculate running balances on the filtered list
+    const enrichedAndBalancedExpenses = useMemo((): EnrichedExpense[] => {
+        if (!filteredExpenses.length || !accounts || !accountMap.size) return [];
     
-        // The `expenses` are sorted by date descending from the query. For our calculation, we need them ascending.
-        const sortedExpensesChronological = [...expenses].reverse();
+        const sortedExpensesChronological = [...filteredExpenses].sort((a, b) => a.date.getTime() - b.date.getTime());
     
-        // Group expenses by account
         const expensesByAccount = new Map<string, Expense[]>();
         for (const expense of sortedExpensesChronological) {
             if (!expensesByAccount.has(expense.accountId)) {
@@ -64,32 +103,38 @@ export default function ExpensesPage() {
         }
     
         const processedExpenses: EnrichedExpense[] = [];
+        const latestTransactionDateByAccount = new Map<string, Date>();
+
+        // Find the latest transaction date for each account within the filtered range
+        for (const expense of sortedExpensesChronological) {
+            const currentLatest = latestTransactionDateByAccount.get(expense.accountId);
+            if (!currentLatest || expense.date > currentLatest) {
+                latestTransactionDateByAccount.set(expense.accountId, expense.date);
+            }
+        }
     
-        // For each account, calculate the running balance
         for (const account of accounts) {
             const accountExpenses = expensesByAccount.get(account.id) || [];
             if (accountExpenses.length === 0) continue;
-    
-            // Calculate the total change from all transactions for this account
-            const totalChange = accountExpenses.reduce((sum, expense) => {
-                const amount = expense.type === 'income' ? expense.amount : -expense.amount;
-                return sum + amount;
-            }, 0);
-    
-            // Determine the starting balance (balance before the first transaction)
+
+            const latestDate = latestTransactionDateByAccount.get(account.id);
+            if (!latestDate) continue;
+
+            // Find total change of ALL transactions for the account up to the latest date in the filtered range
+             const allTransactionsForAccount = allEnrichedExpenses.filter(e => e.accountId === account.id && e.date <= latestDate);
+             const totalChange = allTransactionsForAccount.reduce((sum, expense) => {
+                 return sum + (expense.type === 'income' ? expense.amount : -expense.amount);
+             }, 0);
+
+            // Starting balance is the current balance minus the total change of all transactions up to the latest filtered date
             let runningBalance = account.balance - totalChange;
-    
+
             for (const expense of accountExpenses) {
-                // Apply the transaction to the running balance
                 const amountChange = expense.type === 'income' ? expense.amount : -expense.amount;
                 runningBalance += amountChange;
     
                 processedExpenses.push({
                     ...expense,
-                    date: expense.date.toDate(),
-                    category: categoryMap.get(expense.categoryId),
-                    account: accountMap.get(expense.accountId),
-                    tag: expense.tagId ? tagMap.get(expense.tagId) : undefined,
                     balanceAfterTransaction: runningBalance,
                 });
             }
@@ -98,15 +143,22 @@ export default function ExpensesPage() {
         // Sort the final combined list by date descending for display
         return processedExpenses.sort((a, b) => b.date.getTime() - a.date.getTime());
     
-    }, [expenses, accounts, categoryMap, accountMap, tagMap]);
+    }, [filteredExpenses, accounts, accountMap, allEnrichedExpenses]);
 
     return (
         <div className="w-full space-y-8">
             <PageHeader title="Transactions" description="A detailed list of your recent income and expenses." />
 
-            <ExpensesTable expenses={enrichedExpenses} isLoading={isLoading} />
+            <ExpensesFilters 
+                filters={filters}
+                onFiltersChange={setFilters}
+                accounts={accounts || []}
+                categories={categories || []}
+            />
 
-            <div className="fixed bottom-6 right-6 flex flex-col gap-3">
+            <ExpensesTable expenses={enrichedAndBalancedExpenses} isLoading={isLoading} />
+
+            <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-40">
                 <AddExpenseDialog initialType="expense">
                      <Button size="icon" className="h-14 w-14 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg">
                         <Minus className="h-6 w-6" />

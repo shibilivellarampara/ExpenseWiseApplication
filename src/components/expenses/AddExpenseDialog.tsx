@@ -109,11 +109,17 @@ function ExpenseForm({
   onSubmit,
   id,
   transactionType,
+  accounts,
+  categories,
+  tags
 }: {
   form: UseFormReturn<any>;
   onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
   id: string;
   transactionType: 'expense' | 'income';
+  accounts: Account[];
+  categories: Category[];
+  tags: Tag[];
 }) {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -121,15 +127,6 @@ function ExpenseForm({
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
      
-    // Fetch relational data for dropdowns
-    const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [user, firestore]);
-    const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
-    const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [user, firestore]);
-    
-    const { data: categories } = useCollection<Category>(categoriesQuery);
-    const { data: accounts } = useCollection<Account>(accountsQuery);
-    const { data: tags } = useCollection<Tag>(tagsQuery);
-
     const activeAccounts = useMemo(() => accounts?.filter(acc => acc.status === 'active' || acc.status === undefined) || [], [accounts]);
     
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
@@ -167,7 +164,7 @@ function ExpenseForm({
                                     </Label>
                                 </FormItem>
                                  <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'income' ? "border-green-500 text-green-500" : "border-muted")}>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'income' ? "border-green-600 text-green-600" : "border-muted")}>
                                         <RadioGroupItem value="income" className="sr-only" />
                                         <span>Cash In</span>
                                     </Label>
@@ -360,7 +357,7 @@ function DesktopAddExpenseDialog({
     sharedExpenseId?: string,
     initialType?: 'income' | 'expense';
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, transactionType, isEditMode, formId, accounts, categories, tags } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -371,7 +368,7 @@ function DesktopAddExpenseDialog({
                     <DialogDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType} />
+                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType} accounts={accounts} categories={categories} tags={tags} />
                 </div>
                 <DialogFooter className="flex-row justify-between w-full">
                     <div>
@@ -433,7 +430,7 @@ function MobileAddExpenseDrawer({
     sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, transactionType, isEditMode, formId, accounts, categories, tags } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
     
     return (
         <Drawer open={open} onOpenChange={setOpen}>
@@ -444,7 +441,7 @@ function MobileAddExpenseDrawer({
                     <DrawerDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DrawerDescription>
                 </DrawerHeader>
                  <div className="overflow-y-auto px-4">
-                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType}/>
+                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType} accounts={accounts} categories={categories} tags={tags}/>
                 </div>
                  <DrawerFooter className="pt-2">
                     <div className="flex w-full gap-2">
@@ -504,9 +501,17 @@ function useExpenseForm(
     const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
     const isEditMode = !!expenseToEdit;
 
+    // Fetch all necessary data here
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+    const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [user, firestore]);
+    const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
+    const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [user, firestore]);
 
+    const { data: categories } = useCollection<Category>(categoriesQuery);
+    const { data: accounts } = useCollection<Account>(accountsQuery);
+    const { data: tags } = useCollection<Tag>(tagsQuery);
+    
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
 
     const form = useForm<z.infer<typeof expenseSchema>>({
@@ -545,13 +550,30 @@ function useExpenseForm(
     }, [expenseToEdit, userProfile, isEditMode, initialType]);
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
-        if (!firestore || !user) {
-            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+        if (!firestore || !user || !tags || !accounts) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Required data is not loaded.' });
             return false;
         }
         setIsLoading(true);
+
         try {
             const batch = writeBatch(firestore);
+
+            // --- Special logic for Credit Limit Upgrade ---
+            const selectedTag = tags.find(t => t.id === values.tagId);
+            const selectedAccount = accounts.find(a => a.id === values.accountId);
+
+            if (selectedTag?.name === 'Credit Limit Upgrade' && selectedAccount?.type === 'credit_card') {
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+                batch.update(accountRef, { limit: values.amount });
+                await batch.commit();
+                toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount.name} is now ${values.amount}.` });
+                setIsLoading(false);
+                return true; // End execution here for this special case
+            }
+            // --- End of special logic ---
+
+
             const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
 
             if (isEditMode && expenseToEdit) {
@@ -661,5 +683,17 @@ function useExpenseForm(
     };
 
 
-    return { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, transactionType, isEditMode, formId };
+    return { 
+      form, 
+      onFinalSubmit, 
+      onSaveAndNewSubmit, 
+      handleDelete, 
+      isLoading, 
+      transactionType, 
+      isEditMode, 
+      formId,
+      accounts: accounts || [],
+      categories: categories || [],
+      tags: tags || []
+    };
 }

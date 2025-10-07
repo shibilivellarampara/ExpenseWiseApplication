@@ -24,6 +24,7 @@ export const defaultTags = [
   { name: 'Reimbursable', icon: 'Undo2' },
   { name: 'Gift', icon: 'Gift' },
   { name: 'Subscription', icon: 'Repeat' },
+  { name: 'Credit Limit Upgrade', icon: 'TrendingUp' },
 ];
 
 // Available icons for categories
@@ -32,7 +33,7 @@ export const availableIcons = [
   "Home", "Plane", "Book", "Gift", "Film", "Shirt", "Gamepad2", "Bus", "Train",
   "Briefcase", "Coffee", "Droplets", "Pizza", "GraduationCap", "PawPrint",
   "Wallet", "CreditCard", "Landmark", "Tag", "Ticket", "User", "IndianRupee",
-  "Contact", "Undo2", "Repeat", "MoreHorizontal", "Banknote", "Coins"
+  "Contact", "Undo2", "Repeat", "MoreHorizontal", "Banknote", "Coins", "TrendingUp"
 ];
 
 // This is a legacy export and can be removed in the future

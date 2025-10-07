@@ -152,12 +152,12 @@ function GroupedExpenseList({ expenses, currencySymbol, isShared }: { expenses: 
                                             'font-bold text-lg',
                                             expense.type === 'income' ? 'text-green-600' : 'text-red-600'
                                         )}>
-                                            {currencySymbol}{expense.amount.toFixed(2)}
+                                            {expense.amount.toFixed(2)}
                                         </div>
                                      </div>
                                     {!isShared && expense.balanceAfterTransaction !== undefined && (
                                         <p className="text-xs text-muted-foreground mt-1">
-                                            Balance: {currencySymbol}{expense.balanceAfterTransaction?.toFixed(2)}
+                                            Balance: {expense.balanceAfterTransaction?.toFixed(2)}
                                         </p>
                                     )}
                                 </div>

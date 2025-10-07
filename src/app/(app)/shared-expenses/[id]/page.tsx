@@ -88,7 +88,7 @@ export default function SharedExpenseDetailPage({ params }: { params: { id: stri
                 date: expense.date.toDate(),
                 category: categoryMap.get(expense.categoryId ?? ''),
                 account: accountMap.get(expense.accountId),
-                tag: expense.tagId ? tagMap.get(expense.tagId) : undefined,
+                tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
                 user: memberProfiles.get(expense.userId), // Attach user profile who created it
             };
         }).sort((a, b) => b.date.getTime() - a.date.getTime()); // Ensure final sort

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -412,8 +413,23 @@ function ExpenseForm({
                             <div className="flex gap-2">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-start font-normal">
-                                            Select tags...
+                                        <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10">
+                                            {selectedTags.length > 0 ? (
+                                                <div className="flex flex-wrap gap-1">
+                                                    {selectedTags.map(tag => (
+                                                        <Badge
+                                                            key={tag.id}
+                                                            variant="secondary"
+                                                            className="flex items-center gap-1"
+                                                        >
+                                                            {renderIcon(tag.icon, "h-3 w-3")}
+                                                            {tag.name}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                "Select tags..."
+                                            )}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
@@ -443,34 +459,6 @@ function ExpenseForm({
                                 </QuickAddItemDialog>
                             </div>
                             <FormMessage />
-                            {selectedTags.length > 0 && (
-                                <div className="flex flex-wrap gap-1 pt-2">
-                                    {selectedTags.map(tag => {
-                                        const color = generateColorFromString(tag.name);
-                                        return (
-                                            <Badge
-                                                key={tag.id}
-                                                style={{ backgroundColor: color.backgroundColor, color: color.textColor }}
-                                                className="flex items-center gap-1 border-transparent pr-1"
-                                            >
-                                                {renderIcon(tag.icon, "h-3 w-3")}
-                                                {tag.name}
-                                                <button
-                                                    type="button"
-                                                    className="ml-1 rounded-full p-0.5 hover:bg-black/10"
-                                                    onClick={() => {
-                                                        const currentTagIds = form.getValues('tagIds') || [];
-                                                        form.setValue('tagIds', currentTagIds.filter(id => id !== tag.id), { shouldValidate: true });
-                                                    }}
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                    <span className="sr-only">Remove {tag.name}</span>
-                                                </button>
-                                            </Badge>
-                                        )
-                                    })}
-                                </div>
-                            )}
                         </FormItem>
                     )}
                 />
@@ -954,7 +942,3 @@ function useExpenseForm({
       tags: tags || []
     };
 }
-
-    
-
-    

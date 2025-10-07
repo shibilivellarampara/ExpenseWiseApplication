@@ -1,178 +1,169 @@
 /**
- * @fileoverview Firestore Security Rules for Expense Tracker App
+ * @fileoverview Firestore Security Rules for the Expense Tracker application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Only the authenticated user who owns a specific document or subcollection
- * has read and write access to it. This ensures data privacy and prevents unauthorized modifications.
+ * This ruleset enforces a strict user-ownership model. Each user has a dedicated
+ * data tree under `/users/{userId}` where they can store their profile,
+ * expenses, accounts, categories, and tags.  Only the authenticated user can
+ * read and write data to their own data tree.
  *
  * Data Structure:
- * All data is nested under the /users/{userId} path, creating a clear ownership hierarchy. This means each user has their own private
- * data tree.  The root user document at `/users/{userId}` stores profile information.  Subcollections under each user document store
- * the user's expenses, accounts, contributions, categories, and tags.
+ * - /users/{userId}: User profile data.
+ * - /users/{userId}/expenses/{expenseId}: Expense records for a specific user.
+ * - /users/{userId}/accounts/{accountId}: Financial account information for a user.
+ * - /users/{userId}/contributions/{contributionId}: Contribution records for shared expenses for a user.
+ * - /users/{userId}/categories/{categoryId}: Expense categories defined by the user.
+ * - /users/{userId}/tags/{tagId}: Expense tags defined by the user.
  *
  * Key Security Decisions:
- * - All data is private by default, requiring authentication.
- * - Users can only access their own data (no shared access or roles).
- * - User enumeration (listing all users) is disallowed.
- *
- * Denormalization for Authorization:
- *  To avoid costly `get()` calls, all documents that require ownership checks (e.g., expenses, accounts) MUST include a `userId` field
- * that matches the authenticated user's UID. This allows the `isOwner()` function to efficiently verify ownership.
+ * - User listing is explicitly denied.
+ * - All data is private and user-specific, so there are no public collections.
+ * - All write operations are validated against the authenticated user's ID.
+ * - No schema validation is performed beyond checking user IDs for ownership.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is authenticated.
-     * @return {boolean} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user ID matches the provided user ID.
-     * @param {string} userId The user ID to compare against the authenticated user's UID.
-     * @return {boolean} True if the user IDs match, false otherwise.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-     /**
-      * @description Checks if the authenticated user ID matches the provided user ID and resource exists.
-      * @param {string} userId The user ID to compare against the authenticated user's UID.
-      * @return {boolean} True if the user IDs match, false otherwise.
-      */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Rules for the /users/{userId} document.
+     * @description Controls access to user profile documents.
      * @path /users/{userId}
-     * @allow (create) User 'abc' can create their own profile if request.auth.uid == 'abc'
-     * @deny (create) User 'abc' cannot create a profile for user 'xyz'.
-     * @allow (get) User 'abc' can get their own profile if request.auth.uid == 'abc'
-     * @deny (get) User 'abc' cannot get the profile for user 'xyz'.
-     * @allow (update) User 'abc' can update their own profile if request.auth.uid == 'abc'
-     * @deny (update) User 'abc' cannot update the profile for user 'xyz'.
-     * @allow (delete) User 'abc' can delete their own profile if request.auth.uid == 'abc'
-     * @deny (delete) User 'abc' cannot delete the profile for user 'xyz'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' can create their profile.
+     * @allow (get) User with ID 'user123' can read their profile.
+     * @allow (update) User with ID 'user123' can update their profile.
+     * @allow (delete) User with ID 'user123' can delete their profile.
+     * @deny (create) User with ID 'user456' cannot create a profile for 'user123'.
+     * @deny (get) User with ID 'user456' cannot read the profile of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the profile of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the profile of 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/expenses/{expenseId} collection.
+     * @description Controls access to expense documents.
      * @path /users/{userId}/expenses/{expenseId}
-     * @allow (create) User 'abc' can create an expense if request.auth.uid == 'abc' and request.resource.data.userId == 'abc'.
-     * @deny (create) User 'abc' cannot create an expense for user 'xyz'.
-     * @allow (get) User 'abc' can get their own expense if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (get) User 'abc' cannot get the expense for user 'xyz'.
-     * @allow (update) User 'abc' can update their own expense if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (update) User 'abc' cannot update the expense for user 'xyz'.
-     * @allow (delete) User 'abc' can delete their own expense if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (delete) User 'abc' cannot delete the expense for user 'xyz'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' can create an expense record.
+     * @allow (get) User with ID 'user123' can read their expense record.
+     * @allow (update) User with ID 'user123' can update their expense record.
+     * @allow (delete) User with ID 'user123' can delete their expense record.
+     * @deny (create) User with ID 'user456' cannot create an expense for 'user123'.
+     * @deny (get) User with ID 'user456' cannot read the expense of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the expense of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the expense of 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/expenses/{expenseId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/accounts/{accountId} collection.
+     * @description Controls access to account documents.
      * @path /users/{userId}/accounts/{accountId}
-     * @allow (create) User 'abc' can create an account if request.auth.uid == 'abc' and request.resource.data.userId == 'abc'.
-     * @deny (create) User 'abc' cannot create an account for user 'xyz'.
-     * @allow (get) User 'abc' can get their own account if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (get) User 'abc' cannot get the account for user 'xyz'.
-     * @allow (update) User 'abc' can update their own account if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (update) User 'abc' cannot update the account for user 'xyz'.
-     * @allow (delete) User 'abc' can delete their own account if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (delete) User 'abc' cannot delete the account for user 'xyz'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' can create an account.
+     * @allow (get) User with ID 'user123' can read their account details.
+     * @allow (update) User with ID 'user123' can update their account details.
+     * @allow (delete) User with ID 'user123' can delete their account.
+     * @deny (create) User with ID 'user456' cannot create an account for 'user123'.
+     * @deny (get) User with ID 'user456' cannot read the account of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the account of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the account of 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/accounts/{accountId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/contributions/{contributionId} collection.
+     * @description Controls access to contribution documents.
      * @path /users/{userId}/contributions/{contributionId}
-     * @allow (create) User 'abc' can create a contribution if request.auth.uid == 'abc' and request.resource.data.userId == 'abc'.
-     * @deny (create) User 'abc' cannot create a contribution for user 'xyz'.
-     * @allow (get) User 'abc' can get their own contribution if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (get) User 'abc' cannot get the contribution for user 'xyz'.
-     * @allow (update) User 'abc' can update their own contribution if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (update) User 'abc' cannot update the contribution for user 'xyz'.
-     * @allow (delete) User 'abc' can delete their own contribution if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (delete) User 'abc' cannot delete the contribution for user 'xyz'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' can create a contribution record.
+     * @allow (get) User with ID 'user123' can read their contribution record.
+     * @allow (update) User with ID 'user123' can update their contribution record.
+     * @allow (delete) User with ID 'user123' can delete their contribution record.
+     * @deny (create) User with ID 'user456' cannot create a contribution for 'user123'.
+     * @deny (get) User with ID 'user456' cannot read the contribution of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the contribution of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the contribution of 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/contributions/{contributionId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/categories/{categoryId} collection.
+     * @description Controls access to category documents.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) User 'abc' can create a category if request.auth.uid == 'abc' and request.resource.data.userId == 'abc'.
-     * @deny (create) User 'abc' cannot create a category for user 'xyz'.
-     * @allow (get) User 'abc' can get their own category if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (get) User 'abc' cannot get the category for user 'xyz'.
-     * @allow (update) User 'abc' can update their own category if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (update) User 'abc' cannot update the category for user 'xyz'.
-     * @allow (delete) User 'abc' can delete their own category if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (delete) User 'abc' cannot delete the category for user 'xyz'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' can create a category.
+     * @allow (get) User with ID 'user123' can read their category details.
+     * @allow (update) User with ID 'user123' can update their category details.
+     * @allow (delete) User with ID 'user123' can delete their category.
+     * @deny (create) User with ID 'user456' cannot create a category for 'user123'.
+     * @deny (get) User with ID 'user456' cannot read the category of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the category of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the category of 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/categories/{categoryId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/tags/{tagId} collection.
+     * @description Controls access to tag documents.
      * @path /users/{userId}/tags/{tagId}
-     * @allow (create) User 'abc' can create a tag if request.auth.uid == 'abc' and request.resource.data.userId == 'abc'.
-     * @deny (create) User 'abc' cannot create a tag for user 'xyz'.
-     * @allow (get) User 'abc' can get their own tag if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (get) User 'abc' cannot get the tag for user 'xyz'.
-     * @allow (update) User 'abc' can update their own tag if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (update) User 'abc' cannot update the tag for user 'xyz'.
-     * @allow (delete) User 'abc' can delete their own tag if request.auth.uid == 'abc' and resource.data.userId == 'abc'.
-     * @deny (delete) User 'abc' cannot delete the tag for user 'xyz'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' can create a tag.
+     * @allow (get) User with ID 'user123' can read their tag details.
+     * @allow (update) User with ID 'user123' can update their tag details.
+     * @allow (delete) User with ID 'user123' can delete their tag.
+     * @deny (create) User with ID 'user456' cannot create a tag for 'user123'.
+     * @deny (get) User with ID 'user456' cannot read the tag of 'user123'.
+     * @deny (update) User with ID 'user456' cannot update the tag of 'user123'.
+     * @deny (delete) User with ID 'user456' cannot delete the tag of 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/tags/{tagId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
+  }
+
+  // Helper function to determine if the request is from the owner.
+  function isOwner(userId) {
+    return isSignedIn() && request.auth.uid == userId;
+  }
+
+  // Helper function to determine if the request is from the owner and the resource exists
+  function isExistingOwner(userId) {
+    return isOwner(userId) && resource != null;
+  }
+
+  // Helper function to determine if a user is signed in
+  function isSignedIn() {
+    return request.auth != null;
   }
 }

@@ -17,13 +17,13 @@ import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, writeBatch, increment } from 'firebase/firestore';
 import { Loader2, Pilcrow } from 'lucide-react';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
+import { Account } from '@/lib/types';
 
 const accountSchema = z.object({
     name: z.string().min(1, 'Account name is required.'),
@@ -36,18 +36,22 @@ const accountSchema = z.object({
     path: ["limit"],
 });
 
+type AccountFormData = z.infer<typeof accountSchema>;
+
 interface AddAccountSheetProps {
     children: React.ReactNode;
+    accountToEdit?: Account;
 }
 
-export function AddAccountSheet({ children }: AddAccountSheetProps) {
+export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProps) {
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
+    const isEditMode = !!accountToEdit;
 
-    const form = useForm<z.infer<typeof accountSchema>>({
+    const form = useForm<AccountFormData>({
         resolver: zodResolver(accountSchema),
         defaultValues: {
             name: '',
@@ -62,17 +66,27 @@ export function AddAccountSheet({ children }: AddAccountSheetProps) {
 
     useEffect(() => {
         if(open) {
-            form.reset({
-                name: '',
-                type: 'bank',
-                balance: 0,
-                icon: 'Landmark',
-                limit: undefined,
-            });
+            if (isEditMode && accountToEdit) {
+                 form.reset({
+                    name: accountToEdit.name,
+                    type: accountToEdit.type,
+                    balance: accountToEdit.balance,
+                    icon: accountToEdit.icon,
+                    limit: accountToEdit.limit,
+                });
+            } else {
+                form.reset({
+                    name: '',
+                    type: 'bank',
+                    balance: 0,
+                    icon: 'Landmark',
+                    limit: undefined,
+                });
+            }
         }
-    }, [open, form]);
+    }, [open, form, isEditMode, accountToEdit]);
 
-    async function onSubmit(values: z.infer<typeof accountSchema>) {
+    async function onSubmit(values: AccountFormData) {
         setIsLoading(true);
         if (!firestore || !user) {
              toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
@@ -90,13 +104,38 @@ export function AddAccountSheet({ children }: AddAccountSheetProps) {
         }
 
         try {
-            const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
-            await addDoc(accountsCol, accountData);
-            
-            toast({
-                title: 'Account Added!',
-                description: 'The new account has been created.',
-            });
+            if (isEditMode && accountToEdit) {
+                // Update existing account
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountToEdit.id);
+                const batch = writeBatch(firestore);
+
+                // If balance is changed manually, we need to adjust it.
+                // The balance in Firestore is the source of truth.
+                // The balance on the form is the *new* desired truth.
+                const balanceDifference = values.balance - accountToEdit.balance;
+                if (balanceDifference !== 0) {
+                    // This update just syncs the form state with firestore.
+                    // The actual balance is what is in Firestore.
+                    // We just set it.
+                }
+
+                batch.update(accountRef, accountData);
+                await batch.commit();
+
+                toast({
+                    title: 'Account Updated!',
+                    description: 'Your account details have been saved.',
+                });
+            } else {
+                // Add new account
+                const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
+                await addDoc(accountsCol, accountData);
+                
+                toast({
+                    title: 'Account Added!',
+                    description: 'The new account has been created.',
+                });
+            }
             setOpen(false);
 
         } catch (error: any) {
@@ -116,9 +155,9 @@ export function AddAccountSheet({ children }: AddAccountSheetProps) {
             <SheetTrigger asChild>{children}</SheetTrigger>
             <SheetContent className="overflow-y-auto">
                 <SheetHeader>
-                    <SheetTitle className="font-headline">Add New Account</SheetTitle>
+                    <SheetTitle className="font-headline">{isEditMode ? 'Edit Account' : 'Add New Account'}</SheetTitle>
                     <SheetDescription>
-                        Create a new account to track your finances.
+                        {isEditMode ? 'Update the details for your account.' : 'Create a new account to track your finances.'}
                     </SheetDescription>
                 </SheetHeader>
                 <Form {...form}>
@@ -165,7 +204,7 @@ export function AddAccountSheet({ children }: AddAccountSheetProps) {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        {accountType === 'credit_card' ? 'Outstanding Amount' : 'Current Balance'}
+                                        {accountType === 'credit_card' ? 'Current Outstanding Amount' : 'Current Balance'}
                                     </FormLabel>
                                     <FormControl>
                                         <Input type="number" placeholder="0.00" {...field} />
@@ -218,7 +257,7 @@ export function AddAccountSheet({ children }: AddAccountSheetProps) {
                         />
 
                         <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Account"}
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Account"}
                         </Button>
                     </form>
                 </Form>

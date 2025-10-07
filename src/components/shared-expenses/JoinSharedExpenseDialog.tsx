@@ -103,6 +103,7 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
                                             placeholder="ABC123" 
                                             {...field}
                                             onChange={(e) => field.onChange(e.target.value.toUpperCase())} 
+                                            autoComplete="off"
                                         />
                                     </FormControl>
                                     <FormMessage />

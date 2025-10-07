@@ -53,8 +53,9 @@ import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
 import { useDebounce } from 'use-debounce';
-import ReactSelect from 'react-select';
+import ReactSelect, { StylesConfig } from 'react-select';
 import { availableIcons } from '@/lib/defaults';
+import { Separator } from '../ui/separator';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -192,7 +193,7 @@ function ExpenseForm({
     const [isSuggesting, startSuggestionTransition] = useTransition();
 
     const descriptionValue = form.watch('description');
-    const [debouncedDescription] = useDebounce(descriptionValue, 500);
+    const [debouncedDescription] = useDebounce(descriptionValue, 1000);
 
     const handleSuggestion = useCallback(() => {
         if (!debouncedDescription || categories.length === 0 || accounts.length === 0 || tags.length === 0) return;
@@ -206,12 +207,15 @@ function ExpenseForm({
                     accounts: activeAccounts.map(({ id, name }) => ({ id, name })),
                 });
                 
-                if (suggestions.categoryId) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
-                if (suggestions.accountId) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
-                if (suggestions.tagIds) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
-                if (suggestions.description) form.setValue('description', suggestions.description, { shouldValidate: true });
+                if (suggestions.categoryId && !form.getValues('categoryId')) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
+                if (suggestions.accountId && !form.getValues('accountId')) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
+                if (suggestions.tagIds && form.getValues('tagIds')?.length === 0) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
+                // Do not auto-update description to prevent overwriting user input
+                // if (suggestions.description) form.setValue('description', suggestions.description, { shouldValidate: true });
+
             } catch (error) {
                 console.error("AI suggestion failed:", error);
+                // Optional: toast notification for AI failure
             }
         });
     }, [debouncedDescription, form, categories, tags, activeAccounts]);
@@ -227,14 +231,16 @@ function ExpenseForm({
         const collectionName = type === 'Category' ? 'categories' : 'tags';
         const ref = collection(firestore, `users/${user.uid}/${collectionName}`);
         try {
-            const newDoc = await addDoc(ref, { name, icon, userId: user.uid });
+            const newDocRef = doc(ref);
+            await setDoc(newDocRef, { name, icon, userId: user.uid, id: newDocRef.id });
+            
             toast({ title: `${type} Added`, description: `"${name}" has been created.` });
 
             if (type === 'Category') {
-                form.setValue('categoryId', newDoc.id, { shouldValidate: true });
+                form.setValue('categoryId', newDocRef.id, { shouldValidate: true });
             } else {
                 const currentTagIds = form.getValues('tagIds') || [];
-                form.setValue('tagIds', [...currentTagIds, newDoc.id], { shouldValidate: true });
+                form.setValue('tagIds', [...currentTagIds, newDocRef.id], { shouldValidate: true });
             }
         } catch (error: any) {
             toast({ variant: 'destructive', title: `Error Adding ${type}`, description: error.message });
@@ -253,6 +259,39 @@ function ExpenseForm({
     
     const tagOptions = useMemo(() => tags.map(tag => ({ value: tag.id, label: tag.name })), [tags]);
     const selectedTags = tagOptions.filter(option => form.getValues('tagIds')?.includes(option.value));
+
+    const selectStyles: StylesConfig = {
+        control: (base) => ({
+            ...base,
+            background: 'hsl(var(--background))',
+            borderColor: 'hsl(var(--input))',
+            boxShadow: 'none',
+            '&:hover': {
+                borderColor: 'hsl(var(--input))',
+            },
+        }),
+        menu: (base) => ({
+            ...base,
+            background: 'hsl(var(--popover))',
+            color: 'hsl(var(--popover-foreground))',
+            zIndex: 50,
+        }),
+        multiValue: (base) => ({
+            ...base,
+            background: 'hsl(var(--muted))',
+            color: 'hsl(var(--muted-foreground))',
+        }),
+        multiValueLabel: (base) => ({
+            ...base,
+            color: 'hsl(var(--muted-foreground))',
+        }),
+        option: (base, state) => ({
+            ...base,
+            background: state.isFocused ? 'hsl(var(--accent))' : 'transparent',
+            color: state.isFocused ? 'hsl(var(--accent-foreground))' : 'inherit',
+        }),
+    };
+
 
     return (
         <Form {...form}>
@@ -341,27 +380,37 @@ function ExpenseForm({
                         </FormItem>
                     )}
                 />    
+                
+                <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                            <div className="flex justify-between items-center">
+                                <FormLabel>
+                                    Description {isDescriptionRequired ? '' : '(Optional)'}
+                                </FormLabel>
+                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={handleSuggestion} disabled={isSuggesting}>
+                                    {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-amber-500" />}
+                                    <span className="sr-only">Get Suggestions</span>
+                                </Button>
+                            </div>
+                        <FormControl>
+                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 <FormField
                     control={form.control}
                     name="categoryId"
                     render={({ field }) => (
                         <FormItem>
-                            <div className="flex items-center justify-between">
-                                <FormLabel>
-                                    Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
-                                </FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button type="button" variant="ghost" size="sm" className="h-7">
-                                            <PlusCircle className="h-4 w-4 mr-1" /> New
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2">
-                                        <QuickAddItemForm type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)} />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                            <FormLabel>
+                                Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
+                            </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || 'no-category'}>
                             <FormControl>
                             <SelectTrigger>
@@ -369,15 +418,26 @@ function ExpenseForm({
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
-                            {categories?.map(cat => (
-                                <SelectItem key={cat.id} value={cat.id}>
-                                    <div className="flex items-center">
-                                        {renderIcon(cat.icon)}
-                                        {cat.name}
-                                    </div>
-                                </SelectItem>
-                            ))}
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <div className="flex w-full items-center p-2 text-sm hover:bg-accent rounded-sm cursor-pointer">
+                                            <PlusCircle className="h-4 w-4 mr-2" /> Add New
+                                        </div>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-2">
+                                        <QuickAddItemForm type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)} />
+                                    </PopoverContent>
+                                </Popover>
+                                <Separator />
+                                {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
+                                {categories?.map(cat => (
+                                    <SelectItem key={cat.id} value={cat.id}>
+                                        <div className="flex items-center">
+                                            {renderIcon(cat.icon)}
+                                            {cat.name}
+                                        </div>
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -390,65 +450,32 @@ function ExpenseForm({
                     name="tagIds"
                     render={({ field }) => (
                         <FormItem>
-                            <div className="flex items-center justify-between">
-                                <FormLabel>
-                                    Tags {isTagRequired ? '' : '(Optional)'}
-                                </FormLabel>
-                                 <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button type="button" variant="ghost" size="sm" className="h-7">
-                                            <PlusCircle className="h-4 w-4 mr-1" /> New
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2">
-                                        <QuickAddItemForm type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                            <FormLabel>
+                                Tags {isTagRequired ? '' : '(Optional)'}
+                            </FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button type="button" variant="outline" className="w-full justify-start text-muted-foreground font-normal mb-2">
+                                        <PlusCircle className="h-4 w-4 mr-2" /> Add New Tag
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-64 p-2">
+                                    <QuickAddItemForm type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} />
+                                </PopoverContent>
+                            </Popover>
                         <FormControl>
                            <ReactSelect
                                 isMulti
-                                name="colors"
+                                name="tags"
                                 options={tagOptions}
                                 value={selectedTags}
                                 onChange={(selectedOptions) => {
                                     const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
                                     field.onChange(selectedValues);
                                 }}
-                                className="basic-multi-select"
+                                styles={selectStyles}
                                 classNamePrefix="select"
-                                styles={{
-                                    control: (base) => ({
-                                        ...base,
-                                        background: 'transparent',
-                                        borderColor: 'hsl(var(--input))'
-                                    }),
-                                    menu: (base) => ({ ...base, background: 'hsl(var(--background))', zIndex: 50 }),
-                                    multiValue: (base) => ({ ...base, background: 'hsl(var(--muted))' }),
-                                }}
                             />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <div className="flex justify-between items-center">
-                                <FormLabel>
-                                    Description {isDescriptionRequired ? '' : '(Optional)'}
-                                </FormLabel>
-                                <Button type="button" variant="ghost" size="sm" onClick={handleSuggestion} disabled={isSuggesting}>
-                                    {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                                    <span className="sr-only">Get Suggestions</span>
-                                </Button>
-                            </div>
-                        <FormControl>
-                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -883,3 +910,5 @@ function useExpenseForm(
       tags: tags || []
     };
 }
+
+    

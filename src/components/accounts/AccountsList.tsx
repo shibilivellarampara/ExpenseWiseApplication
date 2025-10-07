@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -161,8 +162,8 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                         {creditCards.length > 0 ? creditCards.map(item => {
                              const limit = item.limit || 0;
                              const balance = item.balance;
-                             const usedAmount = balance > 0 ? balance : 0;
-                             const usagePercentage = limit > 0 ? (usedAmount / limit) * 100 : 0;
+                             const availableCredit = limit - balance;
+                             const usagePercentage = limit > 0 ? (availableCredit / limit) * 100 : 0;
                             
                             return (
                                 <div key={item.id} className="p-4 flex items-center gap-4 group">
@@ -181,8 +182,8 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                             <div className="mt-1">
                                                 <Progress value={usagePercentage} className="h-2" />
                                                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                                                    <span>Available: {availableCredit.toFixed(2)}</span>
                                                     <span>Limit: {limit.toFixed(2)}</span>
-                                                    <span>Used: {usagePercentage.toFixed(0)}%</span>
                                                 </div>
                                             </div>
                                         )}
@@ -208,9 +209,9 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                 <CardHeader>
                      <div className="flex items-center gap-3">
                         <Landmark className="h-7 w-7 text-primary"/>
-                        <CardTitle className="font-headline">Other Accounts</CardTitle>
+                        <CardTitle className="font-headline">Savings &amp; Other Accounts</CardTitle>
                     </div>
-                    <CardDescription>Your bank, wallet, and cash accounts.</CardDescription>
+                    <CardDescription>Your bank, wallet, cash, and other accounts.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="divide-y">

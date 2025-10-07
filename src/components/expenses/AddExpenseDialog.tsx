@@ -189,7 +189,8 @@ function ExpenseForm({
   id,
   accounts,
   categories,
-  tags
+  tags,
+  isShared,
 }: {
   form: UseFormReturn<any>;
   onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
@@ -197,6 +198,7 @@ function ExpenseForm({
   accounts: Account[];
   categories: Category[];
   tags: Tag[];
+  isShared?: boolean;
 }) {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -279,36 +281,38 @@ function ExpenseForm({
     return (
         <Form {...form}>
             <form id={id} onSubmit={onSubmit} className="grid items-start gap-4">
-                <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                        <FormItem className="space-y-3">
-                        <FormLabel>Transaction Type</FormLabel>
-                        <FormControl>
-                            <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="grid grid-cols-2 gap-4"
-                            >
-                                <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'expense' ? "border-destructive text-destructive" : "border-muted")}>
-                                        <RadioGroupItem value="expense" className="sr-only" />
-                                        <span>Cash Out</span>
-                                    </Label>
-                                </FormItem>
-                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'income' ? "border-green-600 text-green-600" : "border-muted")}>
-                                        <RadioGroupItem value="income" className="sr-only" />
-                                        <span>Cash In</span>
-                                    </Label>
-                                </FormItem>
-                            </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                {!isShared && (
+                    <FormField
+                        control={form.control}
+                        name="type"
+                        render={({ field }) => (
+                            <FormItem className="space-y-3">
+                            <FormLabel>Transaction Type</FormLabel>
+                            <FormControl>
+                                <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="grid grid-cols-2 gap-4"
+                                >
+                                    <FormItem>
+                                        <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'expense' ? "border-destructive text-destructive" : "border-muted")}>
+                                            <RadioGroupItem value="expense" className="sr-only" />
+                                            <span>Cash Out</span>
+                                        </Label>
+                                    </FormItem>
+                                     <FormItem>
+                                        <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'income' ? "border-green-600 text-green-600" : "border-muted")}>
+                                            <RadioGroupItem value="income" className="sr-only" />
+                                            <span>Cash In</span>
+                                        </Label>
+                                    </FormItem>
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
                  <FormField
                     control={form.control}
                     name="date"
@@ -554,7 +558,7 @@ function DesktopAddExpenseDialog({
                     <DialogDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} />
+                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} isShared={!!sharedExpenseId} />
                 </div>
                 <DialogFooter className="flex-row justify-between w-full">
                     <div>
@@ -633,7 +637,7 @@ function MobileAddExpenseDrawer({
                     <DrawerDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DrawerDescription>
                 </DrawerHeader>
                  <div className="overflow-y-auto px-4">
-                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags}/>
+                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} isShared={!!sharedExpenseId}/>
                 </div>
                  <DrawerFooter className="pt-2">
                     <div className="flex w-full gap-2">
@@ -716,8 +720,15 @@ function useExpenseForm({
     
     // Function to get clean default values
     const getNewFormValues = useCallback(() => {
+        let type = 'expense';
+        if (sharedExpenseId) {
+            type = 'expense';
+        } else if (initialType) {
+            type = initialType;
+        }
+
         return {
-            type: initialType || 'expense',
+            type,
             amount: '' as any,
             date: new Date(),
             accountId: '',
@@ -725,7 +736,7 @@ function useExpenseForm({
             description: '',
             tagIds: [],
         }
-    }, [initialType]);
+    }, [initialType, sharedExpenseId]);
     
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),

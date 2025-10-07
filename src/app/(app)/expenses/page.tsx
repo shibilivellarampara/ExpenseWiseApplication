@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, orderBy, query, doc } from "firebase/firestore";
-import { PlusCircle } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { useMemo } from "react";
 
 export default function ExpensesPage() {
@@ -102,16 +102,24 @@ export default function ExpensesPage() {
 
     return (
         <div className="w-full space-y-8">
-            <PageHeader title="Transactions" description="A detailed list of your recent income and expenses.">
-                <AddExpenseDialog>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Transaction
-                    </Button>
-                </AddExpenseDialog>
-            </PageHeader>
+            <PageHeader title="Transactions" description="A detailed list of your recent income and expenses." />
 
             <ExpensesTable expenses={enrichedExpenses} isLoading={isLoading} />
+
+            <div className="fixed bottom-6 right-6 flex flex-col gap-3">
+                <AddExpenseDialog initialType="expense">
+                     <Button size="icon" className="h-14 w-14 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg">
+                        <Minus className="h-6 w-6" />
+                        <span className="sr-only">Add Expense</span>
+                    </Button>
+                </AddExpenseDialog>
+                <AddExpenseDialog initialType="income">
+                     <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
+                        <Plus className="h-6 w-6" />
+                        <span className="sr-only">Add Income</span>
+                    </Button>
+                </AddExpenseDialog>
+            </div>
         </div>
     );
 }

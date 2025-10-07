@@ -305,24 +305,26 @@ export function AddExpenseDialog({
     children, 
     expenseToEdit,
     sharedExpenseId,
+    initialType,
 }: { 
     children: React.ReactNode, 
     expenseToEdit?: EnrichedExpense,
     sharedExpenseId?: string;
+    initialType?: 'income' | 'expense';
 }) {
     const [open, setOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
     if (isDesktop) {
         return (
-            <DesktopAddExpenseDialog open={open} setOpen={setOpen} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId}>
+            <DesktopAddExpenseDialog open={open} setOpen={setOpen} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType}>
                 {children}
             </DesktopAddExpenseDialog>
         );
     }
 
     return (
-        <MobileAddExpenseDrawer open={open} setOpen={setOpen} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId}>
+        <MobileAddExpenseDrawer open={open} setOpen={setOpen} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType}>
             {children}
         </MobileAddExpenseDrawer>
     );
@@ -335,14 +337,16 @@ function DesktopAddExpenseDialog({
     setOpen,
     expenseToEdit,
     sharedExpenseId,
+    initialType,
 }: { 
     children: React.ReactNode, 
     open: boolean, 
     setOpen: (open: boolean) => void,
     expenseToEdit?: EnrichedExpense,
     sharedExpenseId?: string,
+    initialType?: 'income' | 'expense';
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -379,14 +383,16 @@ function MobileAddExpenseDrawer({
     setOpen,
     expenseToEdit,
     sharedExpenseId,
+    initialType,
 }: { 
     children: React.ReactNode, 
     open: boolean, 
     setOpen: (open: boolean) => void,
     expenseToEdit?: EnrichedExpense,
     sharedExpenseId?: string;
+    initialType?: 'income' | 'expense';
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
     
     return (
         <Drawer open={open} onOpenChange={setOpen}>
@@ -408,7 +414,7 @@ function MobileAddExpenseDrawer({
                     )}
                     <Button type="submit" form={formId} className="flex-1" disabled={isLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {isEditMode ? 'Save Changes' : 'Save'}
+                        {isEditMode ? 'Save' : 'Save'}
                     </Button>
                 </DrawerFooter>
             </DrawerContent>
@@ -422,6 +428,7 @@ function useExpenseForm(
     setOpen: (open: boolean) => void,
     expenseToEdit?: EnrichedExpense, 
     sharedExpenseId?: string,
+    initialType?: 'income' | 'expense',
 ) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
@@ -454,7 +461,7 @@ function useExpenseForm(
             });
         } else {
             form.reset({
-                type: 'expense',
+                type: initialType || 'expense',
                 amount: 0,
                 date: new Date(),
                 accountId: '',
@@ -468,7 +475,7 @@ function useExpenseForm(
     // Reset form when dialog opens
     useEffect(() => {
         resetAndPopulateForm();
-    }, [expenseToEdit, userProfile, isEditMode]);
+    }, [expenseToEdit, userProfile, isEditMode, initialType]);
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
         if (!firestore || !user) {

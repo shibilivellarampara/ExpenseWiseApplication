@@ -148,8 +148,11 @@ function GroupedExpenseList({ expenses, currencySymbol, isShared }: { expenses: 
                                                 <Edit className="h-4 w-4" />
                                             </Button>
                                         </AddExpenseDialog>
-                                        <div className={`font-bold text-lg ${expense.type === 'income' ? 'text-green-600' : ''}`}>
-                                            {expense.type === 'income' ? '+' : '-'}{expense.amount.toFixed(2)}
+                                        <div className={cn(
+                                            'font-bold text-lg',
+                                            expense.type === 'income' ? 'text-green-600' : 'text-red-600'
+                                        )}>
+                                            {currencySymbol}{expense.amount.toFixed(2)}
                                         </div>
                                      </div>
                                     {!isShared && expense.balanceAfterTransaction !== undefined && (

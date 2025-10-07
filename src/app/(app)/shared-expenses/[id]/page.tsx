@@ -10,11 +10,13 @@ import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile, SharedEx
 import { collection, orderBy, query, doc, getDocs, where } from "firebase/firestore";
 import { PlusCircle } from "lucide-react";
 import { useMemo, useEffect, useState } from "react";
+import { useParams } from 'next/navigation';
 
-export default function SharedExpenseDetailPage({ params }: { params: { id: string } }) {
+export default function SharedExpenseDetailPage() {
+    const params = useParams();
     const { user } = useUser();
     const firestore = useFirestore();
-    const sharedExpenseId = params.id;
+    const sharedExpenseId = params.id as string;
 
     // --- Data Fetching ---
     

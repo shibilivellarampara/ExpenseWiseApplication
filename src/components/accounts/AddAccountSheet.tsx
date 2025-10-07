@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -17,7 +18,7 @@ import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc, doc, setDoc, writeBatch, increment } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
 import { Loader2, Pilcrow } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
@@ -31,6 +32,7 @@ const accountSchema = z.object({
     balance: z.coerce.number(),
     limit: z.coerce.number().optional(),
     icon: z.string().min(1, "Icon is required."),
+    status: z.enum(['active', 'inactive']).default('active'),
 }).refine(data => data.type !== 'credit_card' || (data.limit !== undefined && data.limit > 0), {
     message: "Credit limit is required for credit card accounts and must be positive.",
     path: ["limit"],
@@ -59,6 +61,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             balance: 0,
             icon: 'Landmark',
             limit: undefined,
+            status: 'active',
         },
     });
 
@@ -73,6 +76,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     balance: accountToEdit.balance,
                     icon: accountToEdit.icon,
                     limit: accountToEdit.limit,
+                    status: accountToEdit.status,
                 });
             } else {
                 form.reset({
@@ -81,6 +85,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     balance: 0,
                     icon: 'Landmark',
                     limit: undefined,
+                    status: 'active',
                 });
             }
         }
@@ -107,20 +112,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             if (isEditMode && accountToEdit) {
                 // Update existing account
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountToEdit.id);
-                const batch = writeBatch(firestore);
-
-                // If balance is changed manually, we need to adjust it.
-                // The balance in Firestore is the source of truth.
-                // The balance on the form is the *new* desired truth.
-                const balanceDifference = values.balance - accountToEdit.balance;
-                if (balanceDifference !== 0) {
-                    // This update just syncs the form state with firestore.
-                    // The actual balance is what is in Firestore.
-                    // We just set it.
-                }
-
-                batch.update(accountRef, accountData);
-                await batch.commit();
+                await setDoc(accountRef, accountData, { merge: true });
 
                 toast({
                     title: 'Account Updated!',

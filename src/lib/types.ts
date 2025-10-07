@@ -36,6 +36,7 @@ export type Account = {
   limit?: number; // For credit cards
   icon: string; // lucide-react icon name
   userId: string;
+  status: 'active' | 'inactive';
 }
 
 export type Tag = {

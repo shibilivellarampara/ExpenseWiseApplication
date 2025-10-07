@@ -129,6 +129,8 @@ function ExpenseForm({
     const { data: categories } = useCollection<Category>(categoriesQuery);
     const { data: accounts } = useCollection<Account>(accountsQuery);
     const { data: tags } = useCollection<Tag>(tagsQuery);
+
+    const activeAccounts = useMemo(() => accounts?.filter(acc => acc.status === 'active') || [], [accounts]);
     
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
@@ -215,7 +217,7 @@ function ExpenseForm({
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            {accounts?.map(acc => (
+                            {activeAccounts?.map(acc => (
                                 <SelectItem key={acc.id} value={acc.id}>
                                     <div className="flex items-center">
                                         {renderIcon(acc.icon)}

@@ -69,9 +69,10 @@
         "type": { "type": "string", "enum": ["bank", "credit_card", "wallet", "cash"] },
         "balance": { "type": "number", "description": "Current balance or outstanding amount." },
         "limit": { "type": "number", "description": "Credit limit for credit cards." },
-        "icon": { "type": "string", "description": "Name of the lucide-react icon." }
+        "icon": { "type": "string", "description": "Name of the lucide-react icon." },
+        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the account." }
       },
-      "required": ["id", "userId", "name", "type", "balance", "icon"]
+      "required": ["id", "userId", "name", "type", "balance", "icon", "status"]
     },
     "Category": {
       "$schema": "http://json-schema.org/draft-07/schema#",

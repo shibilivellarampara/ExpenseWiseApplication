@@ -5,17 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Account, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import * as LucideIcons from 'lucide-react';
-import { getCurrencySymbol } from "@/lib/currencies";
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { doc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { Progress } from "../ui/progress";
-import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2 } from "lucide-react";
+import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 interface AccountsListProps {
     accounts: Account[];
@@ -28,56 +28,47 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
   return IconComponent ? <IconComponent className={cn("h-6 w-6 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-6 w-6 text-muted-foreground", className)} />;
 };
 
-function DeleteAccountButton({ account, onAccountDeleted }: { account: Account, onAccountDeleted: () => void }) {
+function DeactivateAccountButton({ account, onAccountDeactivated }: { account: Account, onAccountDeactivated: () => void }) {
     const { user } = useUser();
     const firestore = useFirestore();
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [isDeactivating, setIsDeactivating] = useState(false);
     const { toast } = useToast();
 
-    const handleDelete = async () => {
+    const handleDeactivate = async () => {
         if (!user || !firestore) return;
-        setIsDeleting(true);
+        setIsDeactivating(true);
         try {
-            const batch = writeBatch(firestore);
-
-            // 1. Find all transactions associated with this account
-            const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), where('accountId', '==', account.id));
-            const expensesSnapshot = await getDocs(expensesQuery);
-            expensesSnapshot.forEach(doc => batch.delete(doc.ref));
-
-            // 2. Delete the account itself
             const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
-            batch.delete(accountRef);
-
-            // 3. Commit the batch
-            await batch.commit();
-            toast({ title: "Account Deleted", description: `"${account.name}" and its transactions have been removed.` });
-            onAccountDeleted();
+            await setDoc(accountRef, { status: 'inactive' }, { merge: true });
+            
+            toast({ title: "Account Deactivated", description: `"${account.name}" has been hidden and can no longer be used.` });
+            onAccountDeactivated();
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
-            setIsDeleting(false);
+            setIsDeactivating(false);
         }
     }
     
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                </Button>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                    <Archive className="mr-2 h-4 w-4" />
+                    Deactivate
+                </DropdownMenuItem>
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Are you sure you want to deactivate this account?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will permanently delete the account "{account.name}" and all of its associated transactions. This action cannot be undone.
+                        This will hide the account "{account.name}" from lists and prevent new transactions. You can reactivate it later.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                        {isDeleting ? <Loader2 className="animate-spin" /> : "Delete"}
+                    <AlertDialogAction onClick={handleDeactivate} className="bg-destructive hover:bg-destructive/90">
+                        {isDeactivating ? <Loader2 className="animate-spin" /> : "Deactivate"}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -85,18 +76,18 @@ function DeleteAccountButton({ account, onAccountDeleted }: { account: Account, 
     );
 }
 
+
 export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     const { user } = useUser();
     const firestore = useFirestore();
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-    const creditCards = accounts.filter(acc => acc.type === 'credit_card');
-    const otherAccounts = accounts.filter(acc => acc.type !== 'credit_card');
+    const [deactivatedAccountIds, setDeactivatedAccountIds] = useState<string[]>([]);
     
-    const [deletedAccountIds, setDeletedAccountIds] = useState<string[]>([]);
-    const visibleAccounts = accounts.filter(acc => !deletedAccountIds.includes(acc.id));
-
+    const activeAccounts = accounts.filter(acc => acc.status === 'active' && !deactivatedAccountIds.includes(acc.id));
+    const creditCards = activeAccounts.filter(acc => acc.type === 'credit_card');
+    const otherAccounts = activeAccounts.filter(acc => acc.type !== 'credit_card');
 
     if (isLoading) {
         return (
@@ -139,10 +130,10 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
         )
     }
 
-    if (visibleAccounts.length === 0) {
+    if (activeAccounts.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg">
-                <h3 className="text-xl font-semibold">No Accounts Found</h3>
+                <h3 className="text-xl font-semibold">No Active Accounts Found</h3>
                 <p className="text-muted-foreground mt-2">Click "Add Account" to get started.</p>
             </div>
         );
@@ -173,11 +164,13 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                     <div className="flex-grow">
                                         <div className="flex items-center justify-between">
                                             <div className="font-semibold">{item.name}</div>
-                                            <div className="font-bold text-lg text-red-500">
-                                                {item.balance.toFixed(2)}
+                                            <div className={cn("font-bold text-lg", balance > 0 ? 'text-red-500' : 'text-green-500')}>
+                                                {balance.toFixed(2)}
                                             </div>
                                         </div>
-                                        <p className="text-sm text-muted-foreground capitalize">Outstanding Amount</p>
+                                        <p className="text-sm text-muted-foreground capitalize">
+                                            {balance > 0 ? 'Outstanding Amount' : 'Credit Balance'}
+                                        </p>
                                         {limit > 0 && (
                                             <div className="mt-1">
                                                 <Progress value={usagePercentage} className="h-2" />
@@ -188,13 +181,23 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex items-center ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <AddAccountSheet accountToEdit={item}>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                        </AddAccountSheet>
-                                        <DeleteAccountButton account={item} onAccountDeleted={() => setDeletedAccountIds(prev => [...prev, item.id])} />
+                                    <div className="flex items-center ml-auto pl-2">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <AddAccountSheet accountToEdit={item}>
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                </AddAccountSheet>
+                                                <DeactivateAccountButton account={item} onAccountDeactivated={() => setDeactivatedAccountIds(prev => [...prev, item.id])} />
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 </div>
                             )
@@ -223,19 +226,29 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                 <div className="flex-grow">
                                      <div className="flex items-center justify-between">
                                         <div className="font-semibold">{item.name}</div>
-                                        <div className="font-bold text-lg">
+                                        <div className={cn("font-bold text-lg", item.balance >= 0 ? 'text-green-600' : 'text-red-600')}>
                                             {item.balance.toFixed(2)}
                                         </div>
                                      </div>
                                     <p className="text-sm text-muted-foreground capitalize">{item.type.replace('_', ' ')}</p>
                                 </div>
-                                <div className="flex items-center ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <AddAccountSheet accountToEdit={item}>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                    </AddAccountSheet>
-                                     <DeleteAccountButton account={item} onAccountDeleted={() => setDeletedAccountIds(prev => [...prev, item.id])} />
+                                <div className="flex items-center ml-auto pl-2">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <MoreVertical className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <AddAccountSheet accountToEdit={item}>
+                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                            </AddAccountSheet>
+                                            <DeactivateAccountButton account={item} onAccountDeactivated={() => setDeactivatedAccountIds(prev => [...prev, item.id])} />
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </div>
                         )) : (

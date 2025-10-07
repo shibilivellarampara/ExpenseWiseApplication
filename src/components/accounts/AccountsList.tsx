@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
@@ -143,20 +143,18 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-    const [accounts, setAccounts] = useState(initialAccounts);
+    const [accounts, setAccounts] = useState(initialAccounts || []);
 
     // Update state when initialAccounts prop changes
-    useState(() => {
-        setAccounts(initialAccounts);
-    });
+    useEffect(() => {
+        setAccounts(initialAccounts || []);
+    }, [initialAccounts]);
 
     const onAccountUpdate = () => {
-        // This is a dummy function to trigger a re-render.
-        // A better approach would be to refetch or optimistically update the list.
-        // For now, we rely on the parent component's re-render.
-        // A simple way to force refresh is needed here.
-        // Forcing a re-render by creating a new array reference
-        setAccounts([...accounts]);
+        // This is a dummy function to trigger a re-render by the parent.
+        // A more robust solution might involve a state management library
+        // or a callback to the parent to refetch.
+        // For now, we rely on the parent component's live query to provide the update.
     };
 
     const activeAccounts = accounts.filter(acc => (acc.status === 'active' || acc.status === undefined));
@@ -210,7 +208,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
         )
     }
 
-    if (accounts.length === 0) {
+    if (initialAccounts && initialAccounts.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg">
                 <h3 className="text-xl font-semibold">No Accounts Found</h3>
@@ -342,5 +340,3 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
        </div>
     )
 }
-
-    

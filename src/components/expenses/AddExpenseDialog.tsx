@@ -545,7 +545,12 @@ function DesktopAddExpenseDialog({
     sharedExpenseId?: string,
     initialType?: 'income' | 'expense';
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
+        setOpen, 
+        expenseToEdit, 
+        sharedExpenseId, 
+        initialType
+    });
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -618,7 +623,12 @@ function MobileAddExpenseDrawer({
     sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
+        setOpen,
+        expenseToEdit,
+        sharedExpenseId,
+        initialType
+    });
     
     return (
         <Drawer open={open} onOpenChange={setOpen}>
@@ -674,14 +684,20 @@ function MobileAddExpenseDrawer({
     );
 }
 
+interface UseExpenseFormProps {
+    setOpen: (open: boolean) => void;
+    expenseToEdit?: EnrichedExpense; 
+    sharedExpenseId?: string;
+    initialType?: 'income' | 'expense';
+}
 
 // Shared hook for form logic
-function useExpenseForm(
-    setOpen: (open: boolean) => void,
-    expenseToEdit?: EnrichedExpense, 
-    sharedExpenseId?: string,
-    initialType?: 'income' | 'expense',
-) {
+function useExpenseForm({
+    setOpen,
+    expenseToEdit,
+    sharedExpenseId,
+    initialType,
+}: UseExpenseFormProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
@@ -703,23 +719,25 @@ function useExpenseForm(
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
     
     // Function to get clean default values
-    const getNewFormValues = () => ({
-        type: initialType || 'expense',
-        amount: '' as any,
-        date: new Date(),
-        accountId: '',
-        categoryId: 'no-category',
-        description: '',
-        tagIds: [],
-    });
+    const getNewFormValues = useCallback(() => {
+        return {
+            type: initialType || 'expense',
+            amount: '' as any,
+            date: new Date(),
+            accountId: '',
+            categoryId: userProfile?.expenseFieldSettings?.isCategoryRequired ? '' : 'no-category',
+            description: '',
+            tagIds: [],
+        }
+    }, [initialType, userProfile]);
     
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
         defaultValues: getNewFormValues(),
     });
-
+    
+    // Effect to reset the form when the dialog opens or when editing a different expense
     useEffect(() => {
-        // We only reset the form contents, not the form instance itself.
         if (isEditMode && expenseToEdit) {
             form.reset({
                 type: expenseToEdit.type,
@@ -733,7 +751,7 @@ function useExpenseForm(
         } else {
             form.reset(getNewFormValues());
         }
-    }, [isEditMode, expenseToEdit, form]);
+    }, [isEditMode, expenseToEdit, form, getNewFormValues]);
 
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
@@ -764,11 +782,14 @@ function useExpenseForm(
                 createdAt: isAddOperation ? serverTimestamp() : expenseToEdit.createdAt,
                 updatedAt: serverTimestamp(),
                 tagIds: values.tagIds || [],
-                categoryId: values.categoryId === 'no-category' ? '' : values.categoryId,
+                categoryId: values.categoryId === 'no-category' ? null : values.categoryId,
             };
 
             if (sharedExpenseId) {
                 expenseData.sharedExpenseId = sharedExpenseId;
+            } else {
+                // Ensure sharedExpenseId is not present for personal expenses
+                delete expenseData.sharedExpenseId;
             }
 
             // Logic for "Credit Limit Upgrade"
@@ -846,7 +867,7 @@ function useExpenseForm(
     
     const resetForm = useCallback(() => {
         form.reset(getNewFormValues());
-    }, [form, initialType]);
+    }, [form, getNewFormValues]);
 
 
     const onFinalSubmit = form.handleSubmit(async (values) => {

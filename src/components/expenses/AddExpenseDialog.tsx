@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -702,8 +701,9 @@ function useExpenseForm(
     const { data: tags } = useCollection<Tag>(tagsQuery);
     
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
-
-    const getNewFormValues = useCallback(() => ({
+    
+    // Function to get clean default values
+    const getNewFormValues = () => ({
         type: initialType || 'expense',
         amount: '' as any,
         date: new Date(),
@@ -711,7 +711,7 @@ function useExpenseForm(
         categoryId: 'no-category',
         description: '',
         tagIds: [],
-    }), [initialType]);
+    });
     
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
@@ -733,7 +733,7 @@ function useExpenseForm(
         } else {
             form.reset(getNewFormValues());
         }
-    }, [isEditMode, expenseToEdit, form, getNewFormValues]);
+    }, [isEditMode, expenseToEdit, form]);
 
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
@@ -769,8 +769,6 @@ function useExpenseForm(
 
             if (sharedExpenseId) {
                 expenseData.sharedExpenseId = sharedExpenseId;
-            } else if ('sharedExpenseId' in expenseData) {
-                delete expenseData.sharedExpenseId;
             }
 
             // Logic for "Credit Limit Upgrade"
@@ -845,6 +843,11 @@ function useExpenseForm(
             setIsLoading(false);
         }
     }
+    
+    const resetForm = useCallback(() => {
+        form.reset(getNewFormValues());
+    }, [form, initialType]);
+
 
     const onFinalSubmit = form.handleSubmit(async (values) => {
         const success = await handleTransactionSave(values);
@@ -856,7 +859,7 @@ function useExpenseForm(
     const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
         const success = await handleTransactionSave(values);
         if (success) {
-            form.reset(getNewFormValues());
+            resetForm();
         }
     });
 

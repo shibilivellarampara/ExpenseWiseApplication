@@ -1,14 +1,14 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Account, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc, setDoc } from 'firebase/firestore';
 import { Progress } from "../ui/progress";
-import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive } from "lucide-react";
+import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
@@ -16,6 +16,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import { Separator } from "../ui/separator";
 
 interface AccountsListProps {
     accounts: Account[];
@@ -28,7 +30,7 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
   return IconComponent ? <IconComponent className={cn("h-6 w-6 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-6 w-6 text-muted-foreground", className)} />;
 };
 
-function DeactivateAccountButton({ account, onAccountDeactivated }: { account: Account, onAccountDeactivated: () => void }) {
+function DeactivateAccountButton({ account, onUpdate }: { account: Account, onUpdate: () => void }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const [isDeactivating, setIsDeactivating] = useState(false);
@@ -42,7 +44,7 @@ function DeactivateAccountButton({ account, onAccountDeactivated }: { account: A
             await setDoc(accountRef, { status: 'inactive' }, { merge: true });
             
             toast({ title: "Account Deactivated", description: `"${account.name}" has been hidden and can no longer be used.` });
-            onAccountDeactivated();
+            onUpdate();
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
@@ -76,18 +78,96 @@ function DeactivateAccountButton({ account, onAccountDeactivated }: { account: A
     );
 }
 
+function ReactivateAccountButton({ account, onUpdate }: { account: Account, onUpdate: () => void }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const [isReactivating, setIsReactivating] = useState(false);
+    const { toast } = useToast();
 
-export function AccountsList({ accounts, isLoading }: AccountsListProps) {
+    const handleReactivate = async () => {
+        if (!user || !firestore) return;
+        setIsReactivating(true);
+        try {
+            const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
+            await setDoc(accountRef, { status: 'active' }, { merge: true });
+            toast({ title: "Account Reactivated", description: `"${account.name}" is now active.` });
+            onUpdate();
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Error', description: error.message });
+        } finally {
+            setIsReactivating(false);
+        }
+    }
+
+    return (
+        <Button variant="ghost" size="sm" onClick={handleReactivate} disabled={isReactivating}>
+            {isReactivating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCw className="mr-2 h-4 w-4" />}
+            Reactivate
+        </Button>
+    )
+}
+
+function InactiveAccountsSection({ accounts, onUpdate, title }: { accounts: Account[], onUpdate: () => void, title: string }) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    if (accounts.length === 0) return null;
+
+    return (
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+             <Separator />
+            <CollapsibleTrigger asChild>
+                <button className="flex w-full items-center justify-between p-4 text-sm font-medium text-muted-foreground">
+                    <span>View {accounts.length} inactive {title}</span>
+                    {isOpen ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-2 p-4 pt-0">
+                {accounts.map(account => (
+                    <div key={account.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                        <div className="flex items-center gap-2">
+                             {renderIcon(account.icon, 'h-5 w-5')}
+                            <span className="text-muted-foreground">{account.name}</span>
+                        </div>
+                        <ReactivateAccountButton account={account} onUpdate={onUpdate} />
+                    </div>
+                ))}
+            </CollapsibleContent>
+        </Collapsible>
+    )
+}
+
+
+export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsListProps) {
     const { user } = useUser();
     const firestore = useFirestore();
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-    const [deactivatedAccountIds, setDeactivatedAccountIds] = useState<string[]>([]);
-    
-    const activeAccounts = accounts.filter(acc => (acc.status === 'active' || acc.status === undefined) && !deactivatedAccountIds.includes(acc.id));
+    const [accounts, setAccounts] = useState(initialAccounts);
+
+    // Update state when initialAccounts prop changes
+    useState(() => {
+        setAccounts(initialAccounts);
+    });
+
+    const onAccountUpdate = () => {
+        // This is a dummy function to trigger a re-render.
+        // A better approach would be to refetch or optimistically update the list.
+        // For now, we rely on the parent component's re-render.
+        // A simple way to force refresh is needed here.
+        // Forcing a re-render by creating a new array reference
+        setAccounts([...accounts]);
+    };
+
+    const activeAccounts = accounts.filter(acc => (acc.status === 'active' || acc.status === undefined));
+    const inactiveAccounts = accounts.filter(acc => acc.status === 'inactive');
+
     const creditCards = activeAccounts.filter(acc => acc.type === 'credit_card');
     const otherAccounts = activeAccounts.filter(acc => acc.type !== 'credit_card');
+    
+    const inactiveCreditCards = inactiveAccounts.filter(acc => acc.type === 'credit_card');
+    const inactiveOtherAccounts = inactiveAccounts.filter(acc => acc.type !== 'credit_card');
+
 
     if (isLoading) {
         return (
@@ -130,10 +210,10 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
         )
     }
 
-    if (activeAccounts.length === 0) {
+    if (accounts.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg">
-                <h3 className="text-xl font-semibold">No Active Accounts Found</h3>
+                <h3 className="text-xl font-semibold">No Accounts Found</h3>
                 <p className="text-muted-foreground mt-2">Click "Add Account" to get started.</p>
             </div>
         );
@@ -195,17 +275,18 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                         Edit
                                                     </DropdownMenuItem>
                                                 </AddAccountSheet>
-                                                <DeactivateAccountButton account={item} onAccountDeactivated={() => setDeactivatedAccountIds(prev => [...prev, item.id])} />
+                                                <DeactivateAccountButton account={item} onUpdate={onAccountUpdate} />
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
                                 </div>
                             )
                         }) : (
-                             <p className="text-muted-foreground text-center p-8">No credit card accounts yet.</p>
+                             <p className="text-muted-foreground text-center p-8">No active credit card accounts yet.</p>
                         )}
                     </div>
                 </CardContent>
+                <InactiveAccountsSection accounts={inactiveCreditCards} onUpdate={onAccountUpdate} title="Credit Cards" />
             </Card>
 
              <Card>
@@ -246,17 +327,20 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                     Edit
                                                 </DropdownMenuItem>
                                             </AddAccountSheet>
-                                            <DeactivateAccountButton account={item} onAccountDeactivated={() => setDeactivatedAccountIds(prev => [...prev, item.id])} />
+                                            <DeactivateAccountButton account={item} onUpdate={onAccountUpdate} />
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
                             </div>
                         )) : (
-                            <p className="text-muted-foreground text-center p-8">No other accounts yet.</p>
+                            <p className="text-muted-foreground text-center p-8">No other active accounts yet.</p>
                         )}
                     </div>
                 </CardContent>
+                <InactiveAccountsSection accounts={inactiveOtherAccounts} onUpdate={onAccountUpdate} title="Accounts" />
             </Card>
        </div>
     )
 }
+
+    

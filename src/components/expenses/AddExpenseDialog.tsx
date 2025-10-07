@@ -50,8 +50,10 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
-import ReactSelect, { StylesConfig } from 'react-select';
 import { availableIcons } from '@/lib/defaults';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { Checkbox } from '../ui/checkbox';
+
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -237,7 +239,7 @@ function ExpenseForm({
         const ref = collection(firestore, `users/${user.uid}/${collectionName}`);
         try {
             const newDocRef = doc(ref);
-            await setDoc(newDocRef, { name, icon, userId: user.uid, id: newDocRef.id });
+            await setDoc(newDocRef, { id: newDocRef.id, name, icon, userId: user.uid });
             
             toast({ title: `${type} Added`, description: `"${name}" has been created.` });
 
@@ -264,51 +266,16 @@ function ExpenseForm({
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
     
-    const tagOptions = useMemo(() => tags.map(tag => ({ value: tag.id, label: tag.name, icon: tag.icon })), [tags]);
-    const selectedTagValues = form.watch('tagIds') || [];
-    const selectedTags = useMemo(() => 
-        tagOptions.filter(option => selectedTagValues.includes(option.value)),
-    [tagOptions, selectedTagValues]);
+    const selectedTagIds = form.watch('tagIds') || [];
 
-    const formatOptionLabel = ({ label, icon }: { label: string, icon: string }) => (
-        <div className="flex items-center gap-2">
-            {renderIcon(icon)}
-            <span>{label}</span>
-        </div>
-    );
-    
-    const selectStyles: StylesConfig = {
-        control: (base) => ({
-            ...base,
-            background: 'hsl(var(--background))',
-            borderColor: 'hsl(var(--input))',
-            boxShadow: 'none',
-            '&:hover': {
-                borderColor: 'hsl(var(--input))',
-            },
-        }),
-        menu: (base) => ({
-            ...base,
-            background: 'hsl(var(--popover))',
-            color: 'hsl(var(--popover-foreground))',
-            zIndex: 51, // Needs to be higher than dialog/drawer
-        }),
-        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-        multiValue: (base) => ({
-            ...base,
-            background: 'hsl(var(--muted))',
-        }),
-        multiValueLabel: (base) => ({
-            ...base,
-            color: 'hsl(var(--muted-foreground))',
-        }),
-        option: (base, state) => ({
-            ...base,
-            background: state.isFocused ? 'hsl(var(--accent))' : 'transparent',
-            color: state.isFocused ? 'hsl(var(--accent-foreground))' : 'inherit',
-        }),
-    };
-
+    const selectedTagsText = useMemo(() => {
+        if (selectedTagIds.length === 0) return 'Select tags';
+        if (selectedTagIds.length === 1) {
+            const tag = tags.find(t => t.id === selectedTagIds[0]);
+            return tag?.name || '1 selected';
+        }
+        return `${selectedTagIds.length} tags selected`;
+    }, [selectedTagIds, tags]);
 
     return (
         <Form {...form}>
@@ -396,15 +363,15 @@ function ExpenseForm({
                     )}
                 />    
                 
-                <FormItem>
-                    <FormLabel>
-                        Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
-                    </FormLabel>
-                    <div className="flex gap-2">
-                        <FormField
-                            control={form.control}
-                            name="categoryId"
-                            render={({ field }) => (
+                 <FormField
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>
+                                Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
+                            </FormLabel>
+                            <div className="flex gap-2">
                                 <Select onValueChange={field.onChange} value={field.value || ''}>
                                     <FormControl>
                                     <SelectTrigger className="w-full">
@@ -428,48 +395,59 @@ function ExpenseForm({
                                         ))}
                                     </SelectContent>
                                 </Select>
-                            )}
-                        />
-                        <QuickAddItemDialog type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)}>
-                            <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
-                        </QuickAddItemDialog>
-                    </div>
-                     <FormMessage className="col-span-2" />
-                </FormItem>
-                
-                 <FormItem>
-                    <FormLabel>
-                        Tags {isTagRequired ? '' : '(Optional)'}
-                    </FormLabel>
-                    <div className="flex gap-2">
-                        <FormField
-                            control={form.control}
-                            name="tagIds"
-                            render={({ field }) => (
-                                <ReactSelect
-                                    isMulti
-                                    name="tags"
-                                    options={tagOptions}
-                                    value={selectedTags}
-                                    onChange={(selectedOptions) => {
-                                        const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
-                                        field.onChange(selectedValues);
-                                    }}
-                                    formatOptionLabel={formatOptionLabel}
-                                    styles={selectStyles}
-                                    menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
-                                    className="w-full"
-                                    classNamePrefix="select"
-                                />
-                            )}
-                        />
-                        <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
-                           <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
-                        </QuickAddItemDialog>
-                    </div>
-                    <FormMessage />
-                </FormItem>
+                                <QuickAddItemDialog type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)}>
+                                    <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
+                                </QuickAddItemDialog>
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="tagIds"
+                    render={({ field }) => (
+                         <FormItem>
+                            <FormLabel>
+                                Tags {isTagRequired ? '' : '(Optional)'}
+                            </FormLabel>
+                            <div className="flex gap-2">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start font-normal">
+                                            {selectedTagsText}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+                                        {tags.map(tag => (
+                                            <DropdownMenuCheckboxItem
+                                                key={tag.id}
+                                                checked={field.value?.includes(tag.id)}
+                                                onCheckedChange={(checked) => {
+                                                    const newValue = checked
+                                                        ? [...(field.value || []), tag.id]
+                                                        : (field.value || []).filter(id => id !== tag.id);
+                                                    field.onChange(newValue);
+                                                }}
+                                                onSelect={(e) => e.preventDefault()}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    {renderIcon(tag.icon)}
+                                                    <span>{tag.name}</span>
+                                                </div>
+                                            </DropdownMenuCheckboxItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
 
+                                <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
+                                   <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
+                                </QuickAddItemDialog>
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="description"
@@ -740,7 +718,7 @@ function useExpenseForm({
         defaultValues: getNewFormValues(),
     });
     
-    // Effect to reset the form when the dialog opens or when editing a different expense
+    // Effect to reset the form when the dialog opens
     useEffect(() => {
         if (open) {
             if (isEditMode && expenseToEdit) {
@@ -754,7 +732,7 @@ function useExpenseForm({
                     tagIds: expenseToEdit.tags?.map(t => t.id) || [],
                 });
             } else {
-                form.reset(getNewFormValues());
+                 form.reset(getNewFormValues());
             }
         }
     }, [open, isEditMode, expenseToEdit, form, getNewFormValues]);
@@ -791,11 +769,9 @@ function useExpenseForm({
                 categoryId: values.categoryId === 'no-category' ? null : values.categoryId,
             };
 
-            // Remove sharedExpenseId if it's undefined to avoid Firestore error
+            // Only add sharedExpenseId if it exists to avoid Firestore error
             if (sharedExpenseId) {
                 expenseData.sharedExpenseId = sharedExpenseId;
-            } else {
-                delete expenseData.sharedExpenseId;
             }
 
             // Logic for "Credit Limit Upgrade"
@@ -950,3 +926,5 @@ function useExpenseForm({
       tags: tags || []
     };
 }
+
+    

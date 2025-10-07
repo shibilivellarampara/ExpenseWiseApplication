@@ -534,7 +534,7 @@ function useExpenseForm(
         } else {
             form.reset({
                 type: initialType || 'expense',
-                amount: '' as any, // Initialize with empty string to avoid uncontrolled input error
+                amount: '' as any,
                 date: new Date(),
                 accountId: '',
                 categoryId: 'no-category',
@@ -558,30 +558,19 @@ function useExpenseForm(
 
         try {
             const batch = writeBatch(firestore);
+            const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
 
-            // --- Special logic for Credit Limit Upgrade ---
             const selectedTag = tags.find(t => t.id === values.tagId);
+            const isCreditLimitUpgrade = selectedTag?.name === 'Credit Limit Upgrade';
             const selectedAccount = accounts.find(a => a.id === values.accountId);
 
-            if (selectedTag?.name === 'Credit Limit Upgrade' && selectedAccount?.type === 'credit_card') {
-                const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                batch.update(accountRef, { limit: values.amount });
-                await batch.commit();
-                toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount.name} is now ${values.amount}.` });
-                setIsLoading(false);
-                return true; // End execution here for this special case
-            }
-            // --- End of special logic ---
-
-
-            const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
 
             if (isEditMode && expenseToEdit) {
                 // --- EDIT LOGIC ---
                 const expenseRef = doc(firestore, collectionPath, expenseToEdit.id);
                 
                 // For non-shared expenses, update account balance
-                if (!sharedExpenseId) {
+                if (!sharedExpenseId && !isCreditLimitUpgrade) {
                     // Reverse old transaction amount
                     const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
                     const oldAmount = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
@@ -612,8 +601,14 @@ function useExpenseForm(
                 };
                 batch.set(newExpenseRef, expenseData);
     
-                // For non-shared expenses, update account balance
-                if (!sharedExpenseId) {
+                if (isCreditLimitUpgrade) {
+                    if (selectedAccount?.type === 'credit_card') {
+                        const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+                        batch.update(accountRef, { limit: values.amount });
+                        toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount.name} is now ${values.amount}.` });
+                    }
+                } else if (!sharedExpenseId) {
+                    // For regular, non-shared expenses, update account balance
                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
                     const amountToUpdate = values.type === 'income' ? values.amount : -values.amount;
                     batch.update(accountRef, { balance: increment(amountToUpdate) });
@@ -621,7 +616,9 @@ function useExpenseForm(
             }
 
             await batch.commit();
-            toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
+            if (!isCreditLimitUpgrade) {
+                toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
+            }
             return true;
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Uh oh! Something went wrong.', description: error.message || 'Could not save transaction.' });
@@ -697,3 +694,5 @@ function useExpenseForm(
       tags: tags || []
     };
 }
+
+    

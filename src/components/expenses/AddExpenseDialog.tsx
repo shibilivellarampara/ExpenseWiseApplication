@@ -138,20 +138,24 @@ function ExpenseForm({
     const [debouncedDescription] = useDebounce(descriptionValue, 500);
 
     const handleSuggestion = useCallback(() => {
-        if (!debouncedDescription || categories.length === 0 || accounts.length === 0) return;
+        if (!debouncedDescription || categories.length === 0 || accounts.length === 0 || tags.length === 0) return;
 
         startSuggestionTransition(async () => {
-            const suggestions = await suggestExpenseDetails({
-                description: debouncedDescription,
-                categories: categories.map(({ id, name }) => ({ id, name })),
-                tags: tags.map(({ id, name }) => ({ id, name })),
-                accounts: activeAccounts.map(({ id, name }) => ({ id, name })),
-            });
-            
-            if (suggestions.categoryId) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
-            if (suggestions.accountId) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
-            if (suggestions.tagIds) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
-            if (suggestions.description) form.setValue('description', suggestions.description, { shouldValidate: true });
+            try {
+                const suggestions = await suggestExpenseDetails({
+                    description: debouncedDescription,
+                    categories: categories.map(({ id, name }) => ({ id, name })),
+                    tags: tags.map(({ id, name }) => ({ id, name })),
+                    accounts: activeAccounts.map(({ id, name }) => ({ id, name })),
+                });
+                
+                if (suggestions.categoryId) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
+                if (suggestions.accountId) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
+                if (suggestions.tagIds) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
+                if (suggestions.description) form.setValue('description', suggestions.description, { shouldValidate: true });
+            } catch (error) {
+                console.error("AI suggestion failed:", error);
+            }
         });
     }, [debouncedDescription, form, categories, tags, activeAccounts]);
 

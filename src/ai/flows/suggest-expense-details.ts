@@ -8,28 +8,12 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import { Category, Tag, Account } from '@/lib/types';
-
-// We pass the full lists of available categories, tags, and accounts to the model
-// so it can choose from the user's actual data.
-
-export const SuggestExpenseDetailsInputSchema = z.object({
-  description: z.string().describe('The user-provided description of the expense.'),
-  categories: z.array(z.object({ id: z.string(), name: z.string() })).describe('List of available expense categories.'),
-  tags: z.array(z.object({ id: z.string(), name: z.string() })).describe('List of available expense tags.'),
-  accounts: z.array(z.object({ id: z.string(), name: z.string() })).describe('List of available financial accounts.'),
-});
-export type SuggestExpenseDetailsInput = z.infer<typeof SuggestExpenseDetailsInputSchema>;
-
-export const SuggestExpenseDetailsOutputSchema = z.object({
-  categoryId: z.string().optional().describe('The suggested category ID for the expense.'),
-  tagIds: z.array(z.string()).optional().describe('An array of suggested tag IDs for the expense.'),
-  accountId: z.string().optional().describe('The suggested account ID for the expense.'),
-  description: z.string().optional().describe('A cleaned-up or improved version of the expense description.'),
-});
-export type SuggestExpenseDetailsOutput = z.infer<typeof SuggestExpenseDetailsOutputSchema>;
-
+import {
+    SuggestExpenseDetailsInputSchema,
+    SuggestExpenseDetailsOutputSchema,
+    type SuggestExpenseDetailsInput,
+    type SuggestExpenseDetailsOutput
+} from '@/ai/schemas';
 
 const suggestionPrompt = ai.definePrompt({
     name: 'expenseSuggestionPrompt',

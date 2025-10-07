@@ -534,7 +534,7 @@ function useExpenseForm(
         } else {
             form.reset({
                 type: initialType || 'expense',
-                amount: undefined,
+                amount: '' as any, // Initialize with empty string to avoid uncontrolled input error
                 date: new Date(),
                 accountId: '',
                 categoryId: 'no-category',
@@ -644,7 +644,7 @@ function useExpenseForm(
             // Reset form for a new entry, keeping some fields if sensible
             form.reset({
                 ...values, // keep account, type, etc.
-                amount: undefined,
+                amount: '' as any,
                 description: '',
                 date: new Date(),
             });

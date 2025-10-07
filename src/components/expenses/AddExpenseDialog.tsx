@@ -567,30 +567,6 @@ function useExpenseForm(
 
             const isAddOperation = !isEditMode;
 
-            if (isCreditLimitUpgrade) {
-                // Logic for both adding and editing a credit limit upgrade
-                if (selectedAccount?.type === 'credit_card') {
-                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                    
-                    if (isAddOperation) {
-                        const newLimit = (selectedAccount.limit || 0) + values.amount;
-                        batch.update(accountRef, { limit: newLimit });
-                        toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount.name} is now ${newLimit}.` });
-                    } else if (expenseToEdit) {
-                        // Revert old and apply new for edit
-                        const oldAmount = expenseToEdit.amount;
-                        const currentLimit = selectedAccount.limit || 0;
-                        const newLimit = currentLimit - oldAmount + values.amount;
-                        batch.update(accountRef, { limit: newLimit });
-                        toast({ title: 'Credit Limit Corrected!', description: `The limit for ${selectedAccount.name} is now ${newLimit}.` });
-                    }
-                } else {
-                     toast({ variant: 'destructive', title: 'Invalid Account', description: 'Credit Limit Upgrade can only be applied to credit card accounts.'});
-                     setIsLoading(false);
-                     return false;
-                }
-            }
-            
             // --- Record the transaction itself ---
             const expenseCol = collection(firestore, collectionPath);
             const expenseRef = isAddOperation ? doc(expenseCol) : doc(firestore, collectionPath, expenseToEdit.id);
@@ -605,26 +581,51 @@ function useExpenseForm(
                 categoryId: values.categoryId === 'no-category' || !values.categoryId ? '' : values.categoryId,
             };
 
-            // Don't affect balance for credit limit upgrades
-            if (!isCreditLimitUpgrade) {
-                if (isAddOperation) {
-                    if (!sharedExpenseId) {
-                        const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                        const amountToUpdate = values.type === 'income' ? values.amount : -values.amount;
-                        batch.update(accountRef, { balance: increment(amountToUpdate) });
+            // Logic for "Credit Limit Upgrade"
+            if (isCreditLimitUpgrade) {
+                if (selectedAccount?.type === 'credit_card') {
+                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+                    
+                    if (isAddOperation) {
+                        batch.update(accountRef, { limit: increment(values.amount) });
+                    } else if (expenseToEdit) {
+                        const oldAmount = expenseToEdit.amount;
+                        const difference = values.amount - oldAmount;
+                        batch.update(accountRef, { limit: increment(difference) });
                     }
-                } else if (expenseToEdit) {
-                    if (!sharedExpenseId) {
-                        const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
-                        const oldAmount = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
-                        batch.update(oldAccountRef, { balance: increment(oldAmount) });
-
-                        const newAccountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                        const newAmount = values.type === 'income' ? values.amount : -values.amount;
-                        batch.update(newAccountRef, { balance: increment(newAmount) });
-                    }
+                } else {
+                     toast({ variant: 'destructive', title: 'Invalid Account', description: 'Credit Limit Upgrade can only be applied to credit card accounts.'});
+                     setIsLoading(false);
+                     return false;
                 }
             }
+            
+            // --- Adjust Account Balance (skip for shared expenses and credit limit upgrades) ---
+            if (!sharedExpenseId && !isCreditLimitUpgrade) {
+                const getAmountChange = (type: 'income' | 'expense', amount: number) => {
+                     // For credit cards, 'expense' increases balance (debt), 'income' (payment) decreases it.
+                     if (selectedAccount?.type === 'credit_card') {
+                        return type === 'expense' ? amount : -amount;
+                     }
+                     // For other accounts, 'income' increases balance, 'expense' decreases it.
+                     return type === 'income' ? amount : -amount;
+                };
+
+                if (isAddOperation) {
+                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+                     const amountToUpdate = getAmountChange(values.type, values.amount);
+                     batch.update(accountRef, { balance: increment(amountToUpdate) });
+                } else if (expenseToEdit) {
+                    const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
+                    const oldAmountReversal = -getAmountChange(expenseToEdit.type, expenseToEdit.amount);
+                    batch.update(oldAccountRef, { balance: increment(oldAmountReversal) });
+
+                    const newAccountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+                    const newAmount = getAmountChange(values.type, values.amount);
+                    batch.update(newAccountRef, { balance: increment(newAmount) });
+                }
+            }
+
 
             if(isAddOperation) {
                 batch.set(expenseRef, expenseData);
@@ -634,7 +635,9 @@ function useExpenseForm(
 
             await batch.commit();
 
-            if (!isCreditLimitUpgrade) {
+            if (isCreditLimitUpgrade) {
+                toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount?.name} has been increased.` });
+            } else {
                  toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
             }
             return true;
@@ -662,12 +665,14 @@ function useExpenseForm(
                 amount: '' as any,
                 description: '',
                 date: new Date(),
+                tagId: 'no-tag',
+                categoryId: 'no-category',
             });
         }
     });
 
     const handleDelete = async () => {
-        if (!firestore || !user || !isEditMode || !expenseToEdit) {
+        if (!firestore || !user || !isEditMode || !expenseToEdit || !accounts) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction.' });
             return;
         }
@@ -682,17 +687,24 @@ function useExpenseForm(
             // Delete the expense document
             batch.delete(expenseRef);
 
-            // If it's a credit limit upgrade, revert the limit change
-            if (isCreditLimitUpgrade && expenseToEdit.account) {
-                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
-                 batch.update(accountRef, { limit: increment(-expenseToEdit.amount) });
-            } 
-            // If it's not a shared expense and not a credit limit upgrade, adjust the account balance
-            else if (!sharedExpenseId) {
+            // Revert the balance or limit change
+            if (!sharedExpenseId) {
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
-                const amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
-                batch.update(accountRef, { balance: increment(amountToRevert) });
+                const selectedAccount = accounts.find(acc => acc.id === expenseToEdit.accountId);
+
+                if (isCreditLimitUpgrade) {
+                     batch.update(accountRef, { limit: increment(-expenseToEdit.amount) });
+                } else {
+                    let amountToRevert: number;
+                    if (selectedAccount?.type === 'credit_card') {
+                        amountToRevert = expenseToEdit.type === 'expense' ? -expenseToEdit.amount : expenseToEdit.amount;
+                    } else {
+                        amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
+                    }
+                    batch.update(accountRef, { balance: increment(amountToRevert) });
+                }
             }
+
 
             await batch.commit();
             toast({ title: 'Transaction Deleted', description: 'The transaction has been permanently removed.' });

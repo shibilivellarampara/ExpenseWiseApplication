@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -70,31 +71,30 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
                 memberIds: arrayUnion(user.uid),
             });
 
-            batch.commit()
-                .then(() => {
-                    toast({ title: 'Successfully Joined!', description: `You are now a member of "${spaceData.name}".` });
-                    setOpen(false);
-                    form.reset();
-                })
-                .catch(async (serverError) => {
-                    const permissionError = new FirestorePermissionError({
-                        path: spaceDoc.ref.path,
-                        operation: 'update',
-                        requestResourceData: { memberIds: `(arrayUnion: ${user.uid})` }
-                    });
-                    errorEmitter.emit('permission-error', permissionError);
-                })
-                .finally(() => {
-                    setIsLoading(false);
-                });
+            await batch.commit();
 
-        } catch (error) {
-             const permissionError = new FirestorePermissionError({
-                path: 'shared_expenses',
-                operation: 'list',
-                requestResourceData: { where: `joinId == ${values.joinId.toUpperCase()}` }
-            });
+            toast({ title: 'Successfully Joined!', description: `You are now a member of "${spaceData.name}".` });
+            setOpen(false);
+            form.reset();
+
+        } catch (error: any) {
+            let permissionError;
+            // Determine if the error is from the query or the commit
+            if (error.code === 'permission-denied' && error.message.includes('list')) {
+                 permissionError = new FirestorePermissionError({
+                    path: 'shared_expenses',
+                    operation: 'list',
+                    requestResourceData: { where: `joinId == ${values.joinId.toUpperCase()}` }
+                });
+            } else {
+                 permissionError = new FirestorePermissionError({
+                    path: `shared_expenses/${querySnapshot.docs[0]?.id || '(unknown)'}`,
+                    operation: 'update',
+                    requestResourceData: { memberIds: `(arrayUnion: ${user.uid})` }
+                });
+            }
             errorEmitter.emit('permission-error', permissionError);
+        } finally {
             setIsLoading(false);
         }
     };

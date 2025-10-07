@@ -19,18 +19,30 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Pilcrow } from 'lucide-react';
+import { Loader2, Pilcrow, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, writeBatch, increment, deleteDoc } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import * as LucideIcons from 'lucide-react';
@@ -346,7 +358,7 @@ function DesktopAddExpenseDialog({
     sharedExpenseId?: string,
     initialType?: 'income' | 'expense';
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -359,17 +371,45 @@ function DesktopAddExpenseDialog({
                 <div className="flex-1 overflow-y-auto -mx-6 px-6">
                     <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType} />
                 </div>
-                <DialogFooter>
-                     {!isEditMode && (
-                         <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline">
+                <DialogFooter className="flex-row justify-between w-full">
+                    <div>
+                        {isEditMode && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button type="button" variant="destructive" disabled={isLoading}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete this transaction.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                         {!isEditMode && (
+                             <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline">
+                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Save and Add
+                            </Button>
+                         )}
+                         <Button type="submit" form={formId} disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save and Add
+                            {isEditMode ? 'Save Changes' : 'Save'}
                         </Button>
-                     )}
-                     <Button type="submit" form={formId} disabled={isLoading}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {isEditMode ? 'Save Changes' : 'Save'}
-                    </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -391,7 +431,7 @@ function MobileAddExpenseDrawer({
     sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
 }) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, transactionType, isEditMode, formId } = useExpenseForm(setOpen, expenseToEdit, sharedExpenseId, initialType);
     
     return (
         <Drawer open={open} onOpenChange={setOpen}>
@@ -404,17 +444,43 @@ function MobileAddExpenseDrawer({
                  <div className="overflow-y-auto px-4">
                     <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType}/>
                 </div>
-                 <DrawerFooter className="pt-2 flex-row gap-2">
-                    {!isEditMode && (
-                         <Button variant="secondary" className="flex-1" onClick={onSaveAndNewSubmit} disabled={isLoading}>
+                 <DrawerFooter className="pt-2">
+                    <div className="flex w-full gap-2">
+                        {!isEditMode && (
+                             <Button variant="outline" className="flex-1" onClick={onSaveAndNewSubmit} disabled={isLoading}>
+                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Save and Add
+                            </Button>
+                        )}
+                        <Button type="submit" form={formId} className="flex-1" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save and Add
+                            {isEditMode ? 'Save' : 'Save'}
                         </Button>
+                    </div>
+                     {isEditMode && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                 <Button type="button" variant="destructive" className="w-full" disabled={isLoading}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Transaction
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete this transaction.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     )}
-                    <Button type="submit" form={formId} className="flex-1" disabled={isLoading}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {isEditMode ? 'Save' : 'Save'}
-                    </Button>
                 </DrawerFooter>
             </DrawerContent>
         </Drawer>
@@ -561,5 +627,37 @@ function useExpenseForm(
         }
     });
 
-    return { form, onFinalSubmit, onSaveAndNewSubmit, isLoading, transactionType, isEditMode, formId };
+    const handleDelete = async () => {
+        if (!firestore || !user || !isEditMode || !expenseToEdit) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction.' });
+            return;
+        }
+        setIsLoading(true);
+        try {
+            const batch = writeBatch(firestore);
+            const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
+            const expenseRef = doc(firestore, collectionPath, expenseToEdit.id);
+
+            // Delete the expense document
+            batch.delete(expenseRef);
+
+            // If it's not a shared expense, adjust the account balance
+            if (!sharedExpenseId) {
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
+                const amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
+                batch.update(accountRef, { balance: increment(amountToRevert) });
+            }
+
+            await batch.commit();
+            toast({ title: 'Transaction Deleted', description: 'The transaction has been permanently removed.' });
+            setOpen(false);
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Delete Failed', description: error.message });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+    return { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, transactionType, isEditMode, formId };
 }

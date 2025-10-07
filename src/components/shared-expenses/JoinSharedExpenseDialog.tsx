@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, query, where, getDocs, writeBatch, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch, arrayUnion, QuerySnapshot, DocumentData } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { SharedExpense } from '@/lib/types';
 
@@ -45,9 +45,10 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
 
         const spacesRef = collection(firestore, 'shared_expenses');
         const q = query(spacesRef, where('joinId', '==', values.joinId.toUpperCase()));
+        let querySnapshot: QuerySnapshot<DocumentData> | null = null;
         
         try {
-            const querySnapshot = await getDocs(q);
+            querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
                 toast({ variant: 'destructive', title: 'Failed to Join', description: 'No shared space found with this Join ID. Please check the code and try again.' });
@@ -80,7 +81,7 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
         } catch (error: any) {
             let permissionError;
             // Determine if the error is from the query or the commit
-            if (error.code === 'permission-denied' && error.message.includes('list')) {
+            if (error.code === 'permission-denied' && (error.message.includes('list') || querySnapshot === null)) {
                  permissionError = new FirestorePermissionError({
                     path: 'shared_expenses',
                     operation: 'list',
@@ -88,7 +89,7 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
                 });
             } else {
                  permissionError = new FirestorePermissionError({
-                    path: `shared_expenses/${querySnapshot.docs[0]?.id || '(unknown)'}`,
+                    path: `shared_expenses/${querySnapshot?.docs[0]?.id || '(unknown)'}`,
                     operation: 'update',
                     requestResourceData: { memberIds: `(arrayUnion: ${user.uid})` }
                 });

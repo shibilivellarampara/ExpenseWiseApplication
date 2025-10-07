@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Tooltip, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];
@@ -149,7 +149,7 @@ function GroupedExpenseList({ expenses, currencySymbol, isShared }: { expenses: 
                                             </Button>
                                         </AddExpenseDialog>
                                         <div className={`font-bold text-lg ${expense.type === 'income' ? 'text-green-600' : ''}`}>
-                                            {expense.type === 'income' ? '+' : '-'}{currencySymbol}{expense.amount.toFixed(2)}
+                                            {expense.type === 'income' ? '+' : '-'}{expense.amount.toFixed(2)}
                                         </div>
                                      </div>
                                     {!isShared && expense.balanceAfterTransaction !== undefined && (

@@ -409,7 +409,7 @@ function ExpenseForm({
                                 <Select onValueChange={field.onChange} value={field.value || ''}>
                                     <FormControl>
                                     <SelectTrigger className="w-full">
-                                        {field.value ? (
+                                        {field.value && field.value !== 'no-category' ? (
                                             <div className="flex items-center">
                                                 {renderIcon(categories.find(c => c.id === field.value)?.icon)}
                                                 {categories.find(c => c.id === field.value)?.name || "Select a category"}
@@ -705,10 +705,10 @@ function useExpenseForm(
 
     const getNewFormValues = useCallback(() => ({
         type: initialType || 'expense',
-        amount: '' as any, // Use empty string for reset
+        amount: '' as any,
         date: new Date(),
         accountId: '',
-        categoryId: '',
+        categoryId: 'no-category',
         description: '',
         tagIds: [],
     }), [initialType]);
@@ -719,22 +719,21 @@ function useExpenseForm(
     });
 
     useEffect(() => {
-        if (open) { // Use the open state passed to the hook
-            if (isEditMode && expenseToEdit) {
-                form.reset({
-                    type: expenseToEdit.type,
-                    amount: expenseToEdit.amount,
-                    date: expenseToEdit.date,
-                    accountId: expenseToEdit.account?.id || '',
-                    categoryId: expenseToEdit.category?.id || '',
-                    description: expenseToEdit.description || '',
-                    tagIds: expenseToEdit.tags?.map(t => t.id) || [],
-                });
-            } else {
-                form.reset(getNewFormValues());
-            }
+        // We only reset the form contents, not the form instance itself.
+        if (isEditMode && expenseToEdit) {
+            form.reset({
+                type: expenseToEdit.type,
+                amount: expenseToEdit.amount,
+                date: expenseToEdit.date,
+                accountId: expenseToEdit.account?.id || '',
+                categoryId: expenseToEdit.category?.id || 'no-category',
+                description: expenseToEdit.description || '',
+                tagIds: expenseToEdit.tags?.map(t => t.id) || [],
+            });
+        } else {
+            form.reset(getNewFormValues());
         }
-    }, [open, isEditMode, expenseToEdit, form, getNewFormValues]);
+    }, [isEditMode, expenseToEdit, form, getNewFormValues]);
 
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
@@ -770,7 +769,7 @@ function useExpenseForm(
 
             if (sharedExpenseId) {
                 expenseData.sharedExpenseId = sharedExpenseId;
-            } else {
+            } else if ('sharedExpenseId' in expenseData) {
                 delete expenseData.sharedExpenseId;
             }
 
@@ -921,5 +920,3 @@ function useExpenseForm(
       tags: tags || []
     };
 }
-
-    

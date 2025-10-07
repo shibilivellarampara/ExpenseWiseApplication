@@ -7,7 +7,7 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query } from "firebase/firestore";
+import { collection, orderBy, query, doc } from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";

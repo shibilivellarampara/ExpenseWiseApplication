@@ -23,6 +23,7 @@ export default function ExpensesPage() {
         type: 'all' as 'all' | 'income' | 'expense',
         categories: [] as string[],
         accounts: [] as string[],
+        tags: [] as string[],
     });
 
     // Memoized queries for all data collections
@@ -87,6 +88,13 @@ export default function ExpensesPage() {
 
             // Account filter
             if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId)) return false;
+
+            // Tag filter
+            if (filters.tags.length > 0) {
+                const expenseTagIds = expense.tags.map(t => t.id);
+                const hasMatchingTag = filters.tags.some(t => expenseTagIds.includes(t));
+                if (!hasMatchingTag) return false;
+            }
             
             return true;
         });
@@ -159,6 +167,7 @@ export default function ExpensesPage() {
                 onFiltersChange={setFilters}
                 accounts={accounts || []}
                 categories={categories || []}
+                tags={tags || []}
             />
 
             <ExpensesSummary expenses={filteredExpenses} currency={userProfile?.defaultCurrency} isLoading={isLoading} />

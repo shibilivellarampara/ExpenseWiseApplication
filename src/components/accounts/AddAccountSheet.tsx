@@ -17,14 +17,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
+import { useCollection, useFirestore, useUser } from '@/firebase';
+import { collection, addDoc, doc, setDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { Loader2, Pilcrow } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
-import { Account } from '@/lib/types';
+import { Account, Category } from '@/lib/types';
 
 const accountSchema = z.object({
     name: z.string().min(1, 'Account name is required.'),
@@ -52,6 +52,11 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
     const { user } = useUser();
     const firestore = useFirestore();
     const isEditMode = !!accountToEdit;
+    
+    // Fetch categories to find the "Credit Limit Upgrade" category
+    const { data: categories } = useCollection<Category>(
+        user ? collection(firestore, `users/${user.uid}/categories`) : null
+    );
 
     const form = useForm<AccountFormData>({
         resolver: zodResolver(accountSchema),
@@ -109,10 +114,12 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
         }
 
         try {
+            const batch = writeBatch(firestore);
+
             if (isEditMode && accountToEdit) {
                 // Update existing account
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountToEdit.id);
-                await setDoc(accountRef, accountData, { merge: true });
+                batch.set(accountRef, accountData, { merge: true });
 
                 toast({
                     title: 'Account Updated!',
@@ -121,13 +128,35 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             } else {
                 // Add new account
                 const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
-                await addDoc(accountsCol, accountData);
+                const newAccountRef = doc(accountsCol); // Create a reference first to get the ID
+                batch.set(newAccountRef, { ...accountData, id: newAccountRef.id });
+                
+                // If it's a new credit card with a limit, add a "Credit Limit Upgrade" transaction
+                if (values.type === 'credit_card' && values.limit && values.limit > 0) {
+                    const upgradeCategory = categories?.find(c => c.name === 'Credit Limit Upgrade');
+                    if (upgradeCategory) {
+                        const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
+                        const expenseRef = doc(expensesCol);
+                        batch.set(expenseRef, {
+                            id: expenseRef.id,
+                            userId: user.uid,
+                            type: 'expense', // This is just for record-keeping, logic prevents balance change
+                            amount: values.limit,
+                            description: 'Initial Credit Limit',
+                            date: new Date(),
+                            createdAt: serverTimestamp(),
+                            accountId: newAccountRef.id, // Link to the new account
+                            categoryId: upgradeCategory.id,
+                        });
+                    }
+                }
                 
                 toast({
                     title: 'Account Added!',
                     description: 'The new account has been created.',
                 });
             }
+            await batch.commit();
             setOpen(false);
 
         } catch (error: any) {

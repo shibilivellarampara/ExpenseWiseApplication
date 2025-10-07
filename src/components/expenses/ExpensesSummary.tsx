@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EnrichedExpense } from "@/lib/types";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
+import { cn } from "@/lib/utils";
 
 interface ExpensesSummaryProps {
     expenses: EnrichedExpense[];
@@ -55,12 +56,16 @@ export function ExpensesSummary({ expenses, isLoading, currency }: ExpensesSumma
     }
 
     return (
-        <Card className="bg-card">
+        <Card className="bg-card/80 backdrop-blur-sm">
             <CardContent className="p-4">
                 <div className="flex justify-between items-center text-sm">
                     <div>
                         <p className="text-muted-foreground">Net Balance</p>
-                        <p className="text-lg font-bold">
+                        <p className={cn(
+                            "text-lg font-bold",
+                            summary.netBalance > 0 && "text-green-600",
+                            summary.netBalance < 0 && "text-red-500"
+                        )}>
                             {summary.netBalance.toFixed(2)}
                         </p>
                     </div>

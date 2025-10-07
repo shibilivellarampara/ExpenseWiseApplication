@@ -404,7 +404,7 @@ function DesktopAddExpenseDialog({
                          {!isEditMode && (
                              <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline">
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save and Add
+                                Save and New
                             </Button>
                          )}
                          <Button type="submit" form={formId} disabled={isLoading}>
@@ -451,7 +451,7 @@ function MobileAddExpenseDrawer({
                         {!isEditMode && (
                              <Button variant="outline" className="flex-1" onClick={onSaveAndNewSubmit} disabled={isLoading}>
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save and Add
+                                Save and New
                             </Button>
                         )}
                         <Button type="submit" form={formId} className="flex-1" disabled={isLoading}>

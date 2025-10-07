@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Pilcrow, TrendingUp, Edit, User as UserIcon, Minus, Plus } from "lucide-react";
+import { Pilcrow, TrendingUp, Edit, User as UserIcon, Minus, Plus, Wallet } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -84,8 +84,8 @@ function GroupedExpenseList({ expenses, currencySymbol, isShared }: { expenses: 
                             <div key={expense.id} className="p-4 flex items-start gap-4 group">
                                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center mt-1">
                                     {expense.type === 'income' ?
-                                        <Plus className="h-5 w-5 text-green-500" /> :
-                                        <Minus className="h-5 w-5 text-red-500" />
+                                        <Wallet className="h-5 w-5 text-green-500" /> :
+                                        renderIcon(expense.category?.icon, 'h-5 w-5 text-gray-700')
                                     }
                                 </div>
                                 <div className="flex-grow space-y-1">

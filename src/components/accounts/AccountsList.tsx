@@ -230,7 +230,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                     <div className="divide-y">
                         {creditCards.length > 0 ? creditCards.map(item => {
                              const limit = item.limit || 0;
-                             const balance = item.balance;
+                             const balance = item.balance; // Outstanding amount
                              const availableCredit = limit - balance;
                              const usagePercentage = limit > 0 ? (balance / limit) * 100 : 0;
                             
@@ -247,11 +247,11 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                             </div>
                                         </div>
                                         <p className="text-sm text-muted-foreground capitalize">
-                                            {balance > 0 ? 'Outstanding Amount' : 'Credit Balance'}
+                                            {balance > 0 ? 'Outstanding Amount' : (balance < 0 ? 'Credit Balance' : 'Settled')}
                                         </p>
                                         {limit > 0 && (
                                             <div className="mt-1">
-                                                <Progress value={100 - usagePercentage} className="h-2" />
+                                                <Progress value={usagePercentage} className="h-2" />
                                                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                                     <span>Available: {availableCredit.toFixed(2)}</span>
                                                     <span>Limit: {limit.toFixed(2)}</span>

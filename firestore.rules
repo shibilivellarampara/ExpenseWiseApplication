@@ -1,36 +1,42 @@
 /**
- * @description This ruleset enforces a strict user-ownership model for all data stored under the /users/{userId} path.
- * All data is nested under /users/{userId}, creating a private data tree for each user.
- * Key Security Decisions:
- *  - Users can only access their own data.
- *  - No user listing is allowed.
+ * @description
+ * This ruleset enforces a strict user-ownership model for all data stored under the /users/{userId} path,
+ * and defines controlled access for shared expenses.
+ *
+ * Structure:
+ * - /users/{userId} → private user tree (accounts, categories, tags, etc.)
+ * - /shared_expenses/{expenseId} → shared group-level expense
+ * - /shared_expenses/{expenseId}/expenses/{subExpenseId} → individual expense items within a shared expense
+ *
+ * Key Decisions:
+ * - Users can only access their own /users/{userId} data.
+ * - Shared expenses are publicly readable, authenticated users can modify.
+ * - Nested shared expense items are also publicly readable, authenticated users can modify.
  */
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Allows anyone to read and list shared expenses, but only authenticated users can create, update, or delete them.
-     * @path /shared_expenses/{expenseId}
-     * @allow (get, list) - Any user, even unauthenticated, can read and list shared expenses.
-     * @allow (create, update, delete) - Authenticated users can create, update, and delete shared expenses.
-     * @deny (create, update, delete) - Unauthenticated users cannot create, update, or delete shared expenses.
-     * @principle Public read, authenticated writes.
-     */
+    /********************************************
+     * SHARED EXPENSES (Top-level collection)
+     ********************************************/
     match /shared_expenses/{expenseId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;                      // Public read access
+      allow create, update, delete: if isSignedIn(); // Only authenticated users can modify
+
+      /********************************************
+       * Nested Subcollection: /shared_expenses/{expenseId}/expenses/{subExpenseId}
+       ********************************************/
+      match /expenses/{subExpenseId} {
+        allow get, list: if true;                      // Public read access for expense items
+        allow create, update, delete: if isSignedIn(); // Authenticated users can modify
+      }
     }
 
-    /**
-     * @description Enforces strict user ownership for all documents within a user's data tree.
-     * @path /users/{userId}
-     * @allow (create) - A user can create their own profile if the userId matches their auth UID.
-     * @allow (get, list, update, delete) - Only the user with the matching userId can read, update, or delete their profile.
-     * @deny (create) - A user cannot create a profile for another user.
-     * @deny (get, list, update, delete) - A user cannot read, update, or delete another user's profile.
-     * @principle Enforces document ownership for all operations within the /users/{userId} collection.
-     */
+    /********************************************
+     * USERS (Private user data)
+     ********************************************/
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if false;
@@ -38,15 +44,7 @@ service cloud.firestore {
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
 
-      /**
-       * @description Enforces strict user ownership for expenses within a user's data tree.
-       * @path /users/{userId}/expenses/{expenseId}
-       * @allow (create) - A user can create an expense if the userId matches their auth UID.
-       * @allow (get, list, update, delete) - Only the user with the matching userId can read, update, or delete their expenses.
-       * @deny (create) - A user cannot create an expense for another user.
-       * @deny (get, list, update, delete) - A user cannot read, update, or delete another user's expenses.
-       * @principle Enforces document ownership for all operations within the /users/{userId}/expenses collection.
-       */
+      // ---- Nested User Collections ----
       match /expenses/{expenseId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId);
@@ -54,15 +52,6 @@ service cloud.firestore {
         allow delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Enforces strict user ownership for accounts within a user's data tree.
-       * @path /users/{userId}/accounts/{accountId}
-       * @allow (create) - A user can create an account if the userId matches their auth UID.
-       * @allow (get, list, update, delete) - Only the user with the matching userId can read, update, or delete their accounts.
-       * @deny (create) - A user cannot create an account for another user.
-       * @deny (get, list, update, delete) - A user cannot read, update, or delete another user's accounts.
-       * @principle Enforces document ownership for all operations within the /users/{userId}/accounts collection.
-       */
       match /accounts/{accountId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId);
@@ -70,15 +59,6 @@ service cloud.firestore {
         allow delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Enforces strict user ownership for contributions within a user's data tree.
-       * @path /users/{userId}/contributions/{contributionId}
-       * @allow (create) - A user can create a contribution if the userId matches their auth UID.
-       * @allow (get, list, update, delete) - Only the user with the matching userId can read, update, or delete their contributions.
-       * @deny (create) - A user cannot create a contribution for another user.
-       * @deny (get, list, update, delete) - A user cannot read, update, or delete another user's contributions.
-       * @principle Enforces document ownership for all operations within the /users/{userId}/contributions collection.
-       */
       match /contributions/{contributionId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId);
@@ -86,15 +66,6 @@ service cloud.firestore {
         allow delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Enforces strict user ownership for categories within a user's data tree.
-       * @path /users/{userId}/categories/{categoryId}
-       * @allow (create) - A user can create a category if the userId matches their auth UID.
-       * @allow (get, list, update, delete) - Only the user with the matching userId can read, update, or delete their categories.
-       * @deny (create) - A user cannot create a category for another user.
-       * @deny (get, list, update, delete) - A user cannot read, update, or delete another user's categories.
-       * @principle Enforces document ownership for all operations within the /users/{userId}/categories collection.
-       */
       match /categories/{categoryId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId);
@@ -102,15 +73,6 @@ service cloud.firestore {
         allow delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Enforces strict user ownership for tags within a user's data tree.
-       * @path /users/{userId}/tags/{tagId}
-       * @allow (create) - A user can create a tag if the userId matches their auth UID.
-       * @allow (get, list, update, delete) - Only the user with the matching userId can read, update, or delete their tags.
-       * @deny (create) - A user cannot create a tag for another user.
-       * @deny (get, list, update, delete) - A user cannot read, update, or delete another user's tags.
-       * @principle Enforces document ownership for all operations within the /users/{userId}/tags collection.
-       */
       match /tags/{tagId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId);
@@ -119,13 +81,16 @@ service cloud.firestore {
       }
     }
   }
-  // Helper functions
+
+  /********************************************
+   * Helper functions
+   ********************************************/
   function isSignedIn() {
     return request.auth != null;
   }
 
   function isOwner(userId) {
-    return request.auth.uid == userId;
+    return request.auth != null && request.auth.uid == userId;
   }
 
   function isExistingOwner(userId) {

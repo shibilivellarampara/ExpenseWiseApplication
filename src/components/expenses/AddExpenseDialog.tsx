@@ -43,7 +43,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, serverTimestamp, writeBatch, increment, deleteDoc, addDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, writeBatch, increment, deleteDoc, addDoc, setDoc } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import * as LucideIcons from 'lucide-react';
@@ -123,7 +123,9 @@ function QuickAddItemForm({
         return IconComponent ? <IconComponent className={cn("h-5 w-5", className)} /> : <Pilcrow className={cn("h-5 w-5", className)} />;
     };
 
-    const handleSave = async () => {
+    const handleSave = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!name) return;
         setIsSaving(true);
         await onSave(name, icon);
@@ -140,7 +142,7 @@ function QuickAddItemForm({
                     <PopoverTrigger asChild>
                         <Button variant="outline" size="icon" className="shrink-0">{renderIcon(icon)}</Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto grid grid-cols-5 gap-2" align="start">
+                    <PopoverContent className="w-auto grid grid-cols-5 gap-2" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                         {availableIcons.map(iconName => (
                             <Button key={iconName} variant="ghost" size="icon" onClick={() => setIcon(iconName)}>
                                 {renderIcon(iconName)}
@@ -153,6 +155,7 @@ function QuickAddItemForm({
                     onChange={(e) => setName(e.target.value)}
                     placeholder={`${type} name`}
                     className="h-9"
+                    onKeyDown={(e) => e.stopPropagation()}
                 />
                 <Button type="button" size="icon" className="h-9 w-9" onClick={handleSave} disabled={isSaving}>
                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
@@ -210,8 +213,7 @@ function ExpenseForm({
                 if (suggestions.categoryId && !form.getValues('categoryId')) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
                 if (suggestions.accountId && !form.getValues('accountId')) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
                 if (suggestions.tagIds && form.getValues('tagIds')?.length === 0) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
-                // Do not auto-update description to prevent overwriting user input
-                // if (suggestions.description) form.setValue('description', suggestions.description, { shouldValidate: true });
+                if (suggestions.description && !form.getValues('description')) form.setValue('description', suggestions.description, { shouldValidate: true });
 
             } catch (error) {
                 console.error("AI suggestion failed:", error);
@@ -258,7 +260,10 @@ function ExpenseForm({
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
     
     const tagOptions = useMemo(() => tags.map(tag => ({ value: tag.id, label: tag.name })), [tags]);
-    const selectedTags = tagOptions.filter(option => form.getValues('tagIds')?.includes(option.value));
+    const selectedTagValues = form.watch('tagIds') || [];
+    const selectedTags = useMemo(() => 
+        tagOptions.filter(option => selectedTagValues.includes(option.value)),
+    [tagOptions, selectedTagValues]);
 
     const selectStyles: StylesConfig = {
         control: (base) => ({
@@ -279,7 +284,6 @@ function ExpenseForm({
         multiValue: (base) => ({
             ...base,
             background: 'hsl(var(--muted))',
-            color: 'hsl(var(--muted-foreground))',
         }),
         multiValueLabel: (base) => ({
             ...base,
@@ -383,48 +387,31 @@ function ExpenseForm({
                 
                 <FormField
                     control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <div className="flex justify-between items-center">
-                                <FormLabel>
-                                    Description {isDescriptionRequired ? '' : '(Optional)'}
-                                </FormLabel>
-                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={handleSuggestion} disabled={isSuggesting}>
-                                    {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-amber-500" />}
-                                    <span className="sr-only">Get Suggestions</span>
-                                </Button>
-                            </div>
-                        <FormControl>
-                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
                     name="categoryId"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>
                                 Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
                             </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || 'no-category'}>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
+                                {field.value ? (
+                                    <div className="flex items-center">
+                                        {renderIcon(categories.find(c => c.id === field.value)?.icon)}
+                                        {categories.find(c => c.id === field.value)?.name}
+                                    </div>
+                                ) : "Select a category"}
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <Popover>
+                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <div className="flex w-full items-center p-2 text-sm hover:bg-accent rounded-sm cursor-pointer">
-                                            <PlusCircle className="h-4 w-4 mr-2" /> Add New
+                                        <div className="flex w-full items-center p-2 text-sm hover:bg-accent rounded-sm cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                                            <PlusCircle className="h-4 w-4 mr-2" /> Add New Category
                                         </div>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2">
+                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()}>
                                         <QuickAddItemForm type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)} />
                                     </PopoverContent>
                                 </Popover>
@@ -453,35 +440,56 @@ function ExpenseForm({
                             <FormLabel>
                                 Tags {isTagRequired ? '' : '(Optional)'}
                             </FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button type="button" variant="outline" className="w-full justify-start text-muted-foreground font-normal mb-2">
-                                        <PlusCircle className="h-4 w-4 mr-2" /> Add New Tag
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-64 p-2">
-                                    <QuickAddItemForm type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} />
-                                </PopoverContent>
-                            </Popover>
+                            <div className="relative">
+                                <ReactSelect
+                                    isMulti
+                                    name="tags"
+                                    options={tagOptions}
+                                    value={selectedTags}
+                                    onChange={(selectedOptions) => {
+                                        const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
+                                        field.onChange(selectedValues);
+                                    }}
+                                    styles={selectStyles}
+                                    classNamePrefix="select"
+                                />
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7">
+                                            <PlusCircle className="h-4 w-4" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                        <QuickAddItemForm type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                            <div className="flex justify-between items-center">
+                                <FormLabel>
+                                    Description {isDescriptionRequired ? '' : '(Optional)'}
+                                </FormLabel>
+                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={handleSuggestion} disabled={isSuggesting}>
+                                    {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-amber-500" />}
+                                    <span className="sr-only">Get Suggestions</span>
+                                </Button>
+                            </div>
                         <FormControl>
-                           <ReactSelect
-                                isMulti
-                                name="tags"
-                                options={tagOptions}
-                                value={selectedTags}
-                                onChange={(selectedOptions) => {
-                                    const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
-                                    field.onChange(selectedValues);
-                                }}
-                                styles={selectStyles}
-                                classNamePrefix="select"
-                            />
+                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
                 />
-
             </form>
         </Form>
     );
@@ -712,7 +720,7 @@ function useExpenseForm(
                 amount: '' as any,
                 date: new Date(),
                 accountId: '',
-                categoryId: 'no-category',
+                categoryId: '',
                 description: '',
                 tagIds: [],
             });
@@ -722,7 +730,7 @@ function useExpenseForm(
     // Reset form when dialog opens
     useEffect(() => {
         resetAndPopulateForm();
-    }, [expenseToEdit, userProfile, isEditMode, initialType]);
+    }, [expenseToEdit, userProfile, isEditMode, initialType, open]);
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
         if (!firestore || !user || !categories || !accounts) {
@@ -750,7 +758,8 @@ function useExpenseForm(
                 id: expenseRef.id,
                 userId: user.uid,
                 createdAt: isAddOperation ? serverTimestamp() : expenseToEdit.createdAt,
-                sharedExpenseId: sharedExpenseId || '',
+                updatedAt: serverTimestamp(),
+                sharedExpenseId: sharedExpenseId || undefined,
                 tagIds: values.tagIds || [],
                 categoryId: values.categoryId === 'no-category' || !values.categoryId ? '' : values.categoryId,
             };
@@ -844,7 +853,7 @@ function useExpenseForm(
                 description: '',
                 date: new Date(),
                 tagIds: [],
-                categoryId: 'no-category',
+                categoryId: '',
             });
         }
     });
@@ -910,5 +919,3 @@ function useExpenseForm(
       tags: tags || []
     };
 }
-
-    

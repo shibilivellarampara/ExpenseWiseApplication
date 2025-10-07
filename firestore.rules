@@ -1,142 +1,225 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for all data.
+ * All data is nested under /users/{userId}, ensuring that users can only access their own data.
+ *
+ * Data Structure:
+ * - /users/{userId}: User profile information.
+ * - /users/{userId}/expenses/{expenseId}: Expense records.
+ * - /users/{userId}/accounts/{accountId}: User's financial accounts.
+ * - /users/{userId}/contributions/{contributionId}: Contribution records for shared expenses.
+ * - /users/{userId}/categories/{categoryId}: User-defined expense categories.
+ * - /users/{userId}/tags/{tagId}: User-defined tags for expenses.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed.
+ * - All write operations require the user to be authenticated.
+ * - All write operations are restricted to the owner of the data.
+ * - All data is private to the user and not publicly accessible.
+ *
+ * Denormalization for Authorization:
+ *  To create simpler, more performant rules, always denormalize (copy) data required for an authorization decision directly onto the documents being secured. This avoids slow, costly, or impossible security checks.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    /**
-     * @description This ruleset enforces a strict user-ownership model where users can only access their own data.
-     * All data is nested under /users/{userId}, ensuring clear ownership and preventing unauthorized access.
-     * Key Security Decisions:
-     *  - Users can only read and write their own profile data.
-     *  - Listing of user profiles is disallowed for privacy.
-     *  - Each data type (expenses, accounts, etc.) is stored in a dedicated subcollection under the user's profile,
-     *    enforcing data isolation and simplifying access control.
-     *  - All write operations are validated to ensure data consistency and prevent unauthorized modification.
-     */
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function isExistingOwner(userId) {
-      return isOwner(userId) && exists(resource);
-    }
 
     /**
-     * @description Allows users to read and write their own profile data.
+     * @description Secure user profiles. Only the authenticated user can read/write their own profile.
      * @path /users/{userId}
-     * @allow (create) - User with matching userId creates their profile.
-     * @allow (get) - User with matching userId reads their profile.
-     * @allow (update) - User with matching userId updates their profile.
-     * @deny (create) - User attempts to create a profile with a mismatched userId.
-     * @deny (delete) - Only the owner can delete
-     * @deny (list) - Listing all users is not allowed.
+     * @allow (create) User with UID 'user_abc' creates their profile.
+     * @allow (get) User with UID 'user_abc' reads their profile.
+     * @allow (update) User with UID 'user_abc' updates their profile.
+     * @allow (delete) User with UID 'user_abc' deletes their profile.
+     * @deny (create) User with UID 'user_xyz' attempts to create a profile for user 'user_abc'.
+     * @deny (get) User with UID 'user_xyz' attempts to read the profile of user 'user_abc'.
+     * @deny (update) User with UID 'user_xyz' attempts to update the profile of user 'user_abc'.
+     * @deny (delete) User with UID 'user_xyz' attempts to delete the profile of user 'user_abc'.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
       allow get: if isOwner(userId);
       allow list: if false;
-
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to manage their expenses.
+     * @description Secure expense records under a user's profile. Only the owner user can manage their expenses.
      * @path /users/{userId}/expenses/{expenseId}
-     * @allow (create) - User with matching userId creates an expense.
-     * @allow (get) - User with matching userId reads their expense.
-     * @allow (update) - User with matching userId updates their expense.
-     * @deny (create) - User attempts to create an expense with a mismatched userId.
-     * @deny (delete) - Only the owner can delete
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with UID 'user_abc' creates an expense record under their profile.
+     * @allow (get) User with UID 'user_abc' reads an expense record under their profile.
+     * @allow (update) User with UID 'user_abc' updates an expense record under their profile.
+     * @allow (delete) User with UID 'user_abc' deletes an expense record under their profile.
+     * @deny (create) User with UID 'user_xyz' attempts to create an expense record under user 'user_abc' profile.
+     * @deny (get) User with UID 'user_xyz' attempts to read an expense record under user 'user_abc' profile.
+     * @deny (update) User with UID 'user_xyz' attempts to update an expense record under user 'user_abc' profile.
+     * @deny (delete) User with UID 'user_xyz' attempts to delete an expense record under user 'user_abc' profile.
+     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId}/expenses/{expenseId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
 
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to manage their accounts.
+     * @description Secure account records under a user's profile. Only the owner user can manage their accounts.
      * @path /users/{userId}/accounts/{accountId}
-     * @allow (create) - User with matching userId creates an account.
-     * @allow (get) - User with matching userId reads their account.
-     * @allow (update) - User with matching userId updates their account.
-     * @deny (create) - User attempts to create an account with a mismatched userId.
-     * @deny (delete) - Only the owner can delete
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with UID 'user_abc' creates an account record under their profile.
+     * @allow (get) User with UID 'user_abc' reads an account record under their profile.
+     * @allow (update) User with UID 'user_abc' updates an account record under their profile.
+     * @allow (delete) User with UID 'user_abc' deletes an account record under their profile.
+     * @deny (create) User with UID 'user_xyz' attempts to create an account record under user 'user_abc' profile.
+     * @deny (get) User with UID 'user_xyz' attempts to read an account record under user 'user_abc' profile.
+     * @deny (update) User with UID 'user_xyz' attempts to update an account record under user 'user_abc' profile.
+     * @deny (delete) User with UID 'user_xyz' attempts to delete an account record under user 'user_abc' profile.
+     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId}/accounts/{accountId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
 
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to manage their contributions.
+     * @description Secure contribution records under a user's profile. Only the owner user can manage their contributions.
      * @path /users/{userId}/contributions/{contributionId}
-     * @allow (create) - User with matching userId creates a contribution.
-     * @allow (get) - User with matching userId reads their contribution.
-     * @allow (update) - User with matching userId updates their contribution.
-     * @deny (create) - User attempts to create a contribution with a mismatched userId.
-     * @deny (delete) - Only the owner can delete
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with UID 'user_abc' creates a contribution record under their profile.
+     * @allow (get) User with UID 'user_abc' reads a contribution record under their profile.
+     * @allow (update) User with UID 'user_abc' updates a contribution record under their profile.
+     * @allow (delete) User with UID 'user_abc' deletes a contribution record under their profile.
+     * @deny (create) User with UID 'user_xyz' attempts to create a contribution record under user 'user_abc' profile.
+     * @deny (get) User with UID 'user_xyz' attempts to read a contribution record under user 'user_abc' profile.
+     * @deny (update) User with UID 'user_xyz' attempts to update a contribution record under user 'user_abc' profile.
+     * @deny (delete) User with UID 'user_xyz' attempts to delete a contribution record under user 'user_abc' profile.
+     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId}/contributions/{contributionId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
 
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to manage their categories.
+     * @description Secure category records under a user's profile. Only the owner user can manage their categories.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) - User with matching userId creates a category.
-     * @allow (get) - User with matching userId reads their category.
-     * @allow (update) - User with matching userId updates their category.
-     * @deny (create) - User attempts to create a category with a mismatched userId.
-     * @deny (delete) - Only the owner can delete
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with UID 'user_abc' creates a category record under their profile.
+     * @allow (get) User with UID 'user_abc' reads a category record under their profile.
+     * @allow (update) User with UID 'user_abc' updates a category record under their profile.
+     * @allow (delete) User with UID 'user_abc' deletes a category record under their profile.
+     * @deny (create) User with UID 'user_xyz' attempts to create a category record under user 'user_abc' profile.
+     * @deny (get) User with UID 'user_xyz' attempts to read a category record under user 'user_abc' profile.
+     * @deny (update) User with UID 'user_xyz' attempts to update a category record under user 'user_abc' profile.
+     * @deny (delete) User with UID 'user_xyz' attempts to delete a category record under user 'user_abc' profile.
+     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId}/categories/{categoryId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
 
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to manage their tags.
+     * @description Secure tag records under a user's profile. Only the owner user can manage their tags.
      * @path /users/{userId}/tags/{tagId}
-     * @allow (create) - User with matching userId creates a tag.
-     * @allow (get) - User with matching userId reads their tag.
-     * @allow (update) - User with matching userId updates their tag.
-     * @deny (create) - User attempts to create a tag with a mismatched userId.
-     * @deny (delete) - Only the owner can delete
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with UID 'user_abc' creates a tag record under their profile.
+     * @allow (get) User with UID 'user_abc' reads a tag record under their profile.
+     * @allow (update) User with UID 'user_abc' updates a tag record under their profile.
+     * @allow (delete) User with UID 'user_abc' deletes a tag record under their profile.
+     * @deny (create) User with UID 'user_xyz' attempts to create a tag record under user 'user_abc' profile.
+     * @deny (get) User with UID 'user_xyz' attempts to read a tag record under user 'user_abc' profile.
+     * @deny (update) User with UID 'user_xyz' attempts to update a tag record under user 'user_abc' profile.
+     * @deny (delete) User with UID 'user_xyz' attempts to delete a tag record under user 'user_abc' profile.
+     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId}/tags/{tagId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
 
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
   }
 }

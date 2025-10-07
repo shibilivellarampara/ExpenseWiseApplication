@@ -227,16 +227,16 @@ function ExpenseForm({
         const collectionName = type === 'Category' ? 'categories' : 'tags';
         const ref = collection(firestore, `users/${user.uid}/${collectionName}`);
         try {
-            const newDoc = await addDoc(ref, { name, icon, userId: user.uid });
-            await setDoc(newDoc, { id: newDoc.id }, { merge: true });
+            const newDocRef = doc(ref);
+            await setDoc(newDocRef, { name, icon, userId: user.uid, id: newDocRef.id });
             
             toast({ title: `${type} Added`, description: `"${name}" has been created.` });
 
             if (type === 'Category') {
-                form.setValue('categoryId', newDoc.id, { shouldValidate: true });
+                form.setValue('categoryId', newDocRef.id, { shouldValidate: true });
             } else {
                 const currentTagIds = form.getValues('tagIds') || [];
-                form.setValue('tagIds', [...currentTagIds, newDoc.id], { shouldValidate: true });
+                form.setValue('tagIds', [...currentTagIds, newDocRef.id], { shouldValidate: true });
             }
         } catch (error: any) {
             toast({ variant: 'destructive', title: `Error Adding ${type}`, description: error.message });
@@ -399,13 +399,13 @@ function ExpenseForm({
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                 <Popover open={isQuickAddCategoryOpen} onOpenChange={setQuickAddCategoryOpen}>
+                                <Popover open={isQuickAddCategoryOpen} onOpenChange={setQuickAddCategoryOpen}>
                                     <PopoverTrigger asChild>
-                                        <div className="flex w-full items-center p-2 text-sm hover:bg-accent rounded-sm cursor-pointer" onClick={(e) => e.preventDefault()}>
+                                        <Button variant="ghost" className="w-full justify-start text-sm p-2 rounded-sm" onClick={(e) => {e.preventDefault(); e.stopPropagation(); setQuickAddCategoryOpen(true)}}>
                                             <PlusCircle className="h-4 w-4 mr-2" /> Add New Category
-                                        </div>
+                                        </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.preventDefault()}>
+                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.stopPropagation()}>
                                         <QuickAddItemForm type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)} onClose={() => setQuickAddCategoryOpen(false)} />
                                     </PopoverContent>
                                 </Popover>

@@ -130,7 +130,7 @@ function ExpenseForm({
     const { data: accounts } = useCollection<Account>(accountsQuery);
     const { data: tags } = useCollection<Tag>(tagsQuery);
 
-    const activeAccounts = useMemo(() => accounts?.filter(acc => acc.status === 'active') || [], [accounts]);
+    const activeAccounts = useMemo(() => accounts?.filter(acc => acc.status === 'active' || acc.status === undefined) || [], [accounts]);
     
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
@@ -161,7 +161,7 @@ function ExpenseForm({
                             className="grid grid-cols-2 gap-4"
                             >
                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'expense' ? "border-red-500 text-red-500" : "border-muted")}>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'expense' ? "border-destructive text-destructive" : "border-muted")}>
                                         <RadioGroupItem value="expense" className="sr-only" />
                                         <span>Cash Out</span>
                                     </Label>
@@ -196,9 +196,9 @@ function ExpenseForm({
                     name="amount"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Amount ({currencySymbol})</FormLabel>
+                        <FormLabel>Amount</FormLabel>
                         <FormControl>
-                           <Input type="number" placeholder="0.00" {...field} />
+                           <Input type="number" placeholder="Enter amount" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -529,7 +529,7 @@ function useExpenseForm(
         } else {
             form.reset({
                 type: initialType || 'expense',
-                amount: 0,
+                amount: undefined,
                 date: new Date(),
                 accountId: '',
                 categoryId: 'no-category',
@@ -622,7 +622,7 @@ function useExpenseForm(
             // Reset form for a new entry, keeping some fields if sensible
             form.reset({
                 ...values, // keep account, type, etc.
-                amount: 0,
+                amount: undefined,
                 description: '',
                 date: new Date(),
             });

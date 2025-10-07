@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -54,6 +53,7 @@ import { cn } from '@/lib/utils';
 import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
 import ReactSelect, { StylesConfig } from 'react-select';
 import { Separator } from '../ui/separator';
+import { availableIcons } from '@/lib/defaults';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -105,64 +105,80 @@ function DateTimePicker({ field }: { field: any }) {
 }
 
 
-function QuickAddItemForm({
+function QuickAddItemDialog({
     type,
     onSave,
-    onClose,
+    children
 }: {
     type: 'Category' | 'Tag';
-    onSave: (name: string, icon: string) => Promise<void>;
-    onClose: () => void;
+    onSave: (name: string, icon: string) => Promise<string | undefined>;
+    children: React.ReactNode;
 }) {
     const [name, setName] = useState('');
     const [icon, setIcon] = useState(type === 'Category' ? 'Shapes' : 'Tag');
     const [isSaving, setIsSaving] = useState(false);
-    const [popoverOpen, setPopoverOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
 
     const renderIcon = (iconName: string, className?: string) => {
         const IconComponent = (LucideIcons as any)[iconName];
         return IconComponent ? <IconComponent className={cn("h-5 w-5", className)} /> : <Pilcrow className={cn("h-5 w-5", className)} />;
     };
 
-    const handleSave = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+    const handleSave = async () => {
         if (!name) return;
         setIsSaving(true);
         await onSave(name, icon);
         setIsSaving(false);
-        onClose();
+        setIsOpen(false);
+        setName('');
+        setIcon(type === 'Category' ? 'Shapes' : 'Tag');
     };
 
     return (
-        <div className="space-y-2">
-            <p className="font-medium text-sm">Add New {type}</p>
-            <div className="flex items-center gap-2">
-                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" size="icon" className="shrink-0" onClick={(e) => {e.preventDefault(); setPopoverOpen(true);}}>{renderIcon(icon)}</Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto grid grid-cols-5 gap-2" onOpenAutoFocus={(e) => e.preventDefault()}>
-                        {Object.keys(LucideIcons).map(iconName => (
-                            <Button key={iconName} variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); setIcon(iconName); setPopoverOpen(false); }}>
-                                {renderIcon(iconName)}
-                            </Button>
-                        ))}
-                    </PopoverContent>
-                </Popover>
-                <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder={`${type} name`}
-                    className="h-9"
-                    autoFocus
-                    onClick={e => e.stopPropagation()}
-                />
-                <Button type="button" size="icon" className="h-9 w-9" onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
-                </Button>
-            </div>
-        </div>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add New {type}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label>Name</Label>
+                        <Input
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder={`${type} name`}
+                            autoFocus
+                        />
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Icon</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start">
+                                    {renderIcon(icon)}
+                                    <span className="ml-2">{icon}</span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto grid grid-cols-5 gap-2 max-h-60 overflow-y-auto">
+                                {availableIcons.map(iconName => (
+                                    <Button key={iconName} variant="ghost" size="icon" onClick={() => setIcon(iconName)}>
+                                        {renderIcon(iconName)}
+                                    </Button>
+                                ))}
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={isSaving || !name}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -195,8 +211,6 @@ function ExpenseForm({
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
     const [isSuggesting, startSuggestionTransition] = useTransition();
-    const [isQuickAddCategoryOpen, setQuickAddCategoryOpen] = useState(false);
-    const [isQuickAddTagOpen, setQuickAddTagOpen] = useState(false);
 
     const handleSuggestion = useCallback(() => {
         const currentDescription = form.getValues('description');
@@ -214,7 +228,9 @@ function ExpenseForm({
                 if (suggestions.categoryId) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
                 if (suggestions.accountId) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
                 if (suggestions.tagIds) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
-                if (suggestions.description) form.setValue('description', suggestions.description, { shouldValidate: true });
+                if (suggestions.description && suggestions.description !== currentDescription) {
+                    form.setValue('description', suggestions.description, { shouldValidate: true });
+                }
 
             } catch (error) {
                 console.error("AI suggestion failed:", error);
@@ -222,7 +238,7 @@ function ExpenseForm({
         });
     }, [form, categories, tags, activeAccounts]);
 
-    const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string) => {
+    const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string): Promise<string | undefined> => {
         if (!user || !firestore) return;
         const collectionName = type === 'Category' ? 'categories' : 'tags';
         const ref = collection(firestore, `users/${user.uid}/${collectionName}`);
@@ -238,15 +254,17 @@ function ExpenseForm({
                 const currentTagIds = form.getValues('tagIds') || [];
                 form.setValue('tagIds', [...currentTagIds, newDocRef.id], { shouldValidate: true });
             }
+            return newDocRef.id;
         } catch (error: any) {
             toast({ variant: 'destructive', title: `Error Adding ${type}`, description: error.message });
+            return undefined;
         }
     };
 
-    const renderIcon = (iconName: string | undefined) => {
-        if (!iconName) return <Pilcrow className="mr-2 h-4 w-4" />;
+    const renderIcon = (iconName: string | undefined, className?: string) => {
+        if (!iconName) return <Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
         const IconComponent = (LucideIcons as any)[iconName];
-        return IconComponent ? <IconComponent className="mr-2 h-4 w-4" /> : <Pilcrow className="mr-2 h-4 w-4" />;
+        return IconComponent ? <IconComponent className={cn("mr-2 h-4 w-4", className)} /> : <Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
     };
 
     const isDescriptionRequired = userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false;
@@ -379,89 +397,77 @@ function ExpenseForm({
                     )}
                 />    
                 
-                <FormField
-                    control={form.control}
-                    name="categoryId"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>
-                                Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
-                            </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
-                            <FormControl>
-                            <SelectTrigger>
-                                {field.value && field.value !== 'no-category' ? (
-                                    <div className="flex items-center">
-                                        {renderIcon(categories.find(c => c.id === field.value)?.icon)}
-                                        {categories.find(c => c.id === field.value)?.name}
-                                    </div>
-                                ) : (field.value === 'no-category' ? 'No Category' : "Select a category")}
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <Popover open={isQuickAddCategoryOpen} onOpenChange={setQuickAddCategoryOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="ghost" className="w-full justify-start text-sm p-2 rounded-sm" onClick={(e) => {e.preventDefault(); e.stopPropagation(); setQuickAddCategoryOpen(true)}}>
-                                            <PlusCircle className="h-4 w-4 mr-2" /> Add New Category
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.stopPropagation()}>
-                                        <QuickAddItemForm type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)} onClose={() => setQuickAddCategoryOpen(false)} />
-                                    </PopoverContent>
-                                </Popover>
-                                <Separator />
-                                {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
-                                {categories?.map(cat => (
-                                    <SelectItem key={cat.id} value={cat.id}>
-                                        <div className="flex items-center">
-                                            {renderIcon(cat.icon)}
-                                            {cat.name}
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <FormItem>
+                    <FormLabel>
+                        Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
+                    </FormLabel>
+                    <div className="flex gap-2">
+                        <FormField
+                            control={form.control}
+                            name="categoryId"
+                            render={({ field }) => (
+                                <Select onValueChange={field.onChange} value={field.value || ''}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        {field.value && field.value !== 'no-category' ? (
+                                            <div className="flex items-center">
+                                                {renderIcon(categories.find(c => c.id === field.value)?.icon)}
+                                                {categories.find(c => c.id === field.value)?.name}
+                                            </div>
+                                        ) : (field.value === 'no-category' ? 'No Category' : "Select a category")}
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
+                                        {categories?.map(cat => (
+                                            <SelectItem key={cat.id} value={cat.id}>
+                                                <div className="flex items-center">
+                                                    {renderIcon(cat.icon)}
+                                                    {cat.name}
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
+                        <QuickAddItemDialog type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)}>
+                            <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
+                        </QuickAddItemDialog>
+                    </div>
+                     <FormMessage />
+                </FormItem>
                 
-                <FormField
-                    control={form.control}
-                    name="tagIds"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>
-                                Tags {isTagRequired ? '' : '(Optional)'}
-                            </FormLabel>
-                            <div className="relative">
-                               <Popover open={isQuickAddTagOpen} onOpenChange={setQuickAddTagOpen}>
-                                   <ReactSelect
-                                        isMulti
-                                        name="tags"
-                                        options={tagOptions}
-                                        value={selectedTags}
-                                        onChange={(selectedOptions) => {
-                                            const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
-                                            field.onChange(selectedValues);
-                                        }}
-                                        styles={selectStyles}
-                                        classNamePrefix="select"
-                                    />
-                                    <PopoverTrigger asChild>
-                                         <button type="button" className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground" onClick={(e) => { e.preventDefault(); setQuickAddTagOpen(true);}}>
-                                            <PlusCircle className="h-4 w-4" />
-                                        </button>
-                                    </PopoverTrigger>
-                                     <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.preventDefault()}>
-                                        <QuickAddItemForm type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} onClose={() => setQuickAddTagOpen(false)} />
-                                    </PopoverContent>
-                               </Popover>
-                            </div>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                 <FormItem>
+                    <FormLabel>
+                        Tags {isTagRequired ? '' : '(Optional)'}
+                    </FormLabel>
+                    <div className="flex gap-2">
+                        <FormField
+                            control={form.control}
+                            name="tagIds"
+                            render={({ field }) => (
+                                <ReactSelect
+                                    isMulti
+                                    name="tags"
+                                    options={tagOptions}
+                                    value={selectedTags}
+                                    onChange={(selectedOptions) => {
+                                        const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
+                                        field.onChange(selectedValues);
+                                    }}
+                                    styles={selectStyles}
+                                    className="w-full"
+                                    classNamePrefix="select"
+                                />
+                            )}
+                        />
+                        <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
+                           <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
+                        </QuickAddItemDialog>
+                    </div>
+                    <FormMessage />
+                </FormItem>
 
                 <FormField
                     control={form.control}
@@ -759,6 +765,8 @@ function useExpenseForm(
 
             if (sharedExpenseId) {
                 expenseData.sharedExpenseId = sharedExpenseId;
+            } else {
+                delete expenseData.sharedExpenseId;
             }
 
             // Logic for "Credit Limit Upgrade"

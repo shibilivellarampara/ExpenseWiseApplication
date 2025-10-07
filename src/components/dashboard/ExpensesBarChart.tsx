@@ -150,7 +150,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                             stackId="a"
                             fill={categoryColors.get(categoryName) || '#8884d8'}
                             name={categoryName}
-                            radius={[4, 4, 0, 0]}
+                            radius={0}
                         />
                     ))
                 ) : (
@@ -159,7 +159,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                         stackId="a"
                         fill="hsl(var(--primary))"
                         name="Total Expenses"
-                        radius={[4, 4, 0, 0]}
+                        radius={0}
                     />
                 )}
             </BarChart>

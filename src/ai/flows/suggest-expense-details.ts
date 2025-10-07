@@ -43,7 +43,7 @@ Rules:
 1.  **Category:** Choose the ONE most appropriate category ID from the list.
 2.  **Account:** Choose the ONE most likely account ID the user would use for this type of transaction.
 3.  **Tags:** Choose ANY relevant tag IDs from the list. It can be zero, one, or multiple.
-4.  **Description:** Refine the user's description to be clear and concise. For example, "coffee at starbucks with jane" could become "Coffee at Starbucks with Jane".
+4.  **Description:** Refine the user's description to be clear and concise. For example, "coffee at starbucks with jane" could become "Coffee at Starbucks with Jane". Capitalize correctly and make it readable.
 5.  If you cannot make a confident suggestion for a field, omit it from the output. The IDs you return MUST exist in the lists provided.
 `,
 });

@@ -475,10 +475,12 @@ function ExpenseForm({
                                 <FormLabel>
                                     Description {isDescriptionRequired ? '' : '(Optional)'}
                                 </FormLabel>
-                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={handleSuggestion} disabled={isSuggesting}>
-                                    {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-amber-500" />}
-                                    <span className="sr-only">Get Suggestions</span>
-                                </Button>
+                                {!isShared && (
+                                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={handleSuggestion} disabled={isSuggesting}>
+                                        {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-amber-500" />}
+                                        <span className="sr-only">Get Suggestions</span>
+                                    </Button>
+                                )}
                             </div>
                         <FormControl>
                             <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
@@ -720,9 +722,9 @@ function useExpenseForm({
     
     // Function to get clean default values
     const getNewFormValues = useCallback(() => {
-        let type = 'expense';
+        let type: 'income' | 'expense' = 'expense';
         if (sharedExpenseId) {
-            type = 'expense';
+            type = 'expense'; // Shared expenses are always expenses
         } else if (initialType) {
             type = initialType;
         }
@@ -782,26 +784,21 @@ function useExpenseForm({
 
             // --- Record the transaction itself ---
             const expenseCol = collection(firestore, collectionPath);
-            const expenseRef = isAddOperation ? doc(expenseCol) : doc(firestore, collectionPath, expenseToEdit.id);
+            const expenseRef = isAddOperation ? doc(expenseCol) : doc(firestore, collectionPath, expenseToEdit!.id);
 
             const expenseData: any = {
                 ...values,
                 id: expenseRef.id,
                 userId: user.uid,
-                createdAt: isAddOperation ? serverTimestamp() : expenseToEdit.createdAt,
+                createdAt: isAddOperation ? serverTimestamp() : expenseToEdit!.createdAt,
                 updatedAt: serverTimestamp(),
                 tagIds: values.tagIds || [],
                 categoryId: values.categoryId === 'no-category' ? null : values.categoryId,
             };
-
-            // Only add sharedExpenseId if it exists to avoid Firestore error
-            if (sharedExpenseId) {
-                expenseData.sharedExpenseId = sharedExpenseId;
-            } else {
-                delete expenseData.sharedExpenseId;
-            }
-
-            // Logic for "Credit Limit Upgrade"
+            
+            // This property should not be in user expenses.
+            delete expenseData.sharedExpenseId;
+           
             if (isCreditLimitUpgrade) {
                 if (selectedAccount?.type === 'credit_card') {
                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
@@ -820,14 +817,11 @@ function useExpenseForm({
                 }
             }
             
-            // --- Adjust Account Balance (skip for shared expenses and credit limit upgrades) ---
             if (!sharedExpenseId && !isCreditLimitUpgrade) {
                 const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
                      if (accountType === 'credit_card') {
-                        // For credit cards, 'expense' increases balance (debt), 'income' (payment) decreases it.
                         return type === 'expense' ? amount : -amount;
                      }
-                     // For other accounts, 'income' increases balance, 'expense' decreases it.
                      return type === 'income' ? amount : -amount;
                 };
 

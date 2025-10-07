@@ -60,7 +60,7 @@ export type Expense = {
   sharedExpenseId?: string;
 };
 
-export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds' | 'userId'> & {
+export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds'> & {
   id: string;
   user?: UserProfile; // The user who created the expense
   category?: Category;
@@ -78,4 +78,24 @@ export type SharedExpense = {
   joinId?: string; // 6-character unique code for joining
   createdAt: Timestamp;
   members?: UserProfile[]; // populated on the client
+}
+
+export type Contribution = {
+    id: string;
+    totalAmount: number;
+    description: string;
+    userId: string;
+    date: Timestamp;
+    paidById: string;
+    contributorShares: {
+        userId: string;
+        share: number;
+    }[];
+};
+
+
+export type EnrichedContribution = Omit<Contribution, 'date' | 'paidById' | 'contributorShares'> & {
+    date: Date;
+    paidBy?: UserProfile;
+    contributors?: (Partial<UserProfile> & { share: number })[];
 }

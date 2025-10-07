@@ -36,7 +36,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle } from 'lucide-react';
+import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -370,7 +370,7 @@ function ExpenseForm({
                                 Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
                             </FormLabel>
                             <div className="flex gap-2">
-                                <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <Select onValueChange={field.onChange} value={field.value || 'no-category'}>
                                     <FormControl>
                                     <SelectTrigger className="w-full">
                                         {field.value && field.value !== 'no-category' ? (
@@ -451,10 +451,21 @@ function ExpenseForm({
                                             <Badge
                                                 key={tag.id}
                                                 style={{ backgroundColor: color.backgroundColor, color: color.textColor }}
-                                                className="flex items-center gap-1 border-transparent"
+                                                className="flex items-center gap-1 border-transparent pr-1"
                                             >
                                                 {renderIcon(tag.icon, "h-3 w-3")}
                                                 {tag.name}
+                                                <button
+                                                    type="button"
+                                                    className="ml-1 rounded-full p-0.5 hover:bg-black/10"
+                                                    onClick={() => {
+                                                        const currentTagIds = form.getValues('tagIds') || [];
+                                                        form.setValue('tagIds', currentTagIds.filter(id => id !== tag.id), { shouldValidate: true });
+                                                    }}
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                    <span className="sr-only">Remove {tag.name}</span>
+                                                </button>
                                             </Badge>
                                         )
                                     })}

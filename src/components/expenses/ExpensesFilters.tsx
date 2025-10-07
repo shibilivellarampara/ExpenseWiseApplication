@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, ChevronDown, FilterX, ListFilter } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { DateRange as ReactDateRange } from 'react-day-picker';
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, parseISO, isValid } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Account, Category } from '@/lib/types';
 import {
@@ -28,6 +28,8 @@ import {
     SheetTrigger,
   } from '@/components/ui/sheet';
 import { Separator } from '../ui/separator';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 export type DateRange = ReactDateRange;
 
@@ -75,11 +77,9 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, setDat
         onFiltersChange({ ...filters, dateRange: { from, to } });
     }
 
-    const handleCustomDateChange = (range: DateRange | undefined) => {
-        if (range) {
-            setDateRangePreset('custom');
-            onFiltersChange({ ...filters, dateRange: range });
-        }
+    const handleDateChange = (date: Date | undefined, field: 'from' | 'to') => {
+        setDateRangePreset('custom');
+        onFiltersChange({ ...filters, dateRange: { ...filters.dateRange, [field]: date } });
     }
     
     const handleTypeChange = (type: 'all' | 'income' | 'expense') => {
@@ -100,6 +100,10 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, setDat
         onFiltersChange({ ...filters, accounts: newAccounts });
     }
     
+    const formatDateForInput = (date: Date | undefined): string => {
+        return date ? format(date, 'yyyy-MM-dd') : '';
+    }
+
     return (
         <div className="grid gap-4">
             <div>
@@ -117,42 +121,28 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, setDat
                     </SelectContent>
                 </Select>
                  {dateRangePreset === 'custom' && (
-                     <Popover>
-                        <PopoverTrigger asChild>
-                        <Button
-                            id="date"
-                            variant={"outline"}
-                            className={cn(
-                                "w-full justify-start text-left font-normal mt-2",
-                                !filters.dateRange && "text-muted-foreground"
-                            )}
-                            >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {filters.dateRange?.from ? (
-                                filters.dateRange.to ? (
-                                <>
-                                    {format(filters.dateRange.from, "LLL dd, y")} -{" "}
-                                    {format(filters.dateRange.to, "LLL dd, y")}
-                                </>
-                                ) : (
-                                format(filters.dateRange.from, "LLL dd, y")
-                                )
-                            ) : (
-                                <span>Pick a date</span>
-                            )}
-                        </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                            initialFocus
-                            mode="range"
-                            defaultMonth={filters.dateRange?.from}
-                            selected={filters.dateRange}
-                            onSelect={handleCustomDateChange}
-                            numberOfMonths={2}
-                        />
-                        </PopoverContent>
-                    </Popover>
+                     <div className="grid grid-cols-2 gap-2 mt-2">
+                        <div className="space-y-1">
+                            <Label htmlFor="from-date" className="text-xs">From</Label>
+                            <Input
+                                id="from-date"
+                                type="date"
+                                value={formatDateForInput(filters.dateRange?.from)}
+                                onChange={(e) => handleDateChange(e.target.value ? parseISO(e.target.value) : undefined, 'from')}
+                                className="text-sm"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                             <Label htmlFor="to-date" className="text-xs">To</Label>
+                            <Input
+                                id="to-date"
+                                type="date"
+                                value={formatDateForInput(filters.dateRange?.to)}
+                                onChange={(e) => handleDateChange(e.target.value ? parseISO(e.target.value) : undefined, 'to')}
+                                className="text-sm"
+                            />
+                        </div>
+                     </div>
                 )}
             </div>
             <Separator />
@@ -246,6 +236,13 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
         onFiltersChange({ ...filters, dateRange: { from, to } });
     }
 
+     const handleCustomDateChange = (range: DateRange | undefined) => {
+        if (range) {
+            setDateRangePreset('custom');
+            onFiltersChange({ ...filters, dateRange: range });
+        }
+    }
+
     const clearFilters = () => {
         onFiltersChange({
             dateRange: { from: undefined, to: undefined },
@@ -284,20 +281,42 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
             
             {/* Inline filters for desktop */}
             <div className="hidden md:flex gap-2">
-                <Select value={dateRangePreset} onValueChange={handleDateRangePresetChange}>
-                    <SelectTrigger className="w-full md:w-[180px]">
-                        <div className="flex items-center gap-2">
-                            <CalendarIcon className="h-4 w-4" />
-                            <SelectValue placeholder="Select date range" />
-                        </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Time</SelectItem>
-                        <SelectItem value="this-month">This Month</SelectItem>
-                        <SelectItem value="last-month">Last Month</SelectItem>
-                        <SelectItem value="this-year">This Year</SelectItem>
-                    </SelectContent>
-                </Select>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        id="date"
+                        variant={"outline"}
+                        className={cn(
+                            "w-[260px] justify-start text-left font-normal",
+                            !filters.dateRange?.from && "text-muted-foreground"
+                        )}
+                        >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {filters.dateRange?.from ? (
+                            filters.dateRange.to ? (
+                            <>
+                                {format(filters.dateRange.from, "LLL dd, y")} -{" "}
+                                {format(filters.dateRange.to, "LLL dd, y")}
+                            </>
+                            ) : (
+                            format(filters.dateRange.from, "LLL dd, y")
+                            )
+                        ) : (
+                            <span>Pick a date range</span>
+                        )}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={filters.dateRange?.from}
+                        selected={filters.dateRange}
+                        onSelect={handleCustomDateChange}
+                        numberOfMonths={2}
+                    />
+                    </PopoverContent>
+                </Popover>
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -384,3 +403,5 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
         </div>
     );
 }
+
+    

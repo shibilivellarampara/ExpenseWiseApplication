@@ -31,19 +31,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Pilcrow, Trash2, Sparkles } from 'lucide-react';
+import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, serverTimestamp, writeBatch, increment, deleteDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, writeBatch, increment, deleteDoc, addDoc } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import * as LucideIcons from 'lucide-react';
@@ -54,7 +54,7 @@ import { cn } from '@/lib/utils';
 import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
 import { useDebounce } from 'use-debounce';
 import ReactSelect from 'react-select';
-
+import { availableIcons } from '@/lib/defaults';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -105,6 +105,62 @@ function DateTimePicker({ field }: { field: any }) {
     );
 }
 
+
+function QuickAddItemForm({
+    type,
+    onSave,
+}: {
+    type: 'Category' | 'Tag';
+    onSave: (name: string, icon: string) => Promise<void>;
+}) {
+    const [name, setName] = useState('');
+    const [icon, setIcon] = useState(type === 'Category' ? 'Shapes' : 'Tag');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const renderIcon = (iconName: string, className?: string) => {
+        const IconComponent = (LucideIcons as any)[iconName];
+        return IconComponent ? <IconComponent className={cn("h-5 w-5", className)} /> : <Pilcrow className={cn("h-5 w-5", className)} />;
+    };
+
+    const handleSave = async () => {
+        if (!name) return;
+        setIsSaving(true);
+        await onSave(name, icon);
+        setIsSaving(false);
+        setName('');
+        setIcon(type === 'Category' ? 'Shapes' : 'Tag');
+    };
+
+    return (
+        <div className="space-y-2">
+            <p className="font-medium text-sm">Add New {type}</p>
+            <div className="flex items-center gap-2">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" size="icon" className="shrink-0">{renderIcon(icon)}</Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto grid grid-cols-5 gap-2" align="start">
+                        {availableIcons.map(iconName => (
+                            <Button key={iconName} variant="ghost" size="icon" onClick={() => setIcon(iconName)}>
+                                {renderIcon(iconName)}
+                            </Button>
+                        ))}
+                    </PopoverContent>
+                </Popover>
+                <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={`${type} name`}
+                    className="h-9"
+                />
+                <Button type="button" size="icon" className="h-9 w-9" onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 function ExpenseForm({
   form,
   onSubmit,
@@ -124,6 +180,7 @@ function ExpenseForm({
 }) {
     const { user } = useUser();
     const firestore = useFirestore();
+    const { toast } = useToast();
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
@@ -165,6 +222,24 @@ function ExpenseForm({
         }
     }, [debouncedDescription, handleSuggestion]);
 
+    const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string) => {
+        if (!user || !firestore) return;
+        const collectionName = type === 'Category' ? 'categories' : 'tags';
+        const ref = collection(firestore, `users/${user.uid}/${collectionName}`);
+        try {
+            const newDoc = await addDoc(ref, { name, icon, userId: user.uid });
+            toast({ title: `${type} Added`, description: `"${name}" has been created.` });
+
+            if (type === 'Category') {
+                form.setValue('categoryId', newDoc.id, { shouldValidate: true });
+            } else {
+                const currentTagIds = form.getValues('tagIds') || [];
+                form.setValue('tagIds', [...currentTagIds, newDoc.id], { shouldValidate: true });
+            }
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: `Error Adding ${type}`, description: error.message });
+        }
+    };
 
     const renderIcon = (iconName: string | undefined) => {
         if (!iconName) return <Pilcrow className="mr-2 h-4 w-4" />;
@@ -264,9 +339,21 @@ function ExpenseForm({
                     name="categoryId"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>
-                            Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
-                        </FormLabel>
+                            <div className="flex items-center justify-between">
+                                <FormLabel>
+                                    Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
+                                </FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button type="button" variant="ghost" size="sm" className="h-7">
+                                            <PlusCircle className="h-4 w-4 mr-1" /> New
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-2">
+                                        <QuickAddItemForm type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)} />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
                         <Select onValueChange={field.onChange} value={field.value || 'no-category'}>
                             <FormControl>
                             <SelectTrigger>
@@ -322,9 +409,21 @@ function ExpenseForm({
                     name="tagIds"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>
-                            Tags {isTagRequired ? '' : '(Optional)'}
-                        </FormLabel>
+                            <div className="flex items-center justify-between">
+                                <FormLabel>
+                                    Tags {isTagRequired ? '' : '(Optional)'}
+                                </FormLabel>
+                                 <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button type="button" variant="ghost" size="sm" className="h-7">
+                                            <PlusCircle className="h-4 w-4 mr-1" /> New
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-2">
+                                        <QuickAddItemForm type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
                         <FormControl>
                            <ReactSelect
                                 isMulti

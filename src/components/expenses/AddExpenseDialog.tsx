@@ -110,9 +110,11 @@ function DateTimePicker({ field }: { field: any }) {
 function QuickAddItemForm({
     type,
     onSave,
+    onClose,
 }: {
     type: 'Category' | 'Tag';
     onSave: (name: string, icon: string) => Promise<void>;
+    onClose: () => void;
 }) {
     const [name, setName] = useState('');
     const [icon, setIcon] = useState(type === 'Category' ? 'Shapes' : 'Tag');
@@ -125,13 +127,11 @@ function QuickAddItemForm({
 
     const handleSave = async (e: React.MouseEvent) => {
         e.preventDefault();
-        e.stopPropagation();
         if (!name) return;
         setIsSaving(true);
         await onSave(name, icon);
         setIsSaving(false);
-        setName('');
-        setIcon(type === 'Category' ? 'Shapes' : 'Tag');
+        onClose(); // Close the popover on save
     };
 
     return (
@@ -155,7 +155,7 @@ function QuickAddItemForm({
                     onChange={(e) => setName(e.target.value)}
                     placeholder={`${type} name`}
                     className="h-9"
-                    onKeyDown={(e) => e.stopPropagation()}
+                    autoFocus
                 />
                 <Button type="button" size="icon" className="h-9 w-9" onClick={handleSave} disabled={isSaving}>
                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
@@ -194,9 +194,10 @@ function ExpenseForm({
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
     const [isSuggesting, startSuggestionTransition] = useTransition();
+    const [isQuickAddCategoryOpen, setQuickAddCategoryOpen] = useState(false);
+    const [isQuickAddTagOpen, setQuickAddTagOpen] = useState(false);
 
     const descriptionValue = form.watch('description');
-    const [debouncedDescription] = useDebounce(descriptionValue, 1000);
 
     const handleSuggestion = useCallback(() => {
         const currentDescription = form.getValues('description');
@@ -211,14 +212,13 @@ function ExpenseForm({
                     accounts: activeAccounts.map(({ id, name }) => ({ id, name })),
                 });
                 
-                if (suggestions.categoryId && !form.getValues('categoryId')) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
-                if (suggestions.accountId && !form.getValues('accountId')) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
-                if (suggestions.tagIds && form.getValues('tagIds')?.length === 0) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
-                if (suggestions.description && suggestions.description !== currentDescription) form.setValue('description', suggestions.description, { shouldValidate: true });
+                if (suggestions.categoryId) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
+                if (suggestions.accountId) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
+                if (suggestions.tagIds) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
+                if (suggestions.description) form.setValue('description', suggestions.description, { shouldValidate: true });
 
             } catch (error) {
                 console.error("AI suggestion failed:", error);
-                // Optional: toast notification for AI failure
             }
         });
     }, [form, categories, tags, activeAccounts]);
@@ -229,6 +229,7 @@ function ExpenseForm({
         const ref = collection(firestore, `users/${user.uid}/${collectionName}`);
         try {
             const newDocRef = doc(ref);
+            // Save the document with its own ID
             await setDoc(newDocRef, { name, icon, userId: user.uid, id: newDocRef.id });
             
             toast({ title: `${type} Added`, description: `"${name}" has been created.` });
@@ -274,7 +275,7 @@ function ExpenseForm({
             ...base,
             background: 'hsl(var(--popover))',
             color: 'hsl(var(--popover-foreground))',
-            zIndex: 50,
+            zIndex: 51,
         }),
         multiValue: (base) => ({
             ...base,
@@ -391,23 +392,23 @@ function ExpenseForm({
                         <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl>
                             <SelectTrigger>
-                                {field.value ? (
+                                {field.value && field.value !== 'no-category' ? (
                                     <div className="flex items-center">
                                         {renderIcon(categories.find(c => c.id === field.value)?.icon)}
                                         {categories.find(c => c.id === field.value)?.name}
                                     </div>
-                                ) : "Select a category"}
+                                ) : (field.value === 'no-category' ? 'No Category' : "Select a category")}
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                 <Popover>
+                                 <Popover open={isQuickAddCategoryOpen} onOpenChange={setQuickAddCategoryOpen}>
                                     <PopoverTrigger asChild>
-                                        <div className="flex w-full items-center p-2 text-sm hover:bg-accent rounded-sm cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex w-full items-center p-2 text-sm hover:bg-accent rounded-sm cursor-pointer" onSelect={(e) => e.preventDefault()}>
                                             <PlusCircle className="h-4 w-4 mr-2" /> Add New Category
                                         </div>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.stopPropagation()}>
-                                        <QuickAddItemForm type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)} />
+                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                        <QuickAddItemForm type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)} onClose={() => setQuickAddCategoryOpen(false)} />
                                     </PopoverContent>
                                 </Popover>
                                 <Separator />
@@ -436,7 +437,7 @@ function ExpenseForm({
                                 Tags {isTagRequired ? '' : '(Optional)'}
                             </FormLabel>
                             <div className="relative">
-                                <ReactSelect
+                               <ReactSelect
                                     isMulti
                                     name="tags"
                                     options={tagOptions}
@@ -447,17 +448,25 @@ function ExpenseForm({
                                     }}
                                     styles={selectStyles}
                                     classNamePrefix="select"
+                                    components={{
+                                        MenuList: (props) => (
+                                            <>
+                                                {props.children}
+                                                <Separator className="my-1" />
+                                                <Popover open={isQuickAddTagOpen} onOpenChange={setQuickAddTagOpen}>
+                                                    <PopoverTrigger asChild>
+                                                        <div className="flex w-full items-center p-2 text-sm text-foreground hover:bg-accent rounded-sm cursor-pointer" onClick={(e) => { e.stopPropagation(); setQuickAddTagOpen(true) }}>
+                                                            <PlusCircle className="h-4 w-4 mr-2" /> Add New Tag
+                                                        </div>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                                        <QuickAddItemForm type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} onClose={() => setQuickAddTagOpen(false)} />
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </>
+                                        ),
+                                    }}
                                 />
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7">
-                                            <PlusCircle className="h-4 w-4" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.stopPropagation()}>
-                                        <QuickAddItemForm type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} />
-                                    </PopoverContent>
-                                </Popover>
                             </div>
                             <FormMessage />
                         </FormItem>
@@ -756,7 +765,7 @@ function useExpenseForm(
                 updatedAt: serverTimestamp(),
                 sharedExpenseId: sharedExpenseId || undefined,
                 tagIds: values.tagIds || [],
-                categoryId: values.categoryId === 'no-category' || !values.categoryId ? '' : values.categoryId,
+                categoryId: values.categoryId === 'no-category' ? '' : values.categoryId,
             };
 
             // Logic for "Credit Limit Upgrade"

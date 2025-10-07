@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -43,53 +42,61 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
             return;
         }
 
-        // Find the shared expense with the given joinId
         const spacesRef = collection(firestore, 'shared_expenses');
         const q = query(spacesRef, where('joinId', '==', values.joinId.toUpperCase()));
-        const querySnapshot = await getDocs(q);
+        
+        try {
+            const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-            toast({ variant: 'destructive', title: 'Failed to Join', description: 'No shared space found with this Join ID. Please check the code and try again.' });
-            setIsLoading(false);
-            return;
-        }
+            if (querySnapshot.empty) {
+                toast({ variant: 'destructive', title: 'Failed to Join', description: 'No shared space found with this Join ID. Please check the code and try again.' });
+                setIsLoading(false);
+                return;
+            }
 
-        const spaceDoc = querySnapshot.docs[0];
-        const spaceData = spaceDoc.data() as SharedExpense;
+            const spaceDoc = querySnapshot.docs[0];
+            const spaceData = spaceDoc.data() as SharedExpense;
 
-        if (spaceData.memberIds.includes(user.uid)) {
-            toast({ title: "Already a member", description: `You are already a member of "${spaceData.name}".` });
-            setOpen(false);
-            form.reset();
-            setIsLoading(false);
-            return;
-        }
-
-        // Add the current user's ID to the memberIds array
-        const batch = writeBatch(firestore);
-        const updatedMemberIds = arrayUnion(user.uid);
-        batch.update(spaceDoc.ref, {
-            memberIds: updatedMemberIds,
-        });
-
-        // Use non-blocking error handling
-        batch.commit()
-            .then(() => {
-                toast({ title: 'Successfully Joined!', description: `You are now a member of "${spaceData.name}".` });
+            if (spaceData.memberIds.includes(user.uid)) {
+                toast({ title: "Already a member", description: `You are already a member of "${spaceData.name}".` });
                 setOpen(false);
                 form.reset();
-            })
-            .catch(async (serverError) => {
-                const permissionError = new FirestorePermissionError({
-                    path: spaceDoc.ref.path,
-                    operation: 'update',
-                    requestResourceData: { memberIds: '(arrayUnion)' } // Represent the operation
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            })
-            .finally(() => {
                 setIsLoading(false);
+                return;
+            }
+
+            const batch = writeBatch(firestore);
+            batch.update(spaceDoc.ref, {
+                memberIds: arrayUnion(user.uid),
             });
+
+            batch.commit()
+                .then(() => {
+                    toast({ title: 'Successfully Joined!', description: `You are now a member of "${spaceData.name}".` });
+                    setOpen(false);
+                    form.reset();
+                })
+                .catch(async (serverError) => {
+                    const permissionError = new FirestorePermissionError({
+                        path: spaceDoc.ref.path,
+                        operation: 'update',
+                        requestResourceData: { memberIds: `(arrayUnion: ${user.uid})` }
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+
+        } catch (error) {
+             const permissionError = new FirestorePermissionError({
+                path: 'shared_expenses',
+                operation: 'list',
+                requestResourceData: { where: `joinId == ${values.joinId.toUpperCase()}` }
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            setIsLoading(false);
+        }
     };
 
     return (

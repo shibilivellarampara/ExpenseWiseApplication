@@ -179,5 +179,3 @@ export function CategorySettings() {
         </Card>
     );
 }
-
-    

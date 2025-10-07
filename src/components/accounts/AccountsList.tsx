@@ -242,16 +242,16 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                     <div className="flex-grow">
                                         <div className="flex items-center justify-between">
                                             <div className="font-semibold">{item.name}</div>
-                                            <div className={cn("font-bold text-lg", balance > 0 ? 'text-red-500' : 'text-green-500')}>
+                                            <div className="font-bold text-lg text-red-500">
                                                 {balance.toFixed(2)}
                                             </div>
                                         </div>
                                         <p className="text-sm text-muted-foreground capitalize">
-                                            {balance > 0 ? 'Outstanding Amount' : (balance < 0 ? 'Credit Balance' : 'Settled')}
+                                            Outstanding Amount
                                         </p>
                                         {limit > 0 && (
                                             <div className="mt-1">
-                                                <Progress value={availablePercentage} className="h-2" />
+                                                <Progress value={availablePercentage} className="h-2 [&>div]:bg-green-500" />
                                                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                                     <span>Available: {availableCredit.toFixed(2)}</span>
                                                     <span>Limit: {limit.toFixed(2)}</span>

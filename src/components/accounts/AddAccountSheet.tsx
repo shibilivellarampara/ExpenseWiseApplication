@@ -17,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { useCollection, useFirestore, useUser } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, doc, setDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { Loader2, Pilcrow } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -54,9 +54,8 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
     const isEditMode = !!accountToEdit;
     
     // Fetch categories to find the "Credit Limit Upgrade" category
-    const { data: categories } = useCollection<Category>(
-        user ? collection(firestore, `users/${user.uid}/categories`) : null
-    );
+    const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [user, firestore]);
+    const { data: categories } = useCollection<Category>(categoriesQuery);
 
     const form = useForm<AccountFormData>({
         resolver: zodResolver(accountSchema),

@@ -703,14 +703,14 @@ function useExpenseForm(
 
     const transactionType = form.watch('type');
 
-    const resetAndPopulateForm = () => {
+    const resetAndPopulateForm = useCallback(() => {
         if (isEditMode && expenseToEdit) {
             form.reset({
                 type: expenseToEdit.type,
                 amount: expenseToEdit.amount,
                 date: expenseToEdit.date,
                 accountId: expenseToEdit.account?.id || '',
-                categoryId: expenseToEdit.category?.id || 'no-category',
+                categoryId: expenseToEdit.category?.id || '',
                 description: expenseToEdit.description || '',
                 tagIds: expenseToEdit.tags?.map(t => t.id) || [],
             });
@@ -725,12 +725,12 @@ function useExpenseForm(
                 tagIds: [],
             });
         }
-    };
+    }, [form, isEditMode, expenseToEdit, initialType]);
     
     // Reset form when dialog opens
     useEffect(() => {
         resetAndPopulateForm();
-    }, [expenseToEdit, userProfile, isEditMode, initialType]);
+    }, [expenseToEdit, userProfile, isEditMode, initialType, resetAndPopulateForm]);
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
         if (!firestore || !user || !categories || !accounts) {
@@ -852,14 +852,7 @@ function useExpenseForm(
     const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
         const success = await handleTransactionSave(values);
         if (success) {
-            form.reset({
-                ...values,
-                amount: '' as any,
-                description: '',
-                date: new Date(),
-                tagIds: [],
-                categoryId: '',
-            });
+            resetAndPopulateForm();
         }
     });
 

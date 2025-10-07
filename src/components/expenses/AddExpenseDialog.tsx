@@ -52,9 +52,7 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
-import { useDebounce } from 'use-debounce';
 import ReactSelect, { StylesConfig } from 'react-select';
-import { availableIcons } from '@/lib/defaults';
 import { Separator } from '../ui/separator';
 
 // Function to create a dynamic schema
@@ -119,6 +117,7 @@ function QuickAddItemForm({
     const [name, setName] = useState('');
     const [icon, setIcon] = useState(type === 'Category' ? 'Shapes' : 'Tag');
     const [isSaving, setIsSaving] = useState(false);
+    const [popoverOpen, setPopoverOpen] = useState(false);
 
     const renderIcon = (iconName: string, className?: string) => {
         const IconComponent = (LucideIcons as any)[iconName];
@@ -127,24 +126,25 @@ function QuickAddItemForm({
 
     const handleSave = async (e: React.MouseEvent) => {
         e.preventDefault();
+        e.stopPropagation();
         if (!name) return;
         setIsSaving(true);
         await onSave(name, icon);
         setIsSaving(false);
-        onClose(); // Close the popover on save
+        onClose();
     };
 
     return (
         <div className="space-y-2">
             <p className="font-medium text-sm">Add New {type}</p>
             <div className="flex items-center gap-2">
-                <Popover>
+                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
-                        <Button variant="outline" size="icon" className="shrink-0">{renderIcon(icon)}</Button>
+                        <Button variant="outline" size="icon" className="shrink-0" onClick={(e) => {e.preventDefault(); setPopoverOpen(true);}}>{renderIcon(icon)}</Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto grid grid-cols-5 gap-2" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-                        {availableIcons.map(iconName => (
-                            <Button key={iconName} variant="ghost" size="icon" onClick={() => setIcon(iconName)}>
+                    <PopoverContent className="w-auto grid grid-cols-5 gap-2" onOpenAutoFocus={(e) => e.preventDefault()}>
+                        {Object.keys(LucideIcons).map(iconName => (
+                            <Button key={iconName} variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); setIcon(iconName); setPopoverOpen(false); }}>
                                 {renderIcon(iconName)}
                             </Button>
                         ))}
@@ -156,6 +156,7 @@ function QuickAddItemForm({
                     placeholder={`${type} name`}
                     className="h-9"
                     autoFocus
+                    onClick={e => e.stopPropagation()}
                 />
                 <Button type="button" size="icon" className="h-9 w-9" onClick={handleSave} disabled={isSaving}>
                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
@@ -197,8 +198,6 @@ function ExpenseForm({
     const [isQuickAddCategoryOpen, setQuickAddCategoryOpen] = useState(false);
     const [isQuickAddTagOpen, setQuickAddTagOpen] = useState(false);
 
-    const descriptionValue = form.watch('description');
-
     const handleSuggestion = useCallback(() => {
         const currentDescription = form.getValues('description');
         if (!currentDescription || categories.length === 0 || accounts.length === 0 || tags.length === 0) return;
@@ -228,17 +227,16 @@ function ExpenseForm({
         const collectionName = type === 'Category' ? 'categories' : 'tags';
         const ref = collection(firestore, `users/${user.uid}/${collectionName}`);
         try {
-            const newDocRef = doc(ref);
-            // Save the document with its own ID
-            await setDoc(newDocRef, { name, icon, userId: user.uid, id: newDocRef.id });
+            const newDoc = await addDoc(ref, { name, icon, userId: user.uid });
+            await setDoc(newDoc, { id: newDoc.id }, { merge: true });
             
             toast({ title: `${type} Added`, description: `"${name}" has been created.` });
 
             if (type === 'Category') {
-                form.setValue('categoryId', newDocRef.id, { shouldValidate: true });
+                form.setValue('categoryId', newDoc.id, { shouldValidate: true });
             } else {
                 const currentTagIds = form.getValues('tagIds') || [];
-                form.setValue('tagIds', [...currentTagIds, newDocRef.id], { shouldValidate: true });
+                form.setValue('tagIds', [...currentTagIds, newDoc.id], { shouldValidate: true });
             }
         } catch (error: any) {
             toast({ variant: 'destructive', title: `Error Adding ${type}`, description: error.message });
@@ -403,11 +401,11 @@ function ExpenseForm({
                             <SelectContent>
                                  <Popover open={isQuickAddCategoryOpen} onOpenChange={setQuickAddCategoryOpen}>
                                     <PopoverTrigger asChild>
-                                        <div className="flex w-full items-center p-2 text-sm hover:bg-accent rounded-sm cursor-pointer" onSelect={(e) => e.preventDefault()}>
+                                        <div className="flex w-full items-center p-2 text-sm hover:bg-accent rounded-sm cursor-pointer" onClick={(e) => e.preventDefault()}>
                                             <PlusCircle className="h-4 w-4 mr-2" /> Add New Category
                                         </div>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.preventDefault()}>
                                         <QuickAddItemForm type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)} onClose={() => setQuickAddCategoryOpen(false)} />
                                     </PopoverContent>
                                 </Popover>
@@ -437,36 +435,28 @@ function ExpenseForm({
                                 Tags {isTagRequired ? '' : '(Optional)'}
                             </FormLabel>
                             <div className="relative">
-                               <ReactSelect
-                                    isMulti
-                                    name="tags"
-                                    options={tagOptions}
-                                    value={selectedTags}
-                                    onChange={(selectedOptions) => {
-                                        const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
-                                        field.onChange(selectedValues);
-                                    }}
-                                    styles={selectStyles}
-                                    classNamePrefix="select"
-                                    components={{
-                                        MenuList: (props) => (
-                                            <>
-                                                {props.children}
-                                                <Separator className="my-1" />
-                                                <Popover open={isQuickAddTagOpen} onOpenChange={setQuickAddTagOpen}>
-                                                    <PopoverTrigger asChild>
-                                                        <div className="flex w-full items-center p-2 text-sm text-foreground hover:bg-accent rounded-sm cursor-pointer" onClick={(e) => { e.stopPropagation(); setQuickAddTagOpen(true) }}>
-                                                            <PlusCircle className="h-4 w-4 mr-2" /> Add New Tag
-                                                        </div>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()}>
-                                                        <QuickAddItemForm type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} onClose={() => setQuickAddTagOpen(false)} />
-                                                    </PopoverContent>
-                                                </Popover>
-                                            </>
-                                        ),
-                                    }}
-                                />
+                               <Popover open={isQuickAddTagOpen} onOpenChange={setQuickAddTagOpen}>
+                                   <ReactSelect
+                                        isMulti
+                                        name="tags"
+                                        options={tagOptions}
+                                        value={selectedTags}
+                                        onChange={(selectedOptions) => {
+                                            const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
+                                            field.onChange(selectedValues);
+                                        }}
+                                        styles={selectStyles}
+                                        classNamePrefix="select"
+                                    />
+                                    <PopoverTrigger asChild>
+                                         <button type="button" className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground" onClick={(e) => { e.preventDefault(); setQuickAddTagOpen(true);}}>
+                                            <PlusCircle className="h-4 w-4" />
+                                        </button>
+                                    </PopoverTrigger>
+                                     <PopoverContent className="w-64 p-2" onOpenAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.preventDefault()}>
+                                        <QuickAddItemForm type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} onClose={() => setQuickAddTagOpen(false)} />
+                                    </PopoverContent>
+                               </Popover>
                             </div>
                             <FormMessage />
                         </FormItem>
@@ -757,16 +747,19 @@ function useExpenseForm(
             const expenseCol = collection(firestore, collectionPath);
             const expenseRef = isAddOperation ? doc(expenseCol) : doc(firestore, collectionPath, expenseToEdit.id);
 
-            const expenseData = {
+            const expenseData: any = {
                 ...values,
                 id: expenseRef.id,
                 userId: user.uid,
                 createdAt: isAddOperation ? serverTimestamp() : expenseToEdit.createdAt,
                 updatedAt: serverTimestamp(),
-                sharedExpenseId: sharedExpenseId || undefined,
                 tagIds: values.tagIds || [],
                 categoryId: values.categoryId === 'no-category' ? '' : values.categoryId,
             };
+
+            if (sharedExpenseId) {
+                expenseData.sharedExpenseId = sharedExpenseId;
+            }
 
             // Logic for "Credit Limit Upgrade"
             if (isCreditLimitUpgrade) {

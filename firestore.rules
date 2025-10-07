@@ -1,159 +1,166 @@
 /**
- * @description This ruleset enforces a strict user-ownership model for personal finance data. Users can only access their own profile and associated financial records (expenses, accounts, contributions, categories, tags).
- * @dataStructure Data is organized hierarchically under /users/{userId}, with subcollections for expenses, accounts, etc.
- * @keySecurityDecisions
- *   - Users can only list documents within their own /users/{userId} collection.
- *   - Shared expenses functionality is not supported in this version.
- *   - Default security posture is owner-only access unless explicitly stated otherwise.
+ * @fileoverview Firestore Security Rules for Expense Tracker App
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Users can only access
+ * and modify data that belongs to them. All data is nested under /users/{userId},
+ * ensuring clear ownership.
+ *
+ * Data Structure:
+ * - /users/{userId}: User profiles, accessible only to the owner.
+ * - /users/{userId}/expenses/{expenseId}: Expenses for a specific user.
+ * - /users/{userId}/accounts/{accountId}: Accounts for a specific user.
+ * - /users/{userId}/contributions/{contributionId}: Contributions for a specific user.
+ * - /users/{userId}/categories/{categoryId}: Categories for a specific user.
+ * - /users/{userId}/tags/{tagId}: Tags for a specific user.
+ *
+ * Key Security Decisions:
+ * - User profiles are only readable and writable by the owning user.
+ * - Listing of user profiles is explicitly denied.
+ * - All subcollections under /users/{userId} follow the same ownership model.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profiles. Users can read and write their own profile data.
+     * @description Checks if the user is signed in.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the user is the owner of the resource.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the user is the owner of the existing resource.
+     */
+    function isExistingOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId && resource != null;
+    }
+
+    /**
+     * @description User profile access control.
      * @path /users/{userId}
-     * @allow (create) User with UID 'user123' creates their profile at /users/user123.
-     * @allow (get) User with UID 'user123' reads their profile at /users/user123.
-     * @allow (update) User with UID 'user123' updates their profile at /users/user123.
-     * @deny (create) User with UID 'user123' tries to create a profile at /users/user456.
-     * @deny (get) User with UID 'user123' tries to read a profile at /users/user456.
-     * @deny (update) User with UID 'user123' tries to update the profile at /users/user456.
-     * @principle Enforces document ownership for writes and reads.  Allows self-creation of user document.
+     * @allow (create) User 'user_abc' can create their profile with matching ID.
+     * @allow (get, update, delete) User 'user_abc' can get, update, or delete their own profile.
+     * @deny (create) User 'user_abc' cannot create a profile with ID 'user_xyz'.
+     * @deny (get, update, delete) User 'user_abc' cannot access profile 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && resource.data.id == request.resource.data.id;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user expenses. Users can only access expenses under their own user ID.
+     * @description Expense access control.
      * @path /users/{userId}/expenses/{expenseId}
-     * @allow (create) User with UID 'user123' creates an expense at /users/user123/expenses/exp1.
-     * @allow (get) User with UID 'user123' reads an expense at /users/user123/expenses/exp1.
-     * @allow (update) User with UID 'user123' updates an expense at /users/user123/expenses/exp1.
-     * @deny (create) User with UID 'user123' tries to create an expense under /users/user456.
-     * @deny (get) User with UID 'user123' tries to read an expense from /users/user456.
-     * @deny (update) User with UID 'user123' tries to update an expense from /users/user456.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User 'user_abc' can create an expense under their profile.
+     * @allow (get, update, delete, list) User 'user_abc' can manage their own expenses.
+     * @deny (create) User 'user_abc' cannot create an expense under profile 'user_xyz'.
+     * @deny (get, update, delete, list) User 'user_abc' cannot access expenses of 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/expenses/{expenseId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user accounts. Users can only access accounts under their own user ID.
+     * @description Account access control.
      * @path /users/{userId}/accounts/{accountId}
-     * @allow (create) User with UID 'user123' creates an account at /users/user123/accounts/acc1.
-     * @allow (get) User with UID 'user123' reads an account at /users/user123/accounts/acc1.
-     * @allow (update) User with UID 'user123' updates an account at /users/user123/accounts/acc1.
-     * @deny (create) User with UID 'user123' tries to create an account under /users/user456.
-     * @deny (get) User with UID 'user123' tries to read an account from /users/user456.
-     * @deny (update) User with UID 'user123' tries to update an account from /users/user456.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User 'user_abc' can create an account under their profile.
+     * @allow (get, update, delete, list) User 'user_abc' can manage their own accounts.
+     * @deny (create) User 'user_abc' cannot create an account under profile 'user_xyz'.
+     * @deny (get, update, delete, list) User 'user_abc' cannot access accounts of 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/accounts/{accountId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user contributions. Users can only access contributions under their own user ID.
+     * @description Contribution access control.
      * @path /users/{userId}/contributions/{contributionId}
-     * @allow (create) User with UID 'user123' creates a contribution at /users/user123/contributions/con1.
-     * @allow (get) User with UID 'user123' reads a contribution at /users/user123/contributions/con1.
-     * @allow (update) User with UID 'user123' updates a contribution at /users/user123/contributions/con1.
-     * @deny (create) User with UID 'user123' tries to create a contribution under /users/user456.
-     * @deny (get) User with UID 'user123' tries to read a contribution from /users/user456.
-     * @deny (update) User with UID 'user123' tries to update a contribution from /users/user456.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User 'user_abc' can create a contribution under their profile.
+     * @allow (get, update, delete, list) User 'user_abc' can manage their own contributions.
+     * @deny (create) User 'user_abc' cannot create a contribution under profile 'user_xyz'.
+     * @deny (get, update, delete, list) User 'user_abc' cannot access contributions of 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/contributions/{contributionId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user categories. Users can only access categories under their own user ID.
+     * @description Category access control.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) User with UID 'user123' creates a category at /users/user123/categories/cat1.
-     * @allow (get) User with UID 'user123' reads a category at /users/user123/categories/cat1.
-     * @allow (update) User with UID 'user123' updates a category at /users/user123/categories/cat1.
-     * @deny (create) User with UID 'user123' tries to create a category under /users/user456.
-     * @deny (get) User with UID 'user123' tries to read a category from /users/user456.
-     * @deny (update) User with UID 'user123' tries to update a category from /users/user456.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User 'user_abc' can create a category under their profile.
+     * @allow (get, update, delete, list) User 'user_abc' can manage their own categories.
+     * @deny (create) User 'user_abc' cannot create a category under profile 'user_xyz'.
+     * @deny (get, update, delete, list) User 'user_abc' cannot access categories of 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/categories/{categoryId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user tags. Users can only access tags under their own user ID.
+     * @description Tag access control.
      * @path /users/{userId}/tags/{tagId}
-     * @allow (create) User with UID 'user123' creates a tag at /users/user123/tags/tag1.
-     * @allow (get) User with UID 'user123' reads a tag at /users/user123/tags/tag1.
-     * @allow (update) User with UID 'user123' updates a tag at /users/user123/tags/tag1.
-     * @deny (create) User with UID 'user123' tries to create a tag under /users/user456.
-     * @deny (get) User with UID 'user123' tries to read a tag from /users/user456.
-     * @deny (update) User with UID 'user123' tries to update a tag from /users/user456.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User 'user_abc' can create a tag under their profile.
+     * @allow (get, update, delete, list) User 'user_abc' can manage their own tags.
+     * @deny (create) User 'user_abc' cannot create a tag under profile 'user_xyz'.
+     * @deny (get, update, delete, list) User 'user_abc' cannot access tags of 'user_xyz'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/tags/{tagId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
-
-    /**
-     * @description Denies all access to the `shared_expenses` collection.
-     * @path /shared_expenses
-     * @deny (get) Any user attempts to read a document from /shared_expenses.
-     * @deny (list) Any user attempts to list documents in /shared_expenses.
-     * @deny (create) Any user attempts to create a document in /shared_expenses.
-     * @deny (update) Any user attempts to update a document in /shared_expenses.
-     * @deny (delete) Any user attempts to delete a document from /shared_expenses.
-     * @principle  Explicitly disables access to the `shared_expenses` collection, as it's not part of the data model.
-     */
-    match /shared_expenses {
-      allow get: if false;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-  }
-
-  // Helper functions
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  function isOwner(userId) {
-    return isSignedIn() && request.auth.uid == userId;
-  }
-
-  function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
+      /**
+       * @description Public read access to shared_expenses collection is not allowed.
+       * @path /shared_expenses
+       * @allow  (get) no one allowed.
+       * @allow (list) no one allowed.
+       * @allow (create) no one allowed.
+       * @allow (update) no one allowed.
+       * @allow (delete) no one allowed.
+       * @principle The shared_expenses collection should not be publicly accessible.
+       */
+      match /shared_expenses/{sharedExpenseId} {
+        allow get: if false;
+        allow list: if false;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
   }
 }

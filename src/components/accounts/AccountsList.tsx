@@ -232,7 +232,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                              const limit = item.limit || 0;
                              const balance = item.balance; // Outstanding amount
                              const availableCredit = limit - balance;
-                             const usagePercentage = limit > 0 ? (balance / limit) * 100 : 0;
+                             const availablePercentage = limit > 0 ? (availableCredit / limit) * 100 : 0;
                             
                             return (
                                 <div key={item.id} className="p-4 flex items-center gap-4 group">
@@ -251,7 +251,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                         </p>
                                         {limit > 0 && (
                                             <div className="mt-1">
-                                                <Progress value={usagePercentage} className="h-2" />
+                                                <Progress value={availablePercentage} className="h-2" />
                                                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                                     <span>Available: {availableCredit.toFixed(2)}</span>
                                                     <span>Limit: {limit.toFixed(2)}</span>

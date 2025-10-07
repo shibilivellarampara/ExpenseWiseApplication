@@ -124,6 +124,7 @@ export default function DashboardPage() {
         return Array.from(dataMap, ([name, value]) => ({ name, value }));
     }, [currentMonthExpenses, pieChartGrouping]);
 
+    const useCategoryColors = userProfile?.dashboardSettings?.useCategoryColorsInChart ?? true;
 
     return (
         <div className="w-full space-y-8">
@@ -153,13 +154,13 @@ export default function DashboardPage() {
                             ) : (
                                 <>
                                     <TabsContent value="week">
-                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="week" currencySymbol={currencySymbol}/>
+                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="week" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
                                     </TabsContent>
                                     <TabsContent value="month">
-                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="month" currencySymbol={currencySymbol}/>
+                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="month" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
                                     </TabsContent>
                                     <TabsContent value="year">
-                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="year" currencySymbol={currencySymbol}/>
+                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="year" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
                                     </TabsContent>
                                 </>
                             )}

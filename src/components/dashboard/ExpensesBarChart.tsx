@@ -13,9 +13,10 @@ interface ExpensesBarChartProps {
   allCategories: Category[];
   timeRange: 'week' | 'month' | 'year';
   currencySymbol: string;
+  useCategoryColors: boolean;
 }
 
-export function ExpensesBarChart({ expenses, allCategories, timeRange, currencySymbol }: ExpensesBarChartProps) {
+export function ExpensesBarChart({ expenses, allCategories, timeRange, currencySymbol, useCategoryColors }: ExpensesBarChartProps) {
     const expenseOnlyData = useMemo(() => expenses.filter(e => e.type === 'expense'), [expenses]);
 
     const categoryColors = useMemo(() => {
@@ -31,7 +32,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
         if (!expenseOnlyData.length) return [];
         
         const now = new Date();
-        const dataMap = new Map<string, { name: string; [key: string]: any }>();
+        const dataMap = new Map<string, { name: string; total: number, [key: string]: any }>();
         let intervals: { key: string; name: string }[] = [];
 
         // 1. Initialize intervals and dataMap
@@ -59,7 +60,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
         }
 
         intervals.forEach(interval => {
-            const initialData: { name: string; [key: string]: any } = { name: interval.name };
+            const initialData: { name: string; total: number; [key: string]: any } = { name: interval.name, total: 0 };
             allCategories.forEach(cat => {
                 initialData[cat.name] = 0;
             });
@@ -82,6 +83,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
             const dayData = dataMap.get(key);
             if (dayData) {
                 dayData[categoryName] = (dayData[categoryName] || 0) + expense.amount;
+                dayData.total = (dayData.total || 0) + expense.amount;
             }
         });
 
@@ -138,17 +140,28 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                     cursor={{ fill: 'hsl(var(--muted))' }}
                     formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
                 />
-                <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} />
-                {categoriesWithExpenses.map(categoryName => (
+                {useCategoryColors && <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} />}
+                
+                {useCategoryColors ? (
+                    categoriesWithExpenses.map(categoryName => (
+                        <Bar
+                            key={categoryName}
+                            dataKey={categoryName}
+                            stackId="a"
+                            fill={categoryColors.get(categoryName) || '#8884d8'}
+                            name={categoryName}
+                            radius={[4, 4, 0, 0]}
+                        />
+                    ))
+                ) : (
                     <Bar
-                        key={categoryName}
-                        dataKey={categoryName}
+                        dataKey="total"
                         stackId="a"
-                        fill={categoryColors.get(categoryName) || '#8884d8'}
-                        name={categoryName}
+                        fill="hsl(var(--primary))"
+                        name="Total Expenses"
                         radius={[4, 4, 0, 0]}
                     />
-                ))}
+                )}
             </BarChart>
         </ResponsiveContainer>
     );

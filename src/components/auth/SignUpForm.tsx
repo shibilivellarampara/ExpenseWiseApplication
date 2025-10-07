@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -74,7 +75,10 @@ export function SignUpForm() {
           isCategoryRequired: true,
           isDescriptionRequired: false,
           isTagRequired: false,
-        }
+        },
+        dashboardSettings: {
+          useCategoryColorsInChart: true,
+        },
       };
       batch.set(userDocRef, newUserProfile);
       

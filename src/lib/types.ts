@@ -14,6 +14,9 @@ export type UserProfile = {
     isTagRequired?: boolean;
     isCategoryRequired?: boolean;
   };
+  dashboardSettings?: {
+    useCategoryColorsInChart?: boolean;
+  };
   createdAt?: Timestamp;
   sharedExpenseIds?: string[];
 };

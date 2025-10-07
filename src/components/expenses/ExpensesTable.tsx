@@ -1,15 +1,15 @@
 
 'use client';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Pilcrow, TrendingUp, Edit, User as UserIcon, Minus, Plus, Wallet } from "lucide-react";
+import { Pilcrow, TrendingUp, Edit, User as UserIcon, Wallet } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "../ui/button";
@@ -54,7 +54,7 @@ const generateColorFromString = (str: string): { backgroundColor: string, textCo
 };
 
 
-function GroupedExpenseList({ expenses, currencySymbol, isShared }: { expenses: EnrichedExpense[], currencySymbol: string, isShared?: boolean }) {
+function GroupedExpenseList({ expenses, isShared }: { expenses: EnrichedExpense[], isShared?: boolean }) {
 
     const groupedExpenses = useMemo(() => {
         return expenses.reduce((acc, expense) => {
@@ -70,101 +70,105 @@ function GroupedExpenseList({ expenses, currencySymbol, isShared }: { expenses: 
     const sortedDates = useMemo(() => Object.keys(groupedExpenses).sort((a, b) => new Date(b).getTime() - new Date(a).getTime()), [groupedExpenses]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             {sortedDates.map(date => (
-                <div key={date} className="mb-4">
-                    <h3 className="text-sm font-semibold text-muted-foreground px-4 pb-2 border-b">
-                        {new Date(date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                    </h3>
-                    <div className="divide-y">
-                        {groupedExpenses[date].map(expense => {
-                            const categoryColor = expense.category ? generateColorFromString(expense.category.name) : null;
-                            const tagColor = expense.tag ? generateColorFromString(expense.tag.name) : null;
-                            return (
-                            <div key={expense.id} className="p-4 flex items-start gap-4 group">
-                                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center mt-1">
-                                    {expense.type === 'income' ?
-                                        <Wallet className="h-5 w-5 text-green-500" /> :
-                                        renderIcon(expense.category?.icon, 'h-5 w-5 text-gray-700')
-                                    }
-                                </div>
-                                <div className="flex-grow space-y-1">
-                                    <div className="font-semibold truncate">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
-                                    
-                                    <div className="text-xs text-muted-foreground flex items-center gap-4">
-                                        <div className="flex items-center gap-1">
-                                            {isShared && expense.user ? (
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger className="flex items-center gap-1">
-                                                             <Avatar className="h-4 w-4">
-                                                                <AvatarImage src={expense.user.photoURL || ''} alt={expense.user.name || 'user'}/>
-                                                                <AvatarFallback>{getInitials(expense.user.name)}</AvatarFallback>
-                                                            </Avatar>
-                                                            <span>{expense.user.name}</span>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p>Transaction added by {expense.user.name}</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
-                                            ) : (
-                                                <>
-                                                    {renderIcon(expense.account?.icon, "h-3 w-3")}
-                                                    <span>{expense.account?.name}</span>
-                                                </>
+                <Card key={date}>
+                    <CardHeader className="py-3 px-4 border-b">
+                        <CardTitle className="text-base">
+                             {new Date(date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="divide-y">
+                            {groupedExpenses[date].map(expense => {
+                                const categoryColor = expense.category ? generateColorFromString(expense.category.name) : null;
+                                const tagColor = expense.tag ? generateColorFromString(expense.tag.name) : null;
+                                return (
+                                <div key={expense.id} className="p-4 flex items-start gap-4 group">
+                                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center mt-1">
+                                        {expense.type === 'income' ?
+                                            <Wallet className="h-5 w-5 text-green-500" /> :
+                                            renderIcon(expense.category?.icon, 'h-5 w-5 text-gray-700')
+                                        }
+                                    </div>
+                                    <div className="flex-grow space-y-1">
+                                        <div className="font-semibold truncate">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
+                                        
+                                        <div className="text-xs text-muted-foreground flex items-center gap-4">
+                                            <div className="flex items-center gap-1">
+                                                {isShared && expense.user ? (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger className="flex items-center gap-1">
+                                                                <Avatar className="h-4 w-4">
+                                                                    <AvatarImage src={expense.user.photoURL || ''} alt={expense.user.name || 'user'}/>
+                                                                    <AvatarFallback>{getInitials(expense.user.name)}</AvatarFallback>
+                                                                </Avatar>
+                                                                <span>{expense.user.name}</span>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>Transaction added by {expense.user.name}</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                ) : (
+                                                    <>
+                                                        {renderIcon(expense.account?.icon, "h-3 w-3")}
+                                                        <span>{expense.account?.name}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                            <div>
+                                                {expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-2 pt-1">
+                                            {expense.category && categoryColor && (
+                                                <Badge 
+                                                    style={{ backgroundColor: categoryColor.backgroundColor, color: categoryColor.textColor }}
+                                                    className="flex items-center gap-1 border-transparent"
+                                                >
+                                                    {renderIcon(expense.category.icon, "h-3 w-3")}
+                                                    {expense.category.name}
+                                                </Badge>
+                                            )}
+                                            {expense.tag && tagColor && (
+                                                <Badge 
+                                                    style={{ backgroundColor: tagColor.backgroundColor, color: tagColor.textColor }}
+                                                    className="flex items-center gap-1 border-transparent"
+                                                >
+                                                    {renderIcon(expense.tag.icon, "h-3 w-3")}
+                                                    {expense.tag.name}
+                                                </Badge>
                                             )}
                                         </div>
-                                        <div>
-                                            {expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </div>
                                     </div>
-                                    
-                                     <div className="flex items-center gap-2 pt-1">
-                                        {expense.category && categoryColor && (
-                                            <Badge 
-                                                style={{ backgroundColor: categoryColor.backgroundColor, color: categoryColor.textColor }}
-                                                className="flex items-center gap-1 border-transparent"
-                                            >
-                                                {renderIcon(expense.category.icon, "h-3 w-3")}
-                                                {expense.category.name}
-                                            </Badge>
-                                        )}
-                                        {expense.tag && tagColor && (
-                                            <Badge 
-                                                style={{ backgroundColor: tagColor.backgroundColor, color: tagColor.textColor }}
-                                                className="flex items-center gap-1 border-transparent"
-                                            >
-                                                {renderIcon(expense.tag.icon, "h-3 w-3")}
-                                                {expense.tag.name}
-                                            </Badge>
+                                    <div className="text-right flex-shrink-0 w-32 flex flex-col items-end">
+                                        <div className="flex items-center">
+                                            <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId}>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                            </AddExpenseDialog>
+                                            <div className={cn(
+                                                'font-bold text-lg',
+                                                expense.type === 'income' ? 'text-green-600' : 'text-red-600'
+                                            )}>
+                                                {expense.type === 'income' ? '+' : ''}{expense.amount.toFixed(2)}
+                                            </div>
+                                        </div>
+                                        {!isShared && expense.balanceAfterTransaction !== undefined && (
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Balance: {expense.balanceAfterTransaction?.toFixed(2)}
+                                            </p>
                                         )}
                                     </div>
                                 </div>
-                                <div className="text-right flex-shrink-0 w-32 flex flex-col items-end">
-                                     <div className="flex items-center">
-                                        <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId}>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                        </AddExpenseDialog>
-                                        <div className={cn(
-                                            'font-bold text-lg',
-                                            expense.type === 'income' ? 'text-green-600' : 'text-red-600'
-                                        )}>
-                                            {expense.type === 'income' ? '+' : ''}{expense.amount.toFixed(2)}
-                                        </div>
-                                     </div>
-                                    {!isShared && expense.balanceAfterTransaction !== undefined && (
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            Balance: {expense.balanceAfterTransaction?.toFixed(2)}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        )})}
-                    </div>
-                </div>
+                            )})}
+                        </div>
+                    </CardContent>
+                </Card>
             ))}
         </div>
     )
@@ -175,19 +179,19 @@ export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTablePr
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-  const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-             <div key={i} className="space-y-4">
-                <Skeleton className="h-5 w-1/3" />
-                <div className="space-y-2">
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+                <CardHeader>
+                    <Skeleton className="h-5 w-1/3" />
+                </CardHeader>
+                <CardContent className="space-y-2">
                     {Array.from({length: 2}).map((_, j) => (
-                         <div key={j} className="p-4 flex items-center gap-4">
-                             <Skeleton className="w-10 h-10 rounded-full" />
+                        <div key={j} className="p-4 flex items-center gap-4">
+                            <Skeleton className="w-10 h-10 rounded-full" />
                             <div className="flex-grow grid grid-cols-2 gap-2">
                                 <Skeleton className="h-5 w-3/4" />
                                 <Skeleton className="h-5 w-1/2 ml-auto" />
@@ -196,11 +200,10 @@ export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTablePr
                             </div>
                         </div>
                     ))}
-                </div>
-             </div>
-          ))}
-        </CardContent>
-      </Card>
+                </CardContent>
+            </Card>
+        ))}
+      </div>
     )
   }
 
@@ -217,11 +220,5 @@ export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTablePr
     );
   }
 
-  return (
-    <Card>
-        <CardContent className="p-0">
-            <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} isShared={isShared} />
-        </CardContent>
-    </Card>
-  )
+  return <GroupedExpenseList expenses={expenses} isShared={isShared} />;
 }

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -50,6 +51,13 @@ export function CategorySettings() {
 
     const handleRemoveItem = async (itemId: string) => {
         if (!user || !firestore) return;
+
+        const itemToRemove = categories?.find(i => i.id === itemId);
+        if (itemToRemove?.name === 'Credit Limit Upgrade') {
+            toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'The "Credit Limit Upgrade" category is a system category and cannot be removed.' });
+            return;
+        }
+
         setIsSaving(true);
         try {
             const batch = writeBatch(firestore);
@@ -66,6 +74,14 @@ export function CategorySettings() {
 
     const handleSaveEdit = async () => {
         if (!editingItem || !user || !firestore) return;
+
+        const originalItem = categories?.find(i => i.id === editingItem.id);
+        if (originalItem?.name === 'Credit Limit Upgrade') {
+            toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'The "Credit Limit Upgrade" category is a system category and cannot be edited.' });
+            setEditingItem(null);
+            return;
+        }
+
         setIsSaving(true);
         try {
             const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
@@ -163,3 +179,5 @@ export function CategorySettings() {
         </Card>
     );
 }
+
+    

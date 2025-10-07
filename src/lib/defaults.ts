@@ -7,6 +7,7 @@ export const defaultCategories = [
   { name: 'Utilities', icon: 'Receipt' },
   { name: 'Entertainment', icon: 'PartyPopper' },
   { name: 'Health', icon: 'HeartPulse' },
+  { name: 'Credit Limit Upgrade', icon: 'TrendingUp' },
   { name: 'Other', icon: 'MoreHorizontal' },
 ];
 
@@ -24,7 +25,6 @@ export const defaultTags = [
   { name: 'Reimbursable', icon: 'Undo2' },
   { name: 'Gift', icon: 'Gift' },
   { name: 'Subscription', icon: 'Repeat' },
-  { name: 'Credit Limit Upgrade', icon: 'TrendingUp' },
 ];
 
 // Available icons for categories
@@ -44,3 +44,5 @@ export const defaultPaymentMethods = [
   { name: 'UPI', icon: 'IndianRupee' },
   { name: 'Bank Transfer', icon: 'Landmark' },
 ];
+
+    

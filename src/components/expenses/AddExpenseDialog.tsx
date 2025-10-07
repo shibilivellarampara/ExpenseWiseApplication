@@ -551,7 +551,7 @@ function useExpenseForm(
     }, [expenseToEdit, userProfile, isEditMode, initialType]);
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
-        if (!firestore || !user || !tags || !accounts) {
+        if (!firestore || !user || !categories || !accounts) {
             toast({ variant: 'destructive', title: 'Error', description: 'Required data is not loaded.' });
             return false;
         }
@@ -561,8 +561,8 @@ function useExpenseForm(
             const batch = writeBatch(firestore);
             const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
 
-            const selectedTag = tags.find(t => t.id === values.tagId);
-            const isCreditLimitUpgrade = selectedTag?.name === 'Credit Limit Upgrade';
+            const selectedCategory = categories.find(c => c.id === values.categoryId);
+            const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
             const selectedAccount = accounts.find(a => a.id === values.accountId);
 
             const isAddOperation = !isEditMode;
@@ -602,9 +602,9 @@ function useExpenseForm(
             
             // --- Adjust Account Balance (skip for shared expenses and credit limit upgrades) ---
             if (!sharedExpenseId && !isCreditLimitUpgrade) {
-                const getAmountChange = (type: 'income' | 'expense', amount: number) => {
+                const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
                      // For credit cards, 'expense' increases balance (debt), 'income' (payment) decreases it.
-                     if (selectedAccount?.type === 'credit_card') {
+                     if (accountType === 'credit_card') {
                         return type === 'expense' ? amount : -amount;
                      }
                      // For other accounts, 'income' increases balance, 'expense' decreases it.
@@ -613,16 +613,21 @@ function useExpenseForm(
 
                 if (isAddOperation) {
                      const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                     const amountToUpdate = getAmountChange(values.type, values.amount);
+                     const amountToUpdate = getAmountChange(values.type, values.amount, selectedAccount!.type);
                      batch.update(accountRef, { balance: increment(amountToUpdate) });
                 } else if (expenseToEdit) {
-                    const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
-                    const oldAmountReversal = -getAmountChange(expenseToEdit.type, expenseToEdit.amount);
-                    batch.update(oldAccountRef, { balance: increment(oldAmountReversal) });
+                    const oldAccount = accounts.find(a => a.id === expenseToEdit.accountId);
+                    if (oldAccount) {
+                        const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
+                        const oldAmountReversal = -getAmountChange(expenseToEdit.type, expenseToEdit.amount, oldAccount.type);
+                        batch.update(oldAccountRef, { balance: increment(oldAmountReversal) });
+                    }
 
-                    const newAccountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                    const newAmount = getAmountChange(values.type, values.amount);
-                    batch.update(newAccountRef, { balance: increment(newAmount) });
+                    if (selectedAccount) {
+                         const newAccountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+                         const newAmount = getAmountChange(values.type, values.amount, selectedAccount.type);
+                         batch.update(newAccountRef, { balance: increment(newAmount) });
+                    }
                 }
             }
 
@@ -672,7 +677,7 @@ function useExpenseForm(
     });
 
     const handleDelete = async () => {
-        if (!firestore || !user || !isEditMode || !expenseToEdit || !accounts) {
+        if (!firestore || !user || !isEditMode || !expenseToEdit || !accounts || !categories) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction.' });
             return;
         }
@@ -681,8 +686,9 @@ function useExpenseForm(
             const batch = writeBatch(firestore);
             const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
             const expenseRef = doc(firestore, collectionPath, expenseToEdit.id);
-            const selectedTag = tags?.find(t => t.id === expenseToEdit.tagId);
-            const isCreditLimitUpgrade = selectedTag?.name === 'Credit Limit Upgrade';
+
+            const selectedCategory = categories.find(c => c.id === expenseToEdit.categoryId);
+            const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
             
             // Delete the expense document
             batch.delete(expenseRef);
@@ -695,13 +701,15 @@ function useExpenseForm(
                 if (isCreditLimitUpgrade) {
                      batch.update(accountRef, { limit: increment(-expenseToEdit.amount) });
                 } else {
-                    let amountToRevert: number;
-                    if (selectedAccount?.type === 'credit_card') {
-                        amountToRevert = expenseToEdit.type === 'expense' ? -expenseToEdit.amount : expenseToEdit.amount;
-                    } else {
-                        amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
+                    if (selectedAccount) {
+                        let amountToRevert: number;
+                        if (selectedAccount.type === 'credit_card') {
+                            amountToRevert = expenseToEdit.type === 'expense' ? -expenseToEdit.amount : expenseToEdit.amount;
+                        } else {
+                            amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
+                        }
+                        batch.update(accountRef, { balance: increment(amountToRevert) });
                     }
-                    batch.update(accountRef, { balance: increment(amountToRevert) });
                 }
             }
 
@@ -731,6 +739,8 @@ function useExpenseForm(
       tags: tags || []
     };
 }
+
+    
 
     
 

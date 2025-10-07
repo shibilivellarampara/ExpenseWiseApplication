@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -51,12 +52,6 @@ export function TagSettings() {
 
     const handleRemoveItem = async (itemId: string) => {
         if (!user || !firestore) return;
-        
-        const itemToRemove = items?.find(i => i.id === itemId);
-        if (itemToRemove?.name === 'Credit Limit Upgrade') {
-            toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'The "Credit Limit Upgrade" tag is a system tag and cannot be removed.' });
-            return;
-        }
 
         setIsSaving(true);
         try {
@@ -73,13 +68,6 @@ export function TagSettings() {
     const handleSaveEdit = async () => {
         if (!editingItem || !user || !firestore) return;
         
-        const originalItem = items?.find(i => i.id === editingItem.id);
-        if (originalItem?.name === 'Credit Limit Upgrade') {
-            toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'The "Credit Limit Upgrade" tag is a system tag and cannot be edited.' });
-            setEditingItem(null);
-            return;
-        }
-
         setIsSaving(true);
         try {
             const itemRef = doc(firestore, `users/${user.uid}/tags`, editingItem.id);
@@ -177,3 +165,5 @@ export function TagSettings() {
         </Card>
     );
 }
+
+    

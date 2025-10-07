@@ -360,16 +360,15 @@ function DesktopAddExpenseDialog({
                     <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} transactionType={transactionType} />
                 </div>
                 <DialogFooter>
-                     <Button type="button" variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
                      {!isEditMode && (
-                         <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading}>
+                         <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline">
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save and Add New
+                            Save and Add
                         </Button>
                      )}
                      <Button type="submit" form={formId} disabled={isLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {isEditMode ? 'Save Changes' : 'Save Transaction'}
+                        {isEditMode ? 'Save Changes' : 'Save'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -409,7 +408,7 @@ function MobileAddExpenseDrawer({
                     {!isEditMode && (
                          <Button variant="secondary" className="flex-1" onClick={onSaveAndNewSubmit} disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Add New
+                            Save and Add
                         </Button>
                     )}
                     <Button type="submit" form={formId} className="flex-1" disabled={isLoading}>

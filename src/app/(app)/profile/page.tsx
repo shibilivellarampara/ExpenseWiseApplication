@@ -5,8 +5,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ExpenseFieldSettings } from "@/components/profile/ExpenseFieldSettings";
 import { CategorySettings } from "@/components/profile/CategorySettings";
-import { TagSettings } from "@/components/profile/TagSettings";
+import { TagSettings }from "@/components/profile/TagSettings";
 import { DashboardSettings } from "@/components/profile/DashboardSettings";
+import { DataManagementSettings } from "@/components/profile/DataManagementSettings";
 
 export default function ProfilePage() {
     return (
@@ -19,6 +20,7 @@ export default function ProfilePage() {
                 {/* Left Column */}
                 <div className="lg:col-span-1 space-y-8">
                     <ProfileForm />
+                    <DataManagementSettings />
                 </div>
 
                 {/* Right Column */}

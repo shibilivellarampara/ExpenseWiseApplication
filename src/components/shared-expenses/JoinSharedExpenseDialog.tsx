@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useUser } from '@/firebase';
+import { useFirestore, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, where, getDocs, writeBatch, arrayUnion } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { SharedExpense } from '@/lib/types';
@@ -43,41 +43,53 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
             return;
         }
 
-        try {
-            // Find the shared expense with the given joinId
-            const spacesRef = collection(firestore, 'shared_expenses');
-            const q = query(spacesRef, where('joinId', '==', values.joinId.toUpperCase()));
-            const querySnapshot = await getDocs(q);
+        // Find the shared expense with the given joinId
+        const spacesRef = collection(firestore, 'shared_expenses');
+        const q = query(spacesRef, where('joinId', '==', values.joinId.toUpperCase()));
+        const querySnapshot = await getDocs(q);
 
-            if (querySnapshot.empty) {
-                throw new Error('No shared space found with this Join ID. Please check the code and try again.');
-            }
+        if (querySnapshot.empty) {
+            toast({ variant: 'destructive', title: 'Failed to Join', description: 'No shared space found with this Join ID. Please check the code and try again.' });
+            setIsLoading(false);
+            return;
+        }
 
-            const spaceDoc = querySnapshot.docs[0];
-            const spaceData = spaceDoc.data() as SharedExpense;
+        const spaceDoc = querySnapshot.docs[0];
+        const spaceData = spaceDoc.data() as SharedExpense;
 
-            if (spaceData.memberIds.includes(user.uid)) {
-                toast({ title: "Already a member", description: `You are already a member of "${spaceData.name}".` });
-                setOpen(false);
-                form.reset();
-                return;
-            }
-
-            // Add the current user's ID to the memberIds array
-            const batch = writeBatch(firestore);
-            batch.update(spaceDoc.ref, {
-                memberIds: arrayUnion(user.uid),
-            });
-            await batch.commit();
-
-            toast({ title: 'Successfully Joined!', description: `You are now a member of "${spaceData.name}".` });
+        if (spaceData.memberIds.includes(user.uid)) {
+            toast({ title: "Already a member", description: `You are already a member of "${spaceData.name}".` });
             setOpen(false);
             form.reset();
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Failed to Join', description: error.message });
-        } finally {
             setIsLoading(false);
+            return;
         }
+
+        // Add the current user's ID to the memberIds array
+        const batch = writeBatch(firestore);
+        const updatedMemberIds = arrayUnion(user.uid);
+        batch.update(spaceDoc.ref, {
+            memberIds: updatedMemberIds,
+        });
+
+        // Use non-blocking error handling
+        batch.commit()
+            .then(() => {
+                toast({ title: 'Successfully Joined!', description: `You are now a member of "${spaceData.name}".` });
+                setOpen(false);
+                form.reset();
+            })
+            .catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: spaceDoc.ref.path,
+                    operation: 'update',
+                    requestResourceData: { memberIds: '(arrayUnion)' } // Represent the operation
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
     };
 
     return (

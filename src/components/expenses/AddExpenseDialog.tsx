@@ -270,12 +270,17 @@ function ExpenseForm({
 
     const selectedTagsText = useMemo(() => {
         if (selectedTagIds.length === 0) return 'Select tags';
-        if (selectedTagIds.length === 1) {
-            const tag = tags.find(t => t.id === selectedTagIds[0]);
-            return tag?.name || '1 selected';
-        }
-        return `${selectedTagIds.length} tags selected`;
+
+        const selectedNames = selectedTagIds.map(id => {
+            const tag = tags.find(t => t.id === id);
+            return tag?.name;
+        }).filter(Boolean);
+
+        if (selectedNames.length === 0) return 'Select tags';
+
+        return selectedNames.join(', ');
     }, [selectedTagIds, tags]);
+
 
     return (
         <Form {...form}>
@@ -414,7 +419,7 @@ function ExpenseForm({
                             <div className="flex gap-2">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-start font-normal">
+                                        <Button variant="outline" className="w-full justify-start font-normal truncate">
                                             {selectedTagsText}
                                         </Button>
                                     </DropdownMenuTrigger>

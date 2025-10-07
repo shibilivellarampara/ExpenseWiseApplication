@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -11,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, query, where, getDocs, writeBatch, arrayUnion, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch, arrayUnion } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { SharedExpense } from '@/lib/types';
 
@@ -35,7 +34,7 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
         defaultValues: { joinId: '' },
     });
 
-    const onSubmit = async (values: z.infer<typeof joinSchema>) => {
+    const onSubmit = (values: z.infer<typeof joinSchema>) => {
         setIsLoading(true);
         if (!firestore || !user) {
             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to join a space.' });
@@ -44,12 +43,10 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
         }
 
         const spacesRef = collection(firestore, 'shared_expenses');
-        const q = query(spacesRef, where('joinId', '==', values.joinId.toUpperCase()));
-        let querySnapshot: QuerySnapshot<DocumentData> | null = null;
+        const joinIdUpper = values.joinId.toUpperCase();
+        const q = query(spacesRef, where('joinId', '==', joinIdUpper));
         
-        try {
-            querySnapshot = await getDocs(q);
-
+        getDocs(q).then(querySnapshot => {
             if (querySnapshot.empty) {
                 toast({ variant: 'destructive', title: 'Failed to Join', description: 'No shared space found with this Join ID. Please check the code and try again.' });
                 setIsLoading(false);
@@ -72,32 +69,30 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
                 memberIds: arrayUnion(user.uid),
             });
 
-            await batch.commit();
-
-            toast({ title: 'Successfully Joined!', description: `You are now a member of "${spaceData.name}".` });
-            setOpen(false);
-            form.reset();
-
-        } catch (error: any) {
-            let permissionError;
-            // Determine if the error is from the query or the commit
-            if (error.code === 'permission-denied' && (error.message.includes('list') || querySnapshot === null)) {
-                 permissionError = new FirestorePermissionError({
-                    path: 'shared_expenses',
-                    operation: 'list',
-                    requestResourceData: { where: `joinId == ${values.joinId.toUpperCase()}` }
-                });
-            } else {
-                 permissionError = new FirestorePermissionError({
-                    path: `shared_expenses/${querySnapshot?.docs[0]?.id || '(unknown)'}`,
+            batch.commit().then(() => {
+                toast({ title: 'Successfully Joined!', description: `You are now a member of "${spaceData.name}".` });
+                setOpen(false);
+                form.reset();
+                setIsLoading(false);
+            }).catch(commitError => {
+                 const permissionError = new FirestorePermissionError({
+                    path: `shared_expenses/${spaceDoc.id}`,
                     operation: 'update',
                     requestResourceData: { memberIds: `(arrayUnion: ${user.uid})` }
                 });
-            }
+                errorEmitter.emit('permission-error', permissionError);
+                setIsLoading(false);
+            });
+
+        }).catch(queryError => {
+            const permissionError = new FirestorePermissionError({
+                path: 'shared_expenses',
+                operation: 'list',
+                requestResourceData: { where: `joinId == ${joinIdUpper}` }
+            });
             errorEmitter.emit('permission-error', permissionError);
-        } finally {
             setIsLoading(false);
-        }
+        });
     };
 
     return (

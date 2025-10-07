@@ -313,27 +313,35 @@ function ExpenseForm({
                         </FormItem>
                     )}
                     />
-                 <FormField
+                
+                <FormField
                     control={form.control}
-                    name="description"
+                    name="accountId"
                     render={({ field }) => (
                         <FormItem>
-                            <div className="flex justify-between items-center">
-                                <FormLabel>
-                                    Description {isDescriptionRequired ? '' : '(Optional)'}
-                                </FormLabel>
-                                <Button type="button" variant="ghost" size="sm" onClick={handleSuggestion} disabled={isSuggesting}>
-                                    {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                                    <span className="sr-only">Get Suggestions</span>
-                                </Button>
-                            </div>
-                        <FormControl>
-                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
-                        </FormControl>
+                        <FormLabel>Account</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select an account" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {activeAccounts?.map(acc => (
+                                <SelectItem key={acc.id} value={acc.id}>
+                                    <div className="flex items-center">
+                                        {renderIcon(acc.icon)}
+                                        {acc.name}
+                                    </div>
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                         </FormItem>
                     )}
-                />
+                />    
+
                 <FormField
                     control={form.control}
                     name="categoryId"
@@ -376,33 +384,6 @@ function ExpenseForm({
                         </FormItem>
                     )}
                 />
-                <FormField
-                    control={form.control}
-                    name="accountId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Account</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select an account" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {activeAccounts?.map(acc => (
-                                <SelectItem key={acc.id} value={acc.id}>
-                                    <div className="flex items-center">
-                                        {renderIcon(acc.icon)}
-                                        {acc.name}
-                                    </div>
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />    
                 
                 <FormField
                     control={form.control}
@@ -446,6 +427,28 @@ function ExpenseForm({
                                     multiValue: (base) => ({ ...base, background: 'hsl(var(--muted))' }),
                                 }}
                             />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                            <div className="flex justify-between items-center">
+                                <FormLabel>
+                                    Description {isDescriptionRequired ? '' : '(Optional)'}
+                                </FormLabel>
+                                <Button type="button" variant="ghost" size="sm" onClick={handleSuggestion} disabled={isSuggesting}>
+                                    {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                                    <span className="sr-only">Get Suggestions</span>
+                                </Button>
+                            </div>
+                        <FormControl>
+                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -748,8 +751,10 @@ function useExpenseForm(
             if (!sharedExpenseId && !isCreditLimitUpgrade) {
                 const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
                      if (accountType === 'credit_card') {
+                        // For credit cards, 'expense' increases balance (debt), 'income' (payment) decreases it.
                         return type === 'expense' ? amount : -amount;
                      }
+                     // For other accounts, 'income' increases balance, 'expense' decreases it.
                      return type === 'income' ? amount : -amount;
                 };
 

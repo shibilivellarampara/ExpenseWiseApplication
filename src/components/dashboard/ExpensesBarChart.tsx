@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { EnrichedExpense, Category } from '@/lib/types';
 import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, startOfYear, endOfYear } from 'date-fns';
 import { BarChart as BarChartIcon } from 'lucide-react';
-import { generateColorFromString } from '@/lib/utils';
+import { COLORS } from '@/lib/colors';
 
 interface ExpensesBarChartProps {
   expenses: EnrichedExpense[];
@@ -17,6 +17,15 @@ interface ExpensesBarChartProps {
 
 export function ExpensesBarChart({ expenses, allCategories, timeRange, currencySymbol }: ExpensesBarChartProps) {
     const expenseOnlyData = useMemo(() => expenses.filter(e => e.type === 'expense'), [expenses]);
+
+    const categoryColors = useMemo(() => {
+        const colors = new Map<string, string>();
+        allCategories.forEach((cat, index) => {
+            colors.set(cat.name, COLORS[index % COLORS.length]);
+        });
+        colors.set('Uncategorized', '#B0BEC5'); // A neutral color for uncategorized
+        return colors;
+    }, [allCategories]);
 
     const chartData = useMemo(() => {
         if (!expenseOnlyData.length) return [];
@@ -79,22 +88,17 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
         return Array.from(dataMap.values());
     }, [expenseOnlyData, allCategories, timeRange]);
 
-    const categoryColors = useMemo(() => {
-        const colors = new Map<string, string>();
-        allCategories.forEach(cat => {
-            colors.set(cat.name, generateColorFromString(cat.name).backgroundColor);
-        });
-        colors.set('Uncategorized', '#B0BEC5'); // A neutral color for uncategorized
-        return colors;
-    }, [allCategories]);
-
     const categoriesWithExpenses = useMemo(() => {
         const activeCategories = new Set<string>();
         expenseOnlyData.forEach(e => {
             activeCategories.add(e.category?.name || 'Uncategorized');
         });
-        return Array.from(activeCategories);
-    }, [expenseOnlyData]);
+        // Sort categories to match the legend order with allCategories
+        return allCategories
+            .map(c => c.name)
+            .filter(name => activeCategories.has(name))
+            .concat(activeCategories.has('Uncategorized') ? ['Uncategorized'] : []);
+    }, [expenseOnlyData, allCategories]);
 
     if (!expenseOnlyData.length) {
         return (

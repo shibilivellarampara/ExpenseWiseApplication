@@ -4,6 +4,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
 import { useMemo, useState } from 'react';
 import { PieChart as PieChartIcon } from 'lucide-react';
+import { COLORS } from '@/lib/colors';
 
 interface PieChartDataPoint {
   name: string;
@@ -13,8 +14,6 @@ interface CategoryPieChartProps {
   data: PieChartDataPoint[];
   currencySymbol: string;
 }
-
-const COLORS = ['#64B5F6', '#81C784', '#FFB74D', '#E57373', '#9575CD', '#4DB6AC', '#FF8A65', '#A1887F', '#F06292'];
 
 const renderActiveShape = (props: any, currencySymbol: string) => {
   const RADIAN = Math.PI / 180;

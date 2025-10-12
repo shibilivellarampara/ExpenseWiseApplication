@@ -19,14 +19,15 @@ import {
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, Palette } from 'lucide-react';
+import { LogOut, User, Palette, Sun, Moon, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
-import { ThemeToggle } from '../ThemeToggle';
+import { useTheme } from 'next-themes';
 
 export function UserNav() {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
+  const { setTheme } = useTheme();
 
   const handleSignOut = async () => {
     if (auth) {
@@ -74,7 +75,18 @@ export function UserNav() {
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
-                <ThemeToggle />
+                <DropdownMenuItem onClick={() => setTheme("light")}>
+                  <Sun className="mr-2 h-4 w-4" />
+                  <span>Light</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                  <Moon className="mr-2 h-4 w-4" />
+                  <span>Dark</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("chat")}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span>Chat</span>
+                </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>

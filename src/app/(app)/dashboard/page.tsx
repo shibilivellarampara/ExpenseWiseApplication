@@ -165,7 +165,14 @@ export default function DashboardPage() {
 
     return (
         <div className="w-full space-y-8">
-            <PageHeader title="Welcome to your Dashboard" description="Here's a summary of your financial activity." />
+            <PageHeader title="Welcome to your Dashboard" description="Here's a summary of your financial activity.">
+                <AddAccountSheet>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Account
+                    </Button>
+                </AddAccountSheet>
+            </PageHeader>
       
              {!isLoading && accounts?.length === 0 && (
                 <WelcomeCard />

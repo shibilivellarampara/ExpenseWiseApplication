@@ -10,19 +10,12 @@ import {
   CircleUser,
   ArrowRightLeft,
   Briefcase,
-  LogOut,
-  PanelLeft,
 } from 'lucide-react';
 import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
-import { useAuth } from '@/firebase';
-import { signOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
 import { UserNav } from '../auth/UserNav';
 import { Separator } from '../ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
-
 
 const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
@@ -32,7 +25,6 @@ const navItems = [
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
   { href: '/profile', icon: <CircleUser className="h-5 w-5" />, label: 'Profile' },
 ];
-
 
 const NavLink = ({ href, icon, label, isActive }: { href: string, icon: React.ReactNode, label: string, isActive: boolean }) => (
   <Link href={href} passHref>
@@ -54,7 +46,7 @@ const NavLink = ({ href, icon, label, isActive }: { href: string, icon: React.Re
   </Link>
 );
 
-function SidebarContent() {
+export function SidebarContent() {
     const pathname = usePathname();
     return (
         <div className="flex h-full flex-col bg-sidebar-background p-4 text-sidebar-foreground">
@@ -80,32 +72,10 @@ function SidebarContent() {
     )
 }
 
-
 export function AppSidebar() {
   return (
-    <>
-        {/* Mobile Sidebar */}
-        <div className="md:hidden">
-             <Sheet>
-                <SheetTrigger asChild>
-                    <Button size="icon" variant="ghost" className="fixed top-2.5 left-4 z-40">
-                        <PanelLeft />
-                        <span className="sr-only">Toggle Menu</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64">
-                    <SheetHeader>
-                        <SheetTitle className="sr-only">Main Menu</SheetTitle>
-                    </SheetHeader>
-                    <SidebarContent />
-                </SheetContent>
-            </Sheet>
-        </div>
-        
-        {/* Desktop Sidebar */}
-        <aside className="w-56 flex-shrink-0 hidden md:block">
-            <SidebarContent />
-        </aside>
-    </>
+    <aside className="w-56 flex-shrink-0 hidden md:block">
+        <SidebarContent />
+    </aside>
   );
 }

@@ -130,9 +130,24 @@ function usePathname() {
     );
     React.useEffect(() => {
         if (typeof window === 'undefined') return;
-        const cb = () => setPath(window.location.pathname);
-        window.addEventListener('popstate', cb);
-        return () => window.removeEventListener('popstate', cb);
+
+        const onLocationChange = () => {
+            setPath(window.location.pathname);
+        };
+
+        window.addEventListener('popstate', onLocationChange);
+        
+        // Also listen for pushState changes, which Next.js uses for navigation
+        const originalPushState = history.pushState;
+        history.pushState = function(...args) {
+            originalPushState.apply(this, args);
+            onLocationChange();
+        };
+
+        return () => {
+            window.removeEventListener('popstate', onLocationChange);
+            history.pushState = originalPushState; // Restore original
+        };
     }, []);
     return path;
 }

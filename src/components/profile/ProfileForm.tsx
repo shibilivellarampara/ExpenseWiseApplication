@@ -356,7 +356,7 @@ export function ProfileForm() {
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                          <div className="flex items-center gap-2">
-                            <Input id="email" type="email" value={userProfile?.email || ''} disabled />
+                            <Input id="email" type="email" value={userProfile?.email || user?.email || ''} disabled />
                             <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
                                 <DialogTrigger asChild>
                                     <Button type="button" variant="outline">Edit</Button>

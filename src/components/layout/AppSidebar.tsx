@@ -38,7 +38,7 @@ const NavLink = ({ href, icon, label, isActive }: { href: string, icon: React.Re
       )}
     >
       {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>}
-      <div className="flex items-center gap-4">
+      <div className="flex w-full items-center gap-4">
         {icon}
         <span>{label}</span>
       </div>

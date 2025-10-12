@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +51,7 @@ export function ExpenseFieldSettings() {
                 <CollapsibleTrigger asChild>
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
                         <div>
-                            <CardTitle className="font-headline">Expense Fields</CardTitle>
+                            <h3 className="text-lg font-semibold font-headline">Expense Fields</h3>
                             <CardDescription>Customize which fields are required.</CardDescription>
                         </div>
                         <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />

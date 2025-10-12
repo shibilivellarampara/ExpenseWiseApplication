@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -90,7 +91,7 @@ export function TagSettings() {
                 <CollapsibleTrigger asChild>
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
                         <div>
-                            <CardTitle className="font-headline">Tags</CardTitle>
+                            <h3 className="text-lg font-semibold font-headline">Tags</h3>
                             <CardDescription>Manage your expense tags/labels.</CardDescription>
                         </div>
                         <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { updateProfile, RecaptchaVerifier, updatePhoneNumber, PhoneAuthProvider, updateEmail, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
@@ -24,6 +24,7 @@ import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { AvatarList } from "./Avatars";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 
 const currencies = ["USD", "EUR", "JPY", "GBP", "INR"];
 
@@ -32,6 +33,7 @@ export function ProfileForm() {
     const firestore = useFirestore();
     const storage = useStorage();
     const auth = useAuth();
+    const [isOpen, setIsOpen] = useState(true);
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
@@ -245,7 +247,7 @@ export function ProfileForm() {
         return (
             <Card>
                 <CardHeader>
-                  <CardTitle className="font-headline">Profile Details</CardTitle>
+                  <h3 className="text-lg font-semibold font-headline">Profile Details</h3>
                 </CardHeader>
                 <CardContent className="space-y-4 flex items-center justify-center py-10">
                     <Loader2 className="mx-auto animate-spin" />
@@ -256,11 +258,18 @@ export function ProfileForm() {
 
     return (
         <Card className="h-fit">
+            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
              <form onSubmit={handleProfileSubmit}>
-                <CardHeader>
-                    <CardTitle className="font-headline">Profile Details</CardTitle>
-                    <CardDescription>Update your personal information here.</CardDescription>
-                </CardHeader>
+                <CollapsibleTrigger asChild>
+                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                        <div>
+                            <h3 className="text-lg font-semibold font-headline">Profile Details</h3>
+                            <CardDescription>Update your personal information here.</CardDescription>
+                        </div>
+                        <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
+                    </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label>Profile Picture</Label>
@@ -411,6 +420,7 @@ export function ProfileForm() {
                         {isUploading ? 'Uploading...' : 'Save Changes'}
                     </Button>
                 </CardFooter>
+                </CollapsibleContent>
             </form>
              <Dialog open={showOtpDialog} onOpenChange={setShowOtpDialog}>
                 <DialogContent>
@@ -439,6 +449,7 @@ export function ProfileForm() {
                 </DialogContent>
             </Dialog>
             <div ref={recaptchaContainerRef}></div>
+            </Collapsible>
         </Card>
     );
 }

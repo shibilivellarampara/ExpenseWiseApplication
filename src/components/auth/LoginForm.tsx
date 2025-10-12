@@ -76,8 +76,8 @@ export function LoginForm() {
                 case 'auth/user-not-found':
                 case 'auth/wrong-password':
                 case 'auth/invalid-credential':
-                    title = "Wrong Credentials!";
-                    description = "Did you forget your password? Or maybe your secret handshake?";
+                    title = "Whoops!";
+                    description = "Hmm, that password isn't correct. Forgetting things a lot lately?";
                     break;
                 case 'auth/invalid-email':
                     title = "Is that an email?";

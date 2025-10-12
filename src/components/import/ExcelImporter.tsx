@@ -125,7 +125,8 @@ export function ExcelImporter() {
     
     const handleMappingChange = (field: keyof ColumnMapping, header: string) => {
         setTemplate('custom');
-        setMapping(prev => ({ ...prev, [field]: header }));
+        const value = header === 'unmapped' ? null : header;
+        setMapping(prev => ({ ...prev, [field]: value }));
     };
 
     const processedData = useMemo(() => {
@@ -231,12 +232,12 @@ export function ExcelImporter() {
     const MappingField = ({ field, label }: { field: keyof ColumnMapping, label: string }) => (
          <div className="grid grid-cols-2 items-center gap-4">
             <p className="font-medium">{label}</p>
-            <Select value={mapping[field] || ''} onValueChange={(value) => handleMappingChange(field, value)}>
+            <Select value={mapping[field] || 'unmapped'} onValueChange={(value) => handleMappingChange(field, value)}>
                 <SelectTrigger>
                     <SelectValue placeholder="Select column..." />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">-- Not Mapped --</SelectItem>
+                    <SelectItem value="unmapped">-- Not Mapped --</SelectItem>
                     {headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
                 </SelectContent>
             </Select>

@@ -177,8 +177,6 @@ export function SignUpForm() {
                         placeholder="Enter phone number"
                         value={field.value || ""}
                         onChange={field.onChange}
-                        className="flex"
-                        inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />)}
                     />
                 </FormControl>
                 <FormMessage />

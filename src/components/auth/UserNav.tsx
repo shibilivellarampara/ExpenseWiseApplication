@@ -12,11 +12,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Moon, Sun, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 
@@ -41,8 +45,11 @@ export function UserNav() {
   };
 
   const pathname = usePathname();
+  // Check if we are on a main application page (not marketing or auth pages)
   const isAppPage = !pathname.startsWith('/login') && !pathname.startsWith('/signup') && pathname !== '/';
   
+  // In the main app layout, UserNav is in the sidebar. We want a different style for the header.
+  // This logic applies the big button style for the sidebar, and the small avatar style for the header.
   const buttonClass = isAppPage 
     ? "w-full justify-start text-base h-14 px-4 relative text-sidebar-muted-foreground hover:bg-sidebar-active/20 hover:text-sidebar-foreground" 
     : "relative h-10 w-10 rounded-full";
@@ -52,10 +59,10 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className={buttonClass}>
           <div className="flex items-center gap-4">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
-              <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-            </Avatar>
+             <Avatar className="h-10 w-10">
+                <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
+                <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+             </Avatar>
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -74,6 +81,29 @@ export function UserNav() {
               <span>Profile</span>
             </Link>
           </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span>Toggle theme</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onClick={() => setTheme("light")}>
+                  <Sun className="mr-2 h-4 w-4" />
+                  <span>Light</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                  <Moon className="mr-2 h-4 w-4" />
+                  <span>Dark</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("chat")}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span>Chat</span>
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>

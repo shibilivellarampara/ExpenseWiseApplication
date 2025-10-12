@@ -19,9 +19,10 @@ import {
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, Palette, Sun, Moon, MessageSquare } from 'lucide-react';
+import { LogOut, User, Palette, Sun, Moon, MessageSquare, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import { cn } from '@/lib/utils';
 
 export function UserNav() {
   const { user } = useUser();
@@ -43,15 +44,35 @@ export function UserNav() {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
+  const isAppPage = usePathname().startsWith('/d'); // Cheap check if we are in the app
+  const buttonClass = isAppPage 
+    ? "w-full justify-start text-base h-14 px-4 relative text-sidebar-muted-foreground hover:bg-sidebar-active/20 hover:text-sidebar-foreground" 
+    : "relative h-10 w-10 rounded-full";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
-            <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-          </Avatar>
-        </Button>
+        {isAppPage ? (
+          <Button variant="ghost" className={buttonClass}>
+            <div className="flex items-center gap-4">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
+                <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col items-start">
+                  <span className="font-medium text-sidebar-foreground">{user?.displayName}</span>
+                  <span className="text-xs">{user?.email}</span>
+              </div>
+            </div>
+          </Button>
+        ) : (
+           <Button variant="ghost" className={buttonClass}>
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
+              <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+            </Avatar>
+          </Button>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
@@ -83,7 +104,7 @@ export function UserNav() {
                   <Moon className="mr-2 h-4 w-4" />
                   <span>Dark</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("chat")}>
+                 <DropdownMenuItem onClick={() => setTheme("chat")}>
                   <MessageSquare className="mr-2 h-4 w-4" />
                   <span>Chat</span>
                 </DropdownMenuItem>
@@ -99,4 +120,18 @@ export function UserNav() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+// Custom hook to get the pathname
+function usePathname() {
+    const [path, setPath] = React.useState(
+        typeof window !== 'undefined' ? window.location.pathname : ''
+    );
+    React.useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const cb = () => setPath(window.location.pathname);
+        window.addEventListener('popstate', cb);
+        return () => window.removeEventListener('popstate', cb);
+    }, []);
+    return path;
 }

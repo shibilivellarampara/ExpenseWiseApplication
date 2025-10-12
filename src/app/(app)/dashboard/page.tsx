@@ -165,86 +165,83 @@ export default function DashboardPage() {
 
     return (
         <div className="w-full space-y-8">
-            <PageHeader title="Welcome to your Dashboard" description="Here's a summary of your financial activity.">
-                <AddAccountSheet>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Account
-                    </Button>
-                </AddAccountSheet>
-            </PageHeader>
+            <PageHeader title="Welcome to your Dashboard" description="Here's a summary of your financial activity." />
       
              {!isLoading && accounts?.length === 0 && (
                 <WelcomeCard />
             )}
 
-            <DashboardStats 
-              currentMonthExpenses={currentMonthExpenses} 
-              lastMonthExpenses={lastMonthExpenses}
-              isLoading={isLoading}
-              currency={userProfile?.defaultCurrency}
-            />
+            {accounts && accounts.length > 0 && (
+                <>
+                    <DashboardStats 
+                        currentMonthExpenses={currentMonthExpenses} 
+                        lastMonthExpenses={lastMonthExpenses}
+                        isLoading={isLoading}
+                        currency={userProfile?.defaultCurrency}
+                    />
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="lg:col-span-4">
-                     <CardHeader>
-                        <CardTitle className="font-headline">Expenses Overview</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as 'week' | 'month' | 'year')}>
-                            <TabsList className="grid w-full grid-cols-3 mb-4">
-                                <TabsTrigger value="week">This Week</TabsTrigger>
-                                <TabsTrigger value="month">This Month</TabsTrigger>
-                                <TabsTrigger value="year">This Year</TabsTrigger>
-                            </TabsList>
-                             {isLoading ? (
-                                <Skeleton className="h-[350px] w-full" />
-                            ) : (
-                                <>
-                                    <TabsContent value="week">
-                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="week" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
-                                    </TabsContent>
-                                    <TabsContent value="month">
-                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="month" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
-                                    </TabsContent>
-                                    <TabsContent value="year">
-                                        <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="year" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
-                                    </TabsContent>
-                                </>
-                            )}
-                        </Tabs>
-                    </CardContent>
-                </Card>
-                <Card className="lg:col-span-3">
-                     <CardHeader>
-                        <CardTitle className="font-headline">Spending Breakdown</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Tabs defaultValue="category" value={pieChartGrouping} onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)}>
-                            <TabsList className="grid w-full grid-cols-3 mb-4">
-                                <TabsTrigger value="category">Category</TabsTrigger>
-                                <TabsTrigger value="account">Account</TabsTrigger>
-                                <TabsTrigger value="tag">Tag</TabsTrigger>
-                            </TabsList>
-                            {isLoading ? (
-                                <Skeleton className="h-[350px] w-full" />
-                            ) : (
-                                <>
-                                    <TabsContent value="category">
-                                        <CategoryPieChart data={pieChartCategoryData} currencySymbol={currencySymbol} />
-                                    </TabsContent>
-                                    <TabsContent value="account">
-                                        <CategoryPieChart data={pieChartAccountData} currencySymbol={currencySymbol} />
-                                    </TabsContent>
-                                    <TabsContent value="tag">
-                                        <CategoryPieChart data={pieChartTagData} currencySymbol={currencySymbol} />
-                                    </TabsContent>
-                                </>
-                            )}
-                        </Tabs>
-                    </CardContent>
-                </Card>
-            </div>
+                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
+                        <Card className="lg:col-span-4">
+                            <CardHeader>
+                                <CardTitle className="font-headline">Expenses Overview</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as 'week' | 'month' | 'year')}>
+                                    <TabsList className="grid w-full grid-cols-3 mb-4">
+                                        <TabsTrigger value="week">This Week</TabsTrigger>
+                                        <TabsTrigger value="month">This Month</TabsTrigger>
+                                        <TabsTrigger value="year">This Year</TabsTrigger>
+                                    </TabsList>
+                                    {isLoading ? (
+                                        <Skeleton className="h-[350px] w-full" />
+                                    ) : (
+                                        <>
+                                            <TabsContent value="week">
+                                                <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="week" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
+                                            </TabsContent>
+                                            <TabsContent value="month">
+                                                <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="month" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
+                                            </TabsContent>
+                                            <TabsContent value="year">
+                                                <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="year" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
+                                            </TabsContent>
+                                        </>
+                                    )}
+                                </Tabs>
+                            </CardContent>
+                        </Card>
+                        <Card className="lg:col-span-3">
+                            <CardHeader>
+                                <CardTitle className="font-headline">Spending Breakdown</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <Tabs defaultValue="category" value={pieChartGrouping} onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)}>
+                                    <TabsList className="grid w-full grid-cols-3 mb-4">
+                                        <TabsTrigger value="category">Category</TabsTrigger>
+                                        <TabsTrigger value="account">Account</TabsTrigger>
+                                        <TabsTrigger value="tag">Tag</TabsTrigger>
+                                    </TabsList>
+                                    {isLoading ? (
+                                        <Skeleton className="h-[350px] w-full" />
+                                    ) : (
+                                        <>
+                                            <TabsContent value="category">
+                                                <CategoryPieChart data={pieChartCategoryData} currencySymbol={currencySymbol} />
+                                            </TabsContent>
+                                            <TabsContent value="account">
+                                                <CategoryPieChart data={pieChartAccountData} currencySymbol={currencySymbol} />
+                                            </TabsContent>
+                                            <TabsContent value="tag">
+                                                <CategoryPieChart data={pieChartTagData} currencySymbol={currencySymbol} />
+                                            </TabsContent>
+                                        </>
+                                    )}
+                                </Tabs>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

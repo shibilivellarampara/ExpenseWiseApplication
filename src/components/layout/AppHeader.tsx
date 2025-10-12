@@ -24,7 +24,7 @@ const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
   { href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
-  { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses', disabled: true },
+  { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
   { href: '/profile', icon: <CircleUser className="h-5 w-5" />, label: 'Profile' },
 ];
@@ -38,6 +38,14 @@ function getPageTitle(path: string): string {
     return title ? title.charAt(0).toUpperCase() + title.slice(1) : 'Dashboard';
 }
 
+// Wrapper component to handle closing the sidebar on mobile
+const MobileNavLink = ({ children, onClick }: { children: React.ReactNode, onClick: () => void }) => {
+    return (
+        <div onClick={onClick} className="w-full">
+            {children}
+        </div>
+    );
+}
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -69,15 +77,15 @@ export function AppHeader() {
                         </SheetHeader>
                         <nav className="flex-grow space-y-2 mt-4 px-2">
                             {navItems.map((item) => (
-                            <NavLink
-                                key={item.href}
-                                href={item.href}
-                                icon={item.icon}
-                                label={item.label}
-                                isActive={pathname.startsWith(item.href)}
-                                disabled={item.disabled}
-                                onClick={handleLinkClick}
-                            />
+                              <MobileNavLink key={item.href} onClick={handleLinkClick}>
+                                <NavLink
+                                    href={item.href}
+                                    icon={item.icon}
+                                    label={item.label}
+                                    isActive={pathname.startsWith(item.href)}
+                                    disabled={item.disabled}
+                                />
+                              </MobileNavLink>
                             ))}
                         </nav>
                         <div className="mt-auto">

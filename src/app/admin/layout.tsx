@@ -10,6 +10,7 @@ import { doc } from 'firebase/firestore';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
@@ -69,8 +70,10 @@ export default function AdminLayout({
 }) {
 
   return (
-      <AdminGuard>
-        {children}
-      </AdminGuard>
+      <AuthGuard>
+        <AdminGuard>
+            {children}
+        </AdminGuard>
+      </AuthGuard>
   );
 }

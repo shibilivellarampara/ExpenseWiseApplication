@@ -62,8 +62,8 @@ export function AdminSidebar() {
                 <NavLink
                     key={item.href}
                     href={item.href}
-                    icon={item.icon}
                     label={item.label}
+                    icon={item.icon}
                     isActive={pathname === item.href}
                 />
                 ))}

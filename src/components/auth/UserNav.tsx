@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { LogOut, Settings, Moon, Sun, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
@@ -101,33 +101,4 @@ export function UserNav() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
-
-// Custom hook to get the pathname
-function usePathname() {
-    const [path, setPath] = React.useState(
-        typeof window !== 'undefined' ? window.location.pathname : ''
-    );
-    React.useEffect(() => {
-        if (typeof window === 'undefined') return;
-
-        const onLocationChange = () => {
-            setPath(window.location.pathname);
-        };
-
-        window.addEventListener('popstate', onLocationChange);
-        
-        // Also listen for pushState changes, which Next.js uses for navigation
-        const originalPushState = history.pushState;
-        history.pushState = function(...args) {
-            originalPushState.apply(this, args);
-            onLocationChange();
-        };
-
-        return () => {
-            window.removeEventListener('popstate', onLocationChange);
-            history.pushState = originalPushState; // Restore original
-        };
-    }, []);
-    return path;
 }

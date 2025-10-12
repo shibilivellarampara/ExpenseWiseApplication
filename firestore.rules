@@ -1,97 +1,166 @@
 /**
- * @description
- * This ruleset enforces a strict user-ownership model for all data stored under the /users/{userId} path,
- * and defines controlled access for shared expenses.
+ * @fileoverview Firestore Security Rules for Expense Tracker App
  *
- * Structure:
- * - /users/{userId} → private user tree (accounts, categories, tags, etc.)
- * - /shared_expenses/{expenseId} → shared group-level expense
- * - /shared_expenses/{expenseId}/expenses/{subExpenseId} → individual expense items within a shared expense
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Only the authenticated user who owns a specific data record has read and write access to it.
  *
- * Key Decisions:
- * - Users can only access their own /users/{userId} data.
- * - Shared expenses are publicly readable, authenticated users can modify.
- * - Nested shared expense items are also publicly readable, authenticated users can modify.
+ * Data Structure:
+ * All data is nested under /users/{userId}, providing a clear ownership hierarchy. User profiles and associated data (expenses, accounts, contributions, categories, tags) reside under their respective user ID.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed.
+ * - All write operations are validated to ensure the authenticated user owns the data being modified.
+ *
+ * Denormalization for Authorization:
+ * To avoid costly `get()` operations, authorization relies on data consistency between document IDs and the `userId` field within the documents.
  */
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ----------- Shared Expenses (Top Level) -----------
-    match /shared_expenses/{expenseId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
-
-      // ----------- Nested Subcollection: expenses -----------
-      match /expenses/{subExpenseId} {
-        allow get, list: if true;
-        allow create, update, delete: if isSignedIn();
-      }
-    }
-
-    // ----------- Collection Group Fallback -----------
-    match /shared_expenses/{expenseId}/expenses/{subExpenseId=**} {
-      allow read: if true;
-      allow write: if isSignedIn();
-    }
-
-    // ----------- Private User Data -----------
+    /**
+     * @description Secure user profiles. Only the authenticated user can read or write their own profile.
+     * @path /users/{userId}
+     * @allow (create) - Authenticated user with matching userId can create their profile.
+     * @allow (get) - Authenticated user with matching userId can read their profile.
+     * @allow (update) - Authenticated user with matching userId can update their profile.
+     * @allow (delete) - Authenticated user with matching userId can delete their profile.
+     * @deny (create) - Authenticated user attempts to create a profile with a mismatched userId.
+     * @principle Enforces document ownership for all operations.
+     */
     match /users/{userId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
+    }
 
-      match /expenses/{expenseId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId);
-        allow delete: if isExistingOwner(userId);
+    /**
+     * @description Secure user expenses. Only the authenticated user can read or write their own expenses.
+     * @path /users/{userId}/expenses/{expenseId}
+     * @allow (create) - Authenticated user with matching userId can create an expense.
+     * @allow (get) - Authenticated user with matching userId can read an expense.
+     * @allow (update) - Authenticated user with matching userId can update an expense.
+     * @allow (delete) - Authenticated user with matching userId can delete an expense.
+     * @deny (create) - Authenticated user attempts to create an expense with a mismatched userId.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/expenses/{expenseId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
       }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
 
-      match /accounts/{accountId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId);
-        allow delete: if isExistingOwner(userId);
+    /**
+     * @description Secure user accounts. Only the authenticated user can read or write their own accounts.
+     * @path /users/{userId}/accounts/{accountId}
+     * @allow (create) - Authenticated user with matching userId can create an account.
+     * @allow (get) - Authenticated user with matching userId can read an account.
+     * @allow (update) - Authenticated user with matching userId can update an account.
+     * @allow (delete) - Authenticated user with matching userId can delete an account.
+     * @deny (create) - Authenticated user attempts to create an account with a mismatched userId.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/accounts/{accountId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
       }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
 
-      match /contributions/{contributionId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId);
-        allow delete: if isExistingOwner(userId);
+    /**
+     * @description Secure user contributions. Only the authenticated user can read or write their own contributions.
+     * @path /users/{userId}/contributions/{contributionId}
+     * @allow (create) - Authenticated user with matching userId can create a contribution.
+     * @allow (get) - Authenticated user with matching userId can read a contribution.
+     * @allow (update) - Authenticated user with matching userId can update a contribution.
+     * @allow (delete) - Authenticated user with matching userId can delete a contribution.
+     * @deny (create) - Authenticated user attempts to create a contribution with a mismatched userId.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/contributions/{contributionId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
       }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
 
-      match /categories/{categoryId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId);
-        allow delete: if isExistingOwner(userId);
+    /**
+     * @description Secure user categories. Only the authenticated user can read or write their own categories.
+     * @path /users/{userId}/categories/{categoryId}
+     * @allow (create) - Authenticated user with matching userId can create a category.
+     * @allow (get) - Authenticated user with matching userId can read a category.
+     * @allow (update) - Authenticated user with matching userId can update a category.
+     * @allow (delete) - Authenticated user with matching userId can delete a category.
+     * @deny (create) - Authenticated user attempts to create a category with a mismatched userId.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/categories/{categoryId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
       }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
 
-      match /tags/{tagId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId);
-        allow delete: if isExistingOwner(userId);
+    /**
+     * @description Secure user tags. Only the authenticated user can read or write their own tags.
+     * @path /users/{userId}/tags/{tagId}
+     * @allow (create) - Authenticated user with matching userId can create a tag.
+     * @allow (get) - Authenticated user with matching userId can read a tag.
+     * @allow (update) - Authenticated user with matching userId can update a tag.
+     * @allow (delete) - Authenticated user with matching userId can delete a tag.
+     * @deny (create) - Authenticated user attempts to create a tag with a mismatched userId.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/tags/{tagId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
       }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
   }
-
-  // ----------- Helper Functions -----------
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  function isOwner(userId) {
-    return request.auth != null && request.auth.uid == userId;
-  }
-
-  function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
-  }
 }
-

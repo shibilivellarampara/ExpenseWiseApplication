@@ -14,7 +14,7 @@ import {
   LayoutDashboard,
   Wallet,
   FileUp,
-  CircleUser,
+  Settings,
   ArrowRightLeft,
   Briefcase,
 } from 'lucide-react';
@@ -25,11 +25,12 @@ const navItems = [
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
-  { href: '/profile', icon: <CircleUser className="h-5 w-5" />, label: 'Profile' },
+  { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
 ];
 
 
 function getPageTitle(path: string): string {
+    if (path.startsWith('/profile')) return 'Settings';
     const title = path.split('/').pop()?.replace(/-/g, ' ');
     if (path.includes('/shared-expenses/') && path.split('/').length > 3) {
         return "Shared Space";

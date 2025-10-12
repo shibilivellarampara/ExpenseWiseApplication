@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   Wallet,
   FileUp,
-  CircleUser,
+  Settings,
   ArrowRightLeft,
   Briefcase,
 } from 'lucide-react';
@@ -23,7 +23,7 @@ const navItems = [
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
-  { href: '/profile', icon: <CircleUser className="h-5 w-5" />, label: 'Profile' },
+  { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
 ];
 
 export const NavLink = ({ href, icon, label, isActive, disabled }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean }) => {

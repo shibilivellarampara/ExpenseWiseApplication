@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ExpenseFieldSettings } from "@/components/profile/ExpenseFieldSettings";
 import { CategorySettings } from "@/components/profile/CategorySettings";
-import { TagSettings }from "@/components/profile/TagSettings";
+import { TagSettings } from "@/components/profile/TagSettings";
 import { DashboardSettings } from "@/components/profile/DashboardSettings";
 import { DataManagementSettings } from "@/components/profile/DataManagementSettings";
 import { SecuritySettings } from "@/components/profile/SecuritySettings";
@@ -14,7 +14,7 @@ export default function ProfilePage() {
     return (
         <div className="w-full space-y-8">
             <PageHeader
-                title="Your Profile"
+                title="Settings"
                 description="Manage your account settings and preferences."
             />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

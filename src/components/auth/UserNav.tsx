@@ -20,7 +20,7 @@ import {
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, Moon, Sun, MessageSquare } from 'lucide-react';
+import { LogOut, Settings, Moon, Sun, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 
@@ -65,8 +65,8 @@ export function UserNav() {
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
             <Link href="/profile">
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSub>

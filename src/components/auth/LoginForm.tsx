@@ -8,28 +8,22 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, getAuth } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp"
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Link from 'next/link';
 import React from 'react';
 
 
 const formSchema = z.object({
   loginId: z.string().min(1, { message: 'This field is required.' }),
-  password: z.string().optional(),
+  password: z.string().min(1, { message: 'Password is required.' }),
 });
 
 
@@ -38,12 +32,8 @@ export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [showOtpInput, setShowOtpInput] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const auth = useAuth();
-  const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
@@ -56,17 +46,12 @@ export function LoginForm() {
     },
   });
 
-  // Initialize reCAPTCHA
   useEffect(() => {
-    if (auth && recaptchaContainerRef.current && !recaptchaVerifier.current) {
-      recaptchaVerifier.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-        'size': 'invisible',
-        'callback': () => {
-          // reCAPTCHA solved, allow sign-in
-        }
-      });
-    }
+    // This effect can be used to handle redirect results if needed in the future.
+    if (!auth) return;
+    // getRedirectResult(auth).catch(handleLoginError);
   }, [auth]);
+
 
     const handleLoginError = (error: any) => {
         let title = "Whoops!";
@@ -92,17 +77,17 @@ export function LoginForm() {
                     title = "Mysterious Number";
                     description = "That phone number seems to be from another dimension. Is it correct?";
                     break;
-                case 'auth/invalid-verification-code':
-                    title = "Code Mismatch";
-                    description = "That's not the code we sent. Are you a spy? Just kidding, try again!";
-                    break;
                 case 'auth/popup-closed-by-user':
                     title = "Sign-In Canceled";
                     description = "You closed the sign-in window. Give it another try when you're ready!";
                     break;
+                case 'auth/operation-not-supported':
+                     title = "Login Error";
+                     description = "Phone number and password login is not supported in this configuration. Please contact support.";
+                     break;
                 default:
                     title = "An Unexpected Quest!";
-                    description = "Something unexpected happened. Let's give it another shot.";
+                    description = error.message || "Something unexpected happened. Let's give it another shot.";
                     break;
             }
         }
@@ -118,43 +103,16 @@ export function LoginForm() {
         return;
     }
 
-    if (loginMethod === 'email') {
-        if (!values.password) {
-            form.setError('password', { type: 'manual', message: 'Password is required for email login.' });
-            setIsLoading(false);
-            return;
-        }
-        try {
-            await signInWithEmailAndPassword(auth, values.loginId, values.password);
-            toast({ title: 'Success!', description: 'You are now signed in.' });
-            router.push('/dashboard');
-        } catch (error: any) {
-            handleLoginError(error);
-        } finally {
-            setIsLoading(false);
-        }
-    } else if (loginMethod === 'phone') {
-        if (!recaptchaVerifier.current) {
-            toast({ variant: 'destructive', title: 'Error', description: 'reCAPTCHA not initialized.' });
-            setIsLoading(false);
-            return;
-        }
-        try {
-            const result = await signInWithPhoneNumber(auth, values.loginId, recaptchaVerifier.current);
-            setConfirmationResult(result);
-            setShowOtpInput(true);
-            toast({ title: 'Verification code sent!', description: `A code has been sent to ${values.loginId}.` });
-        } catch (error: any) {
-            handleLoginError(error);
-             if (recaptchaVerifier.current) {
-                // @ts-ignore
-                grecaptcha.reset(recaptchaVerifier.current.widgetId);
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    } else {
-        toast({ variant: 'destructive', title: 'Invalid Input', description: 'Please enter a valid email or phone number.' });
+    try {
+        // Since Firebase doesn't directly support phone+password, we treat the loginId as email.
+        // The signup flow ensures that the email is constructed from the phone number.
+        const loginIdentifier = loginMethod === 'phone' ? `${values.loginId}@phone.local` : values.loginId;
+        await signInWithEmailAndPassword(auth, loginIdentifier, values.password);
+        toast({ title: 'Success!', description: 'You are now signed in.' });
+        router.push('/dashboard');
+    } catch (error: any) {
+        handleLoginError(error);
+    } finally {
         setIsLoading(false);
     }
   }
@@ -167,9 +125,6 @@ export function LoginForm() {
             return;
         }
         const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({
-            prompt: 'select_account'
-        });
         
         try {
             await signInWithPopup(auth, provider);
@@ -181,21 +136,6 @@ export function LoginForm() {
             setIsGoogleLoading(false);
         }
     }
-
-  async function handleOtpSubmit(otp: string) {
-    if (!confirmationResult) return;
-    setIsLoading(true);
-    try {
-        await confirmationResult.confirm(otp);
-        toast({ title: 'Success!', description: 'You are now signed in.' });
-        router.push('/dashboard');
-    } catch (error: any) {
-        handleLoginError(error);
-    } finally {
-        setIsLoading(false);
-        setShowOtpInput(false);
-    }
-  }
 
   async function handleForgotPassword() {
     if (!auth || !forgotPasswordEmail) {
@@ -242,44 +182,6 @@ export function LoginForm() {
                         </FormItem>
                         )}
                     />
-                    <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                        <FormItem>
-                            <div className="flex justify-between items-center">
-                                <FormLabel>Password</FormLabel>
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    className="h-auto p-0 text-sm"
-                                    onClick={() => setShowForgotPassword(true)}
-                                >
-                                    Forgot Password?
-                                </Button>
-                            </div>
-                             <FormControl>
-                                <div className="relative">
-                                    <Input 
-                                        type={showPassword ? 'text' : 'password'} 
-                                        placeholder="••••••••" 
-                                        {...field} 
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
-                                        onClick={() => setShowPassword(prev => !prev)}
-                                    >
-                                        {showPassword ? <EyeOff /> : <Eye />}
-                                    </Button>
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
                 </TabsContent>
 
                 <TabsContent value="phone" className="space-y-4 m-0">
@@ -306,10 +208,49 @@ export function LoginForm() {
                         )}
                     />
                 </TabsContent>
+                
+                 <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                    <FormItem>
+                        <div className="flex justify-between items-center">
+                            <FormLabel>Password</FormLabel>
+                            <Button
+                                type="button"
+                                variant="link"
+                                className="h-auto p-0 text-sm"
+                                onClick={() => setShowForgotPassword(true)}
+                            >
+                                Forgot Password?
+                            </Button>
+                        </div>
+                            <FormControl>
+                            <div className="relative">
+                                <Input 
+                                    type={showPassword ? 'text' : 'password'} 
+                                    placeholder="••••••••" 
+                                    {...field} 
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                                    onClick={() => setShowPassword(prev => !prev)}
+                                >
+                                    {showPassword ? <EyeOff /> : <Eye />}
+                                </Button>
+                            </div>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
 
                 <Button type="submit" className="w-full" disabled={isLoading || !auth}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {loginMethod === 'phone' ? 'Send Verification Code' : 'Sign In'}
+                    Sign In
                 </Button>
             </form>
         </Form>
@@ -330,28 +271,6 @@ export function LoginForm() {
         </Button>
         </div>
         
-        <Dialog open={showOtpInput} onOpenChange={setShowOtpInput}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Enter Verification Code</DialogTitle>
-                    <DialogDescription>Please enter the 6-digit code sent to your phone.</DialogDescription>
-                </DialogHeader>
-                <div className="flex justify-center">
-                    <InputOTP maxLength={6} onComplete={handleOtpSubmit}>
-                        <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                        </InputOTPGroup>
-                    </InputOTP>
-                </div>
-                 {isLoading && <Loader2 className="mx-auto mt-4 h-6 w-6 animate-spin" />}
-            </DialogContent>
-        </Dialog>
-
          <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
             <DialogContent>
                 <DialogHeader>
@@ -376,10 +295,6 @@ export function LoginForm() {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-
-        <div ref={recaptchaContainerRef}></div>
     </div>
   );
 }
-
-    

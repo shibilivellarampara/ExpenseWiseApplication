@@ -16,16 +16,19 @@ import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { doc, setDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
 import { defaultCategories, defaultAccounts, defaultTags } from '@/lib/defaults';
 import { UserProfile } from '@/lib/types';
-import PhoneInput from 'react-phone-number-input';
-import { cn } from '@/lib/utils';
+import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import React from 'react';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  email: z.string().email({ message: 'Please enter a valid email.' }),
+  email: z.string().email({ message: 'Please enter a valid email.' }).optional().or(z.literal('')),
+  phoneNumber: z.string().refine(value => isPossiblePhoneNumber(value), { message: "Please enter a valid phone number." }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
-  phoneNumber: z.string().optional(),
+}).refine(data => data.email || data.phoneNumber, {
+    message: "Either email or phone number is required.",
+    path: ["email"],
 });
+
 
 export function SignUpForm() {
   const { toast } = useToast();
@@ -40,8 +43,8 @@ export function SignUpForm() {
     defaultValues: {
       name: '',
       email: '',
-      password: '',
       phoneNumber: '',
+      password: '',
     },
   });
 
@@ -56,8 +59,12 @@ export function SignUpForm() {
         setIsLoading(false);
         return;
     }
+    
+    // We create a fake email for phone-based sign-ups to work with Firebase Auth
+    const finalEmail = values.email || `${values.phoneNumber}@phone.local`;
+
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, finalEmail, values.password);
       const user = userCredential.user;
       
       await updateProfile(user, {
@@ -72,10 +79,10 @@ export function SignUpForm() {
       const newUserProfile: Partial<UserProfile> = {
         id: user.uid,
         name: values.name,
-        email: values.email.toLowerCase(),
+        email: values.email || null, // Store real email if provided
         photoURL: user.photoURL,
-        phoneNumber: values.phoneNumber || null,
-        createdAt: serverTimestamp() as any, // Cast because serverTimestamp is a sentinel value
+        phoneNumber: values.phoneNumber, // Always store phone number
+        createdAt: serverTimestamp() as any, 
         defaultCurrency: 'INR',
         expenseFieldSettings: {
           isCategoryRequired: true,
@@ -121,7 +128,7 @@ export function SignUpForm() {
     } catch (error: any) {
         let userMessage = 'There was a problem with your request.';
         if (error.code === 'auth/email-already-in-use') {
-            userMessage = 'This email address is already in use. Please log in or use a different email.';
+            userMessage = 'This email or phone number is already in use. Please log in or use a different one.';
         }
         toast({
             variant: 'destructive',
@@ -149,39 +156,40 @@ export function SignUpForm() {
             </FormItem>
           )}
         />
+         <FormField
+            control={form.control}
+            name="phoneNumber"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl>
+                    <PhoneInput
+                        international
+                        withCountryCallingCode
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        countrySelectProps={{
+                            className: "PhoneInputCountry"
+                        }}
+                        inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="PhoneInputInput" />)}
+                    />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
         <FormField
           control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Email (Optional)</FormLabel>
               <FormControl>
                 <Input placeholder="name@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
-        />
-        <FormField
-            control={form.control}
-            name="phoneNumber"
-            render={({ field }) => (
-            <FormItem>
-                <FormLabel>Phone Number (Optional)</FormLabel>
-                <FormControl>
-                    <PhoneInput
-                        international
-                        withCountryCallingCode
-                        countryCallingCodeEditable={false}
-                        defaultCountry="IN"
-                        placeholder="Enter phone number"
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                    />
-                </FormControl>
-                <FormMessage />
-            </FormItem>
-            )}
         />
         <FormField
           control={form.control}
@@ -219,5 +227,3 @@ export function SignUpForm() {
     </Form>
   );
 }
-
-    

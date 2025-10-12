@@ -109,14 +109,31 @@
 
 
 /* Custom styles for react-phone-number-input */
-.PhoneInputInput {
-  @apply flex h-10 w-full rounded-md border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm border-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 !important;
-}
-
 .PhoneInput {
-    @apply flex items-center w-full rounded-md border border-input bg-background text-base ring-offset-background placeholder:text-muted-foreground focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm !important;
+    @apply flex items-center;
 }
 
 .PhoneInputCountry {
-    @apply flex items-center justify-center p-2 !important;
+    @apply relative flex items-center justify-center;
+    @apply h-10;
+    @apply rounded-md rounded-r-none border border-r-0 border-input;
+    @apply bg-transparent;
+    @apply px-3;
+    @apply text-sm;
+}
+
+.PhoneInputCountryIcon {
+    @apply !h-6 !w-auto;
+}
+
+.PhoneInputCountrySelectArrow {
+  @apply ml-2;
+  @apply opacity-50;
+}
+
+.PhoneInputInput {
+  @apply !h-10 !w-full !rounded-md !rounded-l-none !border !border-input !bg-background !px-3 !py-2 !text-sm !ring-offset-background;
+  @apply placeholder:!text-muted-foreground;
+  @apply focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-ring focus-visible:!ring-offset-2;
+  @apply disabled:!cursor-not-allowed disabled:!opacity-50;
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from "react";
@@ -24,25 +23,28 @@ import { cn } from "@/lib/utils";
 type RowData = { [key: string]: any };
 type ColumnMapping = {
     date: string;
-    amount: string;
     description: string;
     category: string;
-    type?: string | null; // For cashbook credit/debit
-    tags?: string | null; // Optional tags column
+    tags?: string | null;
+    // For cashbook style
+    cashIn?: string | null;
+    cashOut?: string | null;
+    // For default style
+    amount?: string | null;
 };
 
 const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, description: string } } = {
-    'default': { 
+    'default': {
         name: 'Default Template',
         mapping: { date: 'Date', amount: 'Amount', description: 'Description', category: 'Category', tags: 'Tags' },
         description: "A standard file with columns for Date, Amount, Description, Category, and Tags."
     },
-    'cashbook': { 
+    'cashbook': {
         name: 'Cashbook App',
-        mapping: { date: 'Date', amount: 'Amount', description: 'Description', category: 'Category', type: 'Type' },
-        description: "For exports from the Cashbook app, with a 'Type' column for 'Cash In'/'Cash Out'."
+        mapping: { date: 'Date', description: 'Remark', category: 'Category', cashIn: 'Cash In', cashOut: 'Cash Out' },
+        description: "For exports from the Cashbook app with 'Cash In' and 'Cash Out' columns."
     },
-    'spendee': { 
+    'spendee': {
         name: 'Spendee App',
         mapping: { date: 'Date', amount: 'Amount', description: 'Notes', category: 'Category', tags: 'Tags' },
         description: "For exports from the Spendee app, using 'Notes' for description."
@@ -56,13 +58,13 @@ export function ExcelImporter() {
     const [file, setFile] = useState<File | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
-    
+
     const [rawData, setRawData] = useState<RowData[]>([]);
     const [validationError, setValidationError] = useState<string | null>(null);
-    
+
     const [newCategories, setNewCategories] = useState<string[]>([]);
     const [newTags, setNewTags] = useState<string[]>([]);
-    
+
     const { toast } = useToast();
 
     const { user } = useUser();
@@ -71,11 +73,11 @@ export function ExcelImporter() {
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [user, firestore]);
     const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [user, firestore]);
-    
+
     const { data: accounts } = useCollection<Account>(accountsQuery);
     const { data: existingCategories } = useCollection<Category>(categoriesQuery);
     const { data: existingTags } = useCollection<Tag>(tagsQuery);
-    
+
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
@@ -103,7 +105,7 @@ export function ExcelImporter() {
                 if (missingColumns.length > 0) {
                     throw new Error(`The following required columns are missing for the selected template: ${missingColumns.join(', ')}`);
                 }
-                
+
                 const jsonData = XLSX.utils.sheet_to_json<RowData>(worksheet, { raw: false, dateNF: 'yyyy-mm-dd' });
                 setRawData(jsonData);
 
@@ -135,7 +137,7 @@ export function ExcelImporter() {
                 setNewTags(Array.from(foundNewTags));
                 setFile(fileToParse);
                 setStep(3);
-                
+
             } catch (error: any) {
                 toast({ variant: 'destructive', title: 'File Error', description: error.message });
                 setFile(null);
@@ -153,6 +155,7 @@ export function ExcelImporter() {
     const processedData = useMemo(() => {
         if (rawData.length === 0 || !template) return [];
         const mapping = TEMPLATES[template].mapping;
+        
         return rawData.map((row) => {
             const dateValue = row[mapping.date];
             let date = dateValue instanceof Date ? dateValue : new Date(dateValue);
@@ -163,19 +166,36 @@ export function ExcelImporter() {
                    date = new Date();
                 }
             }
-            
-            const amount = parseFloat(row[mapping.amount]);
+
             const description = row[mapping.description] || 'Imported Transaction';
             const categoryName = row[mapping.category] || 'Other';
-            const tags = mapping.tags && row[mapping.tags] ? row[mapping.tags].split(',').map((t: string) => t.trim()) : [];
-
+            const tags = mapping.tags && row[mapping.tags] ? String(row[mapping.tags]).split(',').map((t: string) => t.trim()) : [];
+            
+            let amount = 0;
             let type: 'income' | 'expense' = 'expense';
-            if (mapping.type && row[mapping.type]?.toLowerCase().includes('in')) {
-                type = 'income';
-            }
 
+            if (mapping.cashIn && mapping.cashOut) {
+                const cashIn = parseFloat(row[mapping.cashIn]);
+                const cashOut = parseFloat(row[mapping.cashOut]);
+                if (!isNaN(cashIn) && cashIn > 0) {
+                    amount = cashIn;
+                    type = 'income';
+                } else if (!isNaN(cashOut) && cashOut > 0) {
+                    amount = cashOut;
+                    type = 'expense';
+                }
+            } else if (mapping.amount) {
+                amount = parseFloat(row[mapping.amount]);
+                if (amount < 0) {
+                    type = 'expense';
+                    amount = Math.abs(amount);
+                } else {
+                    type = 'income';
+                }
+            }
+            
             return { date, amount, description, categoryName, tags, type };
-        }).filter(item => !isNaN(item.amount));
+        }).filter(item => !isNaN(item.amount) && item.amount > 0);
     }, [rawData, template]);
 
     const handleImport = async () => {
@@ -184,7 +204,7 @@ export function ExcelImporter() {
 
         try {
             const batch = writeBatch(firestore);
-            
+
             // --- Create New Categories and Tags First ---
             const newCategoryRefs = new Map<string, string>();
             const newTagRefs = new Map<string, string>();
@@ -201,7 +221,7 @@ export function ExcelImporter() {
                 batch.set(tagRef, { id: tagRef.id, name: tagName, icon: 'Tag', userId: user.uid });
                 newTagRefs.set(tagName.toLowerCase(), tagRef.id);
             }
-            
+
             // --- Prepare for transactions ---
             const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
             const defaultAccount = accounts.find(a => a.type === 'cash') || accounts[0];
@@ -212,10 +232,10 @@ export function ExcelImporter() {
 
             processedData.forEach(item => {
                 const expenseRef = doc(expensesCol);
-                
+
                 const categoryId = categoryMap.get(item.categoryName?.toLowerCase()) || newCategoryRefs.get(item.categoryName?.toLowerCase());
                 const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName.toLowerCase()) || newTagRefs.get(tagName.toLowerCase())).filter(Boolean);
-                
+
                 batch.set(expenseRef, {
                     id: expenseRef.id,
                     userId: user.uid,
@@ -236,7 +256,7 @@ export function ExcelImporter() {
             });
 
             await batch.commit();
-            
+
             toast({
                 title: 'Import Successful',
                 description: `${processedData.length} expenses were added to your '${defaultAccount.name}' account.`,
@@ -248,7 +268,7 @@ export function ExcelImporter() {
             setIsImporting(false);
         }
     };
-    
+
     const resetState = () => {
         setStep(1);
         setFile(null);
@@ -273,7 +293,7 @@ export function ExcelImporter() {
                 }</CardTitle>
                 <CardDescription>
                     {step === 1 && 'Choose a template that matches your file format.'}
-                    {step === 2 && `Ready to upload a file for the '${TEMPLATES[template]?.name}' template.`}
+                    {step === 2 && `Ready to upload a file.`}
                     {step === 3 && 'We found some new items in your file. Review them before importing.'}
                     {step === 4 && `A summary of your import. Ready to add ${processedData.length} transactions.`}
                 </CardDescription>
@@ -380,7 +400,7 @@ export function ExcelImporter() {
                 )}
             </CardContent>
             <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => step > 1 ? (step === 3 ? setStep(1) : setStep(step - 1)) : resetState()} disabled={isProcessing || isImporting}>
+                <Button variant="outline" onClick={() => step > 1 ? (step === 3 ? setStep(2) : setStep(step - 1)) : resetState()} disabled={isProcessing || isImporting}>
                     Back
                 </Button>
                  <div>

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, RecaptchaVerifier, signInWithPhoneNumber, PhoneAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -29,6 +29,13 @@ const phoneSchema = z.object({
   loginId: z.string().refine(isPossiblePhoneNumber, { message: "Please enter a valid phone number." }),
   password: z.string().optional(), // Not used for phone, but keeps structure
 });
+
+// Create a stable component for the phone input to prevent re-renders
+const MemoizedPhoneInput = React.forwardRef<HTMLInputElement>((props, ref) => (
+    <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />
+));
+MemoizedPhoneInput.displayName = 'MemoizedPhoneInput';
+
 
 export function LoginForm() {
   const { toast } = useToast();
@@ -288,7 +295,7 @@ export function LoginForm() {
                                     countrySelectProps={{
                                         className: "PhoneInputCountry"
                                     }}
-                                    inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />)}
+                                    inputComponent={MemoizedPhoneInput}
                                 />
                             </FormControl>
                             <FormMessage />

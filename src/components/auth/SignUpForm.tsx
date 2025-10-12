@@ -36,6 +36,12 @@ const phoneSchema = z.object({
   password: z.string().optional(),
 });
 
+// Create a stable component for the phone input to prevent re-renders
+const MemoizedPhoneInput = React.forwardRef<HTMLInputElement>((props, ref) => (
+    <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />
+));
+MemoizedPhoneInput.displayName = 'MemoizedPhoneInput';
+
 
 export function SignUpForm() {
   const { toast } = useToast();
@@ -81,7 +87,7 @@ export function SignUpForm() {
   }, [auth]);
   
 
-  const provisionNewUser = async (user: import('firebase/auth').User, name: string, email?: string, phoneNumber?: string) => {
+  const provisionNewUser = async (user: import('firebase/auth').User, name: string, email?: string | null, phoneNumber?: string | null) => {
     if (!firestore) return;
     const batch = writeBatch(firestore);
     const userDocRef = doc(firestore, 'users', user.uid);
@@ -270,7 +276,7 @@ export function SignUpForm() {
                                         countrySelectProps={{
                                             className: "PhoneInputCountry"
                                         }}
-                                        inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />)}
+                                        inputComponent={MemoizedPhoneInput}
                                     />
                                 </FormControl>
                                 <FormMessage />

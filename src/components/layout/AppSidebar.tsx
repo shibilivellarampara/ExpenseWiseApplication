@@ -21,30 +21,41 @@ const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
   { href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
-  // { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
+  { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses', disabled: true },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
   { href: '/profile', icon: <CircleUser className="h-5 w-5" />, label: 'Profile' },
 ];
 
-const NavLink = ({ href, icon, label, isActive }: { href: string, icon: React.ReactNode, label: string, isActive: boolean }) => (
-  <Link href={href} passHref>
+const NavLink = ({ href, icon, label, isActive, disabled }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean }) => {
+  const linkContent = (
     <Button
       variant="ghost"
       className={cn(
         "w-full justify-start text-base h-12 px-4 relative",
-        isActive
+        isActive && !disabled
           ? "bg-sidebar-active text-sidebar-active-foreground"
-          : "text-sidebar-muted-foreground hover:bg-sidebar-active/20 hover:text-sidebar-foreground"
+          : "text-sidebar-muted-foreground hover:bg-sidebar-active/20 hover:text-sidebar-foreground",
+        disabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-sidebar-muted-foreground"
       )}
+      disabled={disabled}
+      asChild={!disabled}
     >
-      {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>}
       <div className="flex w-full items-center gap-4">
+        {isActive && !disabled && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>}
         {icon}
         <span>{label}</span>
       </div>
     </Button>
-  </Link>
-);
+  );
+
+  return disabled ? (
+    <div className="cursor-not-allowed">{linkContent}</div>
+  ) : (
+    <Link href={href} passHref>
+      {linkContent}
+    </Link>
+  );
+};
 
 export function SidebarContent() {
     const pathname = usePathname();
@@ -61,6 +72,7 @@ export function SidebarContent() {
                     icon={item.icon}
                     label={item.label}
                     isActive={pathname.startsWith(item.href)}
+                    disabled={item.disabled}
                 />
                 ))}
             </nav>

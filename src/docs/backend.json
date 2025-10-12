@@ -33,6 +33,11 @@
           "type": "array",
           "description": "A list of IDs of the shared expenses this user is a member of.",
           "items": { "type": "string" }
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Indicates if the user has administrative privileges.",
+          "default": false
         }
       },
       "required": ["id", "name", "email"]
@@ -179,6 +184,10 @@
     "/users/{userId}/contributions/{contributionId}": {
         "schema": { "$ref": "#/entities/Contribution" },
         "description": "Stores contribution records for shared expenses."
+    },
+    "/admin/{adminId}": {
+        "schema": { "$ref": "#/entities/UserProfile" },
+        "description": "Admin access control."
     }
   }
 }

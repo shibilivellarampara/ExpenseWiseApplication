@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -10,12 +9,17 @@ import {
   Settings,
   ArrowRightLeft,
   Briefcase,
+  Shield,
 } from 'lucide-react';
 import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { useSidebar } from '../ui/sidebar';
+import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { UserProfile } from '@/lib/types';
+
 
 const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
@@ -25,6 +29,8 @@ const navItems = [
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
 ];
+
+const adminNavItem = { href: '/admin', icon: <Shield className="h-5 w-5" />, label: 'Admin', admin: true };
 
 export const NavLink = ({ href, icon, label, isActive, disabled }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean }) => {
   const { isMobile, setOpenMobile } = useSidebar();
@@ -70,6 +76,12 @@ export const NavLink = ({ href, icon, label, isActive, disabled }: { href: strin
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
   return (
     <aside className="w-56 flex-shrink-0 hidden md:block">
         <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
@@ -87,6 +99,18 @@ export function AppSidebar() {
                     disabled={(item as any).disabled}
                 />
                 ))}
+                 {userProfile?.isAdmin && (
+                  <>
+                    <Separator className='my-2 bg-sidebar-border' />
+                    <NavLink
+                        key={adminNavItem.href}
+                        href={adminNavItem.href}
+                        icon={adminNavItem.icon}
+                        label={adminNavItem.label}
+                        isActive={pathname.startsWith(adminNavItem.href)}
+                    />
+                  </>
+                )}
             </nav>
             <div className="mt-auto">
                 <Separator className='my-4 bg-sidebar-border' />

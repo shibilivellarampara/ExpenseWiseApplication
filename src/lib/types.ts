@@ -1,4 +1,3 @@
-
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -19,6 +18,7 @@ export type UserProfile = {
   };
   createdAt?: Timestamp;
   sharedExpenseIds?: string[];
+  isAdmin?: boolean;
 };
 
 export type Category = {

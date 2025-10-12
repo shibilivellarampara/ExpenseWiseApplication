@@ -89,7 +89,7 @@ const MemberList = ({ memberIds }: { memberIds: string[] }) => {
 }
 
 
-export function SharedExpensesList({ sharedExpenses, isLoading }: SharedExpensesListProps) {
+export function SharedExpensesList({ sharedExpenses, isLoading }: { sharedExpenses: SharedExpense[], isLoading: boolean }) {
     const { toast } = useToast();
 
     const copyToClipboard = (text: string) => {

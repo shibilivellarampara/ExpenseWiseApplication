@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EnrichedExpense } from "@/lib/types";
-import { DollarSign, TrendingUp, Tag, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, Tag, TrendingDown, Minus } from "lucide-react";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
 
@@ -60,7 +60,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Monthly Expense</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground font-bold">{currencySymbol}</span>
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{currencySymbol}{stats.totalExpense.toFixed(2)}</div>

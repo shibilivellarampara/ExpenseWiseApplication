@@ -53,27 +53,19 @@ export function UserNav() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        {isAppPage ? (
-          <Button variant="ghost" className={buttonClass}>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
-                <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col items-start">
-                  <span className="font-medium text-sidebar-foreground">{user?.displayName}</span>
-                  <span className="text-xs">{user?.email}</span>
-              </div>
-            </div>
-          </Button>
-        ) : (
-           <Button variant="ghost" className={buttonClass}>
+        <Button variant="ghost" className={buttonClass}>
+          <div className="flex items-center gap-4">
             <Avatar className="h-10 w-10">
               <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
               <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
             </Avatar>
-          </Button>
-        )}
+            {isAppPage && (
+              <div className="flex flex-col items-start">
+                  <span className="font-medium text-sidebar-foreground">{user?.displayName}</span>
+              </div>
+            )}
+          </div>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">

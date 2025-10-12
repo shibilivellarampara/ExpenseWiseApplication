@@ -52,6 +52,13 @@ const generateColorFromString = (str: string): { backgroundColor: string, textCo
     return { backgroundColor, textColor };
 };
 
+const formatAmount = (amount: number) => {
+    if (amount % 1 === 0) {
+        return amount.toString();
+    }
+    return amount.toFixed(2);
+};
+
 
 function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string }) {
 
@@ -156,12 +163,12 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: 
                                                 'font-bold text-lg',
                                                 expense.type === 'income' ? 'text-green-600' : 'text-red-500'
                                             )}>
-                                                {expense.amount.toFixed(2)}
+                                                {formatAmount(expense.amount)}
                                             </div>
                                         </div>
                                         {!isShared && expense.balanceAfterTransaction !== undefined && (
                                             <p className="text-xs text-muted-foreground mt-1">
-                                                Balance: {expense.balanceAfterTransaction?.toFixed(2)}
+                                                Balance: {formatAmount(expense.balanceAfterTransaction)}
                                             </p>
                                         )}
                                     </div>

@@ -14,7 +14,6 @@ export const defaultCategories = [
 // Default accounts for new users
 export const defaultAccounts = [
   { name: 'Cash', icon: 'Wallet', type: 'cash', balance: 0, status: 'active' },
-  { name: 'Primary Bank', icon: 'Landmark', type: 'bank', balance: 0, status: 'active' },
 ];
 
 // Default tags for new users

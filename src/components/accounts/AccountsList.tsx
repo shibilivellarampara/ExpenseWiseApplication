@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Separator } from "../ui/separator";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 interface AccountsListProps {
     accounts: Account[];
@@ -142,6 +143,8 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
     const firestore = useFirestore();
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+    const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
+
 
     const [accounts, setAccounts] = useState(initialAccounts || []);
 
@@ -243,7 +246,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                         <div className="flex items-center justify-between">
                                             <div className="font-semibold">{item.name}</div>
                                             <div className="font-bold text-lg text-red-500">
-                                                {balance.toFixed(2)}
+                                                {currencySymbol}{balance.toFixed(2)}
                                             </div>
                                         </div>
                                         <p className="text-sm text-muted-foreground capitalize">
@@ -253,8 +256,8 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                             <div className="mt-1">
                                                 <Progress value={availablePercentage} className="h-2 [&>div]:bg-green-500" />
                                                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                                                    <span>Available: {availableCredit.toFixed(2)}</span>
-                                                    <span>Limit: {limit.toFixed(2)}</span>
+                                                    <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
+                                                    <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         )}
@@ -306,7 +309,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                      <div className="flex items-center justify-between">
                                         <div className="font-semibold">{item.name}</div>
                                         <div className={cn("font-bold text-lg", item.balance >= 0 ? 'text-green-600' : 'text-red-600')}>
-                                            {item.balance.toFixed(2)}
+                                            {currencySymbol}{item.balance.toFixed(2)}
                                         </div>
                                      </div>
                                     <p className="text-sm text-muted-foreground capitalize">{item.type.replace('_', ' ')}</p>

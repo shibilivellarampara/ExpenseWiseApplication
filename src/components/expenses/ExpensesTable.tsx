@@ -53,7 +53,7 @@ const generateColorFromString = (str: string): { backgroundColor: string, textCo
 };
 
 
-function GroupedExpenseList({ expenses, isShared }: { expenses: EnrichedExpense[], isShared?: boolean }) {
+function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string }) {
 
     const groupedExpenses = useMemo(() => {
         return expenses.reduce((acc, expense) => {
@@ -156,12 +156,12 @@ function GroupedExpenseList({ expenses, isShared }: { expenses: EnrichedExpense[
                                                 'font-bold text-lg',
                                                 expense.type === 'income' ? 'text-green-600' : 'text-red-500'
                                             )}>
-                                                {expense.amount.toFixed(2)}
+                                                {currencySymbol}{expense.amount.toFixed(2)}
                                             </div>
                                         </div>
                                         {!isShared && expense.balanceAfterTransaction !== undefined && (
                                             <p className="text-xs text-muted-foreground mt-1">
-                                                Balance: {expense.balanceAfterTransaction?.toFixed(2)}
+                                                Balance: {currencySymbol}{expense.balanceAfterTransaction?.toFixed(2)}
                                             </p>
                                         )}
                                     </div>
@@ -180,6 +180,7 @@ export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTablePr
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+  const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
   if (isLoading) {
     return (
@@ -221,5 +222,5 @@ export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTablePr
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} isShared={isShared} />;
+  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} />;
 }

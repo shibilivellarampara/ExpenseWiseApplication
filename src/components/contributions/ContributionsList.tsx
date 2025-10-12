@@ -1,10 +1,14 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { EnrichedContribution } from "@/lib/types";
+import { EnrichedContribution, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { getCurrencySymbol } from "@/lib/currencies";
+import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { doc } from 'firebase/firestore';
 
 interface ContributionsListProps {
     contributions: EnrichedContribution[];
@@ -17,6 +21,13 @@ const getInitials = (name?: string | null) => {
 };
 
 export function ContributionsList({ contributions, isLoading }: ContributionsListProps) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+    const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+    const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
+
+
     if (isLoading) {
         return (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -57,7 +68,7 @@ export function ContributionsList({ contributions, isLoading }: ContributionsLis
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <p className="text-3xl font-bold">${item.totalAmount.toFixed(2)}</p>
+                            <p className="text-3xl font-bold">{currencySymbol}{item.totalAmount.toFixed(2)}</p>
                             <p className="text-sm text-muted-foreground">Total Amount</p>
                         </div>
                         <div>
@@ -70,7 +81,7 @@ export function ContributionsList({ contributions, isLoading }: ContributionsLis
                                             <AvatarImage src={c.photoURL || ''} alt={c.name || 'user'}/>
                                             <AvatarFallback>{getInitials(c.name)}</AvatarFallback>
                                         </Avatar>
-                                        <span className="text-xs text-muted-foreground mt-1">${c.share.toFixed(2)}</span>
+                                        <span className="text-xs text-muted-foreground mt-1">{currencySymbol}{c.share.toFixed(2)}</span>
                                     </div>
                                 ))}
                             </div>

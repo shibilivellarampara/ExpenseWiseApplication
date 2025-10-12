@@ -64,7 +64,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{currencySymbol}{stats.totalExpense.toFixed(2)}</div>
-                    <p className="text-xs text-muted-foreground">in the last 30 days</p>
+                    <p className="text-xs text-muted-foreground">Cash out this month</p>
                 </CardContent>
             </Card>
             <Card>

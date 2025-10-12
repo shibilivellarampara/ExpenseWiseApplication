@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from "react";
@@ -8,6 +9,10 @@ import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { FileUp, Loader2, CheckCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { doc } from 'firebase/firestore';
+import { UserProfile } from "@/lib/types";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 type ExpenseRow = {
     Date: string | number;
@@ -22,6 +27,13 @@ export function ExcelImporter() {
     const [isImporting, setIsImporting] = useState(false);
     const [parsedData, setParsedData] = useState<ExpenseRow[]>([]);
     const { toast } = useToast();
+
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+    const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+    const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
+
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
@@ -145,7 +157,7 @@ export function ExcelImporter() {
                                             <TableCell>{String(row.Date)}</TableCell>
                                             <TableCell>{row.Category}</TableCell>
                                             <TableCell>{row.Description}</TableCell>
-                                            <TableCell className="text-right">${Number(row.Amount).toFixed(2)}</TableCell>
+                                            <TableCell className="text-right">{currencySymbol}{Number(row.Amount).toFixed(2)}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>

@@ -3,7 +3,8 @@
 
 import { UserNav } from '@/components/auth/UserNav';
 import { usePathname } from 'next/navigation';
-import { useUser, useSidebar } from '@/firebase';
+import { useUser } from '@/firebase';
+import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '../ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { Button } from '../ui/button';

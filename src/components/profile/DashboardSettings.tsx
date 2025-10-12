@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,11 +7,16 @@ import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking 
 import { doc } from "firebase/firestore";
 import { UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function DashboardSettings() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const [isOpen, setIsOpen] = useState(false);
 
     const userProfileRef = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -40,24 +44,33 @@ export function DashboardSettings() {
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Dashboard</CardTitle>
-                <CardDescription>Customize the appearance of your dashboard.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                        <Label>Use Category Colors</Label>
-                         <p className="text-[0.8rem] text-muted-foreground">
-                            Color-code the expense chart by category.
-                        </p>
-                    </div>
-                    <Switch
-                        checked={useCategoryColors}
-                        onCheckedChange={(value) => handleSettingChange('useCategoryColorsInChart', value)}
-                    />
-                </div>
-            </CardContent>
+             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                <CollapsibleTrigger asChild>
+                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                        <div>
+                            <CardTitle className="font-headline">Dashboard</CardTitle>
+                            <CardDescription>Customize the appearance of your dashboard.</CardDescription>
+                        </div>
+                        <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
+                    </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                                <Label>Use Category Colors</Label>
+                                <p className="text-[0.8rem] text-muted-foreground">
+                                    Color-code the expense chart by category.
+                                </p>
+                            </div>
+                            <Switch
+                                checked={useCategoryColors}
+                                onCheckedChange={(value) => handleSettingChange('useCategoryColorsInChart', value)}
+                            />
+                        </div>
+                    </CardContent>
+                </CollapsibleContent>
+            </Collapsible>
         </Card>
     );
 }

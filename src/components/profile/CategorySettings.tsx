@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -8,16 +7,19 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { cn } from '@/lib/utils';
 
 export function CategorySettings() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const [isOpen, setIsOpen] = useState(false);
 
     const categoriesQuery = useMemoFirebase(() =>
         user ? collection(firestore, `users/${user.uid}/categories`) : null
@@ -39,7 +41,8 @@ export function CategorySettings() {
         setIsSaving(true);
         try {
             const ref = collection(firestore, `users/${user.uid}/categories`);
-            await addDoc(ref, { name: newItem.name, icon: newItem.icon, userId: user.uid });
+            const newDocRef = doc(ref);
+            await setDoc(newDocRef, { id: newDocRef.id, name: newItem.name, icon: newItem.icon, userId: user.uid });
             setNewItem({ name: '', icon: 'Shapes' });
             toast({ title: 'Category Added' });
         } catch (error: any) {
@@ -97,85 +100,94 @@ export function CategorySettings() {
     
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Categories</CardTitle>
-                <CardDescription>Manage your expense categories.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {isLoading ? (
-                    <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
-                ) : (
-                    <div className="space-y-2">
-                        {categories?.map((item) => (
-                            <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
-                                {editingItem?.id === item.id ? (
-                                    <>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                                {availableIcons.map(icon => (
-                                                    <Button key={icon} variant="ghost" size="icon" onClick={() => setEditingItem({ ...editingItem, icon })}>
-                                                        {renderIcon(icon)}
-                                                    </Button>
-                                                ))}
-                                            </PopoverContent>
-                                        </Popover>
-                                        <Input
-                                            value={editingItem.name}
-                                            onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                                            className="flex-1"
-                                            autoFocus
-                                        />
-                                        <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
-                                            <Check className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="flex items-center flex-1 gap-2">
-                                            {renderIcon(item.icon)}
-                                            <span>{item.name}</span>
-                                        </div>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </>
-                                )}
+            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                <CollapsibleTrigger asChild>
+                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                        <div>
+                            <CardTitle className="font-headline">Categories</CardTitle>
+                            <CardDescription>Manage your expense categories.</CardDescription>
+                        </div>
+                        <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
+                    </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    <CardContent className="space-y-4">
+                        {isLoading ? (
+                            <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
+                        ) : (
+                            <div className="space-y-2">
+                                {categories?.map((item) => (
+                                    <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
+                                        {editingItem?.id === item.id ? (
+                                            <>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                                                        {availableIcons.map(icon => (
+                                                            <Button key={icon} variant="ghost" size="icon" onClick={() => setEditingItem({ ...editingItem, icon })}>
+                                                                {renderIcon(icon)}
+                                                            </Button>
+                                                        ))}
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <Input
+                                                    value={editingItem.name}
+                                                    onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                                    className="flex-1"
+                                                    autoFocus
+                                                />
+                                                <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
+                                                    <Check className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="flex items-center flex-1 gap-2">
+                                                    {renderIcon(item.icon)}
+                                                    <span>{item.name}</span>
+                                                </div>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                )}
-                 <div className="flex items-center gap-2 pt-4">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" size="icon" className="shrink-0">{renderIcon(newItem.icon)}</Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                            {availableIcons.map(icon => (
-                                <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItem({...newItem, icon})}>
-                                    {renderIcon(icon)}
-                                </Button>
-                            ))}
-                        </PopoverContent>
-                    </Popover>
-                    <Input
-                        value={newItem.name}
-                        onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                        placeholder="Add new category"
-                    />
-                    <Button type="button" size="icon" onClick={handleAddItem} disabled={isSaving}>
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
-                    </Button>
-                </div>
-            </CardContent>
+                        )}
+                        <div className="flex items-center gap-2 pt-4">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" size="icon" className="shrink-0">{renderIcon(newItem.icon)}</Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                                    {availableIcons.map(icon => (
+                                        <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItem({...newItem, icon})}>
+                                            {renderIcon(icon)}
+                                        </Button>
+                                    ))}
+                                </PopoverContent>
+                            </Popover>
+                            <Input
+                                value={newItem.name}
+                                onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+                                placeholder="Add new category"
+                            />
+                            <Button type="button" size="icon" onClick={handleAddItem} disabled={isSaving}>
+                                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </CollapsibleContent>
+            </Collapsible>
         </Card>
     );
 }

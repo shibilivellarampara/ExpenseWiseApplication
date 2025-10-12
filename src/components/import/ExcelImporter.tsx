@@ -468,7 +468,7 @@ export function ExcelImporter() {
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="create_new">Create New Account</SelectItem>
-                                                {accounts?.filter(a => a.status === 'active').map(existingAcc => (
+                                                {accounts?.map(existingAcc => (
                                                     <SelectItem key={existingAcc.id} value={existingAcc.id}>Merge with "{existingAcc.name}"</SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -564,5 +564,3 @@ export function ExcelImporter() {
         </Card>
     );
 }
-
-    

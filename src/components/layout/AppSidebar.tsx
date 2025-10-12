@@ -14,8 +14,8 @@ import {
 import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
-import { UserNav } from '../auth/UserNav';
 import { Separator } from '../ui/separator';
+import { useSidebar } from '../ui/sidebar';
 
 const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
@@ -26,10 +26,11 @@ const navItems = [
   { href: '/profile', icon: <CircleUser className="h-5 w-5" />, label: 'Profile' },
 ];
 
-const NavLink = ({ href, icon, label, isActive, disabled }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean }) => {
+const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean, onClick?: () => void }) => {
   const linkContent = (
     <Button
       variant="ghost"
+      onClick={onClick}
       className={cn(
         "w-full justify-start text-base h-12 px-4 relative",
         isActive && !disabled
@@ -59,6 +60,14 @@ const NavLink = ({ href, icon, label, isActive, disabled }: { href: string, icon
 
 export function SidebarContent() {
     const pathname = usePathname();
+    const { isMobile, setOpenMobile } = useSidebar();
+    
+    const handleLinkClick = () => {
+      if (isMobile) {
+        setOpenMobile(false);
+      }
+    }
+
     return (
         <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
             <div className="p-4 border-b border-sidebar-border">
@@ -73,12 +82,12 @@ export function SidebarContent() {
                     label={item.label}
                     isActive={pathname.startsWith(item.href)}
                     disabled={item.disabled}
+                    onClick={handleLinkClick}
                 />
                 ))}
             </nav>
             <div className="mt-auto">
                 <Separator className='my-4 bg-sidebar-border' />
-                
             </div>
         </div>
     )

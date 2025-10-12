@@ -21,7 +21,7 @@ import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { UserNav } from '../auth/UserNav';
 import { Separator } from '../ui/separator';
-import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 
 
 const navItems = [
@@ -57,7 +57,7 @@ const NavLink = ({ href, icon, label, isActive }: { href: string, icon: React.Re
 function SidebarContent() {
     const pathname = usePathname();
     return (
-        <div className="flex h-full flex-col p-4 bg-sidebar text-sidebar-foreground">
+        <div className="flex h-full flex-col bg-sidebar-background p-4 text-sidebar-foreground">
             <div className="py-4 px-2">
                 <Logo />
             </div>
@@ -94,6 +94,9 @@ export function AppSidebar() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-64">
+                    <SheetHeader>
+                        <SheetTitle className="sr-only">Main Menu</SheetTitle>
+                    </SheetHeader>
                     <SidebarContent />
                 </SheetContent>
             </Sheet>

@@ -68,7 +68,6 @@ export function LoginForm() {
   }, [auth]);
 
     const handleLoginError = (error: any) => {
-        console.error("Login Error:", error); // Log the detailed error for debugging
         let userMessage = "An unexpected error occurred. Please try again.";
 
         if (error.code) {

@@ -96,9 +96,31 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: 
                                             renderIcon(expense.category?.icon, 'h-5 w-5 text-gray-700')
                                         }
                                     </div>
-                                    <div className="flex-grow space-y-1">
-                                        <div className="font-semibold truncate">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
-                                        
+                                    <div className="flex-grow space-y-1 w-full min-w-0">
+                                        <div className="flex justify-between items-start">
+                                            <div className="font-semibold truncate flex-1 pr-4">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
+                                            <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
+                                                <div className="flex items-center">
+                                                    <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId}>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                    </AddExpenseDialog>
+                                                    <div className={cn(
+                                                        'font-bold text-lg',
+                                                        expense.type === 'income' ? 'text-green-600' : 'text-red-500'
+                                                    )}>
+                                                        {formatAmount(expense.amount)}
+                                                    </div>
+                                                </div>
+                                                {!isShared && expense.balanceAfterTransaction !== undefined && (
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Balance: {formatAmount(expense.balanceAfterTransaction)}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         <div className="text-xs text-muted-foreground flex items-center gap-4">
                                             <div className="flex items-center gap-1">
                                                 {isShared && expense.user ? (
@@ -128,7 +150,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: 
                                             </div>
                                         </div>
                                         
-                                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                                        <div className="flex flex-wrap items-center gap-2 pt-1 w-full">
                                             {expense.category && categoryColor && (
                                                 <Badge 
                                                     style={{ backgroundColor: categoryColor.backgroundColor, color: categoryColor.textColor }}
@@ -151,26 +173,6 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: 
                                                 </Badge>
                                             )})}
                                         </div>
-                                    </div>
-                                    <div className="text-right flex-shrink-0 w-32 flex flex-col items-end">
-                                        <div className="flex items-center">
-                                            <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId}>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                            </AddExpenseDialog>
-                                            <div className={cn(
-                                                'font-bold text-lg',
-                                                expense.type === 'income' ? 'text-green-600' : 'text-red-500'
-                                            )}>
-                                                {formatAmount(expense.amount)}
-                                            </div>
-                                        </div>
-                                        {!isShared && expense.balanceAfterTransaction !== undefined && (
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                Balance: {formatAmount(expense.balanceAfterTransaction)}
-                                            </p>
-                                        )}
                                     </div>
                                 </div>
                             )})}

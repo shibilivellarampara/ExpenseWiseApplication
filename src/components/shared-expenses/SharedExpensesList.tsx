@@ -10,27 +10,28 @@ import { useFirestore } from "@/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-import { Copy } from "lucide-react";
+import { Copy, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-
-interface SharedExpensesListProps {
-    sharedExpenses: SharedExpense[];
-    isLoading?: boolean;
-}
+import { Badge } from "../ui/badge";
 
 const getInitials = (name?: string | null) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 };
 
-const MemberAvatars = ({ memberIds }: { memberIds: string[] }) => {
+const MemberList = ({ memberIds }: { memberIds: string[] }) => {
     const firestore = useFirestore();
     const [members, setMembers] = useState<UserProfile[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchMembers = async () => {
-            if (!firestore || !memberIds) return;
+            if (!firestore || !memberIds) {
+                setIsLoading(false);
+                return;
+            };
+            setIsLoading(true);
             try {
                 const memberProfiles = await Promise.all(
                     memberIds.map(async (id) => {
@@ -38,34 +39,52 @@ const MemberAvatars = ({ memberIds }: { memberIds: string[] }) => {
                         return userDoc.data() as UserProfile;
                     })
                 );
-                // Ensure we only have valid members with IDs
                 setMembers(memberProfiles.filter(p => p && p.id));
             } catch (error) {
                 console.error("Error fetching member profiles:", error);
                 setMembers([]);
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchMembers();
     }, [firestore, memberIds]);
 
+    if (isLoading) {
+        return (
+             <div className="space-y-2">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+            </div>
+        )
+    }
+
     return (
-        <TooltipProvider>
-            <div className="flex -space-x-2 overflow-hidden">
-                {members.map((member, index) => (
-                    <Tooltip key={member.id || index}>
-                        <TooltipTrigger asChild>
-                            <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                                <AvatarImage src={member.photoURL || undefined} />
-                                <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-                            </Avatar>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{member.name}</p>
-                        </TooltipContent>
-                    </Tooltip>
+        <div className="space-y-2">
+            <TooltipProvider>
+                <div className="flex -space-x-2 overflow-hidden">
+                    {members.map((member) => (
+                        <Tooltip key={member.id}>
+                            <TooltipTrigger asChild>
+                                <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
+                                    <AvatarImage src={member.photoURL || undefined} />
+                                    <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                                </Avatar>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{member.name}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    ))}
+                </div>
+            </TooltipProvider>
+            <div className="flex flex-wrap gap-1">
+                {members.map(member => (
+                    <Badge key={member.id} variant="secondary">{member.name}</Badge>
                 ))}
             </div>
-        </TooltipProvider>
+        </div>
     );
 }
 
@@ -120,8 +139,8 @@ export function SharedExpensesList({ sharedExpenses, isLoading }: SharedExpenses
                     </CardHeader>
                     <CardContent className="space-y-4 flex-grow">
                         <div>
-                            <p className="text-sm font-medium">Members</p>
-                            <MemberAvatars memberIds={item.memberIds} />
+                            <p className="text-sm font-medium mb-2">Members</p>
+                            <MemberList memberIds={item.memberIds} />
                         </div>
                          {item.joinId && (
                             <div>

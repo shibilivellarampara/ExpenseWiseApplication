@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,8 +20,11 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
     const currencySymbol = getCurrencySymbol(currency);
 
     const stats = useMemo(() => {
-        const totalCurrent = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
-        const totalLast = lastMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const currentMonthSpending = currentMonthExpenses.filter(e => e.type === 'expense');
+        const lastMonthSpending = lastMonthExpenses.filter(e => e.type === 'expense');
+
+        const totalCurrent = currentMonthSpending.reduce((sum, e) => sum + e.amount, 0);
+        const totalLast = lastMonthSpending.reduce((sum, e) => sum + e.amount, 0);
 
         let momChange = 0;
         if (totalLast > 0) {
@@ -30,7 +34,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
         }
 
         const categorySpending = new Map<string, number>();
-        currentMonthExpenses.forEach(e => {
+        currentMonthSpending.forEach(e => {
             const categoryName = e.category?.name || 'Uncategorized';
             categorySpending.set(categoryName, (categorySpending.get(categoryName) || 0) + e.amount);
         });

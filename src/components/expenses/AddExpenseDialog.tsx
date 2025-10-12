@@ -420,32 +420,35 @@ function ExpenseForm({
                                         <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10">
                                             {selectedTags.length > 0 ? (
                                                 <div className="flex flex-wrap gap-1">
-                                                    {selectedTags.map(tag => (
-                                                        <Badge
-                                                            key={tag.id}
-                                                            variant="secondary"
-                                                            className="flex items-center gap-1.5"
-                                                        >
-                                                            {renderIcon(tag.icon, "h-3 w-3")}
-                                                            {tag.name}
-                                                            <span
-                                                                role="button"
-                                                                tabIndex={0}
-                                                                className="rounded-full -mr-1 focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") {
-                                                                    e.stopPropagation(); e.preventDefault();
-                                                                    field.onChange(field.value?.filter(id => id !== tag.id))
-                                                                }}}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    e.preventDefault();
-                                                                    field.onChange(field.value?.filter(id => id !== tag.id))
-                                                                }}
+                                                    {selectedTags.map(tag => {
+                                                        const tagColor = generateColorFromString(tag.name);
+                                                        return (
+                                                            <Badge
+                                                                key={tag.id}
+                                                                style={{ backgroundColor: tagColor.backgroundColor, color: tagColor.textColor }}
+                                                                className="flex items-center gap-1.5 border-transparent"
                                                             >
-                                                                <X className="h-3 w-3 text-muted-foreground hover:text-foreground"/>
-                                                            </span>
-                                                        </Badge>
-                                                    ))}
+                                                                {renderIcon(tag.icon, "h-3 w-3")}
+                                                                {tag.name}
+                                                                <span
+                                                                    role="button"
+                                                                    tabIndex={0}
+                                                                    className="rounded-full -mr-1 focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") {
+                                                                        e.stopPropagation(); e.preventDefault();
+                                                                        field.onChange(field.value?.filter(id => id !== tag.id))
+                                                                    }}}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        e.preventDefault();
+                                                                        field.onChange(field.value?.filter(id => id !== tag.id))
+                                                                    }}
+                                                                >
+                                                                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground"/>
+                                                                </span>
+                                                            </Badge>
+                                                        )
+                                                    })}
                                                 </div>
                                             ) : (
                                                 "Select tags..."
@@ -963,3 +966,5 @@ function useExpenseForm({
       tags: tags || []
     };
 }
+
+    

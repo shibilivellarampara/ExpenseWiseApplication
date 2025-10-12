@@ -18,6 +18,7 @@ import { defaultCategories, defaultAccounts, defaultTags } from '@/lib/defaults'
 import { UserProfile } from '@/lib/types';
 import PhoneInput from 'react-phone-number-input';
 import { cn } from '@/lib/utils';
+import React from 'react';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -222,3 +223,5 @@ export function SignUpForm() {
     </Form>
   );
 }
+
+    

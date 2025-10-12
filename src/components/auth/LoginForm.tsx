@@ -67,6 +67,38 @@ export function LoginForm() {
     }
   }, [auth]);
 
+    const handleLoginError = (error: any) => {
+        console.error("Login Error:", error); // Log the detailed error for debugging
+        let userMessage = "An unexpected error occurred. Please try again.";
+
+        if (error.code) {
+            switch (error.code) {
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    userMessage = 'Invalid credentials. Please check your email and password.';
+                    break;
+                case 'auth/invalid-email':
+                    userMessage = 'Please enter a valid email address.';
+                    break;
+                case 'auth/too-many-requests':
+                    userMessage = 'Too many attempts. Please try again later.';
+                    break;
+                case 'auth/invalid-phone-number':
+                    userMessage = 'The phone number is not valid.';
+                    break;
+                case 'auth/invalid-verification-code':
+                    userMessage = 'The verification code is incorrect.';
+                    break;
+                default:
+                    userMessage = 'Login failed. Please try again.';
+                    break;
+            }
+        }
+        
+        toast({ variant: 'destructive', title: 'Login Failed', description: userMessage });
+    }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     if (!auth) {
@@ -86,7 +118,7 @@ export function LoginForm() {
             toast({ title: 'Success!', description: 'You are now signed in.' });
             router.push('/dashboard');
         } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Login Failed', description: error.message });
+            handleLoginError(error);
         } finally {
             setIsLoading(false);
         }
@@ -102,7 +134,7 @@ export function LoginForm() {
             setShowOtpInput(true);
             toast({ title: 'Verification code sent!', description: `A code has been sent to ${values.loginId}.` });
         } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Phone Sign-In Failed', description: error.message });
+            handleLoginError(error);
              if (recaptchaVerifier.current) {
                 // @ts-ignore
                 grecaptcha.reset(recaptchaVerifier.current.widgetId);
@@ -129,7 +161,7 @@ export function LoginForm() {
       toast({ title: 'Success!', description: 'You are now signed in with Google.' });
       router.push('/dashboard');
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Google Sign-In Failed', description: error.message || 'Could not sign in with Google.' });
+      handleLoginError(error);
     } finally {
       setIsGoogleLoading(false);
     }
@@ -143,7 +175,7 @@ export function LoginForm() {
         toast({ title: 'Success!', description: 'You are now signed in.' });
         router.push('/dashboard');
     } catch (error: any) {
-        toast({ variant: 'destructive', title: 'OTP Verification Failed', description: error.message });
+        handleLoginError(error);
     } finally {
         setIsLoading(false);
         setShowOtpInput(false);

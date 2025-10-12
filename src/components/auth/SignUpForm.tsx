@@ -87,21 +87,21 @@ export function SignUpForm() {
       const categoriesRef = collection(firestore, `users/${user.uid}/categories`);
       defaultCategories.forEach(category => {
           const categoryDoc = doc(categoriesRef);
-          batch.set(categoryDoc, { ...category, userId: user.uid });
+          batch.set(categoryDoc, { ...category, userId: user.uid, id: categoryDoc.id });
       });
 
       // 3. Add default accounts
       const accountsRef = collection(firestore, `users/${user.uid}/accounts`);
       defaultAccounts.forEach(pm => {
           const pmDoc = doc(accountsRef);
-          batch.set(pmDoc, { ...pm, userId: user.uid });
+          batch.set(pmDoc, { ...pm, userId: user.uid, id: pmDoc.id });
       });
 
       // 4. Add default tags
       const tagsRef = collection(firestore, `users/${user.uid}/tags`);
       defaultTags.forEach(tag => {
           const tagDoc = doc(tagsRef);
-          batch.set(tagDoc, { ...tag, userId: user.uid });
+          batch.set(tagDoc, { ...tag, userId: user.uid, id: tagDoc.id });
       });
 
       // Commit the batch
@@ -114,11 +114,15 @@ export function SignUpForm() {
       });
       router.push('/login');
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'There was a problem with your request.',
-      });
+        let userMessage = 'There was a problem with your request.';
+        if (error.code === 'auth/email-already-in-use') {
+            userMessage = 'This email address is already in use. Please log in or use a different email.';
+        }
+        toast({
+            variant: 'destructive',
+            title: 'Uh oh! Something went wrong.',
+            description: userMessage,
+        });
     } finally {
       setIsLoading(false);
     }

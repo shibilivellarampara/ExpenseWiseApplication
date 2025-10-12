@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, updateProfile, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { useAuth, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { doc, setDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
 import { defaultCategories, defaultAccounts, defaultTags } from '@/lib/defaults';
@@ -53,13 +53,15 @@ export function SignUpForm() {
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   
+  const formResolver = useCallback((data: any, context: any, options: any) => {
+    if (signupMethod === 'email') {
+        return zodResolver(emailSchema)(data, context, options);
+    }
+    return zodResolver(phoneSchema)(data, context, options);
+  }, [signupMethod]);
+
   const form = useForm<z.infer<typeof emailSchema> | z.infer<typeof phoneSchema>>({
-    resolver: (data, context, options) => {
-        if (signupMethod === 'email') {
-            return zodResolver(emailSchema)(data, context, options);
-        }
-        return zodResolver(phoneSchema)(data, context, options);
-    },
+    resolver: formResolver,
     defaultValues: {
       name: '',
       email: '',
@@ -144,7 +146,7 @@ export function SignUpForm() {
   }
 
   async function handlePhoneSubmit(values: z.infer<typeof phoneSchema>) {
-    if (!auth || !recaptchaVerifier.current) {
+    if (!auth || !recaptchaVerifier.current || !values.phoneNumber) {
         toast({ variant: "destructive", title: "Error", description: "Authentication service not ready." });
         return;
     }
@@ -266,7 +268,7 @@ export function SignUpForm() {
                                         onChange={field.onChange}
                                         className="flex items-center w-full"
                                         countrySelectProps={{
-                                            className: "h-10 rounded-md rounded-r-none border border-r-0 border-input bg-background px-2"
+                                            className: "PhoneInputCountry"
                                         }}
                                         inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />)}
                                     />
@@ -312,3 +314,5 @@ export function SignUpForm() {
     </>
   );
 }
+
+    

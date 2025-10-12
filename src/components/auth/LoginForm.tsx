@@ -11,11 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, RecaptchaVerifier, signInWithPhoneNumber, PhoneAuthProvider } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../ui/dialog';
 import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
-import 'react-phone-number-input/style.css'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React from 'react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '../ui/input-otp';
@@ -52,13 +51,15 @@ export function LoginForm() {
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
 
+  const formResolver = useCallback((data: any, context: any, options: any) => {
+    if (loginMethod === 'email') {
+      return zodResolver(emailSchema)(data, context, options);
+    }
+    return zodResolver(phoneSchema)(data, context, options);
+  }, [loginMethod]);
+
   const form = useForm<{loginId: string, password?: string}>({
-    resolver: (data, context, options) => {
-        if (loginMethod === 'email') {
-            return zodResolver(emailSchema)(data, context, options);
-        }
-        return zodResolver(phoneSchema)(data, context, options);
-    },
+    resolver: formResolver,
     defaultValues: {
       loginId: '',
       password: '',
@@ -285,7 +286,7 @@ export function LoginForm() {
                                     onChange={field.onChange}
                                     className="flex items-center w-full"
                                     countrySelectProps={{
-                                        className: "h-10 rounded-md rounded-r-none border border-r-0 border-input bg-background px-2"
+                                        className: "PhoneInputCountry"
                                     }}
                                     inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />)}
                                 />
@@ -375,3 +376,5 @@ export function LoginForm() {
     </div>
   );
 }
+
+    

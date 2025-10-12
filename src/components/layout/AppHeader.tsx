@@ -3,13 +3,13 @@
 
 import { UserNav } from '@/components/auth/UserNav';
 import { usePathname } from 'next/navigation';
-import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser } from '@/firebase';
 import { Skeleton } from '../ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { Button } from '../ui/button';
-import { PanelLeft, Shield } from 'lucide-react';
+import { PanelLeft } from 'lucide-react';
 import { Logo } from '../Logo';
-import { NavLink, AppSidebar } from './AppSidebar';
+import { NavLink } from './AppSidebar';
 import {
   LayoutDashboard,
   Wallet,
@@ -17,10 +17,7 @@ import {
   Settings,
   ArrowRightLeft,
   Briefcase,
-  Users
 } from 'lucide-react';
-import { doc } from 'firebase/firestore';
-import { UserProfile } from '@/lib/types';
 
 
 const navItems = [
@@ -38,7 +35,7 @@ function getPageTitle(path: string): string {
     if (path.startsWith('/admin')) return 'Admin Dashboard';
     if (path.startsWith('/profile')) return 'Settings';
     const title = path.split('/').pop()?.replace(/-/g, ' ');
-    if (path.includes('/shared-expenses/') && path.split('/').length > 3) {
+    if (path.includes('/shared-expenses/') && path.split('/').length > 2) {
         return "Shared Space";
     }
     return title ? title.charAt(0).toUpperCase() + title.slice(1) : 'Dashboard';
@@ -47,7 +44,7 @@ function getPageTitle(path: string): string {
 export function AppHeader() {
   const pathname = usePathname();
   const title = getPageTitle(pathname);
-  const { user, isUserLoading } = useUser();
+  const { isUserLoading } = useUser();
     
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
@@ -74,7 +71,7 @@ export function AppHeader() {
                                   href={item.href}
                                   icon={item.icon}
                                   label={item.label}
-                                  isActive={pathname === item.href}
+                                  isActive={pathname.startsWith(item.href)}
                               />
                             ))}
                         </nav>

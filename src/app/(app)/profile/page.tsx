@@ -20,7 +20,6 @@ export default function ProfilePage() {
                 {/* Left Column */}
                 <div className="lg:col-span-1 space-y-8">
                     <ProfileForm />
-                    <DataManagementSettings />
                 </div>
 
                 {/* Right Column */}
@@ -30,6 +29,10 @@ export default function ProfilePage() {
                     <TagSettings />
                     <DashboardSettings />
                 </div>
+            </div>
+
+            <div className="pt-8">
+                <DataManagementSettings />
             </div>
         </div>
     );

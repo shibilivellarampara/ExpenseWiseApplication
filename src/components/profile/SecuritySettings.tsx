@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -55,7 +56,7 @@ export function SecuritySettings() {
     return (
         <Card>
             <CardHeader className="p-4">
-                <h3 className="text-lg font-semibold font-headline">Security</h3>
+                <h3 className="text-base font-semibold font-headline">Security</h3>
                 <CardDescription className="text-sm">Manage your password and security settings.</CardDescription>
             </CardHeader>
             <CardContent className="p-4 pt-0">

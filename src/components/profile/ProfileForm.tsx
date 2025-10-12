@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useFirestore, useStorage, useAuth, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
@@ -254,7 +255,7 @@ export function ProfileForm() {
         return (
             <Card>
                 <CardHeader>
-                  <h3 className="text-lg font-semibold font-headline">Profile Details</h3>
+                  <h3 className="text-base font-semibold font-headline">Profile Details</h3>
                 </CardHeader>
                 <CardContent className="space-y-4 flex items-center justify-center py-10">
                     <Loader2 className="mx-auto animate-spin" />
@@ -270,7 +271,7 @@ export function ProfileForm() {
                 <CollapsibleTrigger asChild>
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>
-                            <h3 className="text-lg font-semibold font-headline">Profile Details</h3>
+                            <h3 className="text-base font-semibold font-headline">Profile Details</h3>
                             <CardDescription className="text-sm">Update your personal information here.</CardDescription>
                         </div>
                         <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />

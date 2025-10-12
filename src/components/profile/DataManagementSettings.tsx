@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -190,7 +191,7 @@ export function DataManagementSettings() {
                         <div className="flex items-center gap-3">
                              <AlertTriangle className="text-destructive h-5 w-5"/>
                             <div>
-                                <h3 className="text-lg font-semibold font-headline text-destructive">Danger Zone</h3>
+                                <h3 className="text-base font-semibold font-headline text-destructive">Danger Zone</h3>
                                 <CardDescription className="text-sm">These actions are irreversible. Please be certain.</CardDescription>
                             </div>
                         </div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,7 +49,7 @@ export function DashboardSettings() {
                 <CollapsibleTrigger asChild>
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>
-                            <h3 className="text-lg font-semibold font-headline">Dashboard</h3>
+                            <h3 className="text-base font-semibold font-headline">Dashboard</h3>
                             <CardDescription className="text-sm">Customize the appearance of your dashboard.</CardDescription>
                         </div>
                         <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />

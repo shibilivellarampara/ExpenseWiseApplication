@@ -66,7 +66,7 @@ export function SidebarContent() {
             </nav>
             <div className="mt-auto">
                 <Separator className='my-4 bg-sidebar-border' />
-                <UserNav />
+                
             </div>
         </div>
     )

@@ -44,26 +44,14 @@ export function UserNav() {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
-  const pathname = usePathname();
-  // Check if we are on a main application page (not marketing or auth pages)
-  const isAppPage = !pathname.startsWith('/login') && !pathname.startsWith('/signup') && pathname !== '/';
-  
-  // In the main app layout, UserNav is in the sidebar. We want a different style for the header.
-  // This logic applies the big button style for the sidebar, and the small avatar style for the header.
-  const buttonClass = isAppPage 
-    ? "w-full justify-start text-base h-14 px-4 relative text-sidebar-muted-foreground hover:bg-sidebar-active/20 hover:text-sidebar-foreground" 
-    : "relative h-10 w-10 rounded-full";
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className={buttonClass}>
-          <div className="flex items-center gap-4">
-             <Avatar className="h-10 w-10">
-                <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
-                <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-             </Avatar>
-          </div>
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
+            <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+          </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>

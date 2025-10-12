@@ -95,9 +95,10 @@ export function AppHeader() {
                 </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-64">
                     <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
-                        <div className="p-4 border-b border-sidebar-border">
-                            <Logo />
-                        </div>
+                        <SheetHeader className="p-4 border-b border-sidebar-border">
+                          <SheetTitle className="sr-only">Main Menu</SheetTitle>
+                          <Logo />
+                        </SheetHeader>
                         <nav className="flex-grow space-y-2 mt-4 px-2">
                             {navItems.map((item) => (
                             <NavLink

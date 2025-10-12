@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithRedirect, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail, getRedirectResult } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
@@ -55,6 +55,28 @@ export function LoginForm() {
       password: '',
     },
   });
+
+   // Handle redirect result from Google Sign-In
+    useEffect(() => {
+        if (!auth) return;
+        setIsLoading(true);
+        getRedirectResult(auth)
+            .then((result) => {
+                if (result) {
+                    // This is the signed-in user
+                    toast({ title: 'Success!', description: 'You are now signed in with Google.' });
+                    router.push('/dashboard');
+                } else {
+                    // No redirect result, normal page load
+                }
+            })
+            .catch((error) => {
+                handleLoginError(error);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, [auth, router, toast]);
 
   // Initialize reCAPTCHA
   useEffect(() => {
@@ -166,15 +188,8 @@ export function LoginForm() {
     provider.setCustomParameters({
         prompt: 'select_account'
     });
-    try {
-      await signInWithPopup(auth, provider);
-      toast({ title: 'Success!', description: 'You are now signed in with Google.' });
-      router.push('/dashboard');
-    } catch (error: any) {
-      handleLoginError(error);
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    // Use signInWithRedirect instead of signInWithPopup
+    await signInWithRedirect(auth, provider);
   }
 
   async function handleOtpSubmit(otp: string) {
@@ -290,7 +305,10 @@ export function LoginForm() {
                                     withCountryCallingCode
                                     value={field.value || ""}
                                     onChange={field.onChange}
-                                    inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} />)}
+                                    countrySelectProps={{
+                                        className: "h-10 rounded-md rounded-r-none border border-r-0 border-input bg-background px-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                     }}
+                                    inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />)}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -317,7 +335,7 @@ export function LoginForm() {
       </div>
       <div className="grid grid-cols-1 gap-2">
        <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || !auth}>
-          {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 74.8C307.7 99.8 280.7 86 248 86c-84.3 0-152.3 67.8-152.3 151.4s68 151.4 152.3 151.4c99.2 0 129.1-81.5 133.7-118.8H248v-94.2h239.1c2.3 12.7 3.9 26.1 3.9 40.2z"></path></svg>}
+          {isGoogleLoading || isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 74.8C307.7 99.8 280.7 86 248 86c-84.3 0-152.3 67.8-152.3 151.4s68 151.4 152.3 151.4c99.2 0 129.1-81.5 133.7-118.8H248v-94.2h239.1c2.3 12.7 3.9 26.1 3.9 40.2z"></path></svg>}
           Google
         </Button>
         </div>
@@ -375,3 +393,4 @@ export function LoginForm() {
 }
 
     
+

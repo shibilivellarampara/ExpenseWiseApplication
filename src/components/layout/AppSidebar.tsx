@@ -49,11 +49,11 @@ const NavLink = ({ href, icon, label, isActive }: { href: string, icon: React.Re
 export function SidebarContent() {
     const pathname = usePathname();
     return (
-        <div className="flex h-full flex-col bg-sidebar-background p-4 text-sidebar-foreground">
-            <div className="py-4 px-2">
+        <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
+            <div className="p-4 border-b border-sidebar-border">
                 <Logo />
             </div>
-            <nav className="flex-grow space-y-2 mt-8">
+            <nav className="flex-grow space-y-2 mt-4 px-2">
                 {navItems.map((item) => (
                 <NavLink
                     key={item.href}

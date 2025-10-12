@@ -14,7 +14,6 @@ import { doc } from 'firebase/firestore';
 import { UserProfile, Category, Account } from "@/lib/types";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, writeBatch, increment } from 'firebase/firestore';
 import { Label } from "../ui/label";
 
@@ -340,3 +339,5 @@ export function ExcelImporter() {
         </Card>
     );
 }
+
+    

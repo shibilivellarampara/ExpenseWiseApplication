@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +13,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { Account } from "@/lib/types";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useCollection, useFirestore, useUser, useAuth } from "@/firebase";
+import { Account, UserProfile } from "@/lib/types";
 import { collection, doc, writeBatch, getDocs } from "firebase/firestore";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -24,14 +24,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import * as LucideIcons from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 
 export function DataManagementSettings() {
     const { user } = useUser();
+    const auth = useAuth();
     const firestore = useFirestore();
     const { toast } = useToast();
     const [isClearing, setIsClearing] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
     const [isOpen, setIsOpen] = useState(false);
+    const [showReauthDialog, setShowReauthDialog] = useState(false);
+    const [password, setPassword] = useState('');
+
 
     const accountsQuery = useMemoFirebase(() =>
         user ? collection(firestore, `users/${user.uid}/accounts`) : null
@@ -105,6 +113,69 @@ export function DataManagementSettings() {
             setIsClearing(false);
         }
     }
+    
+    const handleAccountDeletion = async () => {
+        if (!user || !firestore) return;
+        setIsDeleting(true);
+
+        try {
+            const batch = writeBatch(firestore);
+
+            const collectionsToDelete = ['expenses', 'accounts', 'categories', 'tags', 'contributions'];
+            for (const c of collectionsToDelete) {
+                const snapshot = await getDocs(collection(firestore, `users/${user.uid}/${c}`));
+                snapshot.forEach(d => batch.delete(d.ref));
+            }
+            
+            // Delete shared expenses owned by the user
+            const sharedExpensesQuery = query(collection(firestore, 'shared_expenses'), where('ownerId', '==', user.uid));
+            const sharedExpensesSnapshot = await getDocs(sharedExpensesQuery);
+            sharedExpensesSnapshot.forEach(doc => batch.delete(doc.ref));
+
+            // Delete the user profile doc
+            const userProfileRef = doc(firestore, `users/${user.uid}`);
+            batch.delete(userProfileRef);
+
+            await batch.commit();
+
+            // Finally, delete the user from auth
+            await deleteUser(user);
+            
+            toast({ title: "Account Closed", description: "Your account and all data have been permanently deleted." });
+            // The user will be redirected automatically due to auth state change.
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: `Could not delete account data. ${error.message}` });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+
+    const handleReauthenticate = async () => {
+        if (!auth?.currentUser || !password) return;
+        setIsDeleting(true);
+
+        try {
+            const credential = EmailAuthProvider.credential(auth.currentUser.email!, password);
+            await reauthenticateWithCredential(auth.currentUser, credential);
+            
+            // If re-authentication is successful, close the password dialog
+            // and open the final confirmation dialog.
+            setShowReauthDialog(false);
+            
+            // We use a timeout to allow the first dialog to close before opening the next.
+            setTimeout(() => {
+                const trigger = document.getElementById('final-delete-trigger');
+                trigger?.click();
+            }, 100);
+
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Authentication Failed', description: error.message });
+        } finally {
+            setIsDeleting(false);
+            setPassword('');
+        }
+    };
 
     return (
         <Card className="border-destructive/50">
@@ -188,6 +259,61 @@ export function DataManagementSettings() {
                                 </AlertDialog>
                             </div>
                         </div>
+
+                        <div className="rounded-lg border border-destructive/50 p-4">
+                            <h4 className="font-semibold">Close Account</h4>
+                            <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete your account and all associated data. This action is irreversible.</p>
+                            
+                            <Dialog open={showReauthDialog} onOpenChange={setShowReauthDialog}>
+                                <DialogTrigger asChild>
+                                    <Button variant="destructive" size="sm">Close My Account</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Please Re-authenticate</DialogTitle>
+                                        <DialogDescription>For your security, please enter your password to continue.</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-2 py-4">
+                                        <Label htmlFor="password">Password</Label>
+                                        <Input
+                                            id="password"
+                                            type="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <DialogFooter>
+                                        <Button variant="outline" onClick={() => setShowReauthDialog(false)}>Cancel</Button>
+                                        <Button onClick={handleReauthenticate} variant="destructive" disabled={isDeleting || !password}>
+                                            {isDeleting ? <Loader2 className="animate-spin" /> : "Confirm & Continue"}
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <button id="final-delete-trigger" className="hidden">Final Delete Trigger</button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This is your final confirmation. This action will permanently delete your entire account, including all personal data, transactions, and settings. This cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleAccountDeletion} className="bg-destructive hover:bg-destructive/90">
+                                            {isDeleting ? <Loader2 className="animate-spin" /> : "Yes, delete my account forever"}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+
+                        </div>
+
                     </CardContent>
                 </CollapsibleContent>
             </Collapsible>

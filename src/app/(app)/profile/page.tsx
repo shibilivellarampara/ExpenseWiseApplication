@@ -8,6 +8,7 @@ import { CategorySettings } from "@/components/profile/CategorySettings";
 import { TagSettings }from "@/components/profile/TagSettings";
 import { DashboardSettings } from "@/components/profile/DashboardSettings";
 import { DataManagementSettings } from "@/components/profile/DataManagementSettings";
+import { SecuritySettings } from "@/components/profile/SecuritySettings";
 
 export default function ProfilePage() {
     return (
@@ -20,6 +21,7 @@ export default function ProfilePage() {
                 {/* Left Column */}
                 <div className="lg:col-span-1 space-y-8">
                     <ProfileForm />
+                    <SecuritySettings />
                 </div>
 
                 {/* Right Column */}
@@ -37,3 +39,5 @@ export default function ProfilePage() {
         </div>
     );
 }
+
+    

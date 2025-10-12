@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { Separator } from '../ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 import {
   InputOTP,
   InputOTPGroup,
@@ -23,6 +23,7 @@ import {
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Link from 'next/link';
 
 
 const formSchema = z.object({
@@ -43,6 +44,8 @@ export function LoginForm() {
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -147,6 +150,27 @@ export function LoginForm() {
     }
   }
 
+  async function handleForgotPassword() {
+    if (!auth || !forgotPasswordEmail) {
+      toast({ variant: 'destructive', title: 'Email Required', description: 'Please enter your email address.' });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, forgotPasswordEmail);
+      toast({
+        title: 'Password Reset Email Sent',
+        description: 'Check your inbox for instructions to reset your password.',
+      });
+      setShowForgotPassword(false);
+      setForgotPasswordEmail('');
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
 
   return (
     <div className="space-y-4">
@@ -176,7 +200,17 @@ export function LoginForm() {
                         name="password"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <div className="flex justify-between items-center">
+                                <FormLabel>Password</FormLabel>
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    className="h-auto p-0 text-sm"
+                                    onClick={() => setShowForgotPassword(true)}
+                                >
+                                    Forgot Password?
+                                </Button>
+                            </div>
                              <FormControl>
                                 <div className="relative">
                                     <Input 
@@ -266,6 +300,31 @@ export function LoginForm() {
                     </InputOTP>
                 </div>
                  {isLoading && <Loader2 className="mx-auto mt-4 h-6 w-6 animate-spin" />}
+            </DialogContent>
+        </Dialog>
+
+         <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Forgot Password</DialogTitle>
+                    <DialogDescription>Enter your email address and we'll send you a link to reset your password.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2 py-4">
+                    <Input
+                        id="forgot-email"
+                        type="email"
+                        placeholder="name@example.com"
+                        value={forgotPasswordEmail}
+                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        autoFocus
+                    />
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowForgotPassword(false)}>Cancel</Button>
+                    <Button onClick={handleForgotPassword} disabled={isLoading || !forgotPasswordEmail}>
+                        {isLoading ? <Loader2 className="animate-spin" /> : "Send Reset Link"}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
 

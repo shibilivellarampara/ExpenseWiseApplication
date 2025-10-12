@@ -40,17 +40,17 @@ const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, descri
     'default': {
         name: 'Default Template',
         mapping: { date: 'Date', amount: 'Amount', description: 'Description', category: 'Category', tags: 'Tags', mode: 'Account' },
-        description: "Standard file with Date, Amount, Description, Category, Tags, and Account columns."
+        description: "Standard: Date, Amount, Description, etc."
     },
     'cashbook': {
         name: 'Cashbook App',
         mapping: { date: 'Date', description: 'Remark', category: 'Category', cashIn: 'Cash In', cashOut: 'Cash Out', mode: 'Mode' },
-        description: "For exports from the Cashbook app with 'Cash In'/'Cash Out' and 'Mode' for account."
+        description: "For Cashbook app exports with Cash In/Out."
     },
     'spendee': {
         name: 'Spendee App',
         mapping: { date: 'Date', amount: 'Amount', description: 'Notes', category: 'Category', tags: 'Tags', mode: 'Wallet' },
-        description: "For exports from Spendee, using 'Notes' for description and 'Wallet' for account."
+        description: "For Spendee exports using 'Notes' & 'Wallet'."
     },
 };
 
@@ -606,5 +606,7 @@ export function ExcelImporter() {
         </Card>
     );
 }
+
+    
 
     

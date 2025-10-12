@@ -15,6 +15,7 @@ import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
+import { useSidebar } from '../ui/sidebar';
 
 const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
@@ -25,7 +26,15 @@ const navItems = [
   { href: '/profile', icon: <CircleUser className="h-5 w-5" />, label: 'Profile' },
 ];
 
-export const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean, onClick?: () => void }) => {
+export const NavLink = ({ href, icon, label, isActive, disabled }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean }) => {
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   const linkContent = (
     <Button
       variant="ghost"
@@ -52,7 +61,7 @@ export const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { hr
   }
   
   return (
-    <Link href={href} passHref onClick={onClick}>
+    <Link href={href} passHref onClick={handleClick}>
       {linkContent}
     </Link>
   );
@@ -75,7 +84,7 @@ export function AppSidebar() {
                     icon={item.icon}
                     label={item.label}
                     isActive={pathname.startsWith(item.href)}
-                    disabled={item.disabled}
+                    disabled={(item as any).disabled}
                 />
                 ))}
             </nav>

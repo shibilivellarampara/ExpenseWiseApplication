@@ -8,9 +8,8 @@ import { Skeleton } from '../ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { Button } from '../ui/button';
 import { PanelLeft } from 'lucide-react';
-import { useSidebar } from '../ui/sidebar';
 import { Logo } from '../Logo';
-import { NavLink } from './AppSidebar'; // Import NavLink
+import { NavLink } from './AppSidebar';
 import {
   LayoutDashboard,
   Wallet,
@@ -38,25 +37,11 @@ function getPageTitle(path: string): string {
     return title ? title.charAt(0).toUpperCase() + title.slice(1) : 'Dashboard';
 }
 
-// Wrapper component to handle closing the sidebar on mobile
-const MobileNavLink = ({ children, onClick }: { children: React.ReactNode, onClick: () => void }) => {
-    return (
-        <div onClick={onClick} className="w-full">
-            {children}
-        </div>
-    );
-}
-
 export function AppHeader() {
   const pathname = usePathname();
   const title = getPageTitle(pathname);
   const { isUserLoading } = useUser();
-  const { setOpenMobile } = useSidebar();
     
-  const handleLinkClick = () => {
-    setOpenMobile(false);
-  }
-
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
         
@@ -77,15 +62,14 @@ export function AppHeader() {
                         </SheetHeader>
                         <nav className="flex-grow space-y-2 mt-4 px-2">
                             {navItems.map((item) => (
-                              <MobileNavLink key={item.href} onClick={handleLinkClick}>
-                                <NavLink
-                                    href={item.href}
-                                    icon={item.icon}
-                                    label={item.label}
-                                    isActive={pathname.startsWith(item.href)}
-                                    disabled={item.disabled}
-                                />
-                              </MobileNavLink>
+                              <NavLink
+                                  key={item.href}
+                                  href={item.href}
+                                  icon={item.icon}
+                                  label={item.label}
+                                  isActive={pathname.startsWith(item.href)}
+                                  disabled={(item as any).disabled}
+                              />
                             ))}
                         </nav>
                         <div className="mt-auto">

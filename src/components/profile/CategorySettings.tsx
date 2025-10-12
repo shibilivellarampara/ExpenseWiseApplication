@@ -119,6 +119,8 @@ export function CategorySettings() {
         }
     };
     
+    const sortedCategories = categories ? [...categories].sort((a, b) => a.name.localeCompare(b.name)) : [];
+
     return (
         <Card>
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -137,7 +139,7 @@ export function CategorySettings() {
                             <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
                         ) : (
                             <div className="space-y-2">
-                                {categories?.map((item) => (
+                                {sortedCategories.map((item) => (
                                     <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
                                         {editingItem?.id === item.id ? (
                                             <div className="flex items-center gap-2 w-full">

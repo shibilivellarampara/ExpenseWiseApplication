@@ -103,6 +103,8 @@ export function TagSettings() {
             setIsSaving(false);
         }
     };
+
+    const sortedItems = items ? [...items].sort((a, b) => a.name.localeCompare(b.name)) : [];
     
     return (
         <Card>
@@ -122,7 +124,7 @@ export function TagSettings() {
                             <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
                         ) : (
                             <div className="space-y-2">
-                                {items?.map((item) => (
+                                {sortedItems.map((item) => (
                                     <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
                                         {editingItem?.id === item.id ? (
                                             <div className="flex items-center gap-2 w-full">

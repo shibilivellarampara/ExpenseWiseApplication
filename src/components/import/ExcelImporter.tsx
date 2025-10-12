@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ type ColumnMapping = {
     description: string;
     category: string;
     tags?: string | null;
+    mode?: string | null; // For account
     // For cashbook style
     cashIn?: string | null;
     cashOut?: string | null;
@@ -37,20 +39,26 @@ type ColumnMapping = {
 const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, description: string } } = {
     'default': {
         name: 'Default Template',
-        mapping: { date: 'Date', amount: 'Amount', description: 'Description', category: 'Category', tags: 'Tags' },
-        description: "A standard file with columns for Date, Amount, Description, Category, and Tags."
+        mapping: { date: 'Date', amount: 'Amount', description: 'Description', category: 'Category', tags: 'Tags', mode: 'Account' },
+        description: "Standard file with Date, Amount, Description, Category, Tags, and Account columns."
     },
     'cashbook': {
         name: 'Cashbook App',
-        mapping: { date: 'Date', description: 'Remark', category: 'Category', cashIn: 'Cash In', cashOut: 'Cash Out' },
-        description: "For exports from the Cashbook app with 'Cash In' and 'Cash Out' columns."
+        mapping: { date: 'Date', description: 'Remark', category: 'Category', cashIn: 'Cash In', cashOut: 'Cash Out', mode: 'Mode' },
+        description: "For exports from the Cashbook app with 'Cash In'/'Cash Out' and 'Mode' for account."
     },
     'spendee': {
         name: 'Spendee App',
-        mapping: { date: 'Date', amount: 'Amount', description: 'Notes', category: 'Category', tags: 'Tags' },
-        description: "For exports from the Spendee app, using 'Notes' for description."
+        mapping: { date: 'Date', amount: 'Amount', description: 'Notes', category: 'Category', tags: 'Tags', mode: 'Wallet' },
+        description: "For exports from Spendee, using 'Notes' for description and 'Wallet' for account."
     },
 };
+
+type AccountAction = {
+    action: 'create' | 'map';
+    targetId?: string; // only if action is 'map'
+}
+type AccountMapping = { [key: string]: AccountAction };
 
 
 export function ExcelImporter() {
@@ -65,8 +73,11 @@ export function ExcelImporter() {
 
     const [newCategories, setNewCategories] = useState<string[]>([]);
     const [newTags, setNewTags] = useState<string[]>([]);
+    const [newAccounts, setNewAccounts] = useState<string[]>([]);
+
+    const [accountMappings, setAccountMappings] = useState<AccountMapping>({});
     
-    const [importAccountId, setImportAccountId] = useState<string>('');
+    const [importAccountId, setImportAccountId] = useState<string>(''); // For single account import
     const [importedCount, setImportedCount] = useState(0);
 
     const { toast } = useToast();
@@ -87,6 +98,17 @@ export function ExcelImporter() {
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
 
+    useEffect(() => {
+        if (newAccounts.length > 0) {
+            const initialMappings: AccountMapping = {};
+            newAccounts.forEach(accName => {
+                initialMappings[accName] = { action: 'create' };
+            });
+            setAccountMappings(initialMappings);
+        }
+    }, [newAccounts]);
+
+
     const handleFileParseAndValidate = (fileToParse: File) => {
         if (!template) {
             toast({ variant: 'destructive', title: 'Template not selected', description: 'Please select a template first.' });
@@ -103,7 +125,6 @@ export function ExcelImporter() {
                 const worksheet = workbook.Sheets[sheetName];
                 const headers = (XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1, raw: false })[0] || []);
 
-                // Validation
                 const expectedMapping = TEMPLATES[template].mapping;
                 const missingColumns = Object.values(expectedMapping).filter(col => col && !headers.includes(col));
                 if (missingColumns.length > 0) {
@@ -113,16 +134,18 @@ export function ExcelImporter() {
                 const jsonData = XLSX.utils.sheet_to_json<RowData>(worksheet, { raw: false, dateNF: 'yyyy-mm-dd' });
                 setRawData(jsonData);
 
-                // --- Detect New Categories and Tags ---
                 const existingCategoryNames = new Set(existingCategories?.map(c => c.name.toLowerCase()));
                 const existingTagNames = new Set(existingTags?.map(t => t.name.toLowerCase()));
+                const existingAccountNames = new Set(accounts?.map(a => a.name.toLowerCase()));
+                
                 const foundNewCategories = new Set<string>();
                 const foundNewTags = new Set<string>();
+                const foundNewAccounts = new Set<string>();
 
                 jsonData.forEach(row => {
                     const categoryName = row[expectedMapping.category];
-                    if (categoryName && !existingCategoryNames.has(categoryName.toLowerCase())) {
-                        foundNewCategories.add(categoryName);
+                    if (categoryName && !existingCategoryNames.has(String(categoryName).toLowerCase())) {
+                        foundNewCategories.add(String(categoryName));
                     }
                     if (expectedMapping.tags) {
                         const tagsString = row[expectedMapping.tags];
@@ -135,10 +158,17 @@ export function ExcelImporter() {
                             });
                         }
                     }
+                    if (expectedMapping.mode) {
+                        const accountName = row[expectedMapping.mode];
+                        if(accountName && !existingAccountNames.has(String(accountName).toLowerCase())){
+                            foundNewAccounts.add(String(accountName));
+                        }
+                    }
                 });
 
                 setNewCategories(Array.from(foundNewCategories));
                 setNewTags(Array.from(foundNewTags));
+                setNewAccounts(Array.from(foundNewAccounts));
                 setFile(fileToParse);
                 setStep(3);
 
@@ -174,6 +204,7 @@ export function ExcelImporter() {
             const description = row[mapping.description] || 'Imported Transaction';
             const categoryName = row[mapping.category] || 'Other';
             const tags = mapping.tags && row[mapping.tags] ? String(row[mapping.tags]).split(',').map((t: string) => t.trim()) : [];
+            const accountName = mapping.mode ? row[mapping.mode] : null;
             
             let amount = 0;
             let type: 'income' | 'expense' = 'expense';
@@ -198,7 +229,7 @@ export function ExcelImporter() {
                 }
             }
             
-            return { date, amount, description, categoryName, tags, type };
+            return { date, amount, description, categoryName, tags, type, accountName };
         }).filter(item => !isNaN(item.amount) && item.amount > 0);
     }, [rawData, template]);
 
@@ -206,18 +237,21 @@ export function ExcelImporter() {
         if (processedData.length === 0 || !user || !firestore || !accounts || !existingCategories || !existingTags) return;
         setIsImporting(true);
         setImportedCount(0);
-
+    
         const BATCH_SIZE = 50;
         const totalBatches = Math.ceil(processedData.length / BATCH_SIZE);
-
+        const mapping = TEMPLATES[template].mapping;
+    
         try {
-            // --- First, create all new categories and tags in one preliminary batch ---
+            // --- First, create all new items in a preliminary batch ---
             const preliminaryBatch = writeBatch(firestore);
             const newCategoryRefs = new Map<string, string>();
             const newTagRefs = new Map<string, string>();
+            const newAccountRefs = new Map<string, string>();
             const categoriesCol = collection(firestore, `users/${user.uid}/categories`);
             const tagsCol = collection(firestore, `users/${user.uid}/tags`);
-
+            const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
+    
             for (const catName of newCategories) {
                 const catRef = doc(categoriesCol);
                 preliminaryBatch.set(catRef, { id: catRef.id, name: catName, icon: 'Shapes', userId: user.uid });
@@ -228,55 +262,70 @@ export function ExcelImporter() {
                 preliminaryBatch.set(tagRef, { id: tagRef.id, name: tagName, icon: 'Tag', userId: user.uid });
                 newTagRefs.set(tagName.toLowerCase(), tagRef.id);
             }
+            for (const accName of Object.keys(accountMappings)) {
+                if (accountMappings[accName].action === 'create') {
+                    const accRef = doc(accountsCol);
+                    preliminaryBatch.set(accRef, { id: accRef.id, name: accName, icon: 'Landmark', type: 'bank', balance: 0, status: 'active', userId: user.uid });
+                    newAccountRefs.set(accName.toLowerCase(), accRef.id);
+                }
+            }
             await preliminaryBatch.commit();
-
+    
             // --- Prepare for transaction import ---
             const chosenAccountId = importAccountId || accounts.find(a => a.type === 'cash')?.id || accounts[0].id;
-            if (!chosenAccountId) throw new Error("No account available for import. Please create one first.");
             
             const categoryMap = new Map(existingCategories.map(c => [c.name.toLowerCase(), c.id]));
             const tagMap = new Map(existingTags.map(t => [t.name.toLowerCase(), t.id]));
+            const accountMap = new Map(accounts.map(a => [a.name.toLowerCase(), a.id]));
 
+            newCategoryRefs.forEach((val, key) => categoryMap.set(key, val));
+            newTagRefs.forEach((val, key) => tagMap.set(key, val));
+            newAccountRefs.forEach((val, key) => accountMap.set(key, val));
+    
             // --- Process transactions in batches ---
             for (let i = 0; i < totalBatches; i++) {
                 const batch = writeBatch(firestore);
                 const chunk = processedData.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
-                let totalBalanceChange = 0;
+                const balanceChanges = new Map<string, number>();
 
                 chunk.forEach(item => {
                     const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
                     const expenseRef = doc(expensesCol);
+    
+                    const categoryId = categoryMap.get(String(item.categoryName)?.toLowerCase());
+                    const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName.toLowerCase())).filter(Boolean);
 
-                    const categoryId = categoryMap.get(item.categoryName?.toLowerCase()) || newCategoryRefs.get(item.categoryName?.toLowerCase());
-                    const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName.toLowerCase()) || newTagRefs.get(tagName.toLowerCase())).filter(Boolean);
+                    let finalAccountId: string | undefined = chosenAccountId;
+                    if(mapping.mode && item.accountName){
+                        const accNameLower = String(item.accountName).toLowerCase();
+                        const mappingAction = accountMappings[item.accountName]?.action === 'map' ? accountMappings[item.accountName].targetId : undefined;
+                        finalAccountId = mappingAction || accountMap.get(accNameLower);
+                    }
+                    
+                    if (!finalAccountId) return; // Skip if no account can be determined
 
                     batch.set(expenseRef, {
-                        id: expenseRef.id,
-                        userId: user.uid,
-                        type: item.type,
-                        amount: item.amount,
-                        description: item.description,
-                        date: item.date,
-                        accountId: chosenAccountId,
-                        categoryId: categoryId,
-                        tagIds: tagIds,
-                        createdAt: new Date(),
+                        id: expenseRef.id, userId: user.uid, type: item.type, amount: item.amount,
+                        description: item.description, date: item.date, accountId: finalAccountId,
+                        categoryId: categoryId, tagIds: tagIds, createdAt: new Date(),
                     });
                     
-                    totalBalanceChange += item.type === 'income' ? item.amount : -item.amount;
+                    const change = item.type === 'income' ? item.amount : -item.amount;
+                    balanceChanges.set(finalAccountId, (balanceChanges.get(finalAccountId) || 0) + change);
                 });
-
-                const accountRef = doc(firestore, `users/${user.uid}/accounts`, chosenAccountId);
-                batch.update(accountRef, { balance: increment(totalBalanceChange) });
-
+    
+                balanceChanges.forEach((change, accId) => {
+                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, accId);
+                    batch.update(accountRef, { balance: increment(change) });
+                });
+    
                 await batch.commit();
                 setImportedCount(prev => prev + chunk.length);
             }
-
-
+    
             toast({
                 title: 'Import Successful',
-                description: `${processedData.length} expenses were added to your selected account.`,
+                description: `${processedData.length} expenses were added.`,
             });
             resetState();
         } catch (error: any) {
@@ -285,6 +334,7 @@ export function ExcelImporter() {
             setIsImporting(false);
         }
     };
+    
 
     const resetState = () => {
         setStep(1);
@@ -294,6 +344,8 @@ export function ExcelImporter() {
         setTemplate('');
         setNewCategories([]);
         setNewTags([]);
+        setNewAccounts([]);
+        setAccountMappings({});
         setImportAccountId('');
         setImportedCount(0);
     }
@@ -303,17 +355,26 @@ export function ExcelImporter() {
         const IconComponent = (LucideIcons as any)[iconName];
         return IconComponent ? <IconComponent className={cn("h-4 w-4", className)} /> : <Pilcrow className={cn("h-4 w-4", className)} />;
     };
+    
+    const handleAccountMappingChange = (accountName: string, value: string) => {
+        if(value === 'create_new') {
+            setAccountMappings(prev => ({ ...prev, [accountName]: { action: 'create' } }));
+        } else {
+             setAccountMappings(prev => ({ ...prev, [accountName]: { action: 'map', targetId: value } }));
+        }
+    }
+
 
     return (
         <Card>
             <CardHeader>
                 <CardTitle className="font-headline">Step {step}: {
-                    step === 1 ? 'Select Template' : step === 2 ? 'Upload File' : step === 3 ? 'Review New Items' : 'Confirm & Import'
+                    step === 1 ? 'Select Template' : step === 2 ? 'Upload File' : step === 3 ? 'Review & Map New Items' : 'Confirm & Import'
                 }</CardTitle>
                 <CardDescription>
                     {step === 1 && 'Choose a template that matches your file format.'}
                     {step === 2 && `Ready to upload a file.`}
-                    {step === 3 && 'We found some new items in your file. Review them before importing.'}
+                    {step === 3 && 'We found some new items in your file. Review and map them before importing.'}
                     {step === 4 && `A summary of your import. Ready to add ${processedData.length} transactions.`}
                 </CardDescription>
             </CardHeader>
@@ -348,7 +409,7 @@ export function ExcelImporter() {
                 )}
                 {!isImporting && step === 2 && (
                     <div className="space-y-4">
-                        <div className="rounded-md border bg-muted/50 p-3">
+                         <div className="rounded-md border bg-muted/50 p-3">
                             <p className="text-sm font-medium text-muted-foreground">Selected Template: <span className="font-semibold text-foreground">{TEMPLATES[template]?.name}</span></p>
                         </div>
                          <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 flex flex-col items-center justify-center text-center">
@@ -375,21 +436,47 @@ export function ExcelImporter() {
                             </div>
                         )}
                         <div className="rounded-lg border p-4 space-y-2">
-                             <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Categories to be Created ({newCategories.length})</h4>
+                             <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Categories ({newCategories.length})</h4>
                             {newCategories.length > 0 ? (
                                 <div className="flex flex-wrap gap-2">
                                     {newCategories.map(c => <Badge key={c} variant="secondary">{c}</Badge>)}
                                 </div>
-                            ) : <p className="text-sm text-muted-foreground">No new categories found.</p>}
+                            ) : <p className="text-sm text-muted-foreground">No new categories found. They will be created automatically.</p>}
                         </div>
                          <div className="rounded-lg border p-4 space-y-2">
-                             <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Tags to be Created ({newTags.length})</h4>
+                             <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Tags ({newTags.length})</h4>
                             {newTags.length > 0 ? (
                                 <div className="flex flex-wrap gap-2">
                                     {newTags.map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
                                 </div>
-                            ) : <p className="text-sm text-muted-foreground">No new tags found.</p>}
+                            ) : <p className="text-sm text-muted-foreground">No new tags found. They will be created automatically.</p>}
                         </div>
+                         {newAccounts.length > 0 && (
+                             <div className="rounded-lg border p-4 space-y-4">
+                                <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Accounts ({newAccounts.length})</h4>
+                                <p className="text-sm text-muted-foreground">Map new account names from your file to existing accounts, or create new ones.</p>
+                                {newAccounts.map(accName => (
+                                    <div key={accName} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                                        <Badge variant="outline">{accName}</Badge>
+                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                        <Select 
+                                            onValueChange={(value) => handleAccountMappingChange(accName, value)}
+                                            defaultValue="create_new"
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="create_new">Create New Account</SelectItem>
+                                                {accounts?.filter(a => a.status === 'active').map(existingAcc => (
+                                                    <SelectItem key={existingAcc.id} value={existingAcc.id}>Merge with "{existingAcc.name}"</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
                  {!isImporting && step === 4 && (
@@ -401,7 +488,7 @@ export function ExcelImporter() {
                                     <TableRow>
                                         <TableHead>Date</TableHead>
                                         <TableHead>Description</TableHead>
-                                        <TableHead>Category</TableHead>
+                                        <TableHead>Account</TableHead>
                                         <TableHead className="text-right">Amount</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -410,7 +497,7 @@ export function ExcelImporter() {
                                         <TableRow key={index}>
                                             <TableCell>{row.date.toLocaleDateString()}</TableCell>
                                             <TableCell>{row.description}</TableCell>
-                                            <TableCell>{row.categoryName}</TableCell>
+                                            <TableCell>{row.accountName || "Default"}</TableCell>
                                             <TableCell className={`text-right font-medium ${row.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
                                                 {row.type === 'income' ? '+' : '-'}{currencySymbol}{Number(row.amount).toFixed(2)}
                                             </TableCell>
@@ -420,29 +507,31 @@ export function ExcelImporter() {
                             </Table>
                          </div>
                          <p className="text-sm text-muted-foreground mt-2">Showing first 10 of {processedData.length} total records to be imported.</p>
-                         <div className="mt-4 space-y-2">
-                             <Label htmlFor="import-account">Import into Account</Label>
-                             <Select onValueChange={setImportAccountId} defaultValue={importAccountId}>
-                                <SelectTrigger id="import-account">
-                                    <SelectValue placeholder="Select an account..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {accounts?.filter(a => a.status === 'active').map(acc => (
-                                        <SelectItem key={acc.id} value={acc.id}>
-                                            <div className="flex items-center gap-2">
-                                                {renderIcon(acc.icon)}
-                                                {acc.name}
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                             </Select>
-                         </div>
+                         {!TEMPLATES[template]?.mapping.mode && (
+                            <div className="mt-4 space-y-2">
+                                <Label htmlFor="import-account">Import into Account</Label>
+                                <Select onValueChange={setImportAccountId} defaultValue={importAccountId}>
+                                    <SelectTrigger id="import-account">
+                                        <SelectValue placeholder="Select an account..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {accounts?.filter(a => a.status === 'active').map(acc => (
+                                            <SelectItem key={acc.id} value={acc.id}>
+                                                <div className="flex items-center gap-2">
+                                                    {renderIcon(acc.icon)}
+                                                    {acc.name}
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                         )}
                     </div>
                 )}
             </CardContent>
             <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => step > 1 ? (step === 3 ? setStep(2) : setStep(step - 1)) : resetState()} disabled={isProcessing || isImporting}>
+                <Button variant="outline" onClick={() => step > 1 ? setStep(step - 1) : resetState()} disabled={isProcessing || isImporting}>
                     Back
                 </Button>
                  <div>
@@ -462,7 +551,10 @@ export function ExcelImporter() {
                         </Button>
                     )}
                     {!isImporting && step === 4 && (
-                        <Button onClick={handleImport} disabled={isImporting || processedData.length === 0 || !importAccountId}>
+                        <Button 
+                            onClick={handleImport} 
+                            disabled={isImporting || processedData.length === 0 || (!TEMPLATES[template]?.mapping.mode && !importAccountId)}
+                        >
                             {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileCheck2 className="mr-2 h-4 w-4" />}
                             Confirm & Import {processedData.length > 0 ? `${processedData.length} Records` : ''}
                         </Button>
@@ -472,3 +564,5 @@ export function ExcelImporter() {
         </Card>
     );
 }
+
+    

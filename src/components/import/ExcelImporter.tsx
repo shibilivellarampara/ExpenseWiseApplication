@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { FileUp, Loader2, CheckCircle, Settings, ArrowRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { useDoc, useFirestore, useUser, useMemoFirebase, useCollection } from "@/firebase";
 import { doc } from 'firebase/firestore';
 import { UserProfile, Category, Account } from "@/lib/types";
 import { getCurrencySymbol } from "@/lib/currencies";

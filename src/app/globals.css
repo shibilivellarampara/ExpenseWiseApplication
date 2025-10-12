@@ -1,3 +1,4 @@
+
 @import 'react-phone-number-input/style.css';
 @tailwind base;
 @tailwind components;
@@ -51,6 +52,32 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 263.4 95.2% 66.3%;
     --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-accent: hsl(210 40% 96.1% / 0.1);
+  }
+
+  .chat {
+    --background: 220 12% 95%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 210 40% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 142.1 76.2% 36.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142.1 76.2% 36.3%;
+    --radius: 0.75rem;
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
     --sidebar-accent: hsl(210 40% 96.1% / 0.1);
   }
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useFirestore, useStorage, useAuth, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
@@ -28,6 +27,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import React from "react";
 
 const currencies = ["USD", "EUR", "JPY", "GBP", "INR"];
+
+const MemoizedPhoneInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>((props, ref) => (
+    <Input {...props} ref={ref} className="!rounded-l-none" />
+));
+MemoizedPhoneInput.displayName = 'MemoizedPhoneInput';
+
 
 export function ProfileForm() {
     const { user } = useUser();
@@ -266,13 +271,13 @@ export function ProfileForm() {
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>
                             <h3 className="text-lg font-semibold font-headline">Profile Details</h3>
-                            <CardDescription>Update your personal information here.</CardDescription>
+                            <CardDescription className="text-sm">Update your personal information here.</CardDescription>
                         </div>
                         <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
                     </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                <CardContent className="space-y-4">
+                <CardContent className="p-4 pt-0 space-y-4">
                     <div className="space-y-2">
                         <Label>Profile Picture</Label>
                         <Popover>
@@ -406,7 +411,7 @@ export function ProfileForm() {
                                         value={newPhoneNumber}
                                         onChange={setNewPhoneNumber}
                                         className="mt-2"
-                                        inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />)}
+                                        inputComponent={MemoizedPhoneInput}
                                     />
                                     <DialogFooter>
                                         <Button onClick={handleSendPhoneVerification} disabled={isLoading}>
@@ -419,7 +424,7 @@ export function ProfileForm() {
                         </div>
                     </div>
                 </CardContent>
-                <CardFooter className="border-t pt-6 flex justify-end">
+                <CardFooter className="border-t p-4 flex justify-end">
                     <Button type="submit" disabled={isLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {isUploading ? 'Uploading...' : 'Save Changes'}
@@ -458,5 +463,3 @@ export function ProfileForm() {
         </Card>
     );
 }
-
-    

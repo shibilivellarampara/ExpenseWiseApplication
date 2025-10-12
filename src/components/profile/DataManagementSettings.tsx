@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -188,18 +187,18 @@ export function DataManagementSettings() {
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 <CollapsibleTrigger asChild>
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
-                        <div className="flex items-center gap-2">
-                             <AlertTriangle className="text-destructive h-6 w-6"/>
+                        <div className="flex items-center gap-3">
+                             <AlertTriangle className="text-destructive h-5 w-5"/>
                             <div>
                                 <h3 className="text-lg font-semibold font-headline text-destructive">Danger Zone</h3>
-                                <CardDescription>These actions are irreversible. Please be certain before proceeding.</CardDescription>
+                                <CardDescription className="text-sm">These actions are irreversible. Please be certain.</CardDescription>
                             </div>
                         </div>
                         <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
                     </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                    <CardContent className="space-y-4">
+                    <CardContent className="p-4 pt-0 space-y-4">
                         <div className="rounded-lg border border-destructive/50 p-4">
                             <h4 className="font-semibold">Clear All Transaction Data</h4>
                             <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete all your transactions and reset every account balance to zero.</p>

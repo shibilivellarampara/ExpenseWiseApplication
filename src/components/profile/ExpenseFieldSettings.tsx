@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,13 +51,13 @@ export function ExpenseFieldSettings() {
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>
                             <h3 className="text-lg font-semibold font-headline">Expense Fields</h3>
-                            <CardDescription>Customize which fields are required.</CardDescription>
+                            <CardDescription className="text-sm">Customize which fields are required.</CardDescription>
                         </div>
                         <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
                     </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                    <CardContent className="space-y-4">
+                    <CardContent className="p-4 pt-0 space-y-4">
                         <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
                             <div className="space-y-0.5">
                                 <Label>Require Category</Label>

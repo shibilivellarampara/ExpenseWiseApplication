@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -105,8 +104,8 @@ export function CategorySettings() {
                 <CollapsibleTrigger asChild>
                      <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>
-                            <h3 className="font-semibold font-headline">Categories</h3>
-                            <CardDescription className="text-xs">Manage your expense categories.</CardDescription>
+                            <h3 className="text-lg font-semibold font-headline">Categories</h3>
+                            <CardDescription className="text-sm">Manage your expense categories.</CardDescription>
                         </div>
                         <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
                     </CardHeader>

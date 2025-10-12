@@ -120,6 +120,7 @@
   @apply bg-background; /* Use background to match input */
   @apply px-2;
   @apply ring-offset-background;
+  flex-grow: 0.2;
 }
 
 .PhoneInputCountrySelect {

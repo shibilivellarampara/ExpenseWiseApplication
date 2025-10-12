@@ -424,10 +424,21 @@ function ExpenseForm({
                                                         <Badge
                                                             key={tag.id}
                                                             variant="secondary"
-                                                            className="flex items-center gap-1"
+                                                            className="flex items-center gap-1.5"
                                                         >
                                                             {renderIcon(tag.icon, "h-3 w-3")}
                                                             {tag.name}
+                                                            <button
+                                                                type="button"
+                                                                className="rounded-full -mr-1 focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    e.preventDefault();
+                                                                    field.onChange(field.value?.filter(id => id !== tag.id))
+                                                                }}
+                                                            >
+                                                                <X className="h-3 w-3 text-muted-foreground hover:text-foreground"/>
+                                                            </button>
                                                         </Badge>
                                                     ))}
                                                 </div>

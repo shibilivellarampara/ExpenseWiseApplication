@@ -8,7 +8,6 @@ import { Skeleton } from '../ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { Button } from '../ui/button';
 import { PanelLeft } from 'lucide-react';
-import { AppSidebar } from './AppSidebar';
 import { SidebarContent } from './AppSidebar';
 
 
@@ -37,6 +36,9 @@ export function AppHeader() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-64">
+                    <SheetHeader className="p-4">
+                        <SheetTitle className="sr-only">Main Menu</SheetTitle>
+                    </SheetHeader>
                     <SidebarContent />
                 </SheetContent>
             </Sheet>

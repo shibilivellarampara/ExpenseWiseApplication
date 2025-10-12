@@ -10,8 +10,7 @@ import { Button } from '../ui/button';
 import { PanelLeft } from 'lucide-react';
 import { useSidebar } from '../ui/sidebar';
 import { Logo } from '../Logo';
-import { cn } from '@/lib/utils';
-import Link from 'next/link';
+import { NavLink } from './AppSidebar'; // Import NavLink
 import {
   LayoutDashboard,
   Wallet,
@@ -40,38 +39,6 @@ function getPageTitle(path: string): string {
 }
 
 
-const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean, onClick?: () => void }) => {
-  const linkContent = (
-    <Button
-      variant="ghost"
-      className={cn(
-        "w-full justify-start text-base h-12 px-4 relative",
-        isActive && !disabled
-          ? "bg-sidebar-active text-sidebar-active-foreground"
-          : "text-sidebar-muted-foreground hover:bg-sidebar-active/20 hover:text-sidebar-foreground",
-        disabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-sidebar-muted-foreground"
-      )}
-      disabled={disabled}
-      asChild={!disabled}
-    >
-      <div className="flex w-full items-center gap-4">
-        {isActive && !disabled && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>}
-        {icon}
-        <span>{label}</span>
-      </div>
-    </Button>
-  );
-
-  return disabled ? (
-    <div className="cursor-not-allowed">{linkContent}</div>
-  ) : (
-    <Link href={href} passHref onClick={onClick}>
-      {linkContent}
-    </Link>
-  );
-};
-
-
 export function AppHeader() {
   const pathname = usePathname();
   const title = getPageTitle(pathname);
@@ -96,8 +63,9 @@ export function AppHeader() {
                 <SheetContent side="left" className="p-0 w-64">
                     <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
                         <SheetHeader className="p-4 border-b border-sidebar-border">
-                          <SheetTitle className="sr-only">Main Menu</SheetTitle>
-                          <Logo />
+                          <SheetTitle>
+                            <Logo />
+                          </SheetTitle>
                         </SheetHeader>
                         <nav className="flex-grow space-y-2 mt-4 px-2">
                             {navItems.map((item) => (

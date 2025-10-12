@@ -25,7 +25,7 @@ const navItems = [
   { href: '/profile', icon: <CircleUser className="h-5 w-5" />, label: 'Profile' },
 ];
 
-const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean, onClick?: () => void }) => {
+export const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean, onClick?: () => void }) => {
   const linkContent = (
     <Button
       variant="ghost"
@@ -47,9 +47,11 @@ const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: str
     </Button>
   );
 
-  return disabled ? (
-    <div className="cursor-not-allowed" onClick={onClick}>{linkContent}</div>
-  ) : (
+  if (disabled) {
+    return <div className="cursor-not-allowed">{linkContent}</div>;
+  }
+  
+  return (
     <Link href={href} passHref onClick={onClick}>
       {linkContent}
     </Link>

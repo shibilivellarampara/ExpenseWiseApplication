@@ -16,11 +16,13 @@ import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { doc, setDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
 import { defaultCategories, defaultAccounts, defaultTags } from '@/lib/defaults';
 import { UserProfile } from '@/lib/types';
+import PhoneInput from 'react-phone-number-input';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  phoneNumber: z.string().optional(),
 });
 
 export function SignUpForm() {
@@ -37,6 +39,7 @@ export function SignUpForm() {
       name: '',
       email: '',
       password: '',
+      phoneNumber: '',
     },
   });
 
@@ -69,7 +72,7 @@ export function SignUpForm() {
         name: values.name,
         email: values.email.toLowerCase(),
         photoURL: user.photoURL,
-        phoneNumber: user.phoneNumber,
+        phoneNumber: values.phoneNumber || null,
         createdAt: serverTimestamp() as any, // Cast because serverTimestamp is a sentinel value
         defaultCurrency: 'INR',
         expenseFieldSettings: {
@@ -156,6 +159,26 @@ export function SignUpForm() {
               <FormMessage />
             </FormItem>
           )}
+        />
+        <FormField
+            control={form.control}
+            name="phoneNumber"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>Phone Number (Optional)</FormLabel>
+                <FormControl>
+                    <PhoneInput
+                        international
+                        countryCallingCodeEditable={false}
+                        defaultCountry="IN"
+                        placeholder="Enter phone number"
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                    />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
         />
         <FormField
           control={form.control}

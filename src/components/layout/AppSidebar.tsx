@@ -30,7 +30,6 @@ const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: str
   const linkContent = (
     <Button
       variant="ghost"
-      onClick={onClick}
       className={cn(
         "w-full justify-start text-base h-12 px-4 relative",
         isActive && !disabled
@@ -52,7 +51,7 @@ const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: str
   return disabled ? (
     <div className="cursor-not-allowed">{linkContent}</div>
   ) : (
-    <Link href={href} passHref>
+    <Link href={href} passHref onClick={onClick}>
       {linkContent}
     </Link>
   );

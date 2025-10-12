@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react"
@@ -59,11 +58,7 @@ export function UserNav() {
               <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
               <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
             </Avatar>
-            {isAppPage && (
-              <div className="flex flex-col items-start">
-                  <span className="font-medium text-sidebar-foreground">{user?.displayName}</span>
-              </div>
-            )}
+            
           </div>
         </Button>
       </DropdownMenuTrigger>

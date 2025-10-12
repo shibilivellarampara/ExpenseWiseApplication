@@ -49,7 +49,7 @@ const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: str
   );
 
   return disabled ? (
-    <div className="cursor-not-allowed">{linkContent}</div>
+    <div className="cursor-not-allowed" onClick={onClick}>{linkContent}</div>
   ) : (
     <Link href={href} passHref onClick={onClick}>
       {linkContent}

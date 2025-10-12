@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,9 +15,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useCollection, useFirestore, useUser, useAuth } from "@/firebase";
+import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase } from "@/firebase";
 import { Account, UserProfile } from "@/lib/types";
-import { collection, doc, writeBatch, getDocs } from "firebase/firestore";
+import { collection, doc, writeBatch, getDocs, query, where } from "firebase/firestore";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertTriangle, ChevronDown } from "lucide-react";
@@ -115,7 +116,7 @@ export function DataManagementSettings() {
     }
     
     const handleAccountDeletion = async () => {
-        if (!user || !firestore) return;
+        if (!user || !auth?.currentUser || !firestore) return;
         setIsDeleting(true);
 
         try {
@@ -156,7 +157,12 @@ export function DataManagementSettings() {
         setIsDeleting(true);
 
         try {
-            const credential = EmailAuthProvider.credential(auth.currentUser.email!, password);
+            if (!auth.currentUser.email) {
+                toast({ variant: "destructive", title: "Authentication Error", description: "Current user's email is not available." });
+                setIsDeleting(false);
+                return;
+            }
+            const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
             await reauthenticateWithCredential(auth.currentUser, credential);
             
             // If re-authentication is successful, close the password dialog

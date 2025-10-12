@@ -261,7 +261,7 @@ export function ProfileForm() {
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
              <form onSubmit={handleProfileSubmit}>
                 <CollapsibleTrigger asChild>
-                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>
                             <h3 className="text-lg font-semibold font-headline">Profile Details</h3>
                             <CardDescription>Update your personal information here.</CardDescription>

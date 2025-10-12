@@ -110,7 +110,7 @@ export function DataManagementSettings() {
         <Card className="border-destructive/50">
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 <CollapsibleTrigger asChild>
-                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div className="flex items-center gap-2">
                              <AlertTriangle className="text-destructive h-6 w-6"/>
                             <div>

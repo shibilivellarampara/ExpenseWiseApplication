@@ -49,7 +49,7 @@ export function ExpenseFieldSettings() {
         <Card>
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 <CollapsibleTrigger asChild>
-                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>
                             <h3 className="text-lg font-semibold font-headline">Expense Fields</h3>
                             <CardDescription>Customize which fields are required.</CardDescription>

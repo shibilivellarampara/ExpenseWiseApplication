@@ -47,7 +47,7 @@ export function DashboardSettings() {
         <Card>
              <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 <CollapsibleTrigger asChild>
-                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>
                             <h3 className="text-lg font-semibold font-headline">Dashboard</h3>
                             <CardDescription>Customize the appearance of your dashboard.</CardDescription>

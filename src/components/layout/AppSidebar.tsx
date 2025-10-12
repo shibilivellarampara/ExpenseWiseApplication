@@ -25,12 +25,15 @@ const navItems = [
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
 ];
 
-export const NavLink = ({ href, icon, label, isActive, disabled }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean }) => {
+export const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean, onClick?: () => void }) => {
   const { isMobile, setOpenMobile } = useSidebar();
 
   const handleClick = () => {
     if (isMobile) {
       setOpenMobile(false);
+    }
+    if (onClick) {
+      onClick();
     }
   };
 

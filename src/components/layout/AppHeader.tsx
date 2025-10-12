@@ -1,4 +1,3 @@
-
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
@@ -46,13 +45,13 @@ export function AppHeader() {
   const pathname = usePathname();
   const title = getPageTitle(pathname);
   const { isUserLoading } = useUser();
-  const { setOpenMobile } = useSidebar();
+  const { openMobile, setOpenMobile } = useSidebar();
     
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
         
          <div className="md:hidden">
-             <Sheet>
+             <Sheet open={openMobile} onOpenChange={setOpenMobile}>
                 <SheetTrigger asChild>
                     <Button size="icon" variant="ghost">
                         <PanelLeft />
@@ -68,14 +67,13 @@ export function AppHeader() {
                         </SheetHeader>
                         <nav className="flex-grow space-y-2 mt-4 px-2">
                             {navItems.map((item) => (
-                              <div key={item.href} onClick={() => setOpenMobile(false)}>
                                 <NavLink
+                                    key={item.href}
                                     href={item.href}
                                     icon={item.icon}
                                     label={item.label}
                                     isActive={pathname.startsWith(item.href)}
                                 />
-                              </div>
                             ))}
                         </nav>
                         <div className="mt-auto">

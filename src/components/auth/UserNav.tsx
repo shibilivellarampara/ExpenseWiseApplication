@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react"
@@ -11,18 +12,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal
 } from '@/components/ui/dropdown-menu';
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, Palette, Sun, Moon, MessageSquare, ChevronRight } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
-import { cn } from '@/lib/utils';
 
 export function UserNav() {
   const { user } = useUser();
@@ -44,7 +40,9 @@ export function UserNav() {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
-  const isAppPage = usePathname().startsWith('/d'); // Cheap check if we are in the app
+  const pathname = usePathname();
+  const isAppPage = !pathname.startsWith('/login') && !pathname.startsWith('/signup') && pathname !== '/';
+  
   const buttonClass = isAppPage 
     ? "w-full justify-start text-base h-14 px-4 relative text-sidebar-muted-foreground hover:bg-sidebar-active/20 hover:text-sidebar-foreground" 
     : "relative h-10 w-10 rounded-full";
@@ -58,7 +56,6 @@ export function UserNav() {
               <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
               <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
             </Avatar>
-            
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -77,28 +74,6 @@ export function UserNav() {
               <span>Profile</span>
             </Link>
           </DropdownMenuItem>
-           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <Palette className="mr-2 h-4 w-4" />
-              <span>Theme</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem onClick={() => setTheme("light")}>
-                  <Sun className="mr-2 h-4 w-4" />
-                  <span>Light</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
-                  <Moon className="mr-2 h-4 w-4" />
-                  <span>Dark</span>
-                </DropdownMenuItem>
-                 <DropdownMenuItem onClick={() => setTheme("chat")}>
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  <span>Chat</span>
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>

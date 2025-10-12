@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../u
 import { Button } from '../ui/button';
 import { PanelLeft } from 'lucide-react';
 import { SidebarContent } from './AppSidebar';
+import { ThemeToggle } from '../ThemeToggle';
 
 
 function getPageTitle(path: string): string {
@@ -47,6 +48,8 @@ export function AppHeader() {
         <div className="flex-1">
             <h1 className="font-semibold text-lg md:text-xl">{title}</h1>
         </div>
+        
+        <ThemeToggle />
         
         {isUserLoading ? (
             <Skeleton className="h-10 w-10 rounded-full" />

@@ -318,7 +318,7 @@ function ExpenseForm({
                     name="date"
                     render={({ field }) => (
                          <FormItem className="flex flex-col space-y-2">
-                            <FormLabel>Date & Time</FormLabel>
+                            <FormLabel>Date &amp; Time</FormLabel>
                             <DateTimePicker field={field} />
                             <FormMessage />
                         </FormItem>
@@ -428,9 +428,14 @@ function ExpenseForm({
                                                         >
                                                             {renderIcon(tag.icon, "h-3 w-3")}
                                                             {tag.name}
-                                                            <button
-                                                                type="button"
+                                                            <span
+                                                                role="button"
+                                                                tabIndex={0}
                                                                 className="rounded-full -mr-1 focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") {
+                                                                    e.stopPropagation(); e.preventDefault();
+                                                                    field.onChange(field.value?.filter(id => id !== tag.id))
+                                                                }}}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     e.preventDefault();
@@ -438,7 +443,7 @@ function ExpenseForm({
                                                                 }}
                                                             >
                                                                 <X className="h-3 w-3 text-muted-foreground hover:text-foreground"/>
-                                                            </button>
+                                                            </span>
                                                         </Badge>
                                                     ))}
                                                 </div>

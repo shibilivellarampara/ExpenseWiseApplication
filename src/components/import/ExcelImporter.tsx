@@ -18,6 +18,7 @@ import { Label } from "../ui/label";
 import { Badge } from "../ui/badge";
 import * as LucideIcons from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { Progress } from "../ui/progress";
 
 
 type RowData = { [key: string]: any };
@@ -64,6 +65,9 @@ export function ExcelImporter() {
 
     const [newCategories, setNewCategories] = useState<string[]>([]);
     const [newTags, setNewTags] = useState<string[]>([]);
+    
+    const [importAccountId, setImportAccountId] = useState<string>('');
+    const [importedCount, setImportedCount] = useState(0);
 
     const { toast } = useToast();
 
@@ -123,7 +127,7 @@ export function ExcelImporter() {
                     if (expectedMapping.tags) {
                         const tagsString = row[expectedMapping.tags];
                         if (tagsString) {
-                            const tags = tagsString.split(',').map((t: string) => t.trim());
+                            const tags = String(tagsString).split(',').map((t: string) => t.trim());
                             tags.forEach((tagName: string) => {
                                 if (tagName && !existingTagNames.has(tagName.toLowerCase())) {
                                     foundNewTags.add(tagName);
@@ -201,11 +205,14 @@ export function ExcelImporter() {
     const handleImport = async () => {
         if (processedData.length === 0 || !user || !firestore || !accounts || !existingCategories || !existingTags) return;
         setIsImporting(true);
+        setImportedCount(0);
+
+        const BATCH_SIZE = 50;
+        const totalBatches = Math.ceil(processedData.length / BATCH_SIZE);
 
         try {
-            const batch = writeBatch(firestore);
-
-            // --- Create New Categories and Tags First ---
+            // --- First, create all new categories and tags in one preliminary batch ---
+            const preliminaryBatch = writeBatch(firestore);
             const newCategoryRefs = new Map<string, string>();
             const newTagRefs = new Map<string, string>();
             const categoriesCol = collection(firestore, `users/${user.uid}/categories`);
@@ -213,53 +220,63 @@ export function ExcelImporter() {
 
             for (const catName of newCategories) {
                 const catRef = doc(categoriesCol);
-                batch.set(catRef, { id: catRef.id, name: catName, icon: 'Shapes', userId: user.uid });
+                preliminaryBatch.set(catRef, { id: catRef.id, name: catName, icon: 'Shapes', userId: user.uid });
                 newCategoryRefs.set(catName.toLowerCase(), catRef.id);
             }
             for (const tagName of newTags) {
                 const tagRef = doc(tagsCol);
-                batch.set(tagRef, { id: tagRef.id, name: tagName, icon: 'Tag', userId: user.uid });
+                preliminaryBatch.set(tagRef, { id: tagRef.id, name: tagName, icon: 'Tag', userId: user.uid });
                 newTagRefs.set(tagName.toLowerCase(), tagRef.id);
             }
+            await preliminaryBatch.commit();
 
-            // --- Prepare for transactions ---
-            const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
-            const defaultAccount = accounts.find(a => a.type === 'cash') || accounts[0];
-            if (!defaultAccount) throw new Error("No default cash account found. Please create one first.");
-
+            // --- Prepare for transaction import ---
+            const chosenAccountId = importAccountId || accounts.find(a => a.type === 'cash')?.id || accounts[0].id;
+            if (!chosenAccountId) throw new Error("No account available for import. Please create one first.");
+            
             const categoryMap = new Map(existingCategories.map(c => [c.name.toLowerCase(), c.id]));
             const tagMap = new Map(existingTags.map(t => [t.name.toLowerCase(), t.id]));
 
-            processedData.forEach(item => {
-                const expenseRef = doc(expensesCol);
+            // --- Process transactions in batches ---
+            for (let i = 0; i < totalBatches; i++) {
+                const batch = writeBatch(firestore);
+                const chunk = processedData.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+                let totalBalanceChange = 0;
 
-                const categoryId = categoryMap.get(item.categoryName?.toLowerCase()) || newCategoryRefs.get(item.categoryName?.toLowerCase());
-                const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName.toLowerCase()) || newTagRefs.get(tagName.toLowerCase())).filter(Boolean);
+                chunk.forEach(item => {
+                    const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
+                    const expenseRef = doc(expensesCol);
 
-                batch.set(expenseRef, {
-                    id: expenseRef.id,
-                    userId: user.uid,
-                    type: item.type,
-                    amount: item.amount,
-                    description: item.description,
-                    date: item.date,
-                    accountId: defaultAccount.id,
-                    categoryId: categoryId,
-                    tagIds: tagIds,
-                    createdAt: new Date(),
+                    const categoryId = categoryMap.get(item.categoryName?.toLowerCase()) || newCategoryRefs.get(item.categoryName?.toLowerCase());
+                    const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName.toLowerCase()) || newTagRefs.get(tagName.toLowerCase())).filter(Boolean);
+
+                    batch.set(expenseRef, {
+                        id: expenseRef.id,
+                        userId: user.uid,
+                        type: item.type,
+                        amount: item.amount,
+                        description: item.description,
+                        date: item.date,
+                        accountId: chosenAccountId,
+                        categoryId: categoryId,
+                        tagIds: tagIds,
+                        createdAt: new Date(),
+                    });
+                    
+                    totalBalanceChange += item.type === 'income' ? item.amount : -item.amount;
                 });
 
-                const amountChange = item.type === 'income' ? item.amount : -item.amount;
-                batch.update(doc(firestore, `users/${user.uid}/accounts`, defaultAccount.id), {
-                    balance: increment(amountChange)
-                });
-            });
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, chosenAccountId);
+                batch.update(accountRef, { balance: increment(totalBalanceChange) });
 
-            await batch.commit();
+                await batch.commit();
+                setImportedCount(prev => prev + chunk.length);
+            }
+
 
             toast({
                 title: 'Import Successful',
-                description: `${processedData.length} expenses were added to your '${defaultAccount.name}' account.`,
+                description: `${processedData.length} expenses were added to your selected account.`,
             });
             resetState();
         } catch (error: any) {
@@ -277,6 +294,8 @@ export function ExcelImporter() {
         setTemplate('');
         setNewCategories([]);
         setNewTags([]);
+        setImportAccountId('');
+        setImportedCount(0);
     }
 
     const renderIcon = (iconName: string | undefined, className?: string) => {
@@ -299,7 +318,15 @@ export function ExcelImporter() {
                 </CardDescription>
             </CardHeader>
              <CardContent className="space-y-4">
-                {step === 1 && (
+                {isImporting && (
+                     <div className="space-y-2">
+                        <Label>Importing transactions...</Label>
+                        <Progress value={(importedCount / processedData.length) * 100} />
+                        <p className="text-sm text-muted-foreground">{importedCount} of {processedData.length} imported.</p>
+                    </div>
+                )}
+
+                {!isImporting && step === 1 && (
                     <div>
                         <Label>Import Template</Label>
                         <Select value={template} onValueChange={setTemplate}>
@@ -319,7 +346,7 @@ export function ExcelImporter() {
                         </Select>
                     </div>
                 )}
-                {step === 2 && (
+                {!isImporting && step === 2 && (
                     <div className="space-y-4">
                         <div className="rounded-md border bg-muted/50 p-3">
                             <p className="text-sm font-medium text-muted-foreground">Selected Template: <span className="font-semibold text-foreground">{TEMPLATES[template]?.name}</span></p>
@@ -334,7 +361,7 @@ export function ExcelImporter() {
                         </div>
                     </div>
                 )}
-                {step === 3 && (
+                {!isImporting && step === 3 && (
                      <div className="space-y-6">
                         {validationError && (
                              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
@@ -365,7 +392,7 @@ export function ExcelImporter() {
                         </div>
                     </div>
                 )}
-                 {step === 4 && (
+                 {!isImporting && step === 4 && (
                      <div>
                         <h3 className="text-lg font-semibold mb-2">Final Preview</h3>
                          <div className="max-h-60 overflow-y-auto border rounded-md">
@@ -393,8 +420,23 @@ export function ExcelImporter() {
                             </Table>
                          </div>
                          <p className="text-sm text-muted-foreground mt-2">Showing first 10 of {processedData.length} total records to be imported.</p>
-                         <div className="mt-4 rounded-lg border bg-muted/50 p-4">
-                             <p className="text-sm text-muted-foreground">All transactions will be imported into the account: <span className="font-semibold text-foreground">{accounts?.find(a => a.type === 'cash')?.name || accounts?.[0].name}</span></p>
+                         <div className="mt-4 space-y-2">
+                             <Label htmlFor="import-account">Import into Account</Label>
+                             <Select onValueChange={setImportAccountId} defaultValue={importAccountId}>
+                                <SelectTrigger id="import-account">
+                                    <SelectValue placeholder="Select an account..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {accounts?.filter(a => a.status === 'active').map(acc => (
+                                        <SelectItem key={acc.id} value={acc.id}>
+                                            <div className="flex items-center gap-2">
+                                                {renderIcon(acc.icon)}
+                                                {acc.name}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                             </Select>
                          </div>
                     </div>
                 )}
@@ -404,26 +446,25 @@ export function ExcelImporter() {
                     Back
                 </Button>
                  <div>
-                    {step === 1 && (
+                    {!isImporting && step === 1 && (
                         <Button onClick={() => setStep(2)} disabled={!template}>
                             Next <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     )}
-                    {step === 2 && (
-                         <Button onClick={() => file && handleFileParseAndValidate(file)} disabled={!file || isProcessing}>
-                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ListChecks className="mr-2 h-4 w-4" />}
-                            Validate &amp; Review
+                    {!isImporting && step === 2 && (
+                         <Button onClick={() => document.getElementById('file-upload')?.click()} disabled={isProcessing}>
+                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Browse File'}
                         </Button>
                     )}
-                    {step === 3 && (
+                    {!isImporting && step === 3 && (
                         <Button onClick={() => setStep(4)} disabled={validationError !== null}>
                              Next: Final Confirmation <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     )}
-                    {step === 4 && (
-                        <Button onClick={handleImport} disabled={isImporting || processedData.length === 0}>
+                    {!isImporting && step === 4 && (
+                        <Button onClick={handleImport} disabled={isImporting || processedData.length === 0 || !importAccountId}>
                             {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileCheck2 className="mr-2 h-4 w-4" />}
-                            Confirm &amp; Import {processedData.length > 0 ? `${processedData.length} Records` : ''}
+                            Confirm & Import {processedData.length > 0 ? `${processedData.length} Records` : ''}
                         </Button>
                     )}
                  </div>

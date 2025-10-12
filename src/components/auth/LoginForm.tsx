@@ -163,6 +163,9 @@ export function LoginForm() {
         return;
     }
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+        prompt: 'select_account'
+    });
     try {
       await signInWithPopup(auth, provider);
       toast({ title: 'Success!', description: 'You are now signed in with Google.' });
@@ -285,11 +288,9 @@ export function LoginForm() {
                                 <PhoneInput
                                     international
                                     withCountryCallingCode
-                                    countryCallingCodeEditable={false}
-                                    defaultCountry="IN"
-                                    placeholder="Enter phone number"
                                     value={field.value || ""}
                                     onChange={field.onChange}
+                                    inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} />)}
                                 />
                             </FormControl>
                             <FormMessage />

@@ -171,15 +171,13 @@ export function SignUpForm() {
                 <FormControl>
                     <PhoneInput
                         international
+                        withCountryCallingCode
                         countryCallingCodeEditable={false}
                         defaultCountry="IN"
                         placeholder="Enter phone number"
                         value={field.value || ""}
                         onChange={field.onChange}
                         className="flex"
-                        countrySelectProps={{
-                           className: "h-10 rounded-md rounded-r-none border border-r-0 border-input bg-background px-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        }}
                         inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />)}
                     />
                 </FormControl>

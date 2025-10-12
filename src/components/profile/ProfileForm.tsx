@@ -25,6 +25,7 @@ import 'react-phone-number-input/style.css'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { AvatarList } from "./Avatars";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import React from "react";
 
 const currencies = ["USD", "EUR", "JPY", "GBP", "INR"];
 
@@ -217,7 +218,8 @@ export function ProfileForm() {
 
         try {
             // Re-authenticate the user
-            const credential = EmailAuthProvider.credential(user.email!, currentPassword);
+            if (!user.email) throw new Error("User email not found for re-authentication.");
+            const credential = EmailAuthProvider.credential(user.email, currentPassword);
             await reauthenticateWithCredential(auth.currentUser, credential);
 
             // Update email in Firebase Auth
@@ -397,11 +399,14 @@ export function ProfileForm() {
                                     </DialogHeader>
                                      <PhoneInput
                                         international
+                                        withCountryCallingCode
+                                        countryCallingCodeEditable={false}
                                         defaultCountry="IN"
                                         placeholder="Enter phone number"
                                         value={newPhoneNumber}
                                         onChange={setNewPhoneNumber}
                                         className="mt-2"
+                                        inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />)}
                                     />
                                     <DialogFooter>
                                         <Button onClick={handleSendPhoneVerification} disabled={isLoading}>
@@ -453,3 +458,5 @@ export function ProfileForm() {
         </Card>
     );
 }
+
+    

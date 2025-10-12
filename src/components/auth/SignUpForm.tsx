@@ -22,11 +22,19 @@ import React from 'react';
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email.' }).optional().or(z.literal('')),
-  phoneNumber: z.string().refine(value => isPossiblePhoneNumber(value), { message: "Please enter a valid phone number." }),
+  phoneNumber: z.string().optional().or(z.literal('')),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 }).refine(data => data.email || data.phoneNumber, {
     message: "Either email or phone number is required.",
     path: ["email"],
+}).refine(data => {
+    if (data.phoneNumber) {
+        return isPossiblePhoneNumber(data.phoneNumber);
+    }
+    return true;
+}, {
+    message: "Please enter a valid phone number.",
+    path: ["phoneNumber"],
 });
 
 
@@ -81,7 +89,7 @@ export function SignUpForm() {
         name: values.name,
         email: values.email || null, // Store real email if provided
         photoURL: user.photoURL,
-        phoneNumber: values.phoneNumber, // Always store phone number
+        phoneNumber: values.phoneNumber || null,
         createdAt: serverTimestamp() as any, 
         defaultCurrency: 'INR',
         expenseFieldSettings: {
@@ -161,17 +169,14 @@ export function SignUpForm() {
             name="phoneNumber"
             render={({ field }) => (
             <FormItem>
-                <FormLabel>Phone Number</FormLabel>
+                <FormLabel>Phone Number (Optional)</FormLabel>
                 <FormControl>
                     <PhoneInput
                         international
                         withCountryCallingCode
+                        defaultCountry="IN"
                         value={field.value || ""}
                         onChange={field.onChange}
-                        countrySelectProps={{
-                            className: "PhoneInputCountry"
-                        }}
-                        inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="PhoneInputInput" />)}
                     />
                 </FormControl>
                 <FormMessage />

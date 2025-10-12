@@ -8,12 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, getAuth } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { Separator } from '../ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css'
@@ -45,13 +44,6 @@ export function LoginForm() {
       password: '',
     },
   });
-
-  useEffect(() => {
-    // This effect can be used to handle redirect results if needed in the future.
-    if (!auth) return;
-    // getRedirectResult(auth).catch(handleLoginError);
-  }, [auth]);
-
 
     const handleLoginError = (error: any) => {
         let title = "Whoops!";
@@ -195,12 +187,9 @@ export function LoginForm() {
                                 <PhoneInput
                                     international
                                     withCountryCallingCode
+                                    defaultCountry="IN"
                                     value={field.value || ""}
                                     onChange={field.onChange}
-                                    countrySelectProps={{
-                                        className: "PhoneInputCountry"
-                                     }}
-                                    inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="PhoneInputInput" />)}
                                 />
                             </FormControl>
                             <FormMessage />

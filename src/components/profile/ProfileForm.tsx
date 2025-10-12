@@ -316,7 +316,7 @@ export function ProfileForm() {
                                         accept="image/*"
                                     />
                                     <Separator />
-                                    <div className="grid grid-cols-4 gap-2">
+                                    <div className="flex justify-center gap-4">
                                         {AvatarList.map((AvatarItem, index) => (
                                             <button
                                                 key={index}

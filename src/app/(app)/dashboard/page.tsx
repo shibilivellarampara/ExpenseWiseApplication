@@ -99,22 +99,21 @@ export default function DashboardPage() {
 
     const chartData = timeRange === 'year' ? currentYearExpenses : (timeRange === 'week' ? currentWeekExpenses : currentMonthExpenses);
 
-    const pieChartData = useMemo(() => {
+    const generatePieChartData = (grouping: PieChartGrouping) => {
         const expenseOnly = currentMonthExpenses.filter(e => e.type === 'expense');
         const dataMap = new Map<string, number>();
 
         expenseOnly.forEach(item => {
-            let key: string | undefined;
-            if (pieChartGrouping === 'tag') {
+            let keys: string[] = [];
+            if (grouping === 'tag') {
                 if (item.tags.length > 0) {
-                    item.tags.forEach(tag => {
-                         dataMap.set(tag.name, (dataMap.get(tag.name) || 0) + item.amount / item.tags.length); // Split amount for multiple tags
-                    });
+                     item.tags.forEach(tag => keys.push(tag.name));
                 } else {
-                     dataMap.set('Untagged', (dataMap.get('Untagged') || 0) + item.amount);
+                    keys.push('Untagged');
                 }
             } else {
-                switch(pieChartGrouping) {
+                let key: string | undefined;
+                switch(grouping) {
                     case 'category':
                         key = item.category?.name || 'Uncategorized';
                         break;
@@ -123,12 +122,21 @@ export default function DashboardPage() {
                         break;
                 }
                 if (key) {
-                    dataMap.set(key, (dataMap.get(key) || 0) + item.amount);
+                    keys.push(key);
                 }
             }
+            
+            const amountPerKey = keys.length > 0 ? item.amount / keys.length : item.amount;
+            keys.forEach(key => {
+                 dataMap.set(key, (dataMap.get(key) || 0) + amountPerKey);
+            })
         });
         return Array.from(dataMap, ([name, value]) => ({ name, value }));
-    }, [currentMonthExpenses, pieChartGrouping]);
+    };
+    
+    const pieChartCategoryData = useMemo(() => generatePieChartData('category'), [currentMonthExpenses, categories]);
+    const pieChartAccountData = useMemo(() => generatePieChartData('account'), [currentMonthExpenses, accounts]);
+    const pieChartTagData = useMemo(() => generatePieChartData('tag'), [currentMonthExpenses, tags]);
 
     const useCategoryColors = userProfile?.dashboardSettings?.useCategoryColorsInChart ?? true;
 
@@ -178,7 +186,7 @@ export default function DashboardPage() {
                         <CardTitle className="font-headline">Spending Breakdown</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Tabs defaultValue="category" onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)}>
+                        <Tabs defaultValue="category" value={pieChartGrouping} onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)}>
                             <TabsList className="grid w-full grid-cols-3 mb-4">
                                 <TabsTrigger value="category">Category</TabsTrigger>
                                 <TabsTrigger value="account">Account</TabsTrigger>
@@ -187,9 +195,17 @@ export default function DashboardPage() {
                             {isLoading ? (
                                 <Skeleton className="h-[350px] w-full" />
                             ) : (
-                                <TabsContent value={pieChartGrouping}>
-                                    <CategoryPieChart data={pieChartData} currencySymbol={currencySymbol} />
-                                </TabsContent>
+                                <>
+                                    <TabsContent value="category">
+                                        <CategoryPieChart data={pieChartCategoryData} currencySymbol={currencySymbol} />
+                                    </TabsContent>
+                                    <TabsContent value="account">
+                                        <CategoryPieChart data={pieChartAccountData} currencySymbol={currencySymbol} />
+                                    </TabsContent>
+                                    <TabsContent value="tag">
+                                        <CategoryPieChart data={pieChartTagData} currencySymbol={currencySymbol} />
+                                    </TabsContent>
+                                </>
                             )}
                         </Tabs>
                     </CardContent>

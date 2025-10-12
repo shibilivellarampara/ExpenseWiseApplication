@@ -68,34 +68,41 @@ export function LoginForm() {
   }, [auth]);
 
     const handleLoginError = (error: any) => {
-        let userMessage = "An unexpected error occurred. Please try again.";
+        let title = "Whoops!";
+        let description = "Something went wrong on our end. Please try again in a bit.";
 
         if (error.code) {
             switch (error.code) {
                 case 'auth/user-not-found':
                 case 'auth/wrong-password':
                 case 'auth/invalid-credential':
-                    userMessage = 'Invalid credentials. Please check your email and password.';
+                    title = "Wrong Credentials!";
+                    description = "Did you forget your password? Or maybe your secret handshake?";
                     break;
                 case 'auth/invalid-email':
-                    userMessage = 'Please enter a valid email address.';
+                    title = "Is that an email?";
+                    description = "That doesn't look like a valid email address. Let's try that again.";
                     break;
                 case 'auth/too-many-requests':
-                    userMessage = 'Too many attempts. Please try again later.';
+                    title = "Easy there, tiger!";
+                    description = "You've tried to log in too many times. Take a break and try again later.";
                     break;
                 case 'auth/invalid-phone-number':
-                    userMessage = 'The phone number is not valid.';
+                    title = "Mysterious Number";
+                    description = "That phone number seems to be from another dimension. Is it correct?";
                     break;
                 case 'auth/invalid-verification-code':
-                    userMessage = 'The verification code is incorrect.';
+                    title = "Code Mismatch";
+                    description = "That's not the code we sent. Are you a spy? Just kidding, try again!";
                     break;
                 default:
-                    userMessage = 'Login failed. Please try again.';
+                    title = "An Unexpected Quest!";
+                    description = "Something unexpected happened. Let's give it another shot.";
                     break;
             }
         }
         
-        toast({ variant: 'destructive', title: 'Login Failed', description: userMessage });
+        toast({ variant: 'destructive', title: title, description: description });
     }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {

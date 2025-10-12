@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../ui/dialog';
-import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
+import PhoneInput from 'react-phone-number-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React from 'react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '../ui/input-otp';
@@ -26,13 +26,13 @@ const emailSchema = z.object({
 });
 
 const phoneSchema = z.object({
-  loginId: z.string().refine(isPossiblePhoneNumber, { message: "Please enter a valid phone number." }),
+  loginId: z.string().refine((value) => value ? isPossiblePhoneNumber(value) : true, { message: "Please enter a valid phone number." }),
   password: z.string().optional(), // Not used for phone, but keeps structure
 });
 
 // Create a stable component for the phone input to prevent re-renders
-const MemoizedPhoneInput = React.forwardRef<HTMLInputElement>((props, ref) => (
-    <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />
+const MemoizedPhoneInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>((props, ref) => (
+    <Input {...props} ref={ref} className="!rounded-l-none" />
 ));
 MemoizedPhoneInput.displayName = 'MemoizedPhoneInput';
 
@@ -49,6 +49,7 @@ export function LoginForm() {
   // Forgot Password state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [isForgotLoading, setIsForgotLoading] = useState(false);
 
   // Phone Auth State
   const [showOtpDialog, setShowOtpDialog] = useState(false);
@@ -135,7 +136,7 @@ export function LoginForm() {
   }
 
   async function handlePhoneSubmit(values: z.infer<typeof phoneSchema>) {
-      if (!auth || !recaptchaVerifier.current) {
+      if (!auth || !recaptchaVerifier.current || !values.loginId) {
           toast({ variant: "destructive", title: "Error", description: "Authentication service not ready." });
           return;
       }
@@ -193,19 +194,23 @@ export function LoginForm() {
       toast({ variant: 'destructive', title: 'Email Required', description: 'Please enter your email address.' });
       return;
     }
-    setIsLoading(true);
+    setIsForgotLoading(true);
     try {
-      await sendPasswordResetEmail(auth, forgotPasswordEmail);
+      const actionCodeSettings = {
+        url: `${window.location.origin}/reset-password`,
+        handleCodeInApp: true,
+      };
+      await sendPasswordResetEmail(auth, forgotPasswordEmail, actionCodeSettings);
       toast({
         title: 'Password Reset Email Sent',
-        description: 'Check your inbox for instructions to reset your password.',
+        description: 'Check your inbox for a link to reset your password.',
       });
       setShowForgotPassword(false);
       setForgotPasswordEmail('');
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } finally {
-      setIsLoading(false);
+      setIsForgotLoading(false);
     }
   }
 
@@ -345,8 +350,8 @@ export function LoginForm() {
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setShowForgotPassword(false)}>Cancel</Button>
-                    <Button onClick={handleForgotPassword} disabled={isLoading || !forgotPasswordEmail}>
-                        {isLoading ? <Loader2 className="animate-spin" /> : "Send Reset Link"}
+                    <Button onClick={handleForgotPassword} disabled={isForgotLoading || !forgotPasswordEmail}>
+                        {isForgotLoading ? <Loader2 className="animate-spin" /> : "Send Reset Link"}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -383,5 +388,7 @@ export function LoginForm() {
     </div>
   );
 }
+
+    
 
     

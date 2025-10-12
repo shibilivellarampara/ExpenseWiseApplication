@@ -15,7 +15,6 @@ import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
-import { useSidebar } from '../ui/sidebar';
 
 const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
@@ -57,17 +56,11 @@ const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: str
   );
 };
 
-export function SidebarContent() {
-    const pathname = usePathname();
-    const { isMobile, setOpenMobile } = useSidebar();
-    
-    const handleLinkClick = () => {
-      if (isMobile) {
-        setOpenMobile(false);
-      }
-    }
 
-    return (
+export function AppSidebar() {
+  const pathname = usePathname();
+  return (
+    <aside className="w-56 flex-shrink-0 hidden md:block">
         <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
             <div className="p-4 border-b border-sidebar-border">
                 <Logo />
@@ -81,7 +74,6 @@ export function SidebarContent() {
                     label={item.label}
                     isActive={pathname.startsWith(item.href)}
                     disabled={item.disabled}
-                    onClick={handleLinkClick}
                 />
                 ))}
             </nav>
@@ -89,13 +81,6 @@ export function SidebarContent() {
                 <Separator className='my-4 bg-sidebar-border' />
             </div>
         </div>
-    )
-}
-
-export function AppSidebar() {
-  return (
-    <aside className="w-56 flex-shrink-0 hidden md:block">
-        <SidebarContent />
     </aside>
   );
 }

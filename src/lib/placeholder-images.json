@@ -2,9 +2,9 @@
   "placeholderImages": [
     {
       "id": "hero",
-      "description": "A dashboard interface showing charts and graphs for financial data.",
-      "imageUrl": "https://images.unsplash.com/photo-1748439146117-31978164865d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkYXNoYm9hcmQlMjBjaGFydHxlbnwwfHx8fDE3NTk0ODExMzd8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "dashboard chart"
+      "description": "A modern and clean dashboard interface showing financial charts and data visualizations.",
+      "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkYXNoYm9hcmQlMjB1aXxlbnwwfHx8fDE3MjE4OTc0ODN8MA&ixlib=rb-4.1.0&q=80&w=1200",
+      "imageHint": "dashboard ui"
     }
   ],
   "avatarPlaceholders": []

@@ -117,22 +117,20 @@
   @apply relative flex items-center justify-center;
   @apply h-10;
   @apply rounded-md rounded-r-none border border-r-0 border-input;
-  @apply bg-background; /* Use background to match input */
+  @apply bg-background;
   @apply ring-offset-background;
+  @apply pr-2; /* Add some padding to the right */
 }
 
 .PhoneInputCountrySelect {
-    @apply h-full;
-    width: 5rem;
+  @apply absolute inset-0 opacity-0 cursor-pointer;
+  width: 100%;
+  height: 100%;
 }
 
 .PhoneInputCountryIcon {
   @apply !h-6 !w-auto;
-}
-
-.PhoneInputCountrySelectArrow {
-  @apply ml-2;
-  @apply opacity-50;
+  box-shadow: none;
 }
 
 .PhoneInputInput {
@@ -141,3 +139,14 @@
   @apply focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-ring focus-visible:!ring-offset-2;
   @apply disabled:!cursor-not-allowed disabled:!opacity-50;
 }
+
+/* Hide the country name label inside the dropdown button */
+.PhoneInputCountrySelect .PhoneInputCountrySelect-v2-label {
+    display: none;
+}
+
+/* Hide the arrow in the dropdown button */
+.PhoneInputCountrySelectArrow {
+    display: none;
+}
+

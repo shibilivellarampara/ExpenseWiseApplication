@@ -291,9 +291,6 @@ export function ExcelImporter() {
                             <MappingField field="category" label="Category" />
                             {template === 'cashbook' && <MappingField field="type" label="Transaction Type" />}
                         </div>
-                        <Button onClick={() => setStep(3)} disabled={!mapping.date || !mapping.amount}>
-                            Next: Preview Data <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
                     </div>
                 )}
                 {step === 3 && (
@@ -326,18 +323,25 @@ export function ExcelImporter() {
                 )}
             </CardContent>
             <CardFooter className="flex justify-between">
-                 {(step === 2 || step === 3) && (
-                    <Button variant="outline" onClick={resetState}>Start Over</Button>
-                 )}
-                 {step === 3 && (
-                    <Button onClick={handleImport} disabled={isImporting || processedData.length === 0} className="">
-                        {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                        Import {processedData.length > 0 ? `${processedData.length} Records` : ''}
-                    </Button>
-                 )}
+                <div>
+                     {(step === 2 || step === 3) && (
+                        <Button variant="outline" onClick={() => setStep(step - 1)}>Back</Button>
+                     )}
+                </div>
+                 <div>
+                    {step === 2 && (
+                        <Button onClick={() => setStep(3)} disabled={!mapping.date || !mapping.amount}>
+                            Next: Preview Data <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    )}
+                    {step === 3 && (
+                        <Button onClick={handleImport} disabled={isImporting || processedData.length === 0} className="">
+                            {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                            Import {processedData.length > 0 ? `${processedData.length} Records` : ''}
+                        </Button>
+                    )}
+                 </div>
             </CardFooter>
         </Card>
     );
 }
-
-    

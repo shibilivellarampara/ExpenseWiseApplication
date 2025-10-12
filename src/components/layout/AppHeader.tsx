@@ -16,6 +16,7 @@ import {
   Settings,
   ArrowRightLeft,
   Briefcase,
+  Users
 } from 'lucide-react';
 import { doc } from 'firebase/firestore';
 import { UserProfile } from '@/lib/types';
@@ -30,11 +31,15 @@ const navItems = [
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
 ];
 
-const adminNavItem = { href: '/admin', icon: <Shield className="h-5 w-5" />, label: 'Admin', admin: true };
+const adminNavItems = [
+    { href: '/admin', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Admin Dashboard' },
+    { href: '/admin/users', icon: <Users className="h-5 w-5" />, label: 'User Management' }
+]
 
 
 function getPageTitle(path: string): string {
-    if (path.startsWith('/admin')) return 'Admin';
+    if (path.startsWith('/admin/users')) return 'User Management';
+    if (path.startsWith('/admin')) return 'Admin Dashboard';
     if (path.startsWith('/profile')) return 'Settings';
     const title = path.split('/').pop()?.replace(/-/g, ' ');
     if (path.includes('/shared-expenses/') && path.split('/').length > 3) {
@@ -52,6 +57,8 @@ export function AppHeader() {
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     
+  const currentNavItems = userProfile?.isAdmin ? adminNavItems : navItems;
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
         
@@ -71,25 +78,15 @@ export function AppHeader() {
                           </SheetTitle>
                         </SheetHeader>
                         <nav className="flex-grow space-y-2 mt-4 px-2">
-                            {navItems.map((item) => (
+                            {currentNavItems.map((item) => (
                               <NavLink
                                   key={item.href}
                                   href={item.href}
                                   icon={item.icon}
                                   label={item.label}
-                                  isActive={pathname.startsWith(item.href)}
-                                  disabled={(item as any).disabled}
+                                  isActive={pathname === item.href}
                               />
                             ))}
-                             {userProfile?.isAdmin && (
-                                <NavLink
-                                    key={adminNavItem.href}
-                                    href={adminNavItem.href}
-                                    icon={adminNavItem.icon}
-                                    label={adminNavItem.label}
-                                    isActive={pathname.startsWith(adminNavItem.href)}
-                                />
-                            )}
                         </nav>
                         <div className="mt-auto">
                             <div className='my-4 bg-sidebar-border' />

@@ -3,7 +3,7 @@
 
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { PageHeader } from '@/components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useMemo, useState } from 'react';
 import { CategoryPieChart } from '@/components/dashboard/CategoryPieChart';
 import { ExpensesBarChart } from '@/components/dashboard/ExpensesBarChart';
@@ -15,8 +15,31 @@ import { startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, eachDayOfI
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { PlusCircle } from 'lucide-react';
+import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
 
 type PieChartGrouping = 'category' | 'account' | 'tag';
+
+function WelcomeCard() {
+    return (
+        <Card className="bg-primary/10 border-primary/50">
+            <CardHeader>
+                <CardTitle className="font-headline text-primary">Welcome to ExpenseWise!</CardTitle>
+                <CardDescription>It looks like you're new here. To get started, add your first financial account.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <AddAccountSheet>
+                     <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Your First Account
+                    </Button>
+                </AddAccountSheet>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function DashboardPage() {
     const { user } = useUser();
@@ -144,6 +167,10 @@ export default function DashboardPage() {
         <div className="w-full space-y-8">
             <PageHeader title="Welcome to your Dashboard" description="Here's a summary of your financial activity." />
       
+             {!isLoading && accounts?.length === 0 && (
+                <WelcomeCard />
+            )}
+
             <DashboardStats 
               currentMonthExpenses={currentMonthExpenses} 
               lastMonthExpenses={lastMonthExpenses}

@@ -112,8 +112,8 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
 
     async function onSubmit(values: AccountFormData) {
         setIsLoading(true);
-        if (!firestore || !user) {
-             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+        if (!firestore || !user || !categories) {
+             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in and categories must be loaded.' });
              setIsLoading(false);
              return;
         }
@@ -122,8 +122,9 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             ...values,
             userId: user.uid,
         };
-
-        if (isNaN(accountData.limit) || accountData.limit === undefined) {
+        
+        // This makes sure we don't save an empty 'limit' field for non-credit accounts
+        if (values.type !== 'credit_card') {
             delete accountData.limit;
         }
 
@@ -131,7 +132,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             const batch = writeBatch(firestore);
 
             if (isEditMode && accountToEdit) {
-                // Update existing account
+                // Update existing account - balance changes handled via transactions
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountToEdit.id);
                 batch.set(accountRef, accountData, { merge: true });
 
@@ -139,26 +140,45 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     title: 'Account Updated!',
                     description: 'Your account details have been saved.',
                 });
+
             } else {
                 // Add new account
                 const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
-                const newAccountRef = doc(accountsCol); // Create a reference first to get the ID
+                const newAccountRef = doc(accountsCol);
                 batch.set(newAccountRef, { ...accountData, id: newAccountRef.id });
                 
+                const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
+                
+                // If it's not a credit card and has an initial balance, record it as income.
+                if (values.type !== 'credit_card' && values.balance !== 0) {
+                    const expenseRef = doc(expensesCol);
+                    batch.set(expenseRef, {
+                        id: expenseRef.id,
+                        userId: user.uid,
+                        type: 'income',
+                        amount: Math.abs(values.balance), // Ensure it's a positive amount
+                        description: 'Initial Balance',
+                        date: new Date(),
+                        createdAt: serverTimestamp(),
+                        accountId: newAccountRef.id,
+                    });
+                }
+                
+                // If it IS a credit card and has a limit, record it.
                 if (values.type === 'credit_card' && values.limit && values.limit > 0) {
-                    const upgradeCategory = categories?.find(c => c.name === 'Credit Limit Upgrade');
+                    // Find the "Credit Limit Upgrade" category. If it doesn't exist, we can't record this.
+                    const upgradeCategory = categories.find(c => c.name === 'Credit Limit Upgrade');
                     if (upgradeCategory) {
-                        const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
                         const expenseRef = doc(expensesCol);
                         batch.set(expenseRef, {
                             id: expenseRef.id,
                             userId: user.uid,
-                            type: 'income', // This makes it a "cash in" visually
+                            type: 'income',
                             amount: values.limit,
                             description: 'Initial Credit Limit',
                             date: new Date(),
                             createdAt: serverTimestamp(),
-                            accountId: newAccountRef.id, // Link to the new account
+                            accountId: newAccountRef.id,
                             categoryId: upgradeCategory.id,
                         });
                     }

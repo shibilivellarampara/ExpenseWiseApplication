@@ -21,7 +21,7 @@ const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
   { href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
-  { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
+  // { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
   { href: '/profile', icon: <CircleUser className="h-5 w-5" />, label: 'Profile' },
 ];

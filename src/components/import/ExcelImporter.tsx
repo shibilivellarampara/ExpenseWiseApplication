@@ -300,13 +300,18 @@ export function ExcelImporter() {
                     </div>
                 )}
                 {step === 2 && (
-                     <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 flex flex-col items-center justify-center text-center">
-                        <FileUp className="w-12 h-12 text-muted-foreground" />
-                        <p className="mt-4 text-muted-foreground">Drag & drop your file or click to browse</p>
-                        <Input id="file-upload" type="file" accept=".xlsx, .csv" onChange={(e) => e.target.files && handleFileParseAndValidate(e.target.files[0])} className="hidden" />
-                        <Button variant="outline" className="mt-4" onClick={() => document.getElementById('file-upload')?.click()} disabled={isProcessing}>
-                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Browse File'}
-                        </Button>
+                    <div className="space-y-4">
+                        <div className="rounded-md border bg-muted/50 p-3">
+                            <p className="text-sm font-medium text-muted-foreground">Selected Template: <span className="font-semibold text-foreground">{TEMPLATES[template]?.name}</span></p>
+                        </div>
+                         <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 flex flex-col items-center justify-center text-center">
+                            <FileUp className="w-12 h-12 text-muted-foreground" />
+                            <p className="mt-4 text-muted-foreground">Drag & drop your file or click to browse</p>
+                            <Input id="file-upload" type="file" accept=".xlsx, .csv" onChange={(e) => e.target.files && handleFileParseAndValidate(e.target.files[0])} className="hidden" />
+                            <Button variant="outline" className="mt-4" onClick={() => document.getElementById('file-upload')?.click()} disabled={isProcessing}>
+                                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Browse File'}
+                            </Button>
+                        </div>
                     </div>
                 )}
                 {step === 3 && (
@@ -375,7 +380,7 @@ export function ExcelImporter() {
                 )}
             </CardContent>
             <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => step > 1 ? setStep(step - 1) : resetState()} disabled={isProcessing || isImporting}>
+                <Button variant="outline" onClick={() => step > 1 ? (step === 3 ? setStep(1) : setStep(step - 1)) : resetState()} disabled={isProcessing || isImporting}>
                     Back
                 </Button>
                  <div>
@@ -406,5 +411,3 @@ export function ExcelImporter() {
         </Card>
     );
 }
-
-    

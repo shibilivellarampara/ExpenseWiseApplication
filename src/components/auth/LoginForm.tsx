@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, signInWithRedirect, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail, getRedirectResult } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
@@ -56,28 +56,6 @@ export function LoginForm() {
     },
   });
 
-   // Handle redirect result from Google Sign-In
-    useEffect(() => {
-        if (!auth) return;
-        setIsLoading(true);
-        getRedirectResult(auth)
-            .then((result) => {
-                if (result) {
-                    // This is the signed-in user
-                    toast({ title: 'Success!', description: 'You are now signed in with Google.' });
-                    router.push('/dashboard');
-                } else {
-                    // No redirect result, normal page load
-                }
-            })
-            .catch((error) => {
-                handleLoginError(error);
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-    }, [auth, router, toast]);
-
   // Initialize reCAPTCHA
   useEffect(() => {
     if (auth && recaptchaContainerRef.current && !recaptchaVerifier.current) {
@@ -117,6 +95,10 @@ export function LoginForm() {
                 case 'auth/invalid-verification-code':
                     title = "Code Mismatch";
                     description = "That's not the code we sent. Are you a spy? Just kidding, try again!";
+                    break;
+                case 'auth/popup-closed-by-user':
+                    title = "Sign-In Canceled";
+                    description = "You closed the sign-in window. Give it another try when you're ready!";
                     break;
                 default:
                     title = "An Unexpected Quest!";
@@ -177,20 +159,28 @@ export function LoginForm() {
     }
   }
 
-  async function handleGoogleSignIn() {
-    setIsGoogleLoading(true);
-    if (!auth) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.' });
-        setIsGoogleLoading(false);
-        return;
+    async function handleGoogleSignIn() {
+        setIsGoogleLoading(true);
+        if (!auth) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.' });
+            setIsGoogleLoading(false);
+            return;
+        }
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+        
+        try {
+            await signInWithPopup(auth, provider);
+            toast({ title: 'Success!', description: 'You are now signed in with Google.' });
+            router.push('/dashboard');
+        } catch (error: any) {
+            handleLoginError(error);
+        } finally {
+            setIsGoogleLoading(false);
+        }
     }
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-        prompt: 'select_account'
-    });
-    // Use signInWithRedirect instead of signInWithPopup
-    await signInWithRedirect(auth, provider);
-  }
 
   async function handleOtpSubmit(otp: string) {
     if (!confirmationResult) return;
@@ -306,9 +296,9 @@ export function LoginForm() {
                                     value={field.value || ""}
                                     onChange={field.onChange}
                                     countrySelectProps={{
-                                        className: "h-10 rounded-md rounded-r-none border border-r-0 border-input bg-background px-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className: "PhoneInputCountry"
                                      }}
-                                    inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />)}
+                                    inputComponent={React.forwardRef<HTMLInputElement>((props, ref) => <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="PhoneInputInput" />)}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -393,4 +383,3 @@ export function LoginForm() {
 }
 
     
-

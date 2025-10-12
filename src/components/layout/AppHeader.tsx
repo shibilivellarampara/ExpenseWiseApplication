@@ -3,7 +3,7 @@
 
 import { UserNav } from '@/components/auth/UserNav';
 import { usePathname } from 'next/navigation';
-import { useUser } from '@/firebase';
+import { useUser, useSidebar } from '@/firebase';
 import { Skeleton } from '../ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { Button } from '../ui/button';
@@ -45,6 +45,7 @@ export function AppHeader() {
   const pathname = usePathname();
   const title = getPageTitle(pathname);
   const { isUserLoading } = useUser();
+  const { setOpenMobile } = useSidebar();
     
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
@@ -66,13 +67,14 @@ export function AppHeader() {
                         </SheetHeader>
                         <nav className="flex-grow space-y-2 mt-4 px-2">
                             {navItems.map((item) => (
-                              <NavLink
-                                  key={item.href}
-                                  href={item.href}
-                                  icon={item.icon}
-                                  label={item.label}
-                                  isActive={pathname.startsWith(item.href)}
-                              />
+                              <div key={item.href} onClick={() => setOpenMobile(false)}>
+                                <NavLink
+                                    href={item.href}
+                                    icon={item.icon}
+                                    label={item.label}
+                                    isActive={pathname.startsWith(item.href)}
+                                />
+                              </div>
                             ))}
                         </nav>
                         <div className="mt-auto">

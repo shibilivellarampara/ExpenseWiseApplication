@@ -91,14 +91,14 @@ export function TagSettings() {
                 <CollapsibleTrigger asChild>
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>
-                            <h3 className="text-lg font-semibold font-headline">Tags</h3>
-                            <CardDescription>Manage your expense tags/labels.</CardDescription>
+                            <h3 className="font-semibold font-headline">Tags</h3>
+                            <CardDescription className="text-xs">Manage your expense tags/labels.</CardDescription>
                         </div>
                         <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
                     </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 pt-0 p-4">
                         {isLoading ? (
                             <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
                         ) : (
@@ -106,7 +106,7 @@ export function TagSettings() {
                                 {items?.map((item) => (
                                     <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
                                         {editingItem?.id === item.id ? (
-                                            <>
+                                            <div className="flex items-center gap-2 w-full">
                                                 <Popover>
                                                     <PopoverTrigger asChild>
                                                         <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
@@ -131,7 +131,7 @@ export function TagSettings() {
                                                 <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
                                                     <X className="h-4 w-4" />
                                                 </Button>
-                                            </>
+                                            </div>
                                         ) : (
                                             <>
                                                 <div className="flex items-center flex-1 gap-2">

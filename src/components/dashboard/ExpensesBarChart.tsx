@@ -4,14 +4,14 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { useMemo } from 'react';
 import { EnrichedExpense, Category } from '@/lib/types';
-import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, startOfYear, endOfYear } from 'date-fns';
+import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, startOfYear, endOfYear, getYear, subYears } from 'date-fns';
 import { BarChart as BarChartIcon } from 'lucide-react';
 import { COLORS } from '@/lib/colors';
 
 interface ExpensesBarChartProps {
   expenses: EnrichedExpense[];
   allCategories: Category[];
-  timeRange: 'week' | 'month' | 'year';
+  timeRange: 'week' | 'month' | 'year' | '5year';
   currencySymbol: string;
   useCategoryColors: boolean;
 }
@@ -50,13 +50,19 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                 key: format(weekStart, 'yyyy-MM-dd'),
                 name: `W ${format(weekStart, 'd')}`,
             }));
-        } else { // 'year'
+        } else if (timeRange === 'year') {
             const start = startOfYear(now);
             const end = endOfYear(now);
             intervals = eachMonthOfInterval({ start, end }).map(month => ({
                 key: format(month, 'yyyy-MM'),
                 name: format(month, 'MMM'),
             }));
+        } else { // '5year'
+            const currentYear = getYear(now);
+            for (let i = 4; i >= 0; i--) {
+                const year = currentYear - i;
+                intervals.push({ key: String(year), name: String(year) });
+            }
         }
 
         intervals.forEach(interval => {
@@ -75,8 +81,10 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                 key = format(expense.date, 'yyyy-MM-dd');
             } else if (timeRange === 'month') {
                 key = format(startOfWeek(expense.date), 'yyyy-MM-dd');
-            } else { // 'year'
+            } else if (timeRange === 'year') {
                 key = format(expense.date, 'yyyy-MM');
+            } else { // '5year'
+                key = String(getYear(expense.date));
             }
 
             const categoryName = expense.category?.name || 'Uncategorized';

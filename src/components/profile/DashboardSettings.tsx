@@ -42,6 +42,7 @@ export function DashboardSettings() {
     }
 
     const useCategoryColors = userProfile?.dashboardSettings?.useCategoryColorsInChart ?? true;
+    const show5YearView = userProfile?.dashboardSettings?.show5YearView ?? false;
 
     return (
         <Card>
@@ -67,6 +68,18 @@ export function DashboardSettings() {
                             <Switch
                                 checked={useCategoryColors}
                                 onCheckedChange={(value) => handleSettingChange('useCategoryColorsInChart', value)}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                                <Label>Show 5-Year View</Label>
+                                <p className="text-[0.8rem] text-muted-foreground">
+                                    Show a "5 Years" tab in the expense overview chart.
+                                </p>
+                            </div>
+                            <Switch
+                                checked={show5YearView}
+                                onCheckedChange={(value) => handleSettingChange('show5YearView', value)}
                             />
                         </div>
                     </CardContent>

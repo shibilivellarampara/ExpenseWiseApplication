@@ -15,6 +15,7 @@ export type UserProfile = {
   };
   dashboardSettings?: {
     useCategoryColorsInChart?: boolean;
+    show5YearView?: boolean;
   };
   createdAt?: Timestamp;
   sharedExpenseIds?: string[];

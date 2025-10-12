@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { Expense, Category, EnrichedExpense, UserProfile, Account, Tag } from '@/lib/types';
 import { collection, query, where, Timestamp, doc } from 'firebase/firestore';
-import { startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, format, startOfYear, endOfYear } from 'date-fns';
+import { startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, format, startOfYear, endOfYear, subYears } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,6 +21,7 @@ import { PlusCircle } from 'lucide-react';
 import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
 
 type PieChartGrouping = 'category' | 'account' | 'tag';
+type TimeRange = 'week' | 'month' | 'year' | '5year';
 
 function WelcomeCard() {
     return (
@@ -44,7 +45,7 @@ function WelcomeCard() {
 export default function DashboardPage() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
+    const [timeRange, setTimeRange] = useState<TimeRange>('week');
     const [pieChartGrouping, setPieChartGrouping] = useState<PieChartGrouping>('category');
 
     const dateRanges = useMemo(() => {
@@ -58,17 +59,19 @@ export default function DashboardPage() {
             currentWeekEnd: endOfWeek(now),
             currentYearStart: startOfYear(now),
             currentYearEnd: endOfYear(now),
+            fiveYearsAgoStart: startOfYear(subYears(now, 4)),
         };
     }, []);
 
     const expensesQuery = useMemoFirebase(() => {
         if (!user) return null;
-        const startDate = dateRanges.lastMonthStart;
+        // Fetch a broader range to cover all tabs without re-querying
+        const startDate = dateRanges.fiveYearsAgoStart; 
         return query(
             collection(firestore, `users/${user.uid}/expenses`),
             where('date', '>=', Timestamp.fromDate(startDate))
         );
-    }, [user, firestore, dateRanges.lastMonthStart]);
+    }, [user, firestore, dateRanges.fiveYearsAgoStart]);
     
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [firestore, user]);
@@ -83,6 +86,7 @@ export default function DashboardPage() {
 
     const isLoading = expensesLoading || categoriesLoading || profileLoading || accountsLoading || tagsLoading;
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
+    const show5YearView = userProfile?.dashboardSettings?.show5YearView ?? false;
 
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
@@ -119,8 +123,20 @@ export default function DashboardPage() {
         enrichedExpenses.filter(e => e.date >= dateRanges.currentYearStart && e.date <= dateRanges.currentYearEnd)
     , [enrichedExpenses, dateRanges.currentYearStart, dateRanges.currentYearEnd]);
 
+    const last5YearsExpenses = useMemo(() =>
+        enrichedExpenses.filter(e => e.date >= dateRanges.fiveYearsAgoStart && e.date <= dateRanges.currentYearEnd)
+    , [enrichedExpenses, dateRanges.fiveYearsAgoStart, dateRanges.currentYearEnd]);
 
-    const chartData = timeRange === 'year' ? currentYearExpenses : (timeRange === 'week' ? currentWeekExpenses : currentMonthExpenses);
+
+    const chartData = useMemo(() => {
+        switch (timeRange) {
+            case 'week': return currentWeekExpenses;
+            case 'month': return currentMonthExpenses;
+            case 'year': return currentYearExpenses;
+            case '5year': return last5YearsExpenses;
+            default: return currentWeekExpenses;
+        }
+    }, [timeRange, currentWeekExpenses, currentMonthExpenses, currentYearExpenses, last5YearsExpenses]);
 
     const generatePieChartData = (grouping: PieChartGrouping) => {
         const expenseOnly = currentMonthExpenses.filter(e => e.type === 'expense');
@@ -186,11 +202,12 @@ export default function DashboardPage() {
                                 <CardTitle className="font-headline">Expenses Overview</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as 'week' | 'month' | 'year')}>
-                                    <TabsList className="grid w-full grid-cols-3 mb-4">
+                                <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as TimeRange)}>
+                                    <TabsList className={`grid w-full grid-cols-${show5YearView ? 4 : 3} mb-4`}>
                                         <TabsTrigger value="week">This Week</TabsTrigger>
                                         <TabsTrigger value="month">This Month</TabsTrigger>
                                         <TabsTrigger value="year">This Year</TabsTrigger>
+                                        {show5YearView && <TabsTrigger value="5year">5 Years</TabsTrigger>}
                                     </TabsList>
                                     {isLoading ? (
                                         <Skeleton className="h-[350px] w-full" />
@@ -205,6 +222,11 @@ export default function DashboardPage() {
                                             <TabsContent value="year">
                                                 <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="year" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
                                             </TabsContent>
+                                            {show5YearView && (
+                                                <TabsContent value="5year">
+                                                    <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="5year" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
+                                                </TabsContent>
+                                            )}
                                         </>
                                     )}
                                 </Tabs>

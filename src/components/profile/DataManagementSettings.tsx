@@ -91,12 +91,10 @@ export function DataManagementSettings() {
             const batch = writeBatch(firestore);
             
             // 1. Delete all expenses for the selected account
-            const expensesQuery = collection(firestore, `users/${user.uid}/expenses`);
+            const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), where('accountId', '==', selectedAccount));
             const expensesSnapshot = await getDocs(expensesQuery);
             expensesSnapshot.forEach(expenseDoc => {
-                if (expenseDoc.data().accountId === selectedAccount) {
-                    batch.delete(expenseDoc.ref);
-                }
+                batch.delete(expenseDoc.ref);
             });
 
             // 2. Reset the selected account balance

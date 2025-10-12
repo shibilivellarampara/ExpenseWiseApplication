@@ -39,6 +39,16 @@ export function CategorySettings() {
 
     const handleAddItem = async () => {
         if (!newItem.name || !user || !firestore) return;
+        
+        if (categories?.some(c => c.name.toLowerCase() === newItem.name.toLowerCase())) {
+            toast({
+                variant: 'destructive',
+                title: 'Duplicate Category',
+                description: `A category named "${newItem.name}" already exists.`,
+            });
+            return;
+        }
+        
         setIsSaving(true);
         try {
             const ref = collection(firestore, `users/${user.uid}/categories`);
@@ -85,6 +95,16 @@ export function CategorySettings() {
             setEditingItem(null);
             return;
         }
+        
+        if (categories?.some(c => c.id !== editingItem.id && c.name.toLowerCase() === editingItem.name.toLowerCase())) {
+            toast({
+                variant: 'destructive',
+                title: 'Duplicate Category',
+                description: `A category named "${editingItem.name}" already exists.`,
+            });
+            return;
+        }
+
 
         setIsSaving(true);
         try {

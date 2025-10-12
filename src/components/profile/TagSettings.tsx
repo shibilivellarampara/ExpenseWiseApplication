@@ -40,6 +40,16 @@ export function TagSettings() {
 
     const handleAddItem = async () => {
         if (!newItem.name || !user || !firestore) return;
+        
+        if (items?.some(t => t.name.toLowerCase() === newItem.name.toLowerCase())) {
+            toast({
+                variant: 'destructive',
+                title: 'Duplicate Tag',
+                description: `A tag named "${newItem.name}" already exists.`,
+            });
+            return;
+        }
+        
         setIsSaving(true);
         try {
             const ref = collection(firestore, `users/${user.uid}/tags`);
@@ -72,6 +82,15 @@ export function TagSettings() {
     const handleSaveEdit = async () => {
         if (!editingItem || !user || !firestore) return;
         
+        if (items?.some(t => t.id !== editingItem.id && t.name.toLowerCase() === editingItem.name.toLowerCase())) {
+            toast({
+                variant: 'destructive',
+                title: 'Duplicate Tag',
+                description: `A tag named "${editingItem.name}" already exists.`,
+            });
+            return;
+        }
+
         setIsSaving(true);
         try {
             const itemRef = doc(firestore, `users/${user.uid}/tags`, editingItem.id);

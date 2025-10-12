@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useAuth, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { doc, setDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
 import { defaultCategories, defaultAccounts, defaultTags } from '@/lib/defaults';
@@ -33,6 +33,10 @@ export function SignUpForm() {
   const auth = useAuth();
   const firestore = useFirestore();
 
+  const [emailUsername, setEmailUsername] = useState('');
+  const [emailDomain, setEmailDomain] = useState('@gmail.com');
+
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,6 +46,17 @@ export function SignUpForm() {
       phoneNumber: '',
     },
   });
+
+  useEffect(() => {
+    const fullEmail = `${emailUsername}${emailDomain}`;
+    // We only set the value if it's a potentially valid email start
+    // to avoid triggering validation too early with an empty username.
+    if (emailUsername) {
+        form.setValue('email', fullEmail, { shouldValidate: true });
+    } else {
+        form.setValue('email', '', { shouldValidate: true });
+    }
+  }, [emailUsername, emailDomain, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -148,17 +163,29 @@ export function SignUpForm() {
           )}
         />
         <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="name@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                        <div className="flex rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                            <Input
+                                placeholder="username"
+                                value={emailUsername}
+                                onChange={(e) => setEmailUsername(e.target.value)}
+                                className="border-0 rounded-r-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                            />
+                            <Input
+                                value={emailDomain}
+                                onChange={(e) => setEmailDomain(e.target.value)}
+                                className="w-auto flex-shrink border-0 rounded-l-none bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            />
+                        </div>
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            )}
         />
         <FormField
             control={form.control}

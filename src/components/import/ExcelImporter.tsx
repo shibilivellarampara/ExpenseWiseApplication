@@ -16,6 +16,7 @@ import { getCurrencySymbol } from "@/lib/currencies";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, writeBatch, increment } from 'firebase/firestore';
+import { Label } from "../ui/label";
 
 type RowData = { [key: string]: any };
 type ColumnMapping = {
@@ -270,10 +271,10 @@ export function ExcelImporter() {
                 )}
                 {step === 2 && (
                     <div className="space-y-6">
-                        <div>
-                            <label className="text-sm font-medium">Use a Template (Optional)</label>
+                        <div className="space-y-2">
+                            <Label htmlFor="template-select">Use a Template (Optional)</Label>
                              <Select value={template} onValueChange={handleTemplateChange}>
-                                <SelectTrigger className="mt-2">
+                                <SelectTrigger id="template-select">
                                     <SelectValue placeholder="Select a template" />
                                 </SelectTrigger>
                                 <SelectContent>

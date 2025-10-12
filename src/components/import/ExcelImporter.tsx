@@ -57,6 +57,7 @@ const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, descri
 type AccountAction = {
     action: 'create' | 'map';
     targetId?: string; // only if action is 'map'
+    type?: Account['type']; // only if action is 'create'
 }
 type AccountMapping = { [key: string]: AccountAction };
 
@@ -102,7 +103,7 @@ export function ExcelImporter() {
         if (newAccounts.length > 0) {
             const initialMappings: AccountMapping = {};
             newAccounts.forEach(accName => {
-                initialMappings[accName] = { action: 'create' };
+                initialMappings[accName] = { action: 'create', type: 'bank' };
             });
             setAccountMappings(initialMappings);
         }
@@ -126,7 +127,9 @@ export function ExcelImporter() {
                 const headers = (XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1, raw: false })[0] || []);
 
                 const expectedMapping = TEMPLATES[template].mapping;
-                const missingColumns = Object.values(expectedMapping).filter(col => col && !headers.includes(col));
+                const requiredColumns = Object.values(expectedMapping).filter(col => col && ['Date', 'Description', 'Category', 'Remark', 'Notes'].includes(col) || (expectedMapping.amount ? ['Amount'].includes(col) : ['Cash In', 'Cash Out'].includes(col)));
+                const missingColumns = requiredColumns.filter(col => col && !headers.includes(col));
+
                 if (missingColumns.length > 0) {
                     throw new Error(`The following required columns are missing for the selected template: ${missingColumns.join(', ')}`);
                 }
@@ -220,12 +223,10 @@ export function ExcelImporter() {
                     type = 'expense';
                 }
             } else if (mapping.amount) {
-                amount = parseFloat(row[mapping.amount]);
-                if (amount < 0) {
-                    type = 'expense';
-                    amount = Math.abs(amount);
-                } else {
-                    type = 'income';
+                const parsedAmount = parseFloat(String(row[mapping.amount]).replace(/[^0-9.-]+/g,""));
+                if (!isNaN(parsedAmount)) {
+                    amount = Math.abs(parsedAmount);
+                    type = parsedAmount < 0 ? 'expense' : 'income';
                 }
             }
             
@@ -263,9 +264,10 @@ export function ExcelImporter() {
                 newTagRefs.set(tagName.toLowerCase(), tagRef.id);
             }
             for (const accName of Object.keys(accountMappings)) {
-                if (accountMappings[accName].action === 'create') {
+                const mapping = accountMappings[accName];
+                if (mapping.action === 'create') {
                     const accRef = doc(accountsCol);
-                    preliminaryBatch.set(accRef, { id: accRef.id, name: accName, icon: 'Landmark', type: 'bank', balance: 0, status: 'active', userId: user.uid });
+                    preliminaryBatch.set(accRef, { id: accRef.id, name: accName, icon: 'Landmark', type: mapping.type || 'bank', balance: 0, status: 'active', userId: user.uid });
                     newAccountRefs.set(accName.toLowerCase(), accRef.id);
                 }
             }
@@ -298,8 +300,12 @@ export function ExcelImporter() {
                     let finalAccountId: string | undefined = chosenAccountId;
                     if(mapping.mode && item.accountName){
                         const accNameLower = String(item.accountName).toLowerCase();
-                        const mappingAction = accountMappings[item.accountName]?.action === 'map' ? accountMappings[item.accountName].targetId : undefined;
-                        finalAccountId = mappingAction || accountMap.get(accNameLower);
+                        const mappingAction = accountMappings[item.accountName];
+                        if (mappingAction?.action === 'map') {
+                            finalAccountId = mappingAction.targetId;
+                        } else {
+                            finalAccountId = accountMap.get(accNameLower);
+                        }
                     }
                     
                     if (!finalAccountId) return; // Skip if no account can be determined
@@ -310,8 +316,13 @@ export function ExcelImporter() {
                         categoryId: categoryId, tagIds: tagIds, createdAt: new Date(),
                     });
                     
-                    const change = item.type === 'income' ? item.amount : -item.amount;
-                    balanceChanges.set(finalAccountId, (balanceChanges.get(finalAccountId) || 0) + change);
+                    const accountToUpdate = accounts.find(a => a.id === finalAccountId);
+                    if (accountToUpdate) {
+                         const change = accountToUpdate.type === 'credit_card'
+                            ? (item.type === 'expense' ? item.amount : -item.amount)
+                            : (item.type === 'income' ? item.amount : -item.amount);
+                         balanceChanges.set(finalAccountId, (balanceChanges.get(finalAccountId) || 0) + change);
+                    }
                 });
     
                 balanceChanges.forEach((change, accId) => {
@@ -358,11 +369,22 @@ export function ExcelImporter() {
     
     const handleAccountMappingChange = (accountName: string, value: string) => {
         if(value === 'create_new') {
-            setAccountMappings(prev => ({ ...prev, [accountName]: { action: 'create' } }));
+            setAccountMappings(prev => ({ ...prev, [accountName]: { ...prev[accountName], action: 'create' } }));
         } else {
-             setAccountMappings(prev => ({ ...prev, [accountName]: { action: 'map', targetId: value } }));
+             setAccountMappings(prev => ({ ...prev, [accountName]: { ...prev[accountName], action: 'map', targetId: value } }));
         }
     }
+
+     const handleAccountTypeChange = (accountName: string, type: Account['type']) => {
+        setAccountMappings(prev => ({
+            ...prev,
+            [accountName]: {
+                ...prev[accountName],
+                action: 'create', // Ensure action is 'create'
+                type: type,
+            }
+        }));
+    };
 
 
     return (
@@ -441,7 +463,8 @@ export function ExcelImporter() {
                                 <div className="flex flex-wrap gap-2">
                                     {newCategories.map(c => <Badge key={c} variant="secondary">{c}</Badge>)}
                                 </div>
-                            ) : <p className="text-sm text-muted-foreground">No new categories found. They will be created automatically.</p>}
+                            ) : <p className="text-sm text-muted-foreground">No new categories found. Existing categories will be used.</p>}
+                             <p className="text-xs text-muted-foreground pt-1">New categories will be created automatically.</p>
                         </div>
                          <div className="rounded-lg border p-4 space-y-2">
                              <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Tags ({newTags.length})</h4>
@@ -449,7 +472,8 @@ export function ExcelImporter() {
                                 <div className="flex flex-wrap gap-2">
                                     {newTags.map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
                                 </div>
-                            ) : <p className="text-sm text-muted-foreground">No new tags found. They will be created automatically.</p>}
+                            ) : <p className="text-sm text-muted-foreground">No new tags found. Existing tags will be used.</p>}
+                            <p className="text-xs text-muted-foreground pt-1">New tags will be created automatically.</p>
                         </div>
                          {newAccounts.length > 0 && (
                              <div className="rounded-lg border p-4 space-y-4">
@@ -457,22 +481,40 @@ export function ExcelImporter() {
                                 <p className="text-sm text-muted-foreground">Map new account names from your file to existing accounts, or create new ones.</p>
                                 {newAccounts.map(accName => (
                                     <div key={accName} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                                        <Badge variant="outline">{accName}</Badge>
+                                        <Badge variant="outline" className="truncate">{accName}</Badge>
                                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                                        <Select 
-                                            onValueChange={(value) => handleAccountMappingChange(accName, value)}
-                                            defaultValue="create_new"
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="create_new">Create New Account</SelectItem>
-                                                {accounts?.map(existingAcc => (
-                                                    <SelectItem key={existingAcc.id} value={existingAcc.id}>Merge with "{existingAcc.name}"</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="flex gap-2">
+                                            <Select 
+                                                onValueChange={(value) => handleAccountMappingChange(accName, value)}
+                                                defaultValue="create_new"
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="create_new">Create New Account</SelectItem>
+                                                    {accounts?.filter(a => a.status === 'active').map(existingAcc => (
+                                                        <SelectItem key={existingAcc.id} value={existingAcc.id}>Merge with "{existingAcc.name}"</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            {accountMappings[accName]?.action === 'create' && (
+                                                <Select
+                                                    onValueChange={(value) => handleAccountTypeChange(accName, value as Account['type'])}
+                                                    defaultValue="bank"
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="bank">Bank</SelectItem>
+                                                        <SelectItem value="credit_card">Credit Card</SelectItem>
+                                                        <SelectItem value="wallet">Wallet</SelectItem>
+                                                        <SelectItem value="cash">Cash</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -564,3 +606,5 @@ export function ExcelImporter() {
         </Card>
     );
 }
+
+    

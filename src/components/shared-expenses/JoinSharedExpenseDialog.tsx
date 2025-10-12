@@ -73,7 +73,6 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
                 toast({ title: 'Successfully Joined!', description: `You are now a member of "${spaceData.name}".` });
                 setOpen(false);
                 form.reset();
-                setIsLoading(false);
             }).catch(commitError => {
                  const permissionError = new FirestorePermissionError({
                     path: `shared_expenses/${spaceDoc.id}`,
@@ -81,6 +80,7 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
                     requestResourceData: { memberIds: `(arrayUnion: ${user.uid})` }
                 });
                 errorEmitter.emit('permission-error', permissionError);
+            }).finally(() => {
                 setIsLoading(false);
             });
 

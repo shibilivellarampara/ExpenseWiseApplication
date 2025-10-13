@@ -5,14 +5,17 @@ import { PageHeader } from "@/components/PageHeader";
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
-import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc } from "firebase/firestore";
-import { Plus, Minus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { collection, orderBy, query, doc, where, limit, startAfter, getDocs, Query, DocumentData, Timestamp } from "firebase/firestore";
+import { Plus, Minus, Loader2 } from "lucide-react";
+import { useMemo, useState, useCallback } from "react";
 import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
+import { Pagination } from "@/components/ui/pagination";
+
+const PAGE_SIZE = 50;
 
 export default function ExpensesPage() {
     const { user } = useUser();
@@ -26,10 +29,10 @@ export default function ExpensesPage() {
         tags: [] as string[],
     });
 
-    // Memoized queries for all data collections
-    const expensesQuery = useMemoFirebase(() => 
-        user ? query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc')) : null
-    , [firestore, user]);
+    const [allEnrichedExpenses, setAllEnrichedExpenses] = useState<EnrichedExpense[]>([]);
+    const [lastVisible, setLastVisible] = useState<any>(null);
+    const [hasMore, setHasMore] = useState(true);
+    const [expensesLoading, setExpensesLoading] = useState(true);
 
     const categoriesQuery = useMemoFirebase(() => 
         user ? collection(firestore, `users/${user.uid}/categories`) : null
@@ -45,8 +48,6 @@ export default function ExpensesPage() {
     
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
-    // Fetch all data collections
-    const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
     const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
@@ -55,124 +56,115 @@ export default function ExpensesPage() {
     
     const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
 
-    // Create maps for quick lookups
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(accounts?.map(p => [p.id, p])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
-    // Enrich all expenses first
-    const allEnrichedExpenses = useMemo((): EnrichedExpense[] => {
-        if (!expenses) return [];
-        return expenses.map(expense => ({
+    const buildQuery = useCallback((startAfterDoc: any = null) => {
+        if (!user) return null;
+        
+        const expensesCollection = collection(firestore, `users/${user.uid}/expenses`);
+        let q: Query<DocumentData> = query(expensesCollection, orderBy('date', 'desc'));
+
+        if (filters.dateRange.from) {
+            q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
+        }
+        if (filters.dateRange.to) {
+            q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
+        }
+        if (filters.type !== 'all') {
+            q = query(q, where('type', '==', filters.type));
+        }
+        if (filters.categories.length > 0) {
+            q = query(q, where('categoryId', 'in', filters.categories));
+        }
+        if (filters.accounts.length > 0) {
+            q = query(q, where('accountId', 'in', filters.accounts));
+        }
+        if (filters.tags.length > 0) {
+            q = query(q, where('tagIds', 'array-contains-any', filters.tags));
+        }
+
+        q = query(q, limit(PAGE_SIZE));
+
+        if (startAfterDoc) {
+            q = query(q, startAfter(startAfterDoc));
+        }
+
+        return q;
+    }, [user, firestore, filters]);
+
+    const enrichExpenses = useCallback((docs: any[]): EnrichedExpense[] => {
+        if (!docs.length || !categoryMap.size || !accountMap.size) return [];
+        return docs.map(d => d.data()).map((expense: Expense) => ({
             ...expense,
             date: expense.date.toDate(),
             category: categoryMap.get(expense.categoryId),
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
-    }, [expenses, categoryMap, accountMap, tagMap]);
+    }, [categoryMap, accountMap, tagMap]);
 
-    // Apply filters
-    const filteredExpenses = useMemo(() => {
-        return allEnrichedExpenses.filter(expense => {
-            // Date filter
-            const { from, to } = filters.dateRange;
-            if (from && expense.date < startOfDay(from)) return false;
-            if (to && expense.date > endOfDay(to)) return false;
-
-            // Type filter
-            if (filters.type !== 'all' && expense.type !== filters.type) return false;
-
-            // Category filter
-            if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) return false;
-
-            // Account filter
-            if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId)) return false;
-
-            // Tag filter
-            if (filters.tags.length > 0) {
-                const expenseTagIds = expense.tags.map(t => t.id);
-                const hasMatchingTag = filters.tags.some(t => expenseTagIds.includes(t));
-                if (!hasMatchingTag) return false;
-            }
-            
-            return true;
-        });
-    }, [allEnrichedExpenses, filters]);
-
-
-    // Calculate running balances on the filtered list
-    const enrichedAndBalancedExpenses = useMemo((): EnrichedExpense[] => {
-        if (!filteredExpenses.length || !accounts || !accountMap.size) return [];
-    
-        const sortedExpensesChronological = [...filteredExpenses].sort((a, b) => a.date.getTime() - b.date.getTime());
-    
-        const expensesByAccount = new Map<string, Expense[]>();
-        for (const expense of sortedExpensesChronological) {
-            if (!expensesByAccount.has(expense.accountId)) {
-                expensesByAccount.set(expense.accountId, []);
-            }
-            expensesByAccount.get(expense.accountId)!.push(expense);
+    const loadExpenses = useCallback(async (loadMore = false) => {
+        setExpensesLoading(true);
+        const q = buildQuery(loadMore ? lastVisible : null);
+        if (!q) {
+            setExpensesLoading(false);
+            return;
         }
-    
-        const processedExpenses: EnrichedExpense[] = [];
-        const latestTransactionDateByAccount = new Map<string, Date>();
 
-        // Find the latest transaction date for each account within the filtered range
-        for (const expense of sortedExpensesChronological) {
-            const currentLatest = latestTransactionDateByAccount.get(expense.accountId);
-            if (!currentLatest || expense.date > currentLatest) {
-                latestTransactionDateByAccount.set(expense.accountId, expense.date);
-            }
+        try {
+            const querySnapshot = await getDocs(q);
+            const newExpenses = enrichExpenses(querySnapshot.docs);
+            const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+            setAllEnrichedExpenses(prev => loadMore ? [...prev, ...newExpenses] : newExpenses);
+            setLastVisible(newLastVisible);
+            setHasMore(querySnapshot.docs.length === PAGE_SIZE);
+        } catch (error) {
+            console.error("Error fetching expenses:", error);
+        } finally {
+            setExpensesLoading(false);
         }
+    }, [buildQuery, enrichExpenses, lastVisible]);
     
-        for (const account of accounts) {
-            const accountExpenses = expensesByAccount.get(account.id) || [];
-            if (accountExpenses.length === 0) continue;
+    // Initial load and filter change handler
+    const handleFiltersChange = (newFilters: any) => {
+        setFilters(newFilters);
+        setAllEnrichedExpenses([]); // Reset expenses
+        setLastVisible(null); // Reset pagination
+        setHasMore(true);
+        // loadExpenses will be called by useEffect
+    };
 
-            const latestDate = latestTransactionDateByAccount.get(account.id);
-            if (!latestDate) continue;
+    // Effect for initial load and when filters change
+    useMemo(() => {
+        loadExpenses(false);
+    }, [filters]);
 
-            // Find total change of ALL transactions for the account up to the latest date in the filtered range
-             const allTransactionsForAccount = allEnrichedExpenses.filter(e => e.accountId === account.id && e.date <= latestDate);
-             const totalChange = allTransactionsForAccount.reduce((sum, expense) => {
-                 return sum + (expense.type === 'income' ? expense.amount : -expense.amount);
-             }, 0);
-
-            // Starting balance is the current balance minus the total change of all transactions up to the latest filtered date
-            let runningBalance = account.balance - totalChange;
-
-            for (const expense of accountExpenses) {
-                const amountChange = expense.type === 'income' ? expense.amount : -expense.amount;
-                runningBalance += amountChange;
-    
-                processedExpenses.push({
-                    ...expense,
-                    balanceAfterTransaction: runningBalance,
-                });
-            }
-        }
-    
-        // Sort the final combined list by date descending for display
-        return processedExpenses.sort((a, b) => b.date.getTime() - a.date.getTime());
-    
-    }, [filteredExpenses, accounts, accountMap, allEnrichedExpenses]);
 
     return (
-        <div className="w-full space-y-4 pb-24"> {/* Add padding-bottom */}
+        <div className="w-full space-y-4 pb-24">
             <PageHeader title="Transactions" description="A detailed list of your recent income and expenses." />
 
             <ExpensesFilters 
                 filters={filters}
-                onFiltersChange={setFilters}
+                onFiltersChange={handleFiltersChange}
                 accounts={accounts || []}
                 categories={categories || []}
                 tags={tags || []}
             />
 
-            <ExpensesSummary expenses={filteredExpenses} currency={userProfile?.defaultCurrency} isLoading={isLoading} />
+            <ExpensesSummary expenses={allEnrichedExpenses} currency={userProfile?.defaultCurrency} isLoading={isLoading} />
 
-            <ExpensesTable expenses={enrichedAndBalancedExpenses} isLoading={isLoading} />
+            <ExpensesTable expenses={allEnrichedExpenses} isLoading={expensesLoading && allEnrichedExpenses.length === 0} />
+            
+            <Pagination
+                onLoadMore={() => loadExpenses(true)}
+                isLoading={expensesLoading}
+                hasMore={hasMore}
+            />
+
 
             <div className="fixed bottom-0 left-0 right-0 p-4 z-40 md:hidden">
                  <div className="container mx-auto flex justify-around gap-2">
@@ -208,3 +200,4 @@ export default function ExpensesPage() {
         </div>
     );
 }
+

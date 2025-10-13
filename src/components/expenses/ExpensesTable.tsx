@@ -113,11 +113,6 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: 
                                                         {formatAmount(expense.amount)}
                                                     </div>
                                                 </div>
-                                                {!isShared && expense.balanceAfterTransaction !== undefined && (
-                                                    <p className="text-xs text-muted-foreground mt-1">
-                                                        Balance: {formatAmount(expense.balanceAfterTransaction)}
-                                                    </p>
-                                                )}
                                             </div>
                                         </div>
 
@@ -223,7 +218,7 @@ export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTablePr
        <Card>
           <CardContent className="pt-6">
               <div className="h-48 flex flex-col items-center justify-center text-center">
-                 <h3 className="text-lg font-semibold">No transactions match your filters.</h3>
+                 <h3 className="text-lg font-semibold">No transactions found.</h3>
                  <p className="text-muted-foreground">Try adjusting your filters or add a new transaction.</p>
               </div>
           </CardContent>

@@ -48,30 +48,48 @@ export default function DashboardPage() {
     const [timeRange, setTimeRange] = useState<TimeRange>('week');
     const [pieChartGrouping, setPieChartGrouping] = useState<PieChartGrouping>('category');
 
-    const dateRanges = useMemo(() => {
+    const { dateRangeStart, dateRangeEnd } = useMemo(() => {
         const now = new Date();
-        return {
-            currentMonthStart: startOfMonth(now),
-            currentMonthEnd: endOfMonth(now),
-            lastMonthStart: startOfMonth(subMonths(now, 1)),
-            lastMonthEnd: endOfMonth(subMonths(now, 1)),
-            currentWeekStart: startOfWeek(now),
-            currentWeekEnd: endOfWeek(now),
-            currentYearStart: startOfYear(now),
-            currentYearEnd: endOfYear(now),
-            fiveYearsAgoStart: startOfYear(subYears(now, 4)),
-        };
-    }, []);
+        switch (timeRange) {
+            case 'week':
+                return { dateRangeStart: startOfWeek(now), dateRangeEnd: endOfWeek(now) };
+            case 'month':
+                return { dateRangeStart: startOfMonth(now), dateRangeEnd: endOfMonth(now) };
+            case 'year':
+                return { dateRangeStart: startOfYear(now), dateRangeEnd: endOfYear(now) };
+            case '5year':
+                 return { dateRangeStart: startOfYear(subYears(now, 4)), dateRangeEnd: endOfYear(now) };
+            default:
+                return { dateRangeStart: startOfWeek(now), dateRangeEnd: endOfWeek(now) };
+        }
+    }, [timeRange]);
 
     const expensesQuery = useMemoFirebase(() => {
         if (!user) return null;
-        // Fetch a broader range to cover all tabs without re-querying
-        const startDate = dateRanges.fiveYearsAgoStart; 
         return query(
             collection(firestore, `users/${user.uid}/expenses`),
-            where('date', '>=', Timestamp.fromDate(startDate))
+            where('date', '>=', Timestamp.fromDate(dateRangeStart)),
+            where('date', '<=', Timestamp.fromDate(dateRangeEnd))
         );
-    }, [user, firestore, dateRanges.fiveYearsAgoStart]);
+    }, [user, firestore, dateRangeStart, dateRangeEnd]);
+
+    const lastMonthRange = useMemo(() => {
+        const now = new Date();
+        return {
+            start: startOfMonth(subMonths(now, 1)),
+            end: endOfMonth(subMonths(now, 1)),
+        };
+    }, []);
+
+    const lastMonthExpensesQuery = useMemoFirebase(() => {
+        if (!user) return null;
+        return query(
+            collection(firestore, `users/${user.uid}/expenses`),
+            where('date', '>=', Timestamp.fromDate(lastMonthRange.start)),
+            where('date', '<=', Timestamp.fromDate(lastMonthRange.end))
+        );
+    }, [user, firestore, lastMonthRange]);
+
     
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [firestore, user]);
@@ -79,12 +97,13 @@ export default function DashboardPage() {
     const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [firestore, user]);
 
     const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
+    const { data: lastMonthExpenses, isLoading: lastMonthLoading } = useCollection<Expense>(lastMonthExpensesQuery);
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
     const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
-    const isLoading = expensesLoading || categoriesLoading || profileLoading || accountsLoading || tagsLoading;
+    const isLoading = expensesLoading || categoriesLoading || profileLoading || accountsLoading || tagsLoading || lastMonthLoading;
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
     const show5YearView = userProfile?.dashboardSettings?.show5YearView ?? false;
 
@@ -92,9 +111,9 @@ export default function DashboardPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
 
-    const enrichedExpenses = useMemo((): EnrichedExpense[] => {
-        if (!expenses || !categoryMap.size || !accountMap.size) return [];
-        return expenses.map(expense => {
+    const enrichExpenses = (expenseList: Expense[] | null) => {
+        if (!expenseList || !categoryMap.size || !accountMap.size) return [];
+        return expenseList.map(expense => {
             const date = expense.date instanceof Date ? expense.date : expense.date.toDate();
             return {
                 ...expense,
@@ -104,39 +123,16 @@ export default function DashboardPage() {
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             };
         });
-    }, [expenses, categoryMap, accountMap, tagMap]);
+    }
+
+    const currentMonthExpenses = useMemo(() => {
+        if (timeRange !== 'month' || !expenses) return [];
+        return enrichExpenses(expenses);
+    }, [timeRange, expenses, categoryMap, accountMap, tagMap]);
     
-    // Filter expenses for various time ranges
-    const currentMonthExpenses = useMemo(() => 
-        enrichedExpenses.filter(e => e.date >= dateRanges.currentMonthStart && e.date <= dateRanges.currentMonthEnd)
-    , [enrichedExpenses, dateRanges.currentMonthStart, dateRanges.currentMonthEnd]);
+    const enrichedChartExpenses = useMemo(() => enrichExpenses(expenses), [expenses, categoryMap, accountMap, tagMap]);
+    const enrichedLastMonthExpenses = useMemo(() => enrichExpenses(lastMonthExpenses), [lastMonthExpenses, categoryMap, accountMap, tagMap]);
 
-    const lastMonthExpenses = useMemo(() => 
-        enrichedExpenses.filter(e => e.date >= dateRanges.lastMonthStart && e.date <= dateRanges.lastMonthEnd)
-    , [enrichedExpenses, dateRanges.lastMonthStart, dateRanges.lastMonthEnd]);
-    
-    const currentWeekExpenses = useMemo(() =>
-        enrichedExpenses.filter(e => e.date >= dateRanges.currentWeekStart && e.date <= dateRanges.currentWeekEnd)
-    , [enrichedExpenses, dateRanges.currentWeekStart, dateRanges.currentWeekEnd]);
-    
-    const currentYearExpenses = useMemo(() =>
-        enrichedExpenses.filter(e => e.date >= dateRanges.currentYearStart && e.date <= dateRanges.currentYearEnd)
-    , [enrichedExpenses, dateRanges.currentYearStart, dateRanges.currentYearEnd]);
-
-    const last5YearsExpenses = useMemo(() =>
-        enrichedExpenses.filter(e => e.date >= dateRanges.fiveYearsAgoStart && e.date <= dateRanges.currentYearEnd)
-    , [enrichedExpenses, dateRanges.fiveYearsAgoStart, dateRanges.currentYearEnd]);
-
-
-    const chartData = useMemo(() => {
-        switch (timeRange) {
-            case 'week': return currentWeekExpenses;
-            case 'month': return currentMonthExpenses;
-            case 'year': return currentYearExpenses;
-            case '5year': return last5YearsExpenses;
-            default: return currentWeekExpenses;
-        }
-    }, [timeRange, currentWeekExpenses, currentMonthExpenses, currentYearExpenses, last5YearsExpenses]);
 
     const generatePieChartData = (grouping: PieChartGrouping) => {
         const expenseOnly = currentMonthExpenses.filter(e => e.type === 'expense');
@@ -191,7 +187,7 @@ export default function DashboardPage() {
                 <>
                     <DashboardStats 
                         currentMonthExpenses={currentMonthExpenses} 
-                        lastMonthExpenses={lastMonthExpenses}
+                        lastMonthExpenses={enrichedLastMonthExpenses}
                         isLoading={isLoading}
                         currency={userProfile?.defaultCurrency}
                     />
@@ -214,17 +210,17 @@ export default function DashboardPage() {
                                     ) : (
                                         <>
                                             <TabsContent value="week">
-                                                <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="week" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
+                                                <ExpensesBarChart expenses={enrichedChartExpenses} allCategories={categories || []} timeRange="week" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
                                             </TabsContent>
                                             <TabsContent value="month">
-                                                <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="month" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
+                                                <ExpensesBarChart expenses={enrichedChartExpenses} allCategories={categories || []} timeRange="month" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
                                             </TabsContent>
                                             <TabsContent value="year">
-                                                <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="year" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
+                                                <ExpensesBarChart expenses={enrichedChartExpenses} allCategories={categories || []} timeRange="year" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
                                             </TabsContent>
                                             {show5YearView && (
                                                 <TabsContent value="5year">
-                                                    <ExpensesBarChart expenses={chartData} allCategories={categories || []} timeRange="5year" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
+                                                    <ExpensesBarChart expenses={enrichedChartExpenses} allCategories={categories || []} timeRange="5year" currencySymbol={currencySymbol} useCategoryColors={useCategoryColors}/>
                                                 </TabsContent>
                                             )}
                                         </>
@@ -235,6 +231,7 @@ export default function DashboardPage() {
                         <Card className="lg:col-span-3">
                             <CardHeader>
                                 <CardTitle className="font-headline">Spending Breakdown</CardTitle>
+                                 <CardDescription>Breakdown of expenses this month.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <Tabs defaultValue="category" value={pieChartGrouping} onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)}>
@@ -267,3 +264,4 @@ export default function DashboardPage() {
         </div>
     );
 }
+

@@ -9,7 +9,7 @@ import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, orderBy, query, doc, where, limit, startAfter, getDocs, Query, DocumentData, Timestamp } from "firebase/firestore";
 import { Plus, Minus, Loader2 } from "lucide-react";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
@@ -20,6 +20,7 @@ const PAGE_SIZE = 50;
 export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const isMounted = useRef(true);
 
     const [filters, setFilters] = useState({
         dateRange: { from: undefined, to: undefined } as DateRange,
@@ -60,6 +61,13 @@ export default function ExpensesPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(p => [p.id, p])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
+    useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
+
     const buildQuery = useCallback((startAfterDoc: any = null) => {
         if (!user) return null;
         
@@ -115,6 +123,8 @@ export default function ExpensesPage() {
 
         try {
             const querySnapshot = await getDocs(q);
+            if (!isMounted.current) return;
+
             const newExpenses = enrichExpenses(querySnapshot.docs);
             const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
 
@@ -123,8 +133,13 @@ export default function ExpensesPage() {
             setHasMore(querySnapshot.docs.length === PAGE_SIZE);
         } catch (error) {
             console.error("Error fetching expenses:", error);
+            if (isMounted.current) {
+                // Optionally handle error state here
+            }
         } finally {
-            setExpensesLoading(false);
+            if (isMounted.current) {
+                setExpensesLoading(false);
+            }
         }
     }, [buildQuery, enrichExpenses, lastVisible]);
     
@@ -138,7 +153,7 @@ export default function ExpensesPage() {
     };
 
     // Effect for initial load and when filters change
-    useMemo(() => {
+    useEffect(() => {
         loadExpenses(false);
     }, [filters]);
 

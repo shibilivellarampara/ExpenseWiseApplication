@@ -132,7 +132,14 @@ export function ExcelImporter() {
                 const headers = (XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1, raw: false })[0] || []);
 
                 const expectedMapping = TEMPLATES[template].mapping;
-                const requiredColumns = Object.values(expectedMapping).filter(col => col && ['Date', 'Description', 'Category', 'Remark', 'Notes', 'Old Description'].includes(col) || (expectedMapping.amount ? ['Amount'].includes(col) : ['Cash In', 'Cash Out', 'CASH IN', 'CASH OUT'].includes(col)));
+                // Dynamically build the list of required columns from the selected template's mapping
+                const requiredColumns = Object.values(expectedMapping).filter(col => col && (
+                    ['date', 'description', 'category'].includes(Object.keys(expectedMapping).find(key => expectedMapping[key as keyof ColumnMapping] === col)!) ||
+                    (expectedMapping.amount && col === expectedMapping.amount) ||
+                    (expectedMapping.cashIn && col === expectedMapping.cashIn) ||
+                    (expectedMapping.cashOut && col === expectedMapping.cashOut)
+                ));
+
                 const missingColumns = requiredColumns.filter(col => col && !headers.includes(col));
 
                 if (missingColumns.length > 0) {

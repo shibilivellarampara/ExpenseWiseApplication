@@ -203,7 +203,7 @@ export default function DashboardPage() {
                             </CardHeader>
                             <CardContent>
                                 <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as TimeRange)}>
-                                    <TabsList className={`grid w-full grid-cols-${show5YearView ? 4 : 3} mb-4`}>
+                                    <TabsList className={`grid w-full ${show5YearView ? 'grid-cols-4' : 'grid-cols-3'} mb-4`}>
                                         <TabsTrigger value="week">This Week</TabsTrigger>
                                         <TabsTrigger value="month">This Month</TabsTrigger>
                                         <TabsTrigger value="year">This Year</TabsTrigger>

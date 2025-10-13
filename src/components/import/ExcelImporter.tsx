@@ -45,12 +45,17 @@ const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, descri
     'cashbook': {
         name: 'Cashbook App',
         mapping: { date: 'Date', description: 'Remark', category: 'Category', cashIn: 'Cash In', cashOut: 'Cash Out', mode: 'Mode' },
-        description: "For Cashbook app exports with Cash In/Out."
+        description: "For Cashbook app exports."
     },
     'spendee': {
         name: 'Spendee App',
         mapping: { date: 'Date', amount: 'Amount', description: 'Notes', category: 'Category', tags: 'Tags', mode: 'Wallet' },
-        description: "For Spendee exports using 'Notes' & 'Wallet'."
+        description: "For Spendee exports."
+    },
+    'custom_detailed': {
+        name: 'Custom Detailed',
+        mapping: { date: 'Date', description: 'Old Description', category: 'Category', tags: 'Tags', cashIn: 'CASH IN', cashOut: 'CASH OUT', mode: 'ACCOUNT'},
+        description: "For detailed sheets with separate cash in/out."
     },
 };
 
@@ -127,7 +132,7 @@ export function ExcelImporter() {
                 const headers = (XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1, raw: false })[0] || []);
 
                 const expectedMapping = TEMPLATES[template].mapping;
-                const requiredColumns = Object.values(expectedMapping).filter(col => col && ['Date', 'Description', 'Category', 'Remark', 'Notes'].includes(col) || (expectedMapping.amount ? ['Amount'].includes(col) : ['Cash In', 'Cash Out'].includes(col)));
+                const requiredColumns = Object.values(expectedMapping).filter(col => col && ['Date', 'Description', 'Category', 'Remark', 'Notes', 'Old Description'].includes(col) || (expectedMapping.amount ? ['Amount'].includes(col) : ['Cash In', 'Cash Out', 'CASH IN', 'CASH OUT'].includes(col)));
                 const missingColumns = requiredColumns.filter(col => col && !headers.includes(col));
 
                 if (missingColumns.length > 0) {
@@ -606,7 +611,3 @@ export function ExcelImporter() {
         </Card>
     );
 }
-
-    
-
-    

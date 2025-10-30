@@ -71,8 +71,7 @@ export default function ExpensesPage() {
     const buildQuery = useCallback((startAfterDoc: any = null) => {
         if (!user) return null;
         
-        const expensesCollection = collection(firestore, `users/${user.uid}/expenses`);
-        let q: Query<DocumentData> = expensesCollection;
+        let q: Query<DocumentData> = collection(firestore, `users/${user.uid}/expenses`);
 
         // Apply filters
         if (filters.type !== 'all') {
@@ -95,31 +94,67 @@ export default function ExpensesPage() {
         }
 
         // Apply ordering and pagination
-        q = query(q, orderBy('date', 'desc'));
-        if (startAfterDoc) {
-            q = query(q, startAfter(startAfterDoc));
+        let finalQuery = q;
+        if (filters.accounts.length > 0) {
+             finalQuery = query(finalQuery, orderBy('accountId'), orderBy('date', 'desc'));
+        } else if (filters.categories.length > 0) {
+            finalQuery = query(finalQuery, orderBy('categoryId'), orderBy('date', 'desc'));
+        } else if (filters.tags.length > 0) {
+            finalQuery = query(finalQuery, orderBy('tagIds'), orderBy('date', 'desc'));
+        } else {
+             finalQuery = query(finalQuery, orderBy('date', 'desc'));
         }
-        q = query(q, limit(PAGE_SIZE));
 
-        return q;
+        if (startAfterDoc) {
+            finalQuery = query(finalQuery, startAfter(startAfterDoc));
+        }
+        finalQuery = query(finalQuery, limit(PAGE_SIZE));
+        return finalQuery;
+
     }, [user, firestore, filters]);
 
 
-    const enrichExpenses = useCallback((docs: any[]): EnrichedExpense[] => {
-        if (!docs.length || !categoryMap.size || !accountMap.size) return [];
-        return docs.map(d => d.data()).map((expense: Expense) => ({
+    const enrichAndCalculateRunningBalance = useCallback((docs: any[], existingExpenses: EnrichedExpense[]): EnrichedExpense[] => {
+        if (!docs.length || !categoryMap.size || !accountMap.size || !accounts) return [];
+
+        const newExpenses: EnrichedExpense[] = docs.map(d => d.data()).map((expense: Expense) => ({
             ...expense,
             date: expense.date.toDate(),
             category: categoryMap.get(expense.categoryId),
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
-    }, [categoryMap, accountMap, tagMap]);
+        
+        const allExpensesForCalculation = [...existingExpenses, ...newExpenses].sort((a, b) => a.date.getTime() - b.date.getTime());
+        
+        const accountBalances = new Map<string, number>();
+        accounts.forEach(acc => accountBalances.set(acc.id, acc.balance));
+
+        const processedExpenses = allExpensesForCalculation.reverse().map(expense => {
+            const account = expense.account;
+            if (account) {
+                const currentBalance = accountBalances.get(account.id) ?? 0;
+                expense.runningBalance = currentBalance;
+
+                let amountChange = 0;
+                if (account.type === 'credit_card') {
+                    amountChange = expense.type === 'expense' ? -expense.amount : expense.amount;
+                } else {
+                    amountChange = expense.type === 'income' ? -expense.amount : expense.amount;
+                }
+                accountBalances.set(account.id, currentBalance + amountChange);
+            }
+            return expense;
+        });
+
+        return processedExpenses.reverse();
+
+    }, [categoryMap, accountMap, tagMap, accounts]);
 
     const loadExpenses = useCallback(async (loadMore = false) => {
         setExpensesLoading(true);
         const q = buildQuery(loadMore ? lastVisible : null);
-        if (!q) {
+        if (!q || !accounts) {
             setExpensesLoading(false);
             return;
         }
@@ -128,10 +163,10 @@ export default function ExpensesPage() {
             const querySnapshot = await getDocs(q);
             if (!isMounted.current) return;
 
-            const newExpenses = enrichExpenses(querySnapshot.docs);
+            const newExpenses = enrichAndCalculateRunningBalance(querySnapshot.docs, loadMore ? allEnrichedExpenses : []);
             const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
 
-            setAllEnrichedExpenses(prev => loadMore ? [...prev, ...newExpenses] : newExpenses);
+            setAllEnrichedExpenses(loadMore ? newExpenses : newExpenses.sort((a,b) => b.date.getTime() - a.date.getTime()));
             setLastVisible(newLastVisible);
             setHasMore(querySnapshot.docs.length === PAGE_SIZE);
         } catch (error) {
@@ -144,7 +179,7 @@ export default function ExpensesPage() {
                 setExpensesLoading(false);
             }
         }
-    }, [buildQuery, enrichExpenses, lastVisible]);
+    }, [buildQuery, enrichAndCalculateRunningBalance, lastVisible, allEnrichedExpenses, accounts]);
     
     // Initial load and filter change handler
     const handleFiltersChange = (newFilters: any) => {
@@ -162,10 +197,12 @@ export default function ExpensesPage() {
         loadExpenses(false);
     }, [loadExpenses]);
 
-    // Effect for initial load and when filters change
+    // Effect for initial load and when filters or accounts change
     useEffect(() => {
-        loadExpenses(false);
-    }, [filters]);
+        if (accounts) { // Only load expenses once accounts are available
+            loadExpenses(false);
+        }
+    }, [filters, accounts]);
 
 
     return (

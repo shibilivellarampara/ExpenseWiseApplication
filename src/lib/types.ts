@@ -60,6 +60,7 @@ export type Expense = {
   categoryId?: string;
   tagIds?: string[];
   sharedExpenseId?: string;
+  runningBalance?: number;
 };
 
 export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds' | 'date'> & {

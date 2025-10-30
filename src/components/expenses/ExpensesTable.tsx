@@ -111,9 +111,14 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                                         'font-bold text-lg',
                                                         expense.type === 'income' ? 'text-green-600' : 'text-red-500'
                                                     )}>
-                                                        {formatAmount(expense.amount)}
+                                                        {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}
                                                     </div>
                                                 </div>
+                                                 {expense.runningBalance !== undefined && !isShared && (
+                                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                                        Bal: {currencySymbol}{formatAmount(expense.runningBalance)}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 

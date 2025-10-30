@@ -72,40 +72,21 @@ export default function ExpensesPage() {
         if (!user) return null;
         
         const expensesCollection = collection(firestore, `users/${user.uid}/expenses`);
-        let q: Query<DocumentData>;
+        let q: Query<DocumentData> = expensesCollection;
 
-        // Determine the base query with correct initial orderBy
-        if (filters.categories.length > 0) {
-            q = query(expensesCollection, where('categoryId', 'in', filters.categories));
-        } else if (filters.accounts.length > 0) {
-            q = query(expensesCollection, where('accountId', 'in', filters.accounts));
-        } else if (filters.tags.length > 0) {
-            q = query(expensesCollection, where('tagIds', 'array-contains-any', filters.tags));
-        } else if (filters.type !== 'all') {
-            q = query(expensesCollection, where('type', '==', filters.type));
-        } else {
-            q = query(expensesCollection);
-        }
-
-        // Apply additional filters if they weren't the primary one
-        if (filters.type !== 'all' && filters.categories.length > 0) {
-            q = query(q, where('type', '==', filters.type));
-        } else if (filters.type !== 'all' && filters.accounts.length > 0) {
-            q = query(q, where('type', '==', filters.type));
-        } else if (filters.type !== 'all' && filters.tags.length > 0) {
+        // Apply filters
+        if (filters.type !== 'all') {
             q = query(q, where('type', '==', filters.type));
         }
-        
-        if (filters.accounts.length > 0 && filters.categories.length > 0) {
+        if (filters.accounts.length > 0) {
             q = query(q, where('accountId', 'in', filters.accounts));
         }
-
-        if (filters.tags.length > 0 && (filters.categories.length > 0 || filters.accounts.length > 0)) {
+        if (filters.categories.length > 0) {
+            q = query(q, where('categoryId', 'in', filters.categories));
+        }
+        if (filters.tags.length > 0) {
             q = query(q, where('tagIds', 'array-contains-any', filters.tags));
         }
-
-
-        // Date range is always applied on top
         if (filters.dateRange.from) {
             q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
         }
@@ -113,17 +94,16 @@ export default function ExpensesPage() {
             q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
         }
 
-        // Always sort by date descending as the final sort order
+        // Apply ordering and pagination
         q = query(q, orderBy('date', 'desc'));
-
-        q = query(q, limit(PAGE_SIZE));
-
         if (startAfterDoc) {
             q = query(q, startAfter(startAfterDoc));
         }
+        q = query(q, limit(PAGE_SIZE));
 
         return q;
     }, [user, firestore, filters]);
+
 
     const enrichExpenses = useCallback((docs: any[]): EnrichedExpense[] => {
         if (!docs.length || !categoryMap.size || !accountMap.size) return [];
@@ -200,7 +180,7 @@ export default function ExpensesPage() {
                 tags={tags || []}
             />
 
-            <ExpensesSummary expenses={allEnrichedExpenses} currency={userProfile?.defaultCurrency} isLoading={isLoading} />
+            <ExpensesSummary currency={userProfile?.defaultCurrency} isLoading={isLoading} />
 
             <ExpensesTable 
                 expenses={allEnrichedExpenses} 

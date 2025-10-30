@@ -20,6 +20,7 @@ interface ExpensesTableProps {
   expenses: EnrichedExpense[];
   isLoading?: boolean;
   isShared?: boolean;
+  onDataChange: () => void;
 }
 
 const renderIcon = (iconName: string | undefined, className?: string) => {
@@ -60,7 +61,7 @@ const formatAmount = (amount: number) => {
 };
 
 
-function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string }) {
+function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; }) {
 
     const groupedExpenses = useMemo(() => {
         return expenses.reduce((acc, expense) => {
@@ -101,7 +102,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: 
                                             <div className="font-semibold truncate flex-1 pr-4">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
                                             <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
                                                 <div className="flex items-center">
-                                                    <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId}>
+                                                    <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId} onSaveSuccess={onDataChange}>
                                                         <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
@@ -179,7 +180,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: 
     )
 }
 
-export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTableProps) {
+export function ExpensesTable({ expenses, isLoading, isShared, onDataChange }: ExpensesTableProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -226,5 +227,5 @@ export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTablePr
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} />;
+  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} />;
 }

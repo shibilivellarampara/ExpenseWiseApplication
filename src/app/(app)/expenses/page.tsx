@@ -150,6 +150,13 @@ export default function ExpensesPage() {
         setHasMore(true);
         // loadExpenses will be called by useEffect
     };
+    
+    const refreshTransactions = useCallback(() => {
+        setAllEnrichedExpenses([]);
+        setLastVisible(null);
+        setHasMore(true);
+        loadExpenses(false);
+    }, [loadExpenses]);
 
     // Effect for initial load and when filters change
     useEffect(() => {
@@ -171,7 +178,11 @@ export default function ExpensesPage() {
 
             <ExpensesSummary expenses={allEnrichedExpenses} currency={userProfile?.defaultCurrency} isLoading={isLoading} />
 
-            <ExpensesTable expenses={allEnrichedExpenses} isLoading={expensesLoading && allEnrichedExpenses.length === 0} />
+            <ExpensesTable 
+                expenses={allEnrichedExpenses} 
+                isLoading={expensesLoading && allEnrichedExpenses.length === 0} 
+                onDataChange={refreshTransactions} 
+            />
             
             <Pagination
                 onLoadMore={() => loadExpenses(true)}
@@ -182,13 +193,13 @@ export default function ExpensesPage() {
 
             <div className="fixed bottom-0 left-0 right-0 p-4 z-40 md:hidden">
                  <div className="container mx-auto flex justify-around gap-2">
-                    <AddExpenseDialog initialType="income">
+                    <AddExpenseDialog initialType="income" onSaveSuccess={refreshTransactions}>
                         <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg text-base font-semibold py-6">
                             <Plus className="mr-2 h-5 w-5" />
                             CASH IN
                         </Button>
                     </AddExpenseDialog>
-                    <AddExpenseDialog initialType="expense">
+                    <AddExpenseDialog initialType="expense" onSaveSuccess={refreshTransactions}>
                         <Button className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg text-base font-semibold py-6">
                             <Minus className="mr-2 h-5 w-5" />
                             CASH OUT
@@ -198,13 +209,13 @@ export default function ExpensesPage() {
             </div>
 
              <div className="fixed bottom-6 right-6 z-40 hidden md:flex md:flex-col md:gap-3">
-                <AddExpenseDialog initialType="income">
+                <AddExpenseDialog initialType="income" onSaveSuccess={refreshTransactions}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
                         <Plus className="h-6 w-6" />
                         <span className="sr-only">Add Income</span>
                     </Button>
                 </AddExpenseDialog>
-                <AddExpenseDialog initialType="expense">
+                <AddExpenseDialog initialType="expense" onSaveSuccess={refreshTransactions}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg">
                         <Minus className="h-6 w-6" />
                         <span className="sr-only">Add Expense</span>

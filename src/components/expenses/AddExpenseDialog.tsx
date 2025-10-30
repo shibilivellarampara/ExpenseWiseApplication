@@ -518,11 +518,13 @@ export function AddExpenseDialog({
     expenseToEdit,
     sharedExpenseId,
     initialType,
+    onSaveSuccess,
 }: { 
     children: React.ReactNode, 
     expenseToEdit?: EnrichedExpense,
     sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
+    onSaveSuccess?: () => void;
 }) {
     const [open, setOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -533,14 +535,14 @@ export function AddExpenseDialog({
     
     if (isDesktop) {
         return (
-            <DesktopAddExpenseDialog open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType}>
+            <DesktopAddExpenseDialog open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType} onSaveSuccess={onSaveSuccess}>
                 {children}
             </DesktopAddExpenseDialog>
         );
     }
 
     return (
-        <MobileAddExpenseDrawer open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType}>
+        <MobileAddExpenseDrawer open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType} onSaveSuccess={onSaveSuccess}>
             {children}
         </MobileAddExpenseDrawer>
     );
@@ -554,20 +556,23 @@ function DesktopAddExpenseDialog({
     expenseToEdit,
     sharedExpenseId,
     initialType,
+    onSaveSuccess,
 }: { 
     children: React.ReactNode, 
     open: boolean, 
     setOpen: (open: boolean) => void,
     expenseToEdit?: EnrichedExpense,
     sharedExpenseId?: string,
-    initialType?: 'income' | 'expense';
+    initialType?: 'income' | 'expense',
+    onSaveSuccess?: () => void;
 }) {
     const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen, 
         expenseToEdit, 
         sharedExpenseId, 
         initialType,
-        open
+        open,
+        onSaveSuccess,
     });
 
     return (
@@ -633,6 +638,7 @@ function MobileAddExpenseDrawer({
     expenseToEdit,
     sharedExpenseId,
     initialType,
+    onSaveSuccess,
 }: { 
     children: React.ReactNode, 
     open: boolean, 
@@ -640,13 +646,15 @@ function MobileAddExpenseDrawer({
     expenseToEdit?: EnrichedExpense,
     sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
+    onSaveSuccess?: () => void;
 }) {
     const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen,
         expenseToEdit,
         sharedExpenseId,
         initialType,
-        open
+        open,
+        onSaveSuccess,
     });
     
     return (
@@ -709,6 +717,7 @@ interface UseExpenseFormProps {
     sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
     open: boolean;
+    onSaveSuccess?: () => void;
 }
 
 // Shared hook for form logic
@@ -717,7 +726,8 @@ function useExpenseForm({
     expenseToEdit,
     sharedExpenseId,
     initialType,
-    open
+    open,
+    onSaveSuccess,
 }: UseExpenseFormProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
@@ -878,6 +888,7 @@ function useExpenseForm({
             } else {
                  toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
             }
+            onSaveSuccess?.();
             return true;
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Uh oh! Something went wrong.', description: error.message || 'Could not save transaction.' });
@@ -944,6 +955,7 @@ function useExpenseForm({
 
             await batch.commit();
             toast({ title: 'Transaction Deleted', description: 'The transaction has been permanently removed.' });
+            onSaveSuccess?.();
             setOpen(false);
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Delete Failed', description: error.message });

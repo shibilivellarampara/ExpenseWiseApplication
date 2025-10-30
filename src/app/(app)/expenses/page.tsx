@@ -71,8 +71,7 @@ export default function ExpensesPage() {
     const buildQuery = useCallback((startAfterDoc: any = null) => {
         if (!user) return null;
         
-        const expensesCollection = collection(firestore, `users/${user.uid}/expenses`);
-        let q: Query<DocumentData> = query(expensesCollection, orderBy('date', 'desc'));
+        let q: Query<DocumentData> = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
 
         if (filters.dateRange.from) {
             q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));

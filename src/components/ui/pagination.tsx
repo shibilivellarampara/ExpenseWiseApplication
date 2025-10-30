@@ -36,4 +36,3 @@ export function Pagination({ onLoadMore, isLoading, hasMore }: PaginationProps) 
         </div>
     );
 }
-

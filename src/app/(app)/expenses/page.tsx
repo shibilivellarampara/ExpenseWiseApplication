@@ -71,25 +71,48 @@ export default function ExpensesPage() {
     const buildQuery = useCallback((startAfterDoc: any = null) => {
         if (!user) return null;
         
-        let q: Query<DocumentData> = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
+        const expensesCollection = collection(firestore, `users/${user.uid}/expenses`);
+        let q: Query<DocumentData>;
 
+        // Determine the base query with correct initial orderBy
+        if (filters.categories.length > 0) {
+            q = query(expensesCollection, where('categoryId', 'in', filters.categories), orderBy('categoryId', 'asc'), orderBy('date', 'desc'));
+        } else if (filters.accounts.length > 0) {
+            q = query(expensesCollection, where('accountId', 'in', filters.accounts), orderBy('accountId', 'asc'), orderBy('date', 'desc'));
+        } else if (filters.tags.length > 0) {
+            q = query(expensesCollection, where('tagIds', 'array-contains-any', filters.tags), orderBy('date', 'desc'));
+        } else if (filters.type !== 'all') {
+            q = query(expensesCollection, where('type', '==', filters.type), orderBy('date', 'desc'));
+        } else {
+            q = query(expensesCollection, orderBy('date', 'desc'));
+        }
+
+        // Apply additional filters if they weren't the primary one
+        if (filters.type !== 'all' && filters.categories.length === 0 && filters.accounts.length === 0 && filters.tags.length === 0) {
+            // This case is handled by the initial query setup, so we do nothing here.
+        } else if (filters.type !== 'all') {
+            q = query(q, where('type', '==', filters.type));
+        }
+        
+        if (filters.categories.length > 0) {
+            // `in` filter is already applied, so do nothing here to avoid firestore error
+        }
+        
+        if (filters.accounts.length > 0 && filters.categories.length > 0) {
+            q = query(q, where('accountId', 'in', filters.accounts));
+        }
+
+        if (filters.tags.length > 0 && (filters.categories.length > 0 || filters.accounts.length > 0)) {
+            q = query(q, where('tagIds', 'array-contains-any', filters.tags));
+        }
+
+
+        // Date range is always applied on top
         if (filters.dateRange.from) {
             q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
         }
         if (filters.dateRange.to) {
             q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
-        }
-        if (filters.type !== 'all') {
-            q = query(q, where('type', '==', filters.type));
-        }
-        if (filters.categories.length > 0) {
-            q = query(q, where('categoryId', 'in', filters.categories));
-        }
-        if (filters.accounts.length > 0) {
-            q = query(q, where('accountId', 'in', filters.accounts));
-        }
-        if (filters.tags.length > 0) {
-            q = query(q, where('tagIds', 'array-contains-any', filters.tags));
         }
 
         q = query(q, limit(PAGE_SIZE));

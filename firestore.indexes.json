@@ -48,8 +48,8 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "categoryId",
-          "order": "ASCENDING"
+          "fieldPath": "tagIds",
+          "arrayConfig": "CONTAINS"
         },
         {
           "fieldPath": "date",
@@ -62,8 +62,8 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "tagIds",
-          "arrayConfig": "CONTAINS"
+          "fieldPath": "categoryId",
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "date",

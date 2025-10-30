@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Category } from '@/lib/types';
 import { collection, doc, writeBatch, addDoc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
@@ -50,17 +50,25 @@ export function CategorySettings() {
         }
         
         setIsSaving(true);
-        try {
-            const ref = collection(firestore, `users/${user.uid}/categories`);
-            const newDocRef = doc(ref);
-            await setDoc(newDocRef, { id: newDocRef.id, name: newItem.name, icon: newItem.icon, userId: user.uid });
-            setNewItem({ name: '', icon: 'Shapes' });
-            toast({ title: 'Category Added' });
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Error', description: error.message });
-        } finally {
-            setIsSaving(false);
-        }
+        const ref = collection(firestore, `users/${user.uid}/categories`);
+        const newDocRef = doc(ref);
+        const categoryData = { id: newDocRef.id, name: newItem.name, icon: newItem.icon, userId: user.uid };
+
+        setDoc(newDocRef, categoryData)
+            .then(() => {
+                setNewItem({ name: '', icon: 'Shapes' });
+                toast({ title: 'Category Added' });
+            })
+            .catch(async (serverError) => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: newDocRef.path,
+                    operation: 'create',
+                    requestResourceData: categoryData,
+                }));
+            })
+            .finally(() => {
+                 setIsSaving(false);
+            });
     };
 
     const handleRemoveItem = async (itemId: string) => {
@@ -73,17 +81,24 @@ export function CategorySettings() {
         }
 
         setIsSaving(true);
-        try {
-            const batch = writeBatch(firestore);
-            const itemRef = doc(firestore, `users/${user.uid}/categories`, itemId);
-            batch.delete(itemRef);
-            await batch.commit();
-            toast({ title: 'Category Removed' });
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Error', description: error.message });
-        } finally {
-            setIsSaving(false);
-        }
+        const itemRef = doc(firestore, `users/${user.uid}/categories`, itemId);
+        
+        const batch = writeBatch(firestore);
+        batch.delete(itemRef);
+
+        batch.commit()
+            .then(() => {
+                toast({ title: 'Category Removed' });
+            })
+            .catch(async (serverError) => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: itemRef.path,
+                    operation: 'delete',
+                }));
+            })
+            .finally(() => {
+                setIsSaving(false);
+            });
     };
 
     const handleSaveEdit = async () => {
@@ -107,16 +122,24 @@ export function CategorySettings() {
 
 
         setIsSaving(true);
-        try {
-            const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
-            await setDoc(itemRef, { name: editingItem.name, icon: editingItem.icon }, { merge: true });
-            toast({ title: "Category Updated" });
-        } catch (error: any) {
-            toast({ variant: "destructive", title: "Update Failed", description: error.message });
-        } finally {
-            setEditingItem(null);
-            setIsSaving(false);
-        }
+        const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
+        const updatedData = { name: editingItem.name, icon: editingItem.icon };
+
+        setDoc(itemRef, updatedData, { merge: true })
+            .then(() => {
+                toast({ title: "Category Updated" });
+            })
+            .catch(async (serverError) => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: itemRef.path,
+                    operation: 'update',
+                    requestResourceData: updatedData,
+                }));
+            })
+            .finally(() => {
+                 setEditingItem(null);
+                 setIsSaving(false);
+            });
     };
     
     const sortedCategories = categories ? [...categories].sort((a, b) => a.name.localeCompare(b.name)) : [];

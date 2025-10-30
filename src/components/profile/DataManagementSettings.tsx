@@ -15,7 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { Account, UserProfile } from "@/lib/types";
 import { collection, doc, writeBatch, getDocs, query, where } from "firebase/firestore";
 import { useState } from "react";
@@ -117,33 +117,32 @@ export function DataManagementSettings() {
         if (!user || !auth?.currentUser || !firestore) return;
         setIsDeleting(true);
 
+        const batch = writeBatch(firestore);
+        const collectionsToDelete = ['expenses', 'accounts', 'categories', 'tags', 'contributions'];
+        
         try {
-            const batch = writeBatch(firestore);
-
-            const collectionsToDelete = ['expenses', 'accounts', 'categories', 'tags', 'contributions'];
             for (const c of collectionsToDelete) {
                 const snapshot = await getDocs(collection(firestore, `users/${user.uid}/${c}`));
                 snapshot.forEach(d => batch.delete(d.ref));
             }
             
-            // Delete shared expenses owned by the user
             const sharedExpensesQuery = query(collection(firestore, 'shared_expenses'), where('ownerId', '==', user.uid));
             const sharedExpensesSnapshot = await getDocs(sharedExpensesQuery);
             sharedExpensesSnapshot.forEach(doc => batch.delete(doc.ref));
 
-            // Delete the user profile doc
             const userProfileRef = doc(firestore, `users/${user.uid}`);
             batch.delete(userProfileRef);
 
             await batch.commit();
 
-            // Finally, delete the user from auth
             await deleteUser(user);
             
             toast({ title: "Account Closed", description: "Your account and all data have been permanently deleted." });
-            // The user will be redirected automatically due to auth state change.
         } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Deletion Failed', description: `Could not delete account data. ${error.message}` });
+             errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: `/users/${user.uid}`,
+                operation: 'delete',
+            }));
         } finally {
             setIsDeleting(false);
         }
@@ -163,11 +162,8 @@ export function DataManagementSettings() {
             const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
             await reauthenticateWithCredential(auth.currentUser, credential);
             
-            // If re-authentication is successful, close the password dialog
-            // and open the final confirmation dialog.
             setShowReauthDialog(false);
             
-            // We use a timeout to allow the first dialog to close before opening the next.
             setTimeout(() => {
                 const trigger = document.getElementById('final-delete-trigger');
                 trigger?.click();

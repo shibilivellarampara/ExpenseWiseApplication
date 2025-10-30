@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useCollection, useFirestore, useUser, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Tag } from '@/lib/types';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, addDoc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -52,20 +52,41 @@ export function TagSettings() {
         
         setIsSaving(true);
         const ref = collection(firestore, `users/${user.uid}/tags`);
-        await addDocumentNonBlocking(ref, { name: newItem.name, icon: newItem.icon, userId: user.uid });
-        setNewItem({ name: '', icon: 'Tag' });
-        toast({ title: 'Tag Added' });
-        setIsSaving(false);
+        const newDocRef = doc(ref);
+        const tagData = { id: newDocRef.id, name: newItem.name, icon: newItem.icon, userId: user.uid };
+
+        setDoc(newDocRef, tagData)
+            .then(() => {
+                setNewItem({ name: '', icon: 'Tag' });
+                toast({ title: 'Tag Added' });
+            })
+            .catch(async (serverError) => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: newDocRef.path,
+                    operation: 'create',
+                    requestResourceData: tagData,
+                }));
+            })
+            .finally(() => {
+                setIsSaving(false);
+            });
     };
 
     const handleRemoveItem = async (itemId: string) => {
         if (!user || !firestore) return;
-
         setIsSaving(true);
         const itemRef = doc(firestore, `users/${user.uid}/tags`, itemId);
-        deleteDocumentNonBlocking(itemRef);
-        toast({ title: 'Tag Removed' });
-        setIsSaving(false);
+        deleteDocumentNonBlocking(itemRef)
+            .catch(async (serverError) => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: itemRef.path,
+                    operation: 'delete',
+                }));
+            })
+            .finally(() => {
+                toast({ title: 'Tag Removed' });
+                setIsSaving(false);
+            });
     };
 
     const handleSaveEdit = async () => {
@@ -82,10 +103,20 @@ export function TagSettings() {
 
         setIsSaving(true);
         const itemRef = doc(firestore, `users/${user.uid}/tags`, editingItem.id);
-        setDocumentNonBlocking(itemRef, { name: editingItem.name, icon: editingItem.icon }, { merge: true });
-        toast({ title: "Tag Updated" });
-        setEditingItem(null);
-        setIsSaving(false);
+        const updatedData = { name: editingItem.name, icon: editingItem.icon };
+        setDocumentNonBlocking(itemRef, updatedData, { merge: true })
+            .catch(async (serverError) => {
+                 errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: itemRef.path,
+                    operation: 'update',
+                    requestResourceData: updatedData,
+                }));
+            })
+            .finally(() => {
+                toast({ title: "Tag Updated" });
+                setEditingItem(null);
+                setIsSaving(false);
+            });
     };
 
     const sortedItems = items ? [...items].sort((a, b) => a.name.localeCompare(b.name)) : [];

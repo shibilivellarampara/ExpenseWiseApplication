@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
@@ -11,7 +12,38 @@ interface PaginationProps {
 }
 
 export function Pagination({ onLoadMore, isLoading, hasMore }: PaginationProps) {
-    if (!hasMore) {
+    const observerRef = useRef<IntersectionObserver | null>(null);
+    const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (isLoading || !hasMore) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    onLoadMore();
+                }
+            },
+            {
+                rootMargin: '200px', // Pre-load content 200px before it enters the viewport
+            }
+        );
+
+        observerRef.current = observer;
+        const currentSentinel = sentinelRef.current;
+
+        if (currentSentinel) {
+            observer.observe(currentSentinel);
+        }
+
+        return () => {
+            if (currentSentinel) {
+                observer.unobserve(currentSentinel);
+            }
+        };
+    }, [isLoading, hasMore, onLoadMore]);
+
+    if (!hasMore && !isLoading) {
         return (
             <div className="text-center text-muted-foreground text-sm py-8">
                 You've reached the end of the list.
@@ -20,19 +52,13 @@ export function Pagination({ onLoadMore, isLoading, hasMore }: PaginationProps) 
     }
     
     return (
-        <div className="flex justify-center py-4">
-            <Button
-                onClick={onLoadMore}
-                disabled={isLoading}
-                variant="outline"
-            >
-                {isLoading ? (
-                    <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Loading...
-                    </>
-                ) : "Load More"}
-            </Button>
+        <div ref={sentinelRef} className="flex justify-center py-8">
+             {isLoading && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Loading more...</span>
+                </div>
+            )}
         </div>
     );
 }

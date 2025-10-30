@@ -17,8 +17,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
+import { useFirestore, useUser, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
 const sharedExpenseSchema = z.object({
@@ -69,22 +69,15 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
         }
 
         try {
-            const batch = writeBatch(firestore);
-            
-            // Create the new shared_expense document in the root collection
             const sharedExpensesCol = collection(firestore, `shared_expenses`);
-            const newSharedExpenseRef = doc(sharedExpensesCol);
             
-            batch.set(newSharedExpenseRef, {
-                id: newSharedExpenseRef.id,
+            addDocumentNonBlocking(sharedExpensesCol, {
                 name: values.name,
                 ownerId: user.uid,
-                memberIds: [user.uid], // Creator is the first member
+                memberIds: [user.uid],
                 joinId: generateJoinId(),
                 createdAt: serverTimestamp(),
             });
-            
-            await batch.commit();
             
             toast({
                 title: 'Shared Space Created!',

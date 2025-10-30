@@ -1,3 +1,4 @@
+
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -61,15 +62,14 @@ export type Expense = {
   sharedExpenseId?: string;
 };
 
-export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds'> & {
-  id: string;
-  user?: UserProfile; // The user who created the expense
+export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds' | 'date'> & {
   category?: Category;
   account?: Account;
   tags: Tag[];
-  date: Date; // Ensure date is always a Date object for the UI
-  balanceAfterTransaction?: number;
+  user?: UserProfile;
+  date: Date; // Ensure date is always a Date object
 };
+
 
 export type SharedExpense = {
   id: string;

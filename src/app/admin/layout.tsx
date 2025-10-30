@@ -20,7 +20,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   const userProfileRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(firestore, 'users', user.uid);
-  }, [user?.uid, firestore]);
+  }, [user, firestore]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
 

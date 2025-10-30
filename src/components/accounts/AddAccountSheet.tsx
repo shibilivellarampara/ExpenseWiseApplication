@@ -17,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, addDoc, doc, setDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { Loader2, Pilcrow } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -123,40 +123,31 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             userId: user.uid,
         };
         
-        // This makes sure we don't save an empty 'limit' field for non-credit accounts
         if (values.type !== 'credit_card') {
             delete accountData.limit;
         }
 
         try {
-            const batch = writeBatch(firestore);
-
             if (isEditMode && accountToEdit) {
-                // Update existing account - balance changes handled via transactions
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountToEdit.id);
-                batch.set(accountRef, accountData, { merge: true });
-
+                setDocumentNonBlocking(accountRef, accountData, { merge: true });
                 toast({
                     title: 'Account Updated!',
                     description: 'Your account details have been saved.',
                 });
-
             } else {
-                // Add new account
                 const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
-                const newAccountRef = doc(accountsCol);
-                batch.set(newAccountRef, { ...accountData, id: newAccountRef.id });
+                const newAccountRef = await addDoc(accountsCol, {});
+                
+                setDocumentNonBlocking(newAccountRef, { ...accountData, id: newAccountRef.id });
                 
                 const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
                 
-                // If it's not a credit card and has an initial balance, record it as income.
                 if (values.type !== 'credit_card' && values.balance !== 0) {
-                    const expenseRef = doc(expensesCol);
-                    batch.set(expenseRef, {
-                        id: expenseRef.id,
+                    addDocumentNonBlocking(expensesCol, {
                         userId: user.uid,
                         type: 'income',
-                        amount: Math.abs(values.balance), // Ensure it's a positive amount
+                        amount: Math.abs(values.balance),
                         description: 'Initial Balance',
                         date: new Date(),
                         createdAt: serverTimestamp(),
@@ -164,14 +155,10 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     });
                 }
                 
-                // If it IS a credit card and has a limit, record it.
                 if (values.type === 'credit_card' && values.limit && values.limit > 0) {
-                    // Find the "Credit Limit Upgrade" category. If it doesn't exist, we can't record this.
                     const upgradeCategory = categories.find(c => c.name === 'Credit Limit Upgrade');
                     if (upgradeCategory) {
-                        const expenseRef = doc(expensesCol);
-                        batch.set(expenseRef, {
-                            id: expenseRef.id,
+                        addDocumentNonBlocking(expensesCol, {
                             userId: user.uid,
                             type: 'income',
                             amount: values.limit,
@@ -189,7 +176,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     description: 'The new account has been created.',
                 });
             }
-            await batch.commit();
             setOpen(false);
 
         } catch (error: any) {
@@ -261,8 +247,9 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                         {accountType === 'credit_card' ? 'Current Outstanding Amount' : 'Current Balance'}
                                     </FormLabel>
                                     <FormControl>
-                                        <Input type="number" placeholder="0.00" {...field} />
+                                        <Input type="number" placeholder="0.00" {...field} disabled={isEditMode} />
                                     </FormControl>
+                                     {isEditMode && <FormDescription>Balance can only be changed by adding transactions.</FormDescription>}
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -275,8 +262,9 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                     <FormItem>
                                         <FormLabel>Credit Limit</FormLabel>
                                         <FormControl>
-                                            <Input type="number" placeholder="50000" {...field} value={field.value ?? ''} />
+                                            <Input type="number" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
                                         </FormControl>
+                                        {isEditMode && <FormDescription>Limit can only be changed via a "Credit Limit Upgrade" transaction.</FormDescription>}
                                         <FormMessage />
                                     </FormItem>
                                 )}

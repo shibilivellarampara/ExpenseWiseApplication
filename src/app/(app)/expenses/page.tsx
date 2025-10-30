@@ -76,26 +76,24 @@ export default function ExpensesPage() {
 
         // Determine the base query with correct initial orderBy
         if (filters.categories.length > 0) {
-            q = query(expensesCollection, where('categoryId', 'in', filters.categories), orderBy('categoryId', 'asc'), orderBy('date', 'desc'));
+            q = query(expensesCollection, where('categoryId', 'in', filters.categories));
         } else if (filters.accounts.length > 0) {
-            q = query(expensesCollection, where('accountId', 'in', filters.accounts), orderBy('accountId', 'asc'), orderBy('date', 'desc'));
+            q = query(expensesCollection, where('accountId', 'in', filters.accounts));
         } else if (filters.tags.length > 0) {
-            q = query(expensesCollection, where('tagIds', 'array-contains-any', filters.tags), orderBy('date', 'desc'));
+            q = query(expensesCollection, where('tagIds', 'array-contains-any', filters.tags));
         } else if (filters.type !== 'all') {
-            q = query(expensesCollection, where('type', '==', filters.type), orderBy('date', 'desc'));
+            q = query(expensesCollection, where('type', '==', filters.type));
         } else {
-            q = query(expensesCollection, orderBy('date', 'desc'));
+            q = query(expensesCollection);
         }
 
         // Apply additional filters if they weren't the primary one
-        if (filters.type !== 'all' && filters.categories.length === 0 && filters.accounts.length === 0 && filters.tags.length === 0) {
-            // This case is handled by the initial query setup, so we do nothing here.
-        } else if (filters.type !== 'all') {
+        if (filters.type !== 'all' && filters.categories.length > 0) {
             q = query(q, where('type', '==', filters.type));
-        }
-        
-        if (filters.categories.length > 0) {
-            // `in` filter is already applied, so do nothing here to avoid firestore error
+        } else if (filters.type !== 'all' && filters.accounts.length > 0) {
+            q = query(q, where('type', '==', filters.type));
+        } else if (filters.type !== 'all' && filters.tags.length > 0) {
+            q = query(q, where('type', '==', filters.type));
         }
         
         if (filters.accounts.length > 0 && filters.categories.length > 0) {
@@ -114,6 +112,9 @@ export default function ExpensesPage() {
         if (filters.dateRange.to) {
             q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
         }
+
+        // Always sort by date descending as the final sort order
+        q = query(q, orderBy('date', 'desc'));
 
         q = query(q, limit(PAGE_SIZE));
 

@@ -94,10 +94,18 @@ export default function ExpensesPage() {
         }
     
         // Apply ordering
-        // **IMPORTANT**: When using an 'in' filter, the first orderBy clause must be on the same field.
+        // **IMPORTANT**: When using an 'in' or 'array-contains-any' filter, 
+        // the first orderBy clause must be on the same field if other orderBy clauses are used.
         if (filters.accounts.length > 0) {
             q = query(q, orderBy('accountId', 'asc'), orderBy('date', 'desc'));
-        } else {
+        } else if (filters.categories.length > 0) {
+            q = query(q, orderBy('categoryId', 'asc'), orderBy('date', 'desc'));
+        } else if (filters.tags.length > 0) {
+            // Firestore does not allow orderBy on a different field when using array-contains-any
+            // So we rely on the default date ordering for tags.
+            q = query(q, orderBy('date', 'desc'));
+        }
+        else {
             q = query(q, orderBy('date', 'desc'));
         }
     

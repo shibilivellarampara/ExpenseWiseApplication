@@ -14,7 +14,7 @@ import { doc } from 'firebase/firestore';
 import { UserProfile, Category, Account, Tag } from "@/lib/types";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { collection, writeBatch, increment, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, writeBatch, increment, addDoc, getDocs, query, where, doc as firestoreDoc, setDoc } from 'firebase/firestore';
 import { Label } from "../ui/label";
 import { Badge } from "../ui/badge";
 import * as LucideIcons from 'lucide-react';
@@ -65,7 +65,7 @@ type AccountAction = {
     targetId?: string; // only if action is 'map'
     type?: Account['type']; // only if action is 'create'
 }
-type AccountMapping = { [key: string]: AccountAction };
+type AccountMapping = { [key:string]: AccountAction };
 
 
 export function ExcelImporter() {
@@ -272,100 +272,100 @@ export function ExcelImporter() {
         const mapping = TEMPLATES[template].mapping;
     
         try {
+            // --- 1. Create new categories, tags, and accounts in a preliminary batch ---
             const preliminaryBatch = writeBatch(firestore);
             const newCategoryRefs = new Map<string, string>();
+            const newTagRefs = new Map<string, string>();
             const newAccountRefs = new Map<string, { id: string; type: Account['type'] }>();
+            
             const categoriesCol = collection(firestore, `users/${user.uid}/categories`);
             const tagsCol = collection(firestore, `users/${user.uid}/tags`);
             const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
     
-            for (const catName of newCategories) {
-                const catRef = doc(categoriesCol);
+            newCategories.forEach(catName => {
+                const catRef = firestoreDoc(categoriesCol);
                 preliminaryBatch.set(catRef, { id: catRef.id, name: catName, icon: 'Shapes', userId: user.uid });
                 newCategoryRefs.set(catName.toLowerCase(), catRef.id);
-            }
-            for (const tagName of newTags) {
-                const tagRef = doc(tagsCol);
-                await addDoc(tagsCol, { id: tagRef.id, name: tagName, icon: 'Tag', userId: user.uid });
-            }
-
-            for (const accName of Object.keys(accountMappings)) {
+            });
+    
+            newTags.forEach(tagName => {
+                const tagRef = firestoreDoc(tagsCol);
+                preliminaryBatch.set(tagRef, { id: tagRef.id, name: tagName, icon: 'Tag', userId: user.uid });
+                newTagRefs.set(tagName.toLowerCase(), tagRef.id);
+            });
+    
+            Object.keys(accountMappings).forEach(accName => {
                 if (selectedAccountsToImport.includes(accName)) {
                     const mappingInfo = accountMappings[accName];
                     if (mappingInfo.action === 'create') {
-                        const accRef = doc(accountsCol);
+                        const accRef = firestoreDoc(accountsCol);
                         const accountType = mappingInfo.type || 'bank';
                         preliminaryBatch.set(accRef, { id: accRef.id, name: accName, icon: 'Landmark', type: accountType, balance: 0, status: 'active', userId: user.uid });
                         newAccountRefs.set(accName.toLowerCase(), { id: accRef.id, type: accountType });
                     }
                 }
-            }
+            });
             await preliminaryBatch.commit();
     
-            // Refresh tags after adding them
-             const freshTagsSnapshot = await getDocs(tagsQuery);
-             const freshTags = freshTagsSnapshot.docs.map(d => d.data() as Tag);
-
-             const allAccounts: Account[] = [
+            // --- 2. Build comprehensive maps for all items (existing + new) ---
+            const allAccounts: Account[] = [
                 ...(accounts || []),
                 ...Array.from(newAccountRefs.entries()).map(([name, { id, type }]) => ({ id, name, type, balance: 0, userId: user.uid, status: 'active', icon: 'Landmark' }))
             ];
-            
-            const chosenAccountId = importAccountId || allAccounts.find(a => a.type === 'cash')?.id || allAccounts[0].id;
-            
-            const categoryMap = new Map(existingCategories.map(c => [c.name.toLowerCase(), c.id]));
-            newCategoryRefs.forEach((val, key) => categoryMap.set(key, val));
-
-            const tagMap = new Map(freshTags.map(t => [t.name.toLowerCase(), t.id]));
-    
             const accountMap = new Map(allAccounts.map(a => [a.name.toLowerCase(), a]));
+            
+            const allCategories: Category[] = [...(existingCategories || []), ...Array.from(newCategoryRefs.entries()).map(([name, id]) => ({ id, name, icon: 'Shapes', userId: user.uid }))];
+            const categoryMap = new Map(allCategories.map(c => [c.name.toLowerCase(), c.id]));
     
+            const allTags: Tag[] = [...(existingTags || []), ...Array.from(newTagRefs.entries()).map(([name, id]) => ({ id, name, icon: 'Tag', userId: user.uid }))];
+            const tagMap = new Map(allTags.map(t => [t.name.toLowerCase(), t.id]));
+            
+            const chosenAccountId = importAccountId || allAccounts.find(a => a.type === 'cash')?.id || allAccounts[0]?.id;
+    
+            // --- 3. Process transactions in chunks ---
             for (let i = 0; i < totalBatches; i++) {
                 const batch = writeBatch(firestore);
                 const chunk = processedData.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
                 const balanceChanges = new Map<string, number>();
-
+    
                 chunk.forEach(item => {
                     const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
-                    const expenseRef = doc(expensesCol);
+                    const expenseRef = firestoreDoc(expensesCol);
     
                     const categoryId = categoryMap.get(String(item.categoryName)?.toLowerCase());
-                    const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName.toLowerCase())).filter(Boolean);
-
+                    const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName.toLowerCase())).filter(Boolean) as string[];
+    
                     let finalAccountId: string | undefined = chosenAccountId;
                     let accountForTx: Account | undefined;
-
-                    if(mapping.mode && item.accountName){
+    
+                    if (mapping.mode && item.accountName) {
                         const accNameLower = String(item.accountName).toLowerCase();
                         const mappingAction = accountMappings[item.accountName];
-
+    
                         if (mappingAction?.action === 'map' && mappingAction.targetId) {
                             finalAccountId = mappingAction.targetId;
-                            accountForTx = allAccounts.find(a => a.id === finalAccountId);
                         } else {
-                            accountForTx = accountMap.get(accNameLower);
-                            finalAccountId = accountForTx?.id;
+                            finalAccountId = accountMap.get(accNameLower)?.id;
                         }
-                    } else {
-                        accountForTx = allAccounts.find(a => a.id === chosenAccountId);
                     }
+                    accountForTx = allAccounts.find(a => a.id === finalAccountId);
                     
                     if (!finalAccountId || !accountForTx) return;
-
+    
                     batch.set(expenseRef, {
                         id: expenseRef.id, userId: user.uid, type: item.type, amount: item.amount,
                         description: item.description, date: item.date, accountId: finalAccountId,
                         categoryId: categoryId, tagIds: tagIds, createdAt: new Date(),
                     });
                     
-                     const change = accountForTx.type === 'credit_card'
+                    const change = accountForTx.type === 'credit_card'
                         ? (item.type === 'expense' ? item.amount : -item.amount)
                         : (item.type === 'income' ? item.amount : -item.amount);
-                     balanceChanges.set(finalAccountId, (balanceChanges.get(finalAccountId) || 0) + change);
+                    balanceChanges.set(finalAccountId, (balanceChanges.get(finalAccountId) || 0) + change);
                 });
     
                 balanceChanges.forEach((change, accId) => {
-                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, accId);
+                    const accountRef = firestoreDoc(firestore, `users/${user.uid}/accounts`, accId);
                     batch.update(accountRef, { balance: increment(change) });
                 });
     
@@ -379,7 +379,7 @@ export function ExcelImporter() {
             });
             resetState();
         } catch (error: any) {
-             toast({ variant: 'destructive', title: 'Import Error', description: error.message });
+            toast({ variant: 'destructive', title: 'Import Error', description: error.message });
         } finally {
             setIsImporting(false);
         }

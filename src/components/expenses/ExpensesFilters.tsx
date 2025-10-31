@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, ChevronDown, FilterX, ListFilter, Pilcrow } from 'lucide-react';
+import { CalendarIcon, ChevronDown, FilterX, ListFilter, Pilcrow, Check } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { DateRange as ReactDateRange } from 'react-day-picker';
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, parseISO, isValid } from 'date-fns';

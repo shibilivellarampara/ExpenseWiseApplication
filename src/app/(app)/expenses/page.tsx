@@ -6,7 +6,7 @@ import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
-import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
+import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile, CollectionReference } from "@/lib/types";
 import { collection, orderBy, query, doc, where, limit, startAfter, getDocs, Query, DocumentData, Timestamp } from "firebase/firestore";
 import { Plus, Minus, Loader2 } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
@@ -71,42 +71,41 @@ export default function ExpensesPage() {
     const buildQuery = useCallback((startAfterDoc: any = null) => {
         if (!user) return null;
     
-        const baseRef: CollectionReference<DocumentData> = collection(firestore, `users/${user.uid}/expenses`);
+        const baseRef = collection(firestore, `users/${user.uid}/expenses`) as CollectionReference<DocumentData>;
         
-        const queryConstraints = [];
+        let q: Query = baseRef;
 
-        // Apply filters
+        if (filters.dateRange.from) {
+            q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
+        }
+        if (filters.dateRange.to) {
+            q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
+        }
         if (filters.type !== 'all') {
-            queryConstraints.push(where('type', '==', filters.type));
+            q = query(q, where('type', '==', filters.type));
         }
 
         if (filters.accounts.length > 0) {
-            queryConstraints.push(where('accountId', 'in', filters.accounts));
-        } else if (filters.categories.length > 0) {
-            queryConstraints.push(where('categoryId', 'in', filters.categories));
-        } else if (filters.tags.length > 0) {
-            queryConstraints.push(where('tagIds', 'array-contains-any', filters.tags));
+            q = query(q, where('accountId', 'in', filters.accounts));
+        }
+        
+        if (filters.categories.length > 0) {
+            q = query(q, where('categoryId', 'in', filters.categories));
         }
 
-        if (filters.dateRange.from) {
-            queryConstraints.push(where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
-        }
-        if (filters.dateRange.to) {
-            queryConstraints.push(where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
+        if (filters.tags.length > 0) {
+             q = query(q, where('tagIds', 'array-contains-any', filters.tags));
         }
     
-        // Add sorting
-        queryConstraints.push(orderBy('date', 'desc'));
-        
-        let finalQuery = query(baseRef, ...queryConstraints);
+        q = query(q, orderBy('date', 'desc'));
     
         if (startAfterDoc) {
-            finalQuery = query(finalQuery, startAfter(startAfterDoc));
+            q = query(q, startAfter(startAfterDoc));
         }
 
-        finalQuery = query(finalQuery, limit(PAGE_SIZE));
+        q = query(q, limit(PAGE_SIZE));
         
-        return finalQuery;
+        return q;
     
     }, [user, firestore, filters]);
 
@@ -199,6 +198,7 @@ export default function ExpensesPage() {
         if (accounts) { // Only load expenses once accounts are available
             loadExpenses(false);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters, accounts]);
 
 

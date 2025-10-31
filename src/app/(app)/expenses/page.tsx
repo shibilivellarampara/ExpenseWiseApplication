@@ -95,13 +95,13 @@ export default function ExpensesPage() {
         }
         
         // --- ORDER BY Clauses ---
-        // Firestore requires that the first orderBy field matches the field in the first inequality filter
-        if (filters.categories.length > 0) {
+        // Firestore requires that the first orderBy field matches the field in the first inequality/array filter
+        if (filters.accounts.length > 0) {
+            q = query(q, orderBy('accountId', 'asc'), orderBy('date', 'desc'));
+        } else if (filters.categories.length > 0) {
             q = query(q, orderBy('categoryId', 'asc'), orderBy('date', 'desc'));
-        } else if (filters.accounts.length > 0) {
-             q = query(q, orderBy('accountId', 'asc'), orderBy('date', 'desc'));
         } else if (filters.tags.length > 0) {
-            q = query(q, orderBy('date', 'desc')); // array-contains-any doesn't need a matching order-by
+            q = query(q, orderBy('date', 'desc')); // array-contains-any doesn't need a matching order-by for the array field
         } else if (filters.type !== 'all') {
             q = query(q, orderBy('type', 'asc'), orderBy('date', 'desc'));
         } else {

@@ -85,6 +85,7 @@ export function ExcelImporter() {
     
     const [importAccountId, setImportAccountId] = useState<string>(''); // For single account import
     const [importedCount, setImportedCount] = useState(0);
+    const [filterAccount, setFilterAccount] = useState('all');
 
     const { toast } = useToast();
 
@@ -201,7 +202,7 @@ export function ExcelImporter() {
         reader.readAsBinaryString(fileToParse);
     };
 
-    const processedData = useMemo(() => {
+    const allProcessedData = useMemo(() => {
         if (rawData.length === 0 || !template) return [];
         const mapping = TEMPLATES[template].mapping;
         
@@ -245,6 +246,14 @@ export function ExcelImporter() {
             return { date, amount, description, categoryName, tags, type, accountName };
         }).filter(item => !isNaN(item.amount) && item.amount > 0);
     }, [rawData, template]);
+
+    const processedData = useMemo(() => {
+        if (filterAccount === 'all') {
+            return allProcessedData;
+        }
+        return allProcessedData.filter(item => item.accountName === filterAccount);
+    }, [allProcessedData, filterAccount]);
+
 
     const handleImport = async () => {
         if (processedData.length === 0 || !user || !firestore || !accounts || !existingCategories || !existingTags) return;
@@ -371,6 +380,7 @@ export function ExcelImporter() {
         setAccountMappings({});
         setImportAccountId('');
         setImportedCount(0);
+        setFilterAccount('all');
     }
 
     const renderIcon = (iconName: string | undefined, className?: string) => {
@@ -397,6 +407,17 @@ export function ExcelImporter() {
             }
         }));
     };
+
+
+    const accountsInFile = useMemo(() => {
+        const accountSet = new Set<string>();
+        allProcessedData.forEach(item => {
+            if (item.accountName) {
+                accountSet.add(item.accountName);
+            }
+        });
+        return Array.from(accountSet);
+    }, [allProcessedData]);
 
 
     return (
@@ -536,6 +557,49 @@ export function ExcelImporter() {
                  {!isImporting && step === 4 && (
                      <div>
                         <h3 className="text-lg font-semibold mb-2">Final Preview</h3>
+
+                        <div className="grid md:grid-cols-2 gap-4 mb-4">
+                             {TEMPLATES[template]?.mapping.mode && accountsInFile.length > 0 && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="filter-account">Filter by Account</Label>
+                                    <Select onValueChange={setFilterAccount} defaultValue={filterAccount}>
+                                        <SelectTrigger id="filter-account">
+                                            <SelectValue placeholder="Select an account to view..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Accounts</SelectItem>
+                                            {accountsInFile.map(accName => (
+                                                <SelectItem key={accName} value={accName}>
+                                                    {accName}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                             )}
+
+                            {!TEMPLATES[template]?.mapping.mode && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="import-account">Import into Account</Label>
+                                    <Select onValueChange={setImportAccountId} defaultValue={importAccountId}>
+                                        <SelectTrigger id="import-account">
+                                            <SelectValue placeholder="Select an account..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {accounts?.filter(a => a.status === 'active').map(acc => (
+                                                <SelectItem key={acc.id} value={acc.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        {renderIcon(acc.icon)}
+                                                        {acc.name}
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+                        </div>
+
                          <div className="max-h-60 overflow-y-auto border rounded-md">
                             <Table>
                                 <TableHeader>
@@ -561,26 +625,6 @@ export function ExcelImporter() {
                             </Table>
                          </div>
                          <p className="text-sm text-muted-foreground mt-2">Showing first 10 of {processedData.length} total records to be imported.</p>
-                         {!TEMPLATES[template]?.mapping.mode && (
-                            <div className="mt-4 space-y-2">
-                                <Label htmlFor="import-account">Import into Account</Label>
-                                <Select onValueChange={setImportAccountId} defaultValue={importAccountId}>
-                                    <SelectTrigger id="import-account">
-                                        <SelectValue placeholder="Select an account..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {accounts?.filter(a => a.status === 'active').map(acc => (
-                                            <SelectItem key={acc.id} value={acc.id}>
-                                                <div className="flex items-center gap-2">
-                                                    {renderIcon(acc.icon)}
-                                                    {acc.name}
-                                                </div>
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                         )}
                     </div>
                 )}
             </CardContent>

@@ -30,7 +30,7 @@ import {
 import { Separator } from '../ui/separator';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import * as LucideIcons from 'lucide-react';
 import { Badge } from '../ui/badge';
 
@@ -103,7 +103,21 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
         const newValues = currentValues.includes(value)
             ? currentValues.filter(v => v !== value)
             : [...currentValues, value];
-        onFiltersChange({ ...filters, [field]: newValues });
+
+        let updatedFilters = { ...filters, [field]: newValues };
+
+        // Firestore limitation: only one "in", "not-in", or "array-contains-any" clause per query.
+        // If user selects from a new multi-select filter, clear the others.
+        const multiSelectFields: ('categories' | 'accounts' | 'tags')[] = ['categories', 'accounts', 'tags'];
+        const changedField = field;
+        
+        multiSelectFields.forEach(f => {
+            if (f !== changedField && updatedFilters[f].length > 0) {
+                updatedFilters = {...updatedFilters, [f]: []};
+            }
+        });
+
+        onFiltersChange(updatedFilters);
     }
     
     const formatDateForInput = (date: Date | undefined): string => {
@@ -128,25 +142,28 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                 <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                     <Command>
                         <CommandInput placeholder={`Search ${title.toLowerCase()}...`} />
-                        <CommandEmpty>No results found.</CommandEmpty>
-                        <CommandGroup>
-                            {items.map(item => (
-                                <DropdownMenuCheckboxItem
-                                    key={item.id}
-                                    checked={filters[field].includes(item.id)}
-                                    onCheckedChange={() => handleMultiSelectChange(field, item.id)}
-                                    onSelect={(e) => e.preventDefault()}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        {'icon' in item && renderIcon(item.icon)}
-                                        {item.name}
-                                    </div>
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </CommandGroup>
+                        <CommandList>
+                            <CommandEmpty>No results found.</CommandEmpty>
+                            <CommandGroup>
+                                {items.map(item => (
+                                    <CommandItem
+                                        key={item.id}
+                                        onSelect={() => handleMultiSelectChange(field, item.id)}
+                                        className="flex justify-between"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {'icon' in item && renderIcon(item.icon)}
+                                            {item.name}
+                                        </div>
+                                         {filters[field].includes(item.id) && <Check className="h-4 w-4" />}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </CommandList>
                     </Command>
                 </DropdownMenuContent>
             </DropdownMenu>
+            <p className="text-xs text-muted-foreground mt-1">You can only filter by one group (Categories, Accounts, or Tags) at a time.</p>
         </div>
     );
 
@@ -240,7 +257,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
     const hasActiveFilters = filters.dateRange.from || filters.type !== 'all' || filters.categories.length > 0 || filters.accounts.length > 0 || filters.tags.length > 0;
     
     const activeFilterCount =
-        (filters.dateRange.from ? 1 : 0) +
+        (filters.dateRange.from || filters.dateRange.to ? 1 : 0) +
         (filters.type !== 'all' ? 1 : 0) +
         (filters.categories.length > 0 ? 1 : 0) +
         (filters.accounts.length > 0 ? 1 : 0) +
@@ -324,7 +341,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full md:w-auto">
+                        <Button variant="outline" className="w-full md:w-auto" disabled={filters.accounts.length > 0 || filters.tags.length > 0}>
                             Category ({filters.categories.length || 'All'})
                             <ChevronDown className="ml-2 h-4 w-4" />
                         </Button>
@@ -351,7 +368,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full md:w-auto">
+                        <Button variant="outline" className="w-full md:w-auto" disabled={filters.categories.length > 0 || filters.tags.length > 0}>
                             Account ({filters.accounts.length || 'All'})
                             <ChevronDown className="ml-2 h-4 w-4" />
                         </Button>
@@ -378,7 +395,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full md:w-auto">
+                        <Button variant="outline" className="w-full md:w-auto" disabled={filters.accounts.length > 0 || filters.categories.length > 0}>
                             Tags ({filters.tags.length || 'All'})
                             <ChevronDown className="ml-2 h-4 w-4" />
                         </Button>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Pilcrow, TrendingUp, Edit, User as UserIcon, Wallet } from "lucide-react";
+import { Pilcrow, TrendingUp, Edit, User as UserIcon, Wallet, AlertTriangle } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -21,6 +21,7 @@ interface ExpensesTableProps {
   isLoading?: boolean;
   isShared?: boolean;
   onDataChange: () => void;
+  error?: string | null;
 }
 
 const renderIcon = (iconName: string | undefined, className?: string) => {
@@ -185,7 +186,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
     )
 }
 
-export function ExpensesTable({ expenses, isLoading, isShared, onDataChange }: ExpensesTableProps) {
+export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, error }: ExpensesTableProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -217,6 +218,20 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange }: E
         ))}
       </div>
     )
+  }
+
+  if (error) {
+    return (
+        <Card>
+            <CardContent className="pt-6">
+                <div className="h-48 flex flex-col items-center justify-center text-center text-destructive">
+                   <AlertTriangle className="h-10 w-10 mb-4" />
+                   <h3 className="text-lg font-semibold">Could not load transactions</h3>
+                   <p className="text-sm">There was an issue fetching your data. This may be due to the combination of filters selected. Try simplifying your filter.</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
   }
 
   if (expenses.length === 0) {

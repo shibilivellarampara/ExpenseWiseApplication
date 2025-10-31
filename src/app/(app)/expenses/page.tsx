@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, orderBy, query, doc, where, limit, startAfter, getDocs, Query, DocumentData, Timestamp } from "firebase/firestore";
-import { Plus, Minus, Loader2 } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
@@ -34,6 +33,7 @@ export default function ExpensesPage() {
     const [lastVisible, setLastVisible] = useState<any>(null);
     const [hasMore, setHasMore] = useState(true);
     const [expensesLoading, setExpensesLoading] = useState(true);
+    const [queryError, setQueryError] = useState<string | null>(null);
 
     const categoriesQuery = useMemoFirebase(() => 
         user ? collection(firestore, `users/${user.uid}/categories`) : null
@@ -72,6 +72,11 @@ export default function ExpensesPage() {
         if (!user) return null;
     
         let q: Query = collection(firestore, `users/${user.uid}/expenses`);
+        
+        // Firestore allows only one 'array-contains-any' or 'in' filter.
+        // We must prioritize which one to use if multiple are selected.
+        const multiFilterPriority: ('tags' | 'categories' | 'accounts')[] = ['tags', 'categories', 'accounts'];
+        const activeMultiFilter = multiFilterPriority.find(f => filters[f].length > 0);
 
         // Apply filters
         if (filters.dateRange.from) {
@@ -83,33 +88,26 @@ export default function ExpensesPage() {
         if (filters.type !== 'all') {
             q = query(q, where('type', '==', filters.type));
         }
-        if (filters.accounts.length > 0) {
-            q = query(q, where('accountId', 'in', filters.accounts));
-        }
-        if (filters.categories.length > 0) {
-            q = query(q, where('categoryId', 'in', filters.categories));
-        }
-        if (filters.tags.length > 0) {
-            q = query(q, where('tagIds', 'array-contains-any', filters.tags));
-        }
-    
-        // Apply ordering
-        // **IMPORTANT**: When using an 'in' or 'array-contains-any' filter, 
-        // the first orderBy clause must be on the same field if other orderBy clauses are used.
-        if (filters.accounts.length > 0) {
-            q = query(q, orderBy('accountId', 'asc'), orderBy('date', 'desc'));
-        } else if (filters.categories.length > 0) {
-            q = query(q, orderBy('categoryId', 'asc'), orderBy('date', 'desc'));
-        } else if (filters.tags.length > 0) {
-            // Firestore does not allow orderBy on a different field when using array-contains-any
-            // So we rely on the default date ordering for tags.
+
+        if (activeMultiFilter) {
+             const filterField = {
+                'tags': 'tagIds',
+                'categories': 'categoryId',
+                'accounts': 'accountId'
+            }[activeMultiFilter] as 'tagIds' | 'categoryId' | 'accountId';
+
+            const filterOperator = activeMultiFilter === 'tags' ? 'array-contains-any' : 'in';
+
+            q = query(q, where(filterField, filterOperator, filters[activeMultiFilter]));
+            
+            // The first orderBy clause must be on the same field as the inequality/array filter.
+             q = query(q, orderBy(filterField), orderBy('date', 'desc'));
+
+        } else {
+            // Default sort when no multi-filters are active
             q = query(q, orderBy('date', 'desc'));
         }
-        else {
-            q = query(q, orderBy('date', 'desc'));
-        }
-    
-        // Apply pagination
+
         if (startAfterDoc) {
             q = query(q, startAfter(startAfterDoc));
         }
@@ -160,6 +158,7 @@ export default function ExpensesPage() {
 
     const loadExpenses = useCallback(async (loadMore = false) => {
         setExpensesLoading(true);
+        setQueryError(null);
         const q = buildQuery(loadMore ? lastVisible : null);
         if (!q || !accounts) {
             setExpensesLoading(false);
@@ -173,13 +172,14 @@ export default function ExpensesPage() {
             const newExpenses = enrichAndCalculateRunningBalance(querySnapshot.docs, loadMore ? allEnrichedExpenses : []);
             const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
 
-            setAllEnrichedExpenses(loadMore ? newExpenses : newExpenses.sort((a,b) => b.date.getTime() - a.date.getTime()));
+            setAllEnrichedExpenses(loadMore ? newExpenses.sort((a,b) => b.date.getTime() - a.date.getTime()) : newExpenses.sort((a,b) => b.date.getTime() - a.date.getTime()));
             setLastVisible(newLastVisible);
             setHasMore(querySnapshot.docs.length === PAGE_SIZE);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching expenses:", error);
+            setQueryError(error.message || 'An error occurred while fetching data. It might be due to missing database indexes.');
             if (isMounted.current) {
-                // Optionally handle error state here
+                 setAllEnrichedExpenses([]);
             }
         } finally {
             if (isMounted.current) {
@@ -231,6 +231,7 @@ export default function ExpensesPage() {
                 expenses={allEnrichedExpenses} 
                 isLoading={expensesLoading && allEnrichedExpenses.length === 0} 
                 onDataChange={refreshTransactions} 
+                error={queryError}
             />
             
             <Pagination

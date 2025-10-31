@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -12,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Account, Category, Tag } from '@/lib/types';
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -104,18 +102,12 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
             ? currentValues.filter(v => v !== value)
             : [...currentValues, value];
 
-        let updatedFilters = { ...filters, [field]: newValues };
-
-        // Firestore limitation: only one "in", "not-in", or "array-contains-any" clause per query.
-        // If user selects from a new multi-select filter, clear the others.
-        const multiSelectFields: ('categories' | 'accounts' | 'tags')[] = ['categories', 'accounts', 'tags'];
-        const changedField = field;
-        
-        multiSelectFields.forEach(f => {
-            if (f !== changedField && updatedFilters[f].length > 0) {
-                updatedFilters = {...updatedFilters, [f]: []};
-            }
-        });
+        let updatedFilters: Filters = { 
+            ...filters, 
+            categories: field === 'categories' ? newValues : [],
+            accounts: field === 'accounts' ? newValues : [],
+            tags: field === 'tags' ? newValues : [],
+        };
 
         onFiltersChange(updatedFilters);
     }
@@ -149,7 +141,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                     <CommandItem
                                         key={item.id}
                                         onSelect={() => handleMultiSelectChange(field, item.id)}
-                                        className="flex justify-between"
+                                        className="flex justify-between cursor-pointer"
                                     >
                                         <div className="flex items-center gap-2">
                                             {'icon' in item && renderIcon(item.icon)}
@@ -254,8 +246,6 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
         setDateRangePreset('all');
     };
     
-    const hasActiveFilters = filters.dateRange.from || filters.type !== 'all' || filters.categories.length > 0 || filters.accounts.length > 0 || filters.tags.length > 0;
-    
     const activeFilterCount =
         (filters.dateRange.from || filters.dateRange.to ? 1 : 0) +
         (filters.type !== 'all' ? 1 : 0) +
@@ -290,7 +280,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
             </Sheet>
             
             {/* Inline filters for desktop */}
-            <div className="hidden md:flex gap-2">
+            <div className="hidden md:flex flex-wrap gap-2">
                 <Popover>
                     <PopoverTrigger asChild>
                     <Button
@@ -347,22 +337,28 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56">
-                        <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {categories.map((category) => (
-                            <DropdownMenuCheckboxItem
-                                key={category.id}
-                                checked={filters.categories.includes(category.id)}
-                                onCheckedChange={() => {
-                                    const newCategories = filters.categories.includes(category.id)
-                                        ? filters.categories.filter(c => c !== category.id)
-                                        : [...filters.categories, category.id];
-                                    onFiltersChange({ ...filters, categories: newCategories });
-                                }}
-                            >
-                                {category.name}
-                            </DropdownMenuCheckboxItem>
-                        ))}
+                        <Command>
+                            <CommandInput placeholder="Filter by category..." />
+                            <CommandList>
+                                <CommandEmpty>No category found.</CommandEmpty>
+                                <CommandGroup>
+                                {categories.map((category) => (
+                                    <CommandItem
+                                        key={category.id}
+                                        onSelect={() => {
+                                            const newSelection = filters.categories.includes(category.id) ? [] : [category.id];
+                                            onFiltersChange({ ...filters, categories: newSelection, accounts:[], tags: [] });
+                                        }}
+                                    >
+                                        <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.categories.includes(category.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                                            <Check className={cn("h-4 w-4")} />
+                                        </div>
+                                        {category.name}
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -373,23 +369,29 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                             <ChevronDown className="ml-2 h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56">
-                        <DropdownMenuLabel>Filter by Account</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {accounts.map((account) => (
-                            <DropdownMenuCheckboxItem
-                                key={account.id}
-                                checked={filters.accounts.includes(account.id)}
-                                onCheckedChange={() => {
-                                     const newAccounts = filters.accounts.includes(account.id)
-                                        ? filters.accounts.filter(a => a !== account.id)
-                                        : [...filters.accounts, account.id];
-                                    onFiltersChange({ ...filters, accounts: newAccounts });
-                                }}
-                            >
-                                {account.name}
-                            </DropdownMenuCheckboxItem>
-                        ))}
+                     <DropdownMenuContent className="w-56">
+                        <Command>
+                            <CommandInput placeholder="Filter by account..." />
+                            <CommandList>
+                                <CommandEmpty>No account found.</CommandEmpty>
+                                <CommandGroup>
+                                {accounts.map((account) => (
+                                    <CommandItem
+                                        key={account.id}
+                                        onSelect={() => {
+                                            const newSelection = filters.accounts.includes(account.id) ? filters.accounts.filter(a => a !== account.id) : [...filters.accounts, account.id];
+                                            onFiltersChange({ ...filters, accounts: newSelection, categories: [], tags: [] });
+                                        }}
+                                    >
+                                        <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.accounts.includes(account.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                                            <Check className={cn("h-4 w-4")} />
+                                        </div>
+                                        {account.name}
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -400,27 +402,33 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                             <ChevronDown className="ml-2 h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56">
-                        <DropdownMenuLabel>Filter by Tag</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {tags.map((tag) => (
-                            <DropdownMenuCheckboxItem
-                                key={tag.id}
-                                checked={filters.tags.includes(tag.id)}
-                                onCheckedChange={() => {
-                                     const newTags = filters.tags.includes(tag.id)
-                                        ? filters.tags.filter(t => t !== tag.id)
-                                        : [...filters.tags, tag.id];
-                                    onFiltersChange({ ...filters, tags: newTags });
-                                }}
-                            >
-                                {tag.name}
-                            </DropdownMenuCheckboxItem>
-                        ))}
+                     <DropdownMenuContent className="w-56">
+                        <Command>
+                            <CommandInput placeholder="Filter by tag..." />
+                            <CommandList>
+                                <CommandEmpty>No tag found.</CommandEmpty>
+                                <CommandGroup>
+                                {tags.map((tag) => (
+                                    <CommandItem
+                                        key={tag.id}
+                                        onSelect={() => {
+                                            const newSelection = filters.tags.includes(tag.id) ? filters.tags.filter(t => t !== tag.id) : [...filters.tags, tag.id];
+                                            onFiltersChange({ ...filters, tags: newSelection, categories:[], accounts: [] });
+                                        }}
+                                    >
+                                        <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.tags.includes(tag.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                                            <Check className={cn("h-4 w-4")} />
+                                        </div>
+                                        {tag.name}
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
                     </DropdownMenuContent>
                 </DropdownMenu>
                 
-                {hasActiveFilters && (
+                {activeFilterCount > 0 && (
                     <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground">
                         <FilterX className="mr-2 h-4 w-4" />
                         Clear

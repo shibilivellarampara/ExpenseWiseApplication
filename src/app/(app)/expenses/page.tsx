@@ -70,15 +70,19 @@ export default function ExpensesPage() {
 
     const buildQuery = useCallback((startAfterDoc: any = null) => {
         if (!user) return null;
-    
+
         let q: Query = collection(firestore, `users/${user.uid}/expenses`);
         
-        // Firestore allows only one 'array-contains-any' or 'in' filter.
-        // We must prioritize which one to use if multiple are selected.
-        const multiFilterPriority: ('tags' | 'categories' | 'accounts')[] = ['tags', 'categories', 'accounts'];
-        const activeMultiFilter = multiFilterPriority.find(f => filters[f].length > 0);
+        const activeMultiFilterField = filters.categories.length > 0 ? 'categoryId' 
+            : filters.accounts.length > 0 ? 'accountId' 
+            : filters.tags.length > 0 ? 'tagIds' 
+            : null;
 
-        // Apply filters
+        const activeMultiFilterValues = activeMultiFilterField 
+            ? filters[activeMultiFilterField === 'tagIds' ? 'tags' : activeMultiFilterField === 'categoryId' ? 'categories' : 'accounts'] 
+            : [];
+        
+        // Apply single-field filters first
         if (filters.dateRange.from) {
             q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
         }
@@ -89,25 +93,16 @@ export default function ExpensesPage() {
             q = query(q, where('type', '==', filters.type));
         }
 
-        if (activeMultiFilter) {
-             const filterField = {
-                'tags': 'tagIds',
-                'categories': 'categoryId',
-                'accounts': 'accountId'
-            }[activeMultiFilter] as 'tagIds' | 'categoryId' | 'accountId';
-
-            const filterOperator = activeMultiFilter === 'tags' ? 'array-contains-any' : 'in';
-
-            q = query(q, where(filterField, filterOperator, filters[activeMultiFilter]));
-            
-            // The first orderBy clause must be on the same field as the inequality/array filter.
-             q = query(q, orderBy(filterField), orderBy('date', 'desc'));
-
+        // Apply multi-field filters if any
+        if (activeMultiFilterField && activeMultiFilterValues.length > 0) {
+            const operator = activeMultiFilterField === 'tagIds' ? 'array-contains-any' : 'in';
+            q = query(q, where(activeMultiFilterField, operator, activeMultiFilterValues));
+            // Firestore requires the first orderBy to be on the field used in an inequality or array filter.
+            q = query(q, orderBy(activeMultiFilterField), orderBy('date', 'desc'));
         } else {
-            // Default sort when no multi-filters are active
             q = query(q, orderBy('date', 'desc'));
         }
-
+        
         if (startAfterDoc) {
             q = query(q, startAfter(startAfterDoc));
         }
@@ -169,12 +164,27 @@ export default function ExpensesPage() {
             const querySnapshot = await getDocs(q);
             if (!isMounted.current) return;
 
-            const newExpenses = enrichAndCalculateRunningBalance(querySnapshot.docs, loadMore ? allEnrichedExpenses : []);
-            const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+            const newDocs = querySnapshot.docs;
+            const newLastVisible = newDocs.length > 0 ? newDocs[newDocs.length - 1] : null;
 
-            setAllEnrichedExpenses(loadMore ? newExpenses.sort((a,b) => b.date.getTime() - a.date.getTime()) : newExpenses.sort((a,b) => b.date.getTime() - a.date.getTime()));
+            setAllEnrichedExpenses(prevExpenses => {
+                const existing = loadMore ? prevExpenses : [];
+                const newExpenses = newDocs.map(doc => {
+                    const data = doc.data() as Expense;
+                    return {
+                        ...data,
+                        id: doc.id,
+                        date: data.date.toDate(),
+                        category: categoryMap.get(data.categoryId),
+                        account: accountMap.get(data.accountId),
+                        tags: data.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
+                    };
+                });
+                return [...existing, ...newExpenses].sort((a,b) => b.date.getTime() - a.date.getTime());
+            });
+
             setLastVisible(newLastVisible);
-            setHasMore(querySnapshot.docs.length === PAGE_SIZE);
+            setHasMore(newDocs.length === PAGE_SIZE);
         } catch (error: any) {
             console.error("Error fetching expenses:", error);
             setQueryError(error.message || 'An error occurred while fetching data. It might be due to missing database indexes.');
@@ -186,7 +196,7 @@ export default function ExpensesPage() {
                 setExpensesLoading(false);
             }
         }
-    }, [buildQuery, enrichAndCalculateRunningBalance, lastVisible, allEnrichedExpenses, accounts]);
+    }, [buildQuery, accounts, lastVisible, categoryMap, accountMap, tagMap]);
     
     // Initial load and filter change handler
     const handleFiltersChange = (newFilters: any) => {

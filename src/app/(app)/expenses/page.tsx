@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -73,16 +74,7 @@ export default function ExpensesPage() {
 
         let q: Query = collection(firestore, `users/${user.uid}/expenses`);
         
-        const activeMultiFilterField = filters.categories.length > 0 ? 'categoryId' 
-            : filters.accounts.length > 0 ? 'accountId' 
-            : filters.tags.length > 0 ? 'tagIds' 
-            : null;
-
-        const activeMultiFilterValues = activeMultiFilterField 
-            ? filters[activeMultiFilterField === 'tagIds' ? 'tags' : activeMultiFilterField === 'categoryId' ? 'categories' : 'accounts'] 
-            : [];
-        
-        // Apply single-field filters first
+        // --- WHERE Clauses ---
         if (filters.dateRange.from) {
             q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
         }
@@ -92,17 +84,32 @@ export default function ExpensesPage() {
         if (filters.type !== 'all') {
             q = query(q, where('type', '==', filters.type));
         }
-
-        // Apply multi-field filters if any
-        if (activeMultiFilterField && activeMultiFilterValues.length > 0) {
-            const operator = activeMultiFilterField === 'tagIds' ? 'array-contains-any' : 'in';
-            q = query(q, where(activeMultiFilterField, operator, activeMultiFilterValues));
-            // Firestore requires the first orderBy to be on the field used in an inequality or array filter.
-            q = query(q, orderBy(activeMultiFilterField), orderBy('date', 'desc'));
+        if (filters.categories.length > 0) {
+            q = query(q, where('categoryId', 'in', filters.categories));
+        }
+        if (filters.accounts.length > 0) {
+            q = query(q, where('accountId', 'in', filters.accounts));
+        }
+        if (filters.tags.length > 0) {
+            q = query(q, where('tagIds', 'array-contains-any', filters.tags));
+        }
+        
+        // --- ORDER BY Clauses ---
+        // Firestore requires that the first orderBy field matches the field in the first inequality filter
+        if (filters.categories.length > 0) {
+            q = query(q, orderBy('categoryId', 'asc'), orderBy('date', 'desc'));
+        } else if (filters.accounts.length > 0) {
+             q = query(q, orderBy('accountId', 'asc'), orderBy('date', 'desc'));
+        } else if (filters.tags.length > 0) {
+            q = query(q, orderBy('date', 'desc')); // array-contains-any doesn't need a matching order-by
+        } else if (filters.type !== 'all') {
+            q = query(q, orderBy('type', 'asc'), orderBy('date', 'desc'));
         } else {
+            // Default sort order if no other filters are applied
             q = query(q, orderBy('date', 'desc'));
         }
         
+        // --- PAGINATION ---
         if (startAfterDoc) {
             q = query(q, startAfter(startAfterDoc));
         }

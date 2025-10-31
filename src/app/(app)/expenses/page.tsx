@@ -70,47 +70,47 @@ export default function ExpensesPage() {
 
     const buildQuery = useCallback((startAfterDoc: any = null) => {
         if (!user) return null;
-        
+    
         let q: Query<DocumentData> = collection(firestore, `users/${user.uid}/expenses`);
+        
+        let queryParts = [];
 
         // Apply filters
         if (filters.type !== 'all') {
-            q = query(q, where('type', '==', filters.type));
-        }
-        if (filters.accounts.length > 0) {
-            q = query(q, where('accountId', 'in', filters.accounts));
-        }
-        if (filters.categories.length > 0) {
-            q = query(q, where('categoryId', 'in', filters.categories));
-        }
-        if (filters.tags.length > 0) {
-            q = query(q, where('tagIds', 'array-contains-any', filters.tags));
+            queryParts.push(where('type', '==', filters.type));
         }
         if (filters.dateRange.from) {
-            q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
+            queryParts.push(where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
         }
         if (filters.dateRange.to) {
-            q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
+            queryParts.push(where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
         }
-
-        // Apply ordering and pagination
-        let finalQuery = q;
+    
+        let finalQuery;
+    
+        // Firestore requires that if you use an inequality filter (`in`, `not-in`, `array-contains-any`),
+        // the first `orderBy` clause must be on the same field.
         if (filters.accounts.length > 0) {
-             finalQuery = query(finalQuery, orderBy('accountId'), orderBy('date', 'desc'));
+            queryParts.push(where('accountId', 'in', filters.accounts));
+            finalQuery = query(q, ...queryParts, orderBy('accountId', 'asc'), orderBy('date', 'desc'));
         } else if (filters.categories.length > 0) {
-            finalQuery = query(finalQuery, orderBy('categoryId'), orderBy('date', 'desc'));
+            queryParts.push(where('categoryId', 'in', filters.categories));
+            finalQuery = query(q, ...queryParts, orderBy('categoryId', 'asc'), orderBy('date', 'desc'));
         } else if (filters.tags.length > 0) {
-            finalQuery = query(finalQuery, orderBy('tagIds'), orderBy('date', 'desc'));
+            queryParts.push(where('tagIds', 'array-contains-any', filters.tags));
+            finalQuery = query(q, ...queryParts, orderBy('tagIds', 'asc'), orderBy('date', 'desc'));
         } else {
-             finalQuery = query(finalQuery, orderBy('date', 'desc'));
+            // Default query without inequality filters
+            finalQuery = query(q, ...queryParts, orderBy('date', 'desc'));
         }
-
+    
         if (startAfterDoc) {
             finalQuery = query(finalQuery, startAfter(startAfterDoc));
         }
         finalQuery = query(finalQuery, limit(PAGE_SIZE));
+        
         return finalQuery;
-
+    
     }, [user, firestore, filters]);
 
 

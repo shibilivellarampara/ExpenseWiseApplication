@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
@@ -451,8 +452,8 @@ export function ExcelImporter() {
                 {isImporting && (
                      <div className="space-y-2">
                         <Label>Importing transactions...</Label>
-                        <Progress value={(importedCount / processedData.length) * 100} />
-                        <p className="text-sm text-muted-foreground">{importedCount} of {processedData.length} imported.</p>
+                        <Progress value={(importedCount / (processedData.length || 1)) * 100} />
+                        <p className="text-sm text-muted-foreground text-center">{importedCount} of {processedData.length} imported.</p>
                     </div>
                 )}
 

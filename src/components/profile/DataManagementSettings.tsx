@@ -28,6 +28,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { Progress } from "../ui/progress";
 
 export function DataManagementSettings() {
     const { user } = useUser();
@@ -36,6 +37,7 @@ export function DataManagementSettings() {
     const { toast } = useToast();
     const [isClearing, setIsClearing] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
     const [isOpen, setIsOpen] = useState(false);
     const [showReauthDialog, setShowReauthDialog] = useState(false);
@@ -56,23 +58,29 @@ export function DataManagementSettings() {
     const handleClearAllData = async () => {
         if (!user || !firestore) return;
         setIsClearing(true);
+        setProgress(0);
         try {
-            const batch = writeBatch(firestore);
-
-            // 1. Delete all expenses
             const expensesQuery = collection(firestore, `users/${user.uid}/expenses`);
             const expensesSnapshot = await getDocs(expensesQuery);
-            expensesSnapshot.forEach(doc => batch.delete(doc.ref));
-
-            // 2. Reset all account balances
+            const totalDocs = expensesSnapshot.size;
+            let processedDocs = 0;
+            
+            const batch = writeBatch(firestore);
+            expensesSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+                processedDocs++;
+                setProgress((processedDocs / totalDocs) * 50);
+            });
+            
             if (accounts) {
                 accounts.forEach(account => {
                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
                     batch.update(accountRef, { balance: 0 });
                 });
             }
-
+            
             await batch.commit();
+            setProgress(100);
             toast({ title: 'All data cleared', description: 'All your transactions have been deleted and balances reset.' });
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
@@ -87,21 +95,25 @@ export function DataManagementSettings() {
             return;
         }
         setIsClearing(true);
+        setProgress(0);
         try {
-            const batch = writeBatch(firestore);
-            
-            // 1. Delete all expenses for the selected account
             const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), where('accountId', '==', selectedAccount));
             const expensesSnapshot = await getDocs(expensesQuery);
+            const totalDocs = expensesSnapshot.size;
+            let processedDocs = 0;
+            
+            const batch = writeBatch(firestore);
             expensesSnapshot.forEach(expenseDoc => {
                 batch.delete(expenseDoc.ref);
+                processedDocs++;
+                setProgress((processedDocs / totalDocs) * 50);
             });
 
-            // 2. Reset the selected account balance
             const accountRef = doc(firestore, `users/${user.uid}/accounts`, selectedAccount);
             batch.update(accountRef, { balance: 0 });
             
             await batch.commit();
+            setProgress(100);
 
             const accountName = accounts?.find(a => a.id === selectedAccount)?.name || "the account";
             toast({ title: 'Account Data Cleared', description: `Transactions for ${accountName} have been deleted and its balance reset.` });
@@ -116,25 +128,33 @@ export function DataManagementSettings() {
     const handleAccountDeletion = async () => {
         if (!user || !auth?.currentUser || !firestore) return;
         setIsDeleting(true);
+        setProgress(0);
 
-        const batch = writeBatch(firestore);
         const collectionsToDelete = ['expenses', 'accounts', 'categories', 'tags', 'contributions'];
         
         try {
-            for (const c of collectionsToDelete) {
-                const snapshot = await getDocs(collection(firestore, `users/${user.uid}/${c}`));
-                snapshot.forEach(d => batch.delete(d.ref));
+            let docsProcessed = 0;
+            let totalDocs = 0;
+
+            const snapshots = await Promise.all(collectionsToDelete.map(c => getDocs(collection(firestore, `users/${user.uid}/${c}`))));
+            totalDocs = snapshots.reduce((sum, s) => sum + s.size, 0);
+
+            const batch = writeBatch(firestore);
+            
+            for (const snapshot of snapshots) {
+                snapshot.forEach(d => {
+                    batch.delete(d.ref);
+                    docsProcessed++;
+                    setProgress((docsProcessed / (totalDocs + 1)) * 100);
+                });
             }
             
-            const sharedExpensesQuery = query(collection(firestore, 'shared_expenses'), where('ownerId', '==', user.uid));
-            const sharedExpensesSnapshot = await getDocs(sharedExpensesQuery);
-            sharedExpensesSnapshot.forEach(doc => batch.delete(doc.ref));
-
             const userProfileRef = doc(firestore, `users/${user.uid}`);
             batch.delete(userProfileRef);
 
             await batch.commit();
-
+            setProgress(100);
+            
             await deleteUser(user);
             
             toast({ title: "Account Closed", description: "Your account and all data have been permanently deleted." });
@@ -197,9 +217,15 @@ export function DataManagementSettings() {
                         <div className="rounded-lg border border-destructive/50 p-4">
                             <h4 className="font-semibold">Clear All Transaction Data</h4>
                             <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete all your transactions and reset every account balance to zero.</p>
+                            {isClearing && (
+                                <div className="space-y-2 mt-2">
+                                    <Progress value={progress} />
+                                    <p className="text-xs text-muted-foreground text-center">Processing...</p>
+                                </div>
+                            )}
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="sm">Clear All Data</Button>
+                                    <Button variant="destructive" size="sm" disabled={isClearing}>Clear All Data</Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
@@ -221,6 +247,12 @@ export function DataManagementSettings() {
                         <div className="rounded-lg border border-destructive/50 p-4">
                             <h4 className="font-semibold">Clear Specific Account Data</h4>
                             <p className="text-sm text-muted-foreground mt-1 mb-3">Select an account to delete all its associated transactions and reset its balance to zero.</p>
+                             {isClearing && selectedAccount && (
+                                <div className="space-y-2 my-2">
+                                    <Progress value={progress} />
+                                    <p className="text-xs text-muted-foreground text-center">Processing...</p>
+                                </div>
+                            )}
                             <div className="flex gap-2">
                                 <Select onValueChange={setSelectedAccount} value={selectedAccount || ''}>
                                     <SelectTrigger>
@@ -240,7 +272,7 @@ export function DataManagementSettings() {
 
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="sm" disabled={!selectedAccount}>Clear Account</Button>
+                                        <Button variant="destructive" size="sm" disabled={!selectedAccount || isClearing}>Clear Account</Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
@@ -263,10 +295,15 @@ export function DataManagementSettings() {
                         <div className="rounded-lg border border-destructive/50 p-4">
                             <h4 className="font-semibold">Close Account</h4>
                             <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete your account and all associated data. This action is irreversible.</p>
-                            
+                             {isDeleting && (
+                                <div className="space-y-2 mt-2">
+                                    <Progress value={progress} />
+                                    <p className="text-xs text-muted-foreground text-center">Deleting your data...</p>
+                                </div>
+                            )}
                             <Dialog open={showReauthDialog} onOpenChange={setShowReauthDialog}>
                                 <DialogTrigger asChild>
-                                    <Button variant="destructive" size="sm">Close My Account</Button>
+                                    <Button variant="destructive" size="sm" disabled={isDeleting}>Close My Account</Button>
                                 </DialogTrigger>
                                 <DialogContent>
                                     <DialogHeader>

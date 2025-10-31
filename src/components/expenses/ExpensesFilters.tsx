@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,8 +13,6 @@ import { Account, Category, Tag } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from '@/lib/utils';
@@ -50,7 +49,8 @@ interface ExpensesFiltersProps {
     tags: Tag[];
 }
 
-const renderIcon = (iconName: string, className?: string) => {
+const renderIcon = (iconName: string | undefined, className?: string) => {
+    if (!iconName) return null;
     const IconComponent = (LucideIcons as any)[iconName];
     return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
 };
@@ -102,12 +102,18 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
             ? currentValues.filter(v => v !== value)
             : [...currentValues, value];
 
-        let updatedFilters: Filters = { 
+        // This logic allows combining filters, which might require complex indexes.
+        // For simplicity and to avoid index errors, we will reset other multi-select filters.
+        const updatedFilters: Filters = { 
             ...filters, 
-            categories: field === 'categories' ? newValues : [],
-            accounts: field === 'accounts' ? newValues : [],
-            tags: field === 'tags' ? newValues : [],
+            categories: field === 'categories' ? newValues : filters.categories,
+            accounts: field === 'accounts' ? newValues : filters.accounts,
+            tags: field === 'tags' ? newValues : filters.tags,
         };
+
+        if (field === 'categories') updatedFilters.accounts = []; updatedFilters.tags = [];
+        if (field === 'accounts') updatedFilters.categories = []; updatedFilters.tags = [];
+        if (field === 'tags') updatedFilters.categories = []; updatedFilters.accounts = [];
 
         onFiltersChange(updatedFilters);
     }
@@ -126,7 +132,11 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
             <h4 className="text-sm font-medium mb-2">{title}</h4>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
+                    <Button variant="outline" className="w-full justify-between"
+                        disabled={(field === 'accounts' && (filters.categories.length > 0 || filters.tags.length > 0)) ||
+                                  (field === 'categories' && (filters.accounts.length > 0 || filters.tags.length > 0)) ||
+                                  (field === 'tags' && (filters.accounts.length > 0 || filters.categories.length > 0))}
+                    >
                         <span>{filters[field].length > 0 ? `${filters[field].length} selected` : placeholder}</span>
                         <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
@@ -183,7 +193,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                 id="from-date"
                                 type="date"
                                 value={formatDateForInput(filters.dateRange?.from)}
-                                onChange={(e) => handleDateChange(e.target.value ? parseISO(e.target.value) : undefined, 'from')}
+                                onChange={(e) => handleDateChange(e.target.valueAsDate ?? undefined, 'from')}
                                 className="text-sm"
                             />
                         </div>
@@ -193,7 +203,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                 id="to-date"
                                 type="date"
                                 value={formatDateForInput(filters.dateRange?.to)}
-                                onChange={(e) => handleDateChange(e.target.value ? parseISO(e.target.value) : undefined, 'to')}
+                                onChange={(e) => handleDateChange(e.target.valueAsDate ?? undefined, 'to')}
                                 className="text-sm"
                             />
                         </div>

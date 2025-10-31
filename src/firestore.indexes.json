@@ -20,11 +20,19 @@
       "collectionGroup": "expenses",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "accountId", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+     {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "accountId", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
     },
-    {
+     {
       "collectionGroup": "expenses",
       "queryScope": "COLLECTION",
       "fields": [
@@ -37,11 +45,11 @@
       "collectionGroup": "expenses",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "categoryId", "order": "ASCENDING" },
+        { "fieldPath": "categoryId", "arrayConfig": "CONTAINS" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
     },
-    {
+     {
       "collectionGroup": "expenses",
       "queryScope": "COLLECTION",
       "fields": [
@@ -69,7 +77,7 @@
     },
     {
       "collectionGroup": "shared_expenses",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         { "fieldPath": "memberIds", "arrayConfig": "CONTAINS" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }

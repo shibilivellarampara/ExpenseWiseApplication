@@ -6,7 +6,7 @@ import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
-import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile, CollectionReference } from "@/lib/types";
+import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, orderBy, query, doc, where, limit, startAfter, getDocs, Query, DocumentData, Timestamp } from "firebase/firestore";
 import { Plus, Minus, Loader2 } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
@@ -71,10 +71,9 @@ export default function ExpensesPage() {
     const buildQuery = useCallback((startAfterDoc: any = null) => {
         if (!user) return null;
     
-        const baseRef = collection(firestore, `users/${user.uid}/expenses`) as CollectionReference<DocumentData>;
-        
-        let q: Query = baseRef;
+        let q: Query = collection(firestore, `users/${user.uid}/expenses`);
 
+        // Apply filters
         if (filters.dateRange.from) {
             q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
         }
@@ -84,25 +83,29 @@ export default function ExpensesPage() {
         if (filters.type !== 'all') {
             q = query(q, where('type', '==', filters.type));
         }
-
         if (filters.accounts.length > 0) {
             q = query(q, where('accountId', 'in', filters.accounts));
         }
-        
         if (filters.categories.length > 0) {
             q = query(q, where('categoryId', 'in', filters.categories));
         }
-
         if (filters.tags.length > 0) {
-             q = query(q, where('tagIds', 'array-contains-any', filters.tags));
+            q = query(q, where('tagIds', 'array-contains-any', filters.tags));
         }
     
-        q = query(q, orderBy('date', 'desc'));
+        // Apply ordering
+        // **IMPORTANT**: When using an 'in' filter, the first orderBy clause must be on the same field.
+        if (filters.accounts.length > 0) {
+            q = query(q, orderBy('accountId', 'asc'), orderBy('date', 'desc'));
+        } else {
+            q = query(q, orderBy('date', 'desc'));
+        }
     
+        // Apply pagination
         if (startAfterDoc) {
             q = query(q, startAfter(startAfterDoc));
         }
-
+        
         q = query(q, limit(PAGE_SIZE));
         
         return q;

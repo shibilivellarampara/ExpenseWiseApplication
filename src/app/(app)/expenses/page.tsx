@@ -95,17 +95,13 @@ export default function ExpensesPage() {
         }
         
         // --- ORDER BY Clauses ---
-        // Firestore requires that the first orderBy field matches the field in the first inequality/array filter
         if (filters.accounts.length > 0) {
             q = query(q, orderBy('accountId', 'asc'), orderBy('date', 'desc'));
         } else if (filters.categories.length > 0) {
             q = query(q, orderBy('categoryId', 'asc'), orderBy('date', 'desc'));
-        } else if (filters.tags.length > 0) {
-            q = query(q, orderBy('date', 'desc')); // array-contains-any doesn't need a matching order-by for the array field
-        } else if (filters.type !== 'all') {
-            q = query(q, orderBy('type', 'asc'), orderBy('date', 'desc'));
+        } else if (filters.type !== 'all' && (filters.dateRange.from || filters.dateRange.to)) {
+             q = query(q, orderBy('type', 'asc'), orderBy('date', 'desc'));
         } else {
-            // Default sort order if no other filters are applied
             q = query(q, orderBy('date', 'desc'));
         }
         
@@ -159,9 +155,18 @@ export default function ExpensesPage() {
     }, [categoryMap, accountMap, tagMap, accounts]);
 
     const loadExpenses = useCallback(async (loadMore = false) => {
+        if (!loadMore) {
+            setLastVisible(null);
+            setAllEnrichedExpenses([]);
+            setHasMore(true);
+        }
+
         setExpensesLoading(true);
         setQueryError(null);
-        const q = buildQuery(loadMore ? lastVisible : null);
+        
+        const currentLastVisible = loadMore ? lastVisible : null;
+        const q = buildQuery(currentLastVisible);
+        
         if (!q || !accounts) {
             setExpensesLoading(false);
             return;
@@ -174,20 +179,23 @@ export default function ExpensesPage() {
             const newDocs = querySnapshot.docs;
             const newLastVisible = newDocs.length > 0 ? newDocs[newDocs.length - 1] : null;
 
+            const newExpenses = newDocs.map(doc => {
+                const data = doc.data() as Expense;
+                return {
+                    ...data,
+                    id: doc.id,
+                    date: data.date.toDate(),
+                    category: categoryMap.get(data.categoryId),
+                    account: accountMap.get(data.accountId),
+                    tags: data.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
+                };
+            });
+
             setAllEnrichedExpenses(prevExpenses => {
-                const existing = loadMore ? prevExpenses : [];
-                const newExpenses = newDocs.map(doc => {
-                    const data = doc.data() as Expense;
-                    return {
-                        ...data,
-                        id: doc.id,
-                        date: data.date.toDate(),
-                        category: categoryMap.get(data.categoryId),
-                        account: accountMap.get(data.accountId),
-                        tags: data.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
-                    };
-                });
-                return [...existing, ...newExpenses].sort((a,b) => b.date.getTime() - a.date.getTime());
+                const combined = loadMore ? [...prevExpenses, ...newExpenses] : newExpenses;
+                // Deduplicate just in case
+                const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+                return unique.sort((a, b) => b.date.getTime() - a.date.getTime());
             });
 
             setLastVisible(newLastVisible);
@@ -208,16 +216,9 @@ export default function ExpensesPage() {
     // Initial load and filter change handler
     const handleFiltersChange = (newFilters: any) => {
         setFilters(newFilters);
-        setAllEnrichedExpenses([]); // Reset expenses
-        setLastVisible(null); // Reset pagination
-        setHasMore(true);
-        // loadExpenses will be called by useEffect
     };
     
     const refreshTransactions = useCallback(() => {
-        setAllEnrichedExpenses([]);
-        setLastVisible(null);
-        setHasMore(true);
         loadExpenses(false);
     }, [loadExpenses]);
 

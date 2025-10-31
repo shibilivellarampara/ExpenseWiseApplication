@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
@@ -14,7 +13,7 @@ import { doc } from 'firebase/firestore';
 import { UserProfile, Category, Account, Tag } from "@/lib/types";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { collection, writeBatch, increment } from 'firebase/firestore';
+import { collection, writeBatch, increment, addDoc, getDocs, query, where } from 'firebase/firestore';
 import { Label } from "../ui/label";
 import { Badge } from "../ui/badge";
 import * as LucideIcons from 'lucide-react';
@@ -267,15 +266,13 @@ export function ExcelImporter() {
         setIsImporting(true);
         setImportedCount(0);
     
-        const BATCH_SIZE = 50;
+        const BATCH_SIZE = 499; // Firestore batch limit is 500
         const totalBatches = Math.ceil(processedData.length / BATCH_SIZE);
         const mapping = TEMPLATES[template].mapping;
     
         try {
-            // --- First, create all new items in a preliminary batch ---
             const preliminaryBatch = writeBatch(firestore);
             const newCategoryRefs = new Map<string, string>();
-            const newTagRefs = new Map<string, string>();
             const newAccountRefs = new Map<string, { id: string; type: Account['type'] }>();
             const categoriesCol = collection(firestore, `users/${user.uid}/categories`);
             const tagsCol = collection(firestore, `users/${user.uid}/tags`);
@@ -288,9 +285,9 @@ export function ExcelImporter() {
             }
             for (const tagName of newTags) {
                 const tagRef = doc(tagsCol);
-                preliminaryBatch.set(tagRef, { id: tagRef.id, name: tagName, icon: 'Tag', userId: user.uid });
-                newTagRefs.set(tagName.toLowerCase(), tagRef.id);
+                await addDoc(tagsCol, { id: tagRef.id, name: tagName, icon: 'Tag', userId: user.uid });
             }
+
             for (const accName of Object.keys(accountMappings)) {
                 if (selectedAccountsToImport.includes(accName)) {
                     const mappingInfo = accountMappings[accName];
@@ -304,8 +301,11 @@ export function ExcelImporter() {
             }
             await preliminaryBatch.commit();
     
-            // --- Prepare for transaction import ---
-            const allAccounts: Account[] = [
+            // Refresh tags after adding them
+             const freshTagsSnapshot = await getDocs(tagsQuery);
+             const freshTags = freshTagsSnapshot.docs.map(d => d.data() as Tag);
+
+             const allAccounts: Account[] = [
                 ...(accounts || []),
                 ...Array.from(newAccountRefs.entries()).map(([name, { id, type }]) => ({ id, name, type, balance: 0, userId: user.uid, status: 'active', icon: 'Landmark' }))
             ];
@@ -315,12 +315,10 @@ export function ExcelImporter() {
             const categoryMap = new Map(existingCategories.map(c => [c.name.toLowerCase(), c.id]));
             newCategoryRefs.forEach((val, key) => categoryMap.set(key, val));
 
-            const tagMap = new Map(existingTags.map(t => [t.name.toLowerCase(), t.id]));
-            newTagRefs.forEach((val, key) => tagMap.set(key, val));
-
+            const tagMap = new Map(freshTags.map(t => [t.name.toLowerCase(), t.id]));
+    
             const accountMap = new Map(allAccounts.map(a => [a.name.toLowerCase(), a]));
     
-            // --- Process transactions in batches ---
             for (let i = 0; i < totalBatches; i++) {
                 const batch = writeBatch(firestore);
                 const chunk = processedData.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
@@ -664,5 +662,3 @@ export function ExcelImporter() {
         </Card>
     );
 }
-
-    

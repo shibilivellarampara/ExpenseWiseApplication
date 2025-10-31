@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Account, EnrichedExpense } from "@/lib/types";
+import { Account } from "@/lib/types";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { cn } from "@/lib/utils";
@@ -27,31 +27,8 @@ export function ExpensesSummary({ isLoading, currency }: ExpensesSummaryProps) {
 
     const summary = useMemo(() => {
         if (!accounts) {
-            return { totalIncome: 0, totalExpense: 0, netBalance: 0 };
+            return { totalIn: 0, totalOut: 0, netBalance: 0 };
         }
-
-        let netBalance = 0;
-        let totalIncome = 0;
-        let totalExpense = 0;
-
-        accounts.forEach(account => {
-            if (account.status !== 'active') return;
-
-            if (account.type === 'credit_card') {
-                // For credit cards, the balance is what you owe (an expense/liability)
-                netBalance -= account.balance;
-                totalExpense += account.balance;
-            } else {
-                // For other accounts, the balance is what you have
-                netBalance += account.balance;
-                if (account.balance > 0) {
-                    totalIncome += account.balance;
-                } else {
-                    // This case is unlikely for non-credit card accounts but handles it.
-                    totalExpense -= account.balance;
-                }
-            }
-        });
 
         const totalAssets = accounts
             .filter(acc => acc.status === 'active' && acc.type !== 'credit_card')
@@ -61,13 +38,12 @@ export function ExpensesSummary({ isLoading, currency }: ExpensesSummaryProps) {
             .filter(acc => acc.status === 'active' && acc.type === 'credit_card')
             .reduce((sum, acc) => sum + acc.balance, 0);
         
-        const finalNetBalance = totalAssets - totalLiabilities;
-
+        const netBalance = totalAssets - totalLiabilities;
 
         return {
-            totalIncome: totalAssets,
-            totalExpense: totalLiabilities,
-            netBalance: finalNetBalance
+            totalIn: totalAssets,
+            totalOut: totalLiabilities,
+            netBalance: netBalance
         };
     }, [accounts]);
 
@@ -106,10 +82,10 @@ export function ExpensesSummary({ isLoading, currency }: ExpensesSummaryProps) {
                     </div>
                     <div className="text-right">
                         <p className="text-green-600">
-                           <span className="text-muted-foreground">Assets:</span> {currencySymbol}{summary.totalIncome.toFixed(2)}
+                           <span className="text-muted-foreground">IN:</span> {currencySymbol}{summary.totalIn.toFixed(2)}
                         </p>
                          <p className="text-red-500">
-                           <span className="text-muted-foreground">Liabilities:</span> {currencySymbol}{summary.totalExpense.toFixed(2)}
+                           <span className="text-muted-foreground">OUT:</span> {currencySymbol}{summary.totalOut.toFixed(2)}
                         </p>
                     </div>
                 </div>

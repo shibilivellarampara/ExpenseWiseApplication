@@ -276,7 +276,7 @@ export function ExcelImporter() {
             const preliminaryBatch = writeBatch(firestore);
             const newCategoryRefs = new Map<string, string>();
             const newTagRefs = new Map<string, string>();
-            const newAccountRefs = new Map<string, string>();
+            const newAccountRefs = new Map<string, { id: string; type: Account['type'] }>();
             const categoriesCol = collection(firestore, `users/${user.uid}/categories`);
             const tagsCol = collection(firestore, `users/${user.uid}/tags`);
             const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
@@ -292,28 +292,33 @@ export function ExcelImporter() {
                 newTagRefs.set(tagName.toLowerCase(), tagRef.id);
             }
             for (const accName of Object.keys(accountMappings)) {
-                // Only create accounts that are selected for import
                 if (selectedAccountsToImport.includes(accName)) {
-                    const mapping = accountMappings[accName];
-                    if (mapping.action === 'create') {
+                    const mappingInfo = accountMappings[accName];
+                    if (mappingInfo.action === 'create') {
                         const accRef = doc(accountsCol);
-                        preliminaryBatch.set(accRef, { id: accRef.id, name: accName, icon: 'Landmark', type: mapping.type || 'bank', balance: 0, status: 'active', userId: user.uid });
-                        newAccountRefs.set(accName.toLowerCase(), accRef.id);
+                        const accountType = mappingInfo.type || 'bank';
+                        preliminaryBatch.set(accRef, { id: accRef.id, name: accName, icon: 'Landmark', type: accountType, balance: 0, status: 'active', userId: user.uid });
+                        newAccountRefs.set(accName.toLowerCase(), { id: accRef.id, type: accountType });
                     }
                 }
             }
             await preliminaryBatch.commit();
     
             // --- Prepare for transaction import ---
-            const chosenAccountId = importAccountId || accounts.find(a => a.type === 'cash')?.id || accounts[0].id;
+            const allAccounts: Account[] = [
+                ...(accounts || []),
+                ...Array.from(newAccountRefs.entries()).map(([name, { id, type }]) => ({ id, name, type, balance: 0, userId: user.uid, status: 'active', icon: 'Landmark' }))
+            ];
+            
+            const chosenAccountId = importAccountId || allAccounts.find(a => a.type === 'cash')?.id || allAccounts[0].id;
             
             const categoryMap = new Map(existingCategories.map(c => [c.name.toLowerCase(), c.id]));
-            const tagMap = new Map(existingTags.map(t => [t.name.toLowerCase(), t.id]));
-            const accountMap = new Map(accounts.map(a => [a.name.toLowerCase(), a.id]));
-
             newCategoryRefs.forEach((val, key) => categoryMap.set(key, val));
+
+            const tagMap = new Map(existingTags.map(t => [t.name.toLowerCase(), t.id]));
             newTagRefs.forEach((val, key) => tagMap.set(key, val));
-            newAccountRefs.forEach((val, key) => accountMap.set(key, val));
+
+            const accountMap = new Map(allAccounts.map(a => [a.name.toLowerCase(), a]));
     
             // --- Process transactions in batches ---
             for (let i = 0; i < totalBatches; i++) {
@@ -329,17 +334,24 @@ export function ExcelImporter() {
                     const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName.toLowerCase())).filter(Boolean);
 
                     let finalAccountId: string | undefined = chosenAccountId;
+                    let accountForTx: Account | undefined;
+
                     if(mapping.mode && item.accountName){
                         const accNameLower = String(item.accountName).toLowerCase();
                         const mappingAction = accountMappings[item.accountName];
-                        if (mappingAction?.action === 'map') {
+
+                        if (mappingAction?.action === 'map' && mappingAction.targetId) {
                             finalAccountId = mappingAction.targetId;
+                            accountForTx = allAccounts.find(a => a.id === finalAccountId);
                         } else {
-                            finalAccountId = accountMap.get(accNameLower);
+                            accountForTx = accountMap.get(accNameLower);
+                            finalAccountId = accountForTx?.id;
                         }
+                    } else {
+                        accountForTx = allAccounts.find(a => a.id === chosenAccountId);
                     }
                     
-                    if (!finalAccountId) return; // Skip if no account can be determined
+                    if (!finalAccountId || !accountForTx) return;
 
                     batch.set(expenseRef, {
                         id: expenseRef.id, userId: user.uid, type: item.type, amount: item.amount,
@@ -347,13 +359,10 @@ export function ExcelImporter() {
                         categoryId: categoryId, tagIds: tagIds, createdAt: new Date(),
                     });
                     
-                    const accountToUpdate = accounts.find(a => a.id === finalAccountId);
-                    if (accountToUpdate) {
-                         const change = accountToUpdate.type === 'credit_card'
-                            ? (item.type === 'expense' ? item.amount : -item.amount)
-                            : (item.type === 'income' ? item.amount : -item.amount);
-                         balanceChanges.set(finalAccountId, (balanceChanges.get(finalAccountId) || 0) + change);
-                    }
+                     const change = accountForTx.type === 'credit_card'
+                        ? (item.type === 'expense' ? item.amount : -item.amount)
+                        : (item.type === 'income' ? item.amount : -item.amount);
+                     balanceChanges.set(finalAccountId, (balanceChanges.get(finalAccountId) || 0) + change);
                 });
     
                 balanceChanges.forEach((change, accId) => {

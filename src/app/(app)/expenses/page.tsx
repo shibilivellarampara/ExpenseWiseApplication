@@ -71,42 +71,39 @@ export default function ExpensesPage() {
     const buildQuery = useCallback((startAfterDoc: any = null) => {
         if (!user) return null;
     
-        let q: Query<DocumentData> = collection(firestore, `users/${user.uid}/expenses`);
+        const baseRef: CollectionReference<DocumentData> = collection(firestore, `users/${user.uid}/expenses`);
         
-        let queryParts = [];
+        const queryConstraints = [];
 
         // Apply filters
         if (filters.type !== 'all') {
-            queryParts.push(where('type', '==', filters.type));
+            queryConstraints.push(where('type', '==', filters.type));
         }
+
+        if (filters.accounts.length > 0) {
+            queryConstraints.push(where('accountId', 'in', filters.accounts));
+        } else if (filters.categories.length > 0) {
+            queryConstraints.push(where('categoryId', 'in', filters.categories));
+        } else if (filters.tags.length > 0) {
+            queryConstraints.push(where('tagIds', 'array-contains-any', filters.tags));
+        }
+
         if (filters.dateRange.from) {
-            queryParts.push(where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
+            queryConstraints.push(where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
         }
         if (filters.dateRange.to) {
-            queryParts.push(where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
+            queryConstraints.push(where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
         }
     
-        let finalQuery;
-    
-        // Firestore requires that if you use an inequality filter (`in`, `not-in`, `array-contains-any`),
-        // the first `orderBy` clause must be on the same field.
-        if (filters.accounts.length > 0) {
-            queryParts.push(where('accountId', 'in', filters.accounts));
-            finalQuery = query(q, ...queryParts, orderBy('accountId', 'asc'), orderBy('date', 'desc'));
-        } else if (filters.categories.length > 0) {
-            queryParts.push(where('categoryId', 'in', filters.categories));
-            finalQuery = query(q, ...queryParts, orderBy('categoryId', 'asc'), orderBy('date', 'desc'));
-        } else if (filters.tags.length > 0) {
-            queryParts.push(where('tagIds', 'array-contains-any', filters.tags));
-            finalQuery = query(q, ...queryParts, orderBy('tagIds', 'asc'), orderBy('date', 'desc'));
-        } else {
-            // Default query without inequality filters
-            finalQuery = query(q, ...queryParts, orderBy('date', 'desc'));
-        }
+        // Add sorting
+        queryConstraints.push(orderBy('date', 'desc'));
+        
+        let finalQuery = query(baseRef, ...queryConstraints);
     
         if (startAfterDoc) {
             finalQuery = query(finalQuery, startAfter(startAfterDoc));
         }
+
         finalQuery = query(finalQuery, limit(PAGE_SIZE));
         
         return finalQuery;

@@ -194,9 +194,9 @@ export default function ExpensesPage() {
             setHasMore(newDocs.length === PAGE_SIZE);
         } catch (error: any) {
             console.error("Error fetching expenses:", error);
-            setQueryError(error.message || 'An error occurred while fetching data. It might be due to missing database indexes.');
             if (isMounted.current) {
-                 setAllEnrichedExpenses([]);
+                setQueryError(error.message || 'An error occurred while fetching data. It might be due to missing database indexes.');
+                setAllEnrichedExpenses([]);
             }
         } finally {
             if (isMounted.current) {

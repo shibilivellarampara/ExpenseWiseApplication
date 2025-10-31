@@ -20,7 +20,7 @@
       "collectionGroup": "expenses",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "accountId", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "accountId", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
     },
@@ -28,7 +28,7 @@
       "collectionGroup": "expenses",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "accountId", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "accountId", "order": "ASCENDING" },
         { "fieldPath": "type", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
@@ -37,7 +37,7 @@
       "collectionGroup": "expenses",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "categoryId", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "categoryId", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
     },
@@ -45,7 +45,7 @@
       "collectionGroup": "expenses",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "categoryId", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "categoryId", "order": "ASCENDING" },
         { "fieldPath": "type", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]

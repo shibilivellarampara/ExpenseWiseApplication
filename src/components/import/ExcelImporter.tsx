@@ -20,6 +20,7 @@ import { Badge } from "../ui/badge";
 import * as LucideIcons from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Progress } from "../ui/progress";
+import { Checkbox } from "../ui/checkbox";
 
 
 type RowData = { [key: string]: any };
@@ -80,12 +81,14 @@ export function ExcelImporter() {
     const [newCategories, setNewCategories] = useState<string[]>([]);
     const [newTags, setNewTags] = useState<string[]>([]);
     const [newAccounts, setNewAccounts] = useState<string[]>([]);
+    
+    const [selectedAccountsToImport, setSelectedAccountsToImport] = useState<string[]>([]);
+
 
     const [accountMappings, setAccountMappings] = useState<AccountMapping>({});
     
     const [importAccountId, setImportAccountId] = useState<string>(''); // For single account import
     const [importedCount, setImportedCount] = useState(0);
-    const [filterAccount, setFilterAccount] = useState('all');
 
     const { toast } = useToast();
 
@@ -112,6 +115,7 @@ export function ExcelImporter() {
                 initialMappings[accName] = { action: 'create', type: 'bank' };
             });
             setAccountMappings(initialMappings);
+            setSelectedAccountsToImport(newAccounts); // By default, select all new accounts for import
         }
     }, [newAccounts]);
 
@@ -248,11 +252,14 @@ export function ExcelImporter() {
     }, [rawData, template]);
 
     const processedData = useMemo(() => {
-        if (filterAccount === 'all') {
-            return allProcessedData;
+        if (!template) return [];
+        // If there's an account column in the template, filter by selected accounts
+        if (TEMPLATES[template].mapping.mode) {
+             return allProcessedData.filter(item => selectedAccountsToImport.includes(item.accountName));
         }
-        return allProcessedData.filter(item => item.accountName === filterAccount);
-    }, [allProcessedData, filterAccount]);
+        // Otherwise, just return all data (for imports into a single chosen account)
+        return allProcessedData;
+    }, [allProcessedData, selectedAccountsToImport, template]);
 
 
     const handleImport = async () => {
@@ -285,11 +292,14 @@ export function ExcelImporter() {
                 newTagRefs.set(tagName.toLowerCase(), tagRef.id);
             }
             for (const accName of Object.keys(accountMappings)) {
-                const mapping = accountMappings[accName];
-                if (mapping.action === 'create') {
-                    const accRef = doc(accountsCol);
-                    preliminaryBatch.set(accRef, { id: accRef.id, name: accName, icon: 'Landmark', type: mapping.type || 'bank', balance: 0, status: 'active', userId: user.uid });
-                    newAccountRefs.set(accName.toLowerCase(), accRef.id);
+                // Only create accounts that are selected for import
+                if (selectedAccountsToImport.includes(accName)) {
+                    const mapping = accountMappings[accName];
+                    if (mapping.action === 'create') {
+                        const accRef = doc(accountsCol);
+                        preliminaryBatch.set(accRef, { id: accRef.id, name: accName, icon: 'Landmark', type: mapping.type || 'bank', balance: 0, status: 'active', userId: user.uid });
+                        newAccountRefs.set(accName.toLowerCase(), accRef.id);
+                    }
                 }
             }
             await preliminaryBatch.commit();
@@ -380,7 +390,7 @@ export function ExcelImporter() {
         setAccountMappings({});
         setImportAccountId('');
         setImportedCount(0);
-        setFilterAccount('all');
+        setSelectedAccountsToImport([]);
     }
 
     const renderIcon = (iconName: string | undefined, className?: string) => {
@@ -407,17 +417,14 @@ export function ExcelImporter() {
             }
         }));
     };
-
-
-    const accountsInFile = useMemo(() => {
-        const accountSet = new Set<string>();
-        allProcessedData.forEach(item => {
-            if (item.accountName) {
-                accountSet.add(item.accountName);
-            }
-        });
-        return Array.from(accountSet);
-    }, [allProcessedData]);
+    
+    const handleAccountSelectionChange = (accountName: string) => {
+        setSelectedAccountsToImport(prev => 
+            prev.includes(accountName)
+                ? prev.filter(name => name !== accountName)
+                : [...prev, accountName]
+        );
+    }
 
 
     return (
@@ -511,10 +518,15 @@ export function ExcelImporter() {
                          {newAccounts.length > 0 && (
                              <div className="rounded-lg border p-4 space-y-4">
                                 <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Accounts ({newAccounts.length})</h4>
-                                <p className="text-sm text-muted-foreground">Map new account names from your file to existing accounts, or create new ones.</p>
+                                <p className="text-sm text-muted-foreground">Select accounts to import and map them to existing accounts, or create new ones.</p>
                                 {newAccounts.map(accName => (
-                                    <div key={accName} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                                        <Badge variant="outline" className="truncate">{accName}</Badge>
+                                    <div key={accName} className="grid grid-cols-[auto_1fr_auto_1fr] items-center gap-x-4 gap-y-2">
+                                        <Checkbox
+                                            id={`select-acc-${accName}`}
+                                            checked={selectedAccountsToImport.includes(accName)}
+                                            onCheckedChange={() => handleAccountSelectionChange(accName)}
+                                        />
+                                        <Label htmlFor={`select-acc-${accName}`} className="truncate font-medium">{accName}</Label>
                                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
                                         <div className="flex gap-2">
                                             <Select 
@@ -559,26 +571,7 @@ export function ExcelImporter() {
                         <h3 className="text-lg font-semibold mb-2">Final Preview</h3>
 
                         <div className="grid md:grid-cols-2 gap-4 mb-4">
-                             {TEMPLATES[template]?.mapping.mode && accountsInFile.length > 0 && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="filter-account">Filter by Account</Label>
-                                    <Select onValueChange={setFilterAccount} defaultValue={filterAccount}>
-                                        <SelectTrigger id="filter-account">
-                                            <SelectValue placeholder="Select an account to view..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Accounts</SelectItem>
-                                            {accountsInFile.map(accName => (
-                                                <SelectItem key={accName} value={accName}>
-                                                    {accName}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                             )}
-
-                            {!TEMPLATES[template]?.mapping.mode && (
+                             {!TEMPLATES[template]?.mapping.mode && (
                                 <div className="space-y-2">
                                     <Label htmlFor="import-account">Import into Account</Label>
                                     <Select onValueChange={setImportAccountId} defaultValue={importAccountId}>
@@ -662,3 +655,5 @@ export function ExcelImporter() {
         </Card>
     );
 }
+
+    

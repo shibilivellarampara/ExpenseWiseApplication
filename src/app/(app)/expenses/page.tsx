@@ -111,16 +111,23 @@ export default function ExpensesPage() {
     }, [allExpenses, categoryMap, accountMap, tagMap]);
 
     const filteredAndEnrichedExpenses = useMemo(() => {
-        const hasSingleAccountFilter = filters.accounts.length === 1;
-        
-        let processedExpenses = enrichedExpenses;
+        let filtered = enrichedExpenses.filter(expense => {
+            const { dateRange, type, categories, accounts, tags } = filters;
+            if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
+            if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
+            if (type !== 'all' && expense.type !== type) return false;
+            if (categories.length > 0 && !categories.includes(expense.categoryId || '')) return false;
+            if (accounts.length > 0 && !accounts.includes(expense.accountId)) return false;
+            if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
+            return true;
+        });
 
-        if (hasSingleAccountFilter) {
+        if (filters.accounts.length === 1) {
             const accountId = filters.accounts[0];
             const account = accountMap.get(accountId);
 
             if (account) {
-                 const accountTransactions = enrichedExpenses
+                const accountTransactions = enrichedExpenses
                     .filter(tx => tx.accountId === accountId)
                     .sort((a, b) => a.date.getTime() - b.date.getTime());
                 
@@ -150,7 +157,7 @@ export default function ExpensesPage() {
                     balances.set(tx.id, currentBal);
                 });
                 
-                processedExpenses = processedExpenses.map(tx => {
+                filtered = filtered.map(tx => {
                     if (balances.has(tx.id)) {
                         return { ...tx, runningBalance: balances.get(tx.id) };
                     }
@@ -159,17 +166,7 @@ export default function ExpensesPage() {
             }
         }
         
-        return processedExpenses.filter(expense => {
-            const { dateRange, type, categories, accounts, tags } = filters;
-            if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
-            if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
-            if (type !== 'all' && expense.type !== type) return false;
-            if (categories.length > 0 && !categories.includes(expense.categoryId || '')) return false;
-            if (accounts.length > 0 && !accounts.includes(expense.accountId)) return false;
-            if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
-            return true;
-        });
-
+        return filtered;
     }, [enrichedExpenses, filters, accountMap]);
     
     const handleFiltersChange = (newFilters: any) => {
@@ -243,4 +240,5 @@ export default function ExpensesPage() {
     
 
     
+
 

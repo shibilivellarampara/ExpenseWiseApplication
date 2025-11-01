@@ -10,30 +10,29 @@ import { cn } from "@/lib/utils";
 
 interface ExpensesSummaryProps {
     expenses: EnrichedExpense[];
-    isLoading?: boolean;
     currency?: string;
+    isLoading?: boolean;
 }
 
-export function ExpensesSummary({ expenses, isLoading, currency }: ExpensesSummaryProps) {
-
+export function ExpensesSummary({ isLoading, currency, expenses }: ExpensesSummaryProps) {
     const currencySymbol = getCurrencySymbol(currency);
 
     const summary = useMemo(() => {
-        const totalIncome = expenses
-            .filter(e => e.type === 'income')
-            .reduce((sum, e) => sum + e.amount, 0);
+        if (!expenses) {
+            return { totalIn: 0, totalOut: 0, netFlow: 0 };
+        }
+
+        const totalIn = expenses
+            .filter(exp => exp.type === 'income')
+            .reduce((sum, exp) => sum + exp.amount, 0);
         
-        const totalExpense = expenses
-            .filter(e => e.type === 'expense')
-            .reduce((sum, e) => sum + e.amount, 0);
+        const totalOut = expenses
+            .filter(exp => exp.type === 'expense')
+            .reduce((sum, exp) => sum + exp.amount, 0);
 
-        const netBalance = totalIncome - totalExpense;
+        const netFlow = totalIn - totalOut;
 
-        return {
-            totalIncome,
-            totalExpense,
-            netBalance
-        };
+        return { totalIn, totalOut, netFlow };
     }, [expenses]);
 
     if (isLoading) {
@@ -63,18 +62,18 @@ export function ExpensesSummary({ expenses, isLoading, currency }: ExpensesSumma
                         <p className="text-muted-foreground">Net Balance</p>
                         <p className={cn(
                             "text-lg font-bold",
-                            summary.netBalance > 0 && "text-green-600",
-                            summary.netBalance < 0 && "text-red-500"
+                            summary.netFlow >= 0 && "text-green-600",
+                            summary.netFlow < 0 && "text-red-500"
                         )}>
-                            {summary.netBalance.toFixed(2)}
+                            {currencySymbol}{summary.netFlow.toFixed(2)}
                         </p>
                     </div>
                     <div className="text-right">
                         <p className="text-green-600">
-                           <span className="text-muted-foreground">In:</span> {summary.totalIncome.toFixed(2)}
+                           <span className="text-muted-foreground">IN:</span> {currencySymbol}{summary.totalIn.toFixed(2)}
                         </p>
                          <p className="text-red-500">
-                           <span className="text-muted-foreground">Out:</span> {summary.totalExpense.toFixed(2)}
+                           <span className="text-muted-foreground">OUT:</span> {currencySymbol}{summary.totalOut.toFixed(2)}
                         </p>
                     </div>
                 </div>

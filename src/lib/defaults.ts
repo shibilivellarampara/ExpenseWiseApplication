@@ -8,13 +8,13 @@ export const defaultCategories = [
   { name: 'Entertainment', icon: 'PartyPopper' },
   { name: 'Health', icon: 'HeartPulse' },
   { name: 'Credit Limit Upgrade', icon: 'TrendingUp' },
+  { name: 'Credit Card Payment', icon: 'Landmark' },
   { name: 'Other', icon: 'MoreHorizontal' },
 ];
 
 // Default accounts for new users
 export const defaultAccounts = [
   { name: 'Cash', icon: 'Wallet', type: 'cash', balance: 0, status: 'active' },
-  { name: 'Primary Bank', icon: 'Landmark', type: 'bank', balance: 0, status: 'active' },
 ];
 
 // Default tags for new users
@@ -44,5 +44,3 @@ export const defaultPaymentMethods = [
   { name: 'UPI', icon: 'IndianRupee' },
   { name: 'Bank Transfer', icon: 'Landmark' },
 ];
-
-    

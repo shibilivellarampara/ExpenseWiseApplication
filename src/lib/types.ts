@@ -16,9 +16,11 @@ export type UserProfile = {
   };
   dashboardSettings?: {
     useCategoryColorsInChart?: boolean;
+    show5YearView?: boolean;
   };
   createdAt?: Timestamp;
   sharedExpenseIds?: string[];
+  isAdmin?: boolean;
 };
 
 export type Category = {
@@ -34,6 +36,7 @@ export type Account = {
   type: 'bank' | 'credit_card' | 'wallet' | 'cash';
   balance: number;
   limit?: number; // For credit cards
+  billingDate?: number; // Day of the month (1-31) for credit cards
   icon: string; // lucide-react icon name
   userId: string;
   status: 'active' | 'inactive';
@@ -58,17 +61,18 @@ export type Expense = {
   categoryId?: string;
   tagIds?: string[];
   sharedExpenseId?: string;
+  runningBalance?: number;
+  accountBalance?: number;
 };
 
-export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds'> & {
-  id: string;
-  user?: UserProfile; // The user who created the expense
+export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds' | 'date'> & {
   category?: Category;
   account?: Account;
   tags: Tag[];
-  date: Date; // Ensure date is always a Date object for the UI
-  balanceAfterTransaction?: number;
+  user?: UserProfile;
+  date: Date; // Ensure date is always a Date object
 };
+
 
 export type SharedExpense = {
   id: string;

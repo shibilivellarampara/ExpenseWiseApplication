@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Pilcrow, TrendingUp, Edit, User as UserIcon, Wallet } from "lucide-react";
+import { Pilcrow, TrendingUp, Edit, User as UserIcon, Wallet, AlertTriangle } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -20,6 +20,8 @@ interface ExpensesTableProps {
   expenses: EnrichedExpense[];
   isLoading?: boolean;
   isShared?: boolean;
+  onDataChange: () => void;
+  error?: string | null;
 }
 
 const renderIcon = (iconName: string | undefined, className?: string) => {
@@ -60,7 +62,7 @@ const formatAmount = (amount: number) => {
 };
 
 
-function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string }) {
+function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; }) {
 
     const groupedExpenses = useMemo(() => {
         return expenses.reduce((acc, expense) => {
@@ -96,9 +98,36 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: 
                                             renderIcon(expense.category?.icon, 'h-5 w-5 text-gray-700')
                                         }
                                     </div>
-                                    <div className="flex-grow space-y-1">
-                                        <div className="font-semibold truncate">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
-                                        
+                                    <div className="flex-grow space-y-1 w-full min-w-0">
+                                        <div className="flex justify-between items-start">
+                                            <div className="font-semibold truncate flex-1 pr-4">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
+                                            <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
+                                                <div className="flex items-center">
+                                                    <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId} onSaveSuccess={onDataChange}>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                    </AddExpenseDialog>
+                                                    <div className={cn(
+                                                        'font-bold text-lg',
+                                                        expense.type === 'income' ? 'text-green-600' : 'text-red-500'
+                                                    )}>
+                                                        {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}
+                                                    </div>
+                                                </div>
+                                                 {typeof expense.runningBalance === 'number' && (
+                                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                                        Bal: {currencySymbol}{formatAmount(expense.runningBalance)}
+                                                    </div>
+                                                )}
+                                                {typeof expense.accountBalance === 'number' && typeof expense.runningBalance !== 'number' && (
+                                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                                        Acct. Bal: {currencySymbol}{formatAmount(expense.accountBalance)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         <div className="text-xs text-muted-foreground flex items-center gap-4">
                                             <div className="flex items-center gap-1">
                                                 {isShared && expense.user ? (
@@ -128,7 +157,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: 
                                             </div>
                                         </div>
                                         
-                                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                                        <div className="flex flex-wrap items-center gap-2 pt-1 w-full">
                                             {expense.category && categoryColor && (
                                                 <Badge 
                                                     style={{ backgroundColor: categoryColor.backgroundColor, color: categoryColor.textColor }}
@@ -152,26 +181,6 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: 
                                             )})}
                                         </div>
                                     </div>
-                                    <div className="text-right flex-shrink-0 w-32 flex flex-col items-end">
-                                        <div className="flex items-center">
-                                            <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId}>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                            </AddExpenseDialog>
-                                            <div className={cn(
-                                                'font-bold text-lg',
-                                                expense.type === 'income' ? 'text-green-600' : 'text-red-500'
-                                            )}>
-                                                {formatAmount(expense.amount)}
-                                            </div>
-                                        </div>
-                                        {!isShared && expense.balanceAfterTransaction !== undefined && (
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                Balance: {formatAmount(expense.balanceAfterTransaction)}
-                                            </p>
-                                        )}
-                                    </div>
                                 </div>
                             )})}
                         </div>
@@ -182,7 +191,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol }: { expenses: 
     )
 }
 
-export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTableProps) {
+export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, error }: ExpensesTableProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -216,12 +225,26 @@ export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTablePr
     )
   }
 
+  if (error) {
+    return (
+        <Card>
+            <CardContent className="pt-6">
+                <div className="h-48 flex flex-col items-center justify-center text-center text-destructive">
+                   <AlertTriangle className="h-10 w-10 mb-4" />
+                   <h3 className="text-lg font-semibold">Could not load transactions</h3>
+                   <p className="text-sm">There was an issue fetching your data. This may be due to the combination of filters selected. Try simplifying your filter.</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+  }
+
   if (expenses.length === 0) {
     return (
        <Card>
           <CardContent className="pt-6">
               <div className="h-48 flex flex-col items-center justify-center text-center">
-                 <h3 className="text-lg font-semibold">No transactions match your filters.</h3>
+                 <h3 className="text-lg font-semibold">No transactions found.</h3>
                  <p className="text-muted-foreground">Try adjusting your filters or add a new transaction.</p>
               </div>
           </CardContent>
@@ -229,5 +252,5 @@ export function ExpensesTable({ expenses, isLoading, isShared }: ExpensesTablePr
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} />;
+  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} />;
 }

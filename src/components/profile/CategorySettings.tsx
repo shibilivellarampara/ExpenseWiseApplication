@@ -1,23 +1,26 @@
 
 'use client';
 
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Category } from '@/lib/types';
 import { collection, doc, writeBatch, addDoc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { cn } from '@/lib/utils';
 
 export function CategorySettings() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const [isOpen, setIsOpen] = useState(false);
 
     const categoriesQuery = useMemoFirebase(() =>
         user ? collection(firestore, `users/${user.uid}/categories`) : null
@@ -29,6 +32,8 @@ export function CategorySettings() {
     const [editingItem, setEditingItem] = useState<{ id: string; name: string; icon: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
+    const SYSTEM_CATEGORIES = ['Credit Limit Upgrade', 'Credit Card Payment'];
+
     const renderIcon = (iconName: string) => {
         const IconComponent = (LucideIcons as any)[iconName];
         return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
@@ -36,146 +41,202 @@ export function CategorySettings() {
 
     const handleAddItem = async () => {
         if (!newItem.name || !user || !firestore) return;
-        setIsSaving(true);
-        try {
-            const ref = collection(firestore, `users/${user.uid}/categories`);
-            await addDoc(ref, { name: newItem.name, icon: newItem.icon, userId: user.uid });
-            setNewItem({ name: '', icon: 'Shapes' });
-            toast({ title: 'Category Added' });
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Error', description: error.message });
-        } finally {
-            setIsSaving(false);
+        
+        if (categories?.some(c => c.name.toLowerCase() === newItem.name.toLowerCase())) {
+            toast({
+                variant: 'destructive',
+                title: 'Duplicate Category',
+                description: `A category named "${newItem.name}" already exists.`,
+            });
+            return;
         }
+        
+        setIsSaving(true);
+        const ref = collection(firestore, `users/${user.uid}/categories`);
+        const newDocRef = doc(ref);
+        const categoryData = { id: newDocRef.id, name: newItem.name, icon: newItem.icon, userId: user.uid };
+
+        setDoc(newDocRef, categoryData)
+            .then(() => {
+                setNewItem({ name: '', icon: 'Shapes' });
+                toast({ title: 'Category Added' });
+            })
+            .catch(async (serverError) => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: newDocRef.path,
+                    operation: 'create',
+                    requestResourceData: categoryData,
+                }));
+            })
+            .finally(() => {
+                 setIsSaving(false);
+            });
     };
 
     const handleRemoveItem = async (itemId: string) => {
         if (!user || !firestore) return;
 
         const itemToRemove = categories?.find(i => i.id === itemId);
-        if (itemToRemove?.name === 'Credit Limit Upgrade') {
-            toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'The "Credit Limit Upgrade" category is a system category and cannot be removed.' });
+        if (SYSTEM_CATEGORIES.includes(itemToRemove?.name || '')) {
+            toast({ variant: 'destructive', title: 'Action Not Allowed', description: `"${itemToRemove?.name}" is a system category and cannot be removed.` });
             return;
         }
 
         setIsSaving(true);
-        try {
-            const batch = writeBatch(firestore);
-            const itemRef = doc(firestore, `users/${user.uid}/categories`, itemId);
-            batch.delete(itemRef);
-            await batch.commit();
-            toast({ title: 'Category Removed' });
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Error', description: error.message });
-        } finally {
-            setIsSaving(false);
-        }
+        const itemRef = doc(firestore, `users/${user.uid}/categories`, itemId);
+        
+        const batch = writeBatch(firestore);
+        batch.delete(itemRef);
+
+        batch.commit()
+            .then(() => {
+                toast({ title: 'Category Removed' });
+            })
+            .catch(async (serverError) => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: itemRef.path,
+                    operation: 'delete',
+                }));
+            })
+            .finally(() => {
+                setIsSaving(false);
+            });
     };
 
     const handleSaveEdit = async () => {
         if (!editingItem || !user || !firestore) return;
 
         const originalItem = categories?.find(i => i.id === editingItem.id);
-        if (originalItem?.name === 'Credit Limit Upgrade') {
-            toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'The "Credit Limit Upgrade" category is a system category and cannot be edited.' });
+        if (SYSTEM_CATEGORIES.includes(originalItem?.name || '')) {
+            toast({ variant: 'destructive', title: 'Action Not Allowed', description: `"${originalItem?.name}" is a system category and cannot be edited.` });
             setEditingItem(null);
             return;
         }
+        
+        if (categories?.some(c => c.id !== editingItem.id && c.name.toLowerCase() === editingItem.name.toLowerCase())) {
+            toast({
+                variant: 'destructive',
+                title: 'Duplicate Category',
+                description: `A category named "${editingItem.name}" already exists.`,
+            });
+            return;
+        }
+
 
         setIsSaving(true);
-        try {
-            const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
-            await setDoc(itemRef, { name: editingItem.name, icon: editingItem.icon }, { merge: true });
-            toast({ title: "Category Updated" });
-        } catch (error: any) {
-            toast({ variant: "destructive", title: "Update Failed", description: error.message });
-        } finally {
-            setEditingItem(null);
-            setIsSaving(false);
-        }
+        const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
+        const updatedData = { name: editingItem.name, icon: editingItem.icon };
+
+        setDoc(itemRef, updatedData, { merge: true })
+            .then(() => {
+                toast({ title: "Category Updated" });
+            })
+            .catch(async (serverError) => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: itemRef.path,
+                    operation: 'update',
+                    requestResourceData: updatedData,
+                }));
+            })
+            .finally(() => {
+                 setEditingItem(null);
+                 setIsSaving(false);
+            });
     };
     
+    const sortedCategories = categories ? [...categories].sort((a, b) => a.name.localeCompare(b.name)) : [];
+
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Categories</CardTitle>
-                <CardDescription>Manage your expense categories.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {isLoading ? (
-                    <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
-                ) : (
-                    <div className="space-y-2">
-                        {categories?.map((item) => (
-                            <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
-                                {editingItem?.id === item.id ? (
-                                    <>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                                {availableIcons.map(icon => (
-                                                    <Button key={icon} variant="ghost" size="icon" onClick={() => setEditingItem({ ...editingItem, icon })}>
-                                                        {renderIcon(icon)}
-                                                    </Button>
-                                                ))}
-                                            </PopoverContent>
-                                        </Popover>
-                                        <Input
-                                            value={editingItem.name}
-                                            onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                                            className="flex-1"
-                                            autoFocus
-                                        />
-                                        <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
-                                            <Check className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="flex items-center flex-1 gap-2">
-                                            {renderIcon(item.icon)}
-                                            <span>{item.name}</span>
-                                        </div>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </>
-                                )}
+            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                <CollapsibleTrigger asChild>
+                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
+                        <div>
+                            <h3 className="text-base font-semibold font-headline">Categories</h3>
+                            <CardDescription className="text-sm">Manage your expense categories.</CardDescription>
+                        </div>
+                        <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
+                    </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    <CardContent className="space-y-4 pt-0 p-4">
+                        {isLoading ? (
+                            <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
+                        ) : (
+                            <div className="space-y-2">
+                                {sortedCategories.map((item) => (
+                                    <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
+                                        {editingItem?.id === item.id ? (
+                                            <div className="flex items-center gap-2 w-full">
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                                                        {availableIcons.map(icon => (
+                                                            <Button key={icon} variant="ghost" size="icon" onClick={() => setEditingItem({ ...editingItem, icon })}>
+                                                                {renderIcon(icon)}
+                                                            </Button>
+                                                        ))}
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <Input
+                                                    value={editingItem.name}
+                                                    onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                                    className="flex-1"
+                                                    autoFocus
+                                                    disabled={SYSTEM_CATEGORIES.includes(item.name)}
+                                                />
+                                                <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
+                                                    <Check className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="flex items-center flex-1 gap-2">
+                                                    {renderIcon(item.icon)}
+                                                    <span>{item.name}</span>
+                                                </div>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                )}
-                 <div className="flex items-center gap-2 pt-4">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" size="icon" className="shrink-0">{renderIcon(newItem.icon)}</Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                            {availableIcons.map(icon => (
-                                <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItem({...newItem, icon})}>
-                                    {renderIcon(icon)}
-                                </Button>
-                            ))}
-                        </PopoverContent>
-                    </Popover>
-                    <Input
-                        value={newItem.name}
-                        onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                        placeholder="Add new category"
-                    />
-                    <Button type="button" size="icon" onClick={handleAddItem} disabled={isSaving}>
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
-                    </Button>
-                </div>
-            </CardContent>
+                        )}
+                        <div className="flex items-center gap-2 pt-4">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" size="icon" className="shrink-0">{renderIcon(newItem.icon)}</Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                                    {availableIcons.map(icon => (
+                                        <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItem({...newItem, icon})}>
+                                            {renderIcon(icon)}
+                                        </Button>
+                                    ))}
+                                </PopoverContent>
+                            </Popover>
+                            <Input
+                                value={newItem.name}
+                                onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+                                placeholder="Add new category"
+                            />
+                            <Button type="button" size="icon" onClick={handleAddItem} disabled={isSaving}>
+                                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </CollapsibleContent>
+            </Collapsible>
         </Card>
     );
 }

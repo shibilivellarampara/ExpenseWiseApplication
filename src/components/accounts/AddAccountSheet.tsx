@@ -13,12 +13,12 @@ import { Button } from '../ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '../ui/form';
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, doc, setDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { useCollection, useFirestore, useUser, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { Loader2, Pilcrow } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
@@ -31,6 +31,7 @@ const accountSchemaBase = z.object({
     type: z.enum(['bank', 'credit_card', 'wallet', 'cash']),
     balance: z.coerce.number(),
     limit: z.coerce.number().optional(),
+    billingDate: z.coerce.number().min(1).max(31).optional(),
     icon: z.string().min(1, "Icon is required."),
     status: z.enum(['active', 'inactive']).default('active'),
 });
@@ -80,6 +81,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             balance: 0,
             icon: 'Landmark',
             limit: undefined,
+            billingDate: undefined,
             status: 'active',
         },
     });
@@ -95,6 +97,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     balance: accountToEdit.balance,
                     icon: accountToEdit.icon,
                     limit: accountToEdit.limit,
+                    billingDate: accountToEdit.billingDate,
                     status: accountToEdit.status,
                 });
             } else {
@@ -104,6 +107,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     balance: 0,
                     icon: 'Landmark',
                     limit: undefined,
+                    billingDate: undefined,
                     status: 'active',
                 });
             }
@@ -112,8 +116,8 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
 
     async function onSubmit(values: AccountFormData) {
         setIsLoading(true);
-        if (!firestore || !user) {
-             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+        if (!firestore || !user || !categories) {
+             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in and categories must be loaded.' });
              setIsLoading(false);
              return;
         }
@@ -122,43 +126,50 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             ...values,
             userId: user.uid,
         };
-
-        if (isNaN(accountData.limit) || accountData.limit === undefined) {
+        
+        if (values.type !== 'credit_card') {
             delete accountData.limit;
+            delete accountData.billingDate;
         }
 
         try {
-            const batch = writeBatch(firestore);
-
             if (isEditMode && accountToEdit) {
-                // Update existing account
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountToEdit.id);
-                batch.set(accountRef, accountData, { merge: true });
-
+                setDocumentNonBlocking(accountRef, accountData, { merge: true });
                 toast({
                     title: 'Account Updated!',
                     description: 'Your account details have been saved.',
                 });
             } else {
-                // Add new account
-                const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
-                const newAccountRef = doc(accountsCol); // Create a reference first to get the ID
-                batch.set(newAccountRef, { ...accountData, id: newAccountRef.id });
+                const newAccountRef = await addDocumentNonBlocking(collection(firestore, `users/${user.uid}/accounts`), {});
+                
+                setDocumentNonBlocking(newAccountRef, { ...accountData, id: newAccountRef.id });
+                
+                const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
+                
+                if (values.type !== 'credit_card' && values.balance !== 0) {
+                    addDocumentNonBlocking(expensesCol, {
+                        userId: user.uid,
+                        type: 'income',
+                        amount: Math.abs(values.balance),
+                        description: 'Initial Balance',
+                        date: new Date(),
+                        createdAt: serverTimestamp(),
+                        accountId: newAccountRef.id,
+                    });
+                }
                 
                 if (values.type === 'credit_card' && values.limit && values.limit > 0) {
-                    const upgradeCategory = categories?.find(c => c.name === 'Credit Limit Upgrade');
+                    const upgradeCategory = categories.find(c => c.name === 'Credit Limit Upgrade');
                     if (upgradeCategory) {
-                        const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
-                        const expenseRef = doc(expensesCol);
-                        batch.set(expenseRef, {
-                            id: expenseRef.id,
+                        addDocumentNonBlocking(expensesCol, {
                             userId: user.uid,
-                            type: 'income', // This makes it a "cash in" visually
+                            type: 'income',
                             amount: values.limit,
                             description: 'Initial Credit Limit',
                             date: new Date(),
                             createdAt: serverTimestamp(),
-                            accountId: newAccountRef.id, // Link to the new account
+                            accountId: newAccountRef.id,
                             categoryId: upgradeCategory.id,
                         });
                     }
@@ -169,7 +180,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     description: 'The new account has been created.',
                 });
             }
-            await batch.commit();
             setOpen(false);
 
         } catch (error: any) {
@@ -241,26 +251,43 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                         {accountType === 'credit_card' ? 'Current Outstanding Amount' : 'Current Balance'}
                                     </FormLabel>
                                     <FormControl>
-                                        <Input type="number" placeholder="0.00" {...field} />
+                                        <Input type="number" placeholder="0.00" {...field} disabled={isEditMode} />
                                     </FormControl>
+                                     {isEditMode && <FormDescription>Balance can only be changed by adding transactions.</FormDescription>}
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                         {accountType === 'credit_card' && (
-                             <FormField
-                                control={form.control}
-                                name="limit"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Credit Limit</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" placeholder="50000" {...field} value={field.value ?? ''} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                             <>
+                                <FormField
+                                    control={form.control}
+                                    name="limit"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Credit Limit</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
+                                            </FormControl>
+                                            {isEditMode && <FormDescription>Limit can only be changed via a "Credit Limit Upgrade" transaction.</FormDescription>}
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="billingDate"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Billing Date (Day of Month)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" min="1" max="31" placeholder="e.g., 15" {...field} value={field.value ?? ''}/>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                             </>
                         )}
                          <FormField
                             control={form.control}

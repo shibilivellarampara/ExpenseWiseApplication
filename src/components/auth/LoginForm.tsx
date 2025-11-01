@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -7,27 +8,33 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
-import { Separator } from '../ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp"
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../ui/dialog';
 import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React from 'react';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '../ui/input-otp';
 
 
-const formSchema = z.object({
-  loginId: z.string().min(1, { message: 'This field is required.' }),
-  password: z.string().optional(),
+const emailSchema = z.object({
+  loginId: z.string().email({ message: 'Please enter a valid email.' }),
+  password: z.string().min(1, { message: 'Password is required.' }),
 });
+
+const phoneSchema = z.object({
+  loginId: z.string().refine((value) => value ? isPossiblePhoneNumber(value) : true, { message: "Please enter a valid phone number." }),
+  password: z.string().optional(), // Not used for phone, but keeps structure
+});
+
+// Create a stable component for the phone input to prevent re-renders
+const MemoizedPhoneInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>((props, ref) => (
+    <Input {...props} ref={ref} className="!rounded-l-none" />
+));
+MemoizedPhoneInput.displayName = 'MemoizedPhoneInput';
 
 
 export function LoginForm() {
@@ -35,34 +42,81 @@ export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [showOtpInput, setShowOtpInput] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const auth = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  
+  // Forgot Password state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [isForgotLoading, setIsForgotLoading] = useState(false);
+
+  // Phone Auth State
+  const [showOtpDialog, setShowOtpDialog] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+
+  const formResolver = useCallback((data: any, context: any, options: any) => {
+    if (loginMethod === 'email') {
+      return zodResolver(emailSchema)(data, context, options);
+    }
+    return zodResolver(phoneSchema)(data, context, options);
+  }, [loginMethod]);
+
+  const form = useForm<{loginId: string, password?: string}>({
+    resolver: formResolver,
     defaultValues: {
       loginId: '',
       password: '',
     },
   });
 
-  // Initialize reCAPTCHA
-  useEffect(() => {
-    if (auth && recaptchaContainerRef.current && !recaptchaVerifier.current) {
-      recaptchaVerifier.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-        'size': 'invisible',
-        'callback': () => {
-          // reCAPTCHA solved, allow sign-in
+  // Initialize reCAPTCHA for phone update
+    useEffect(() => {
+        if (auth && recaptchaContainerRef.current && !recaptchaVerifier.current) {
+            recaptchaVerifier.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+                'size': 'invisible',
+            });
+            recaptchaVerifier.current.render();
         }
-      });
-    }
-  }, [auth]);
+    }, [auth]);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+
+    const handleLoginError = (error: any) => {
+        let title = "Login Error";
+        let description = "An unexpected error occurred. Please try again.";
+
+        switch (error.code) {
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+            case 'auth/invalid-credential':
+                title = "Invalid Credentials";
+                description = "The email or password you entered is incorrect.";
+                break;
+            case 'auth/invalid-email':
+                title = "Invalid Email";
+                description = "Please enter a valid email address.";
+                break;
+            case 'auth/too-many-requests':
+                title = "Too Many Attempts";
+                description = "You've tried to log in too many times. Please try again later.";
+                break;
+            case 'auth/popup-closed-by-user':
+                title = "Sign-In Canceled";
+                description = "You closed the sign-in window. Please try again.";
+                break;
+            default:
+                description = error.message || description;
+                break;
+        }
+        
+        toast({ variant: 'destructive', title: title, description: description });
+    }
+
+  async function handleEmailSubmit(values: z.infer<typeof emailSchema>) {
     setIsLoading(true);
     if (!auth) {
         toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.' });
@@ -70,91 +124,110 @@ export function LoginForm() {
         return;
     }
 
-    if (loginMethod === 'email') {
-        if (!values.password) {
-            form.setError('password', { type: 'manual', message: 'Password is required for email login.' });
-            setIsLoading(false);
-            return;
-        }
-        try {
-            await signInWithEmailAndPassword(auth, values.loginId, values.password);
-            toast({ title: 'Success!', description: 'You are now signed in.' });
-            router.push('/dashboard');
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Login Failed', description: error.message });
-        } finally {
-            setIsLoading(false);
-        }
-    } else if (loginMethod === 'phone') {
-        if (!recaptchaVerifier.current) {
-            toast({ variant: 'destructive', title: 'Error', description: 'reCAPTCHA not initialized.' });
-            setIsLoading(false);
-            return;
-        }
-        try {
-            const result = await signInWithPhoneNumber(auth, values.loginId, recaptchaVerifier.current);
-            setConfirmationResult(result);
-            setShowOtpInput(true);
-            toast({ title: 'Verification code sent!', description: `A code has been sent to ${values.loginId}.` });
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Phone Sign-In Failed', description: error.message });
-             if (recaptchaVerifier.current) {
-                // @ts-ignore
-                grecaptcha.reset(recaptchaVerifier.current.widgetId);
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    } else {
-        toast({ variant: 'destructive', title: 'Invalid Input', description: 'Please enter a valid email or phone number.' });
-        setIsLoading(false);
-    }
-  }
-
-  async function handleGoogleSignIn() {
-    setIsGoogleLoading(true);
-    if (!auth) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.' });
-        setIsGoogleLoading(false);
-        return;
-    }
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      toast({ title: 'Success!', description: 'You are now signed in with Google.' });
-      router.push('/dashboard');
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Google Sign-In Failed', description: error.message || 'Could not sign in with Google.' });
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  }
-
-  async function handleOtpSubmit(otp: string) {
-    if (!confirmationResult) return;
-    setIsLoading(true);
-    try {
-        await confirmationResult.confirm(otp);
+        await signInWithEmailAndPassword(auth, values.loginId, values.password);
         toast({ title: 'Success!', description: 'You are now signed in.' });
         router.push('/dashboard');
     } catch (error: any) {
-        toast({ variant: 'destructive', title: 'OTP Verification Failed', description: error.message });
+        handleLoginError(error);
     } finally {
         setIsLoading(false);
-        setShowOtpInput(false);
+    }
+  }
+
+  async function handlePhoneSubmit(values: z.infer<typeof phoneSchema>) {
+      if (!auth || !recaptchaVerifier.current || !values.loginId) {
+          toast({ variant: "destructive", title: "Error", description: "Authentication service not ready." });
+          return;
+      }
+      setIsLoading(true);
+      try {
+          const result = await signInWithPhoneNumber(auth, values.loginId, recaptchaVerifier.current);
+          setConfirmationResult(result);
+          setShowOtpDialog(true);
+          toast({ title: "Verification code sent", description: "Please check your phone for an SMS message." });
+      } catch (error: any) {
+          handleLoginError(error);
+      } finally {
+          setIsLoading(false);
+      }
+  }
+
+  async function handleOtpVerification() {
+      if (!confirmationResult || !otp) return;
+      setIsLoading(true);
+      try {
+          await confirmationResult.confirm(otp);
+          setShowOtpDialog(false);
+          toast({ title: "Success!", description: "You are now signed in." });
+          router.push('/dashboard');
+      } catch (error: any) {
+          handleLoginError(error);
+      } finally {
+          setIsLoading(false);
+          setOtp('');
+      }
+  }
+
+
+    async function handleGoogleSignIn() {
+        setIsGoogleLoading(true);
+        if (!auth) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.' });
+            setIsGoogleLoading(false);
+            return;
+        }
+        const provider = new GoogleAuthProvider();
+         try {
+            await signInWithPopup(auth, provider);
+            toast({ title: 'Success!', description: 'You are now signed in with Google.' });
+            router.push('/dashboard');
+        } catch (error: any) {
+            handleLoginError(error)
+        } finally {
+            setIsGoogleLoading(false);
+        }
+    }
+
+  async function handleForgotPassword() {
+    if (!auth || !forgotPasswordEmail) {
+      toast({ variant: 'destructive', title: 'Email Required', description: 'Please enter your email address.' });
+      return;
+    }
+    setIsForgotLoading(true);
+    try {
+      const actionCodeSettings = {
+        url: `${window.location.origin}/reset-password`,
+        handleCodeInApp: true,
+      };
+      await sendPasswordResetEmail(auth, forgotPasswordEmail, actionCodeSettings);
+      toast({
+        title: 'Password Reset Email Sent',
+        description: 'Check your inbox for a link to reset your password.',
+      });
+      setShowForgotPassword(false);
+      setForgotPasswordEmail('');
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+      setIsForgotLoading(false);
     }
   }
 
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="email" className="w-full" onValueChange={(value) => setLoginMethod(value as 'email' | 'phone')}>
+      <div ref={recaptchaContainerRef}></div>
+      <Tabs defaultValue="email" className="w-full" onValueChange={(value) => {
+          setLoginMethod(value as 'email' | 'phone');
+          form.reset();
+        }}>
         <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="phone">Phone</TabsTrigger>
         </TabsList>
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+            <form onSubmit={form.handleSubmit(loginMethod === 'email' ? handleEmailSubmit : handlePhoneSubmit)} className="space-y-4 pt-4">
                 <TabsContent value="email" className="space-y-4 m-0">
                     <FormField
                         control={form.control}
@@ -174,9 +247,34 @@ export function LoginForm() {
                         name="password"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
+                            <div className="flex justify-between items-center">
+                                <FormLabel>Password</FormLabel>
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    className="h-auto p-0 text-sm"
+                                    onClick={() => setShowForgotPassword(true)}
+                                >
+                                    Forgot Password?
+                                </Button>
+                            </div>
+                                <FormControl>
+                                <div className="relative">
+                                    <Input 
+                                        type={showPassword ? 'text' : 'password'} 
+                                        placeholder="••••••••" 
+                                        {...field} 
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                                        onClick={() => setShowPassword(prev => !prev)}
+                                    >
+                                        {showPassword ? <EyeOff /> : <Eye />}
+                                    </Button>
+                                </div>
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -194,11 +292,15 @@ export function LoginForm() {
                             <FormControl>
                                 <PhoneInput
                                     international
-                                    countryCallingCodeEditable={false}
+                                    withCountryCallingCode
                                     defaultCountry="IN"
-                                    placeholder="Enter phone number"
                                     value={field.value || ""}
                                     onChange={field.onChange}
+                                    className="flex items-center w-full"
+                                    countrySelectProps={{
+                                        className: "PhoneInputCountry"
+                                    }}
+                                    inputComponent={MemoizedPhoneInput}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -206,10 +308,10 @@ export function LoginForm() {
                         )}
                     />
                 </TabsContent>
-
+                
                 <Button type="submit" className="w-full" disabled={isLoading || !auth}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {loginMethod === 'phone' ? 'Send Verification Code' : 'Sign In'}
+                    {loginMethod === 'email' ? 'Sign In' : 'Send Verification Code'}
                 </Button>
             </form>
         </Form>
@@ -225,19 +327,43 @@ export function LoginForm() {
       </div>
       <div className="grid grid-cols-1 gap-2">
        <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || !auth}>
-          {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 74.8C307.7 99.8 280.7 86 248 86c-84.3 0-152.3 67.8-152.3 151.4s68 151.4 152.3 151.4c99.2 0 129.1-81.5 133.7-118.8H248v-94.2h239.1c2.3 12.7 3.9 26.1 3.9 40.2z"></path></svg>}
+          {isGoogleLoading || isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 74.8C307.7 99.8 280.7 86 248 86c-84.3 0-152.3 67.8-152.3 151.4s68 151.4 152.3 151.4c99.2 0 129.1-81.5 133.7-118.8H248v-94.2h239.1c2.3 12.7 3.9 26.1 3.9 40.2z"></path></svg>}
           Google
         </Button>
         </div>
         
-        <Dialog open={showOtpInput} onOpenChange={setShowOtpInput}>
+         <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Forgot Password</DialogTitle>
+                    <DialogDescription>Enter your email address and we'll send you a link to reset your password.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2 py-4">
+                    <Input
+                        id="forgot-email"
+                        type="email"
+                        placeholder="name@example.com"
+                        value={forgotPasswordEmail}
+                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        autoFocus
+                    />
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowForgotPassword(false)}>Cancel</Button>
+                    <Button onClick={handleForgotPassword} disabled={isForgotLoading || !forgotPasswordEmail}>
+                        {isForgotLoading ? <Loader2 className="animate-spin" /> : "Send Reset Link"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+         <Dialog open={showOtpDialog} onOpenChange={setShowOtpDialog}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Enter Verification Code</DialogTitle>
                     <DialogDescription>Please enter the 6-digit code sent to your phone.</DialogDescription>
                 </DialogHeader>
-                <div className="flex justify-center">
-                    <InputOTP maxLength={6} onComplete={handleOtpSubmit}>
+                <div className="flex justify-center py-4">
+                    <InputOTP maxLength={6} value={otp} onChange={setOtp}>
                         <InputOTPGroup>
                             <InputOTPSlot index={0} />
                             <InputOTPSlot index={1} />
@@ -248,11 +374,21 @@ export function LoginForm() {
                         </InputOTPGroup>
                     </InputOTP>
                 </div>
-                 {isLoading && <Loader2 className="mx-auto mt-4 h-6 w-6 animate-spin" />}
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={handleOtpVerification} disabled={isLoading || otp.length < 6}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Verify & Sign In
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
-
-        <div ref={recaptchaContainerRef}></div>
     </div>
   );
 }
+
+    
+
+    

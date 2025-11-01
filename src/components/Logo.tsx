@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser } from '@/firebase';
@@ -21,7 +22,7 @@ export function Logo() {
   return (
     <Link href={finalHref} className="flex items-center gap-2" prefetch={false}>
       <Wallet className="h-7 w-7 text-primary" />
-      <span className="text-xl font-headline font-semibold text-gray-800">ExpenseWise</span>
+      <span className="text-xl font-headline font-semibold text-foreground">ExpenseWise</span>
     </Link>
   );
 }

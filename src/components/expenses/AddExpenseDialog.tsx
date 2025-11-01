@@ -41,8 +41,8 @@ import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, serverTimestamp, writeBatch, increment, deleteDoc, addDoc, setDoc } from 'firebase/firestore';
+import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
+import { collection, doc, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import * as LucideIcons from 'lucide-react';
@@ -244,17 +244,18 @@ function ExpenseForm({
         const ref = collection(firestore, `users/${user.uid}/${collectionName}`);
         try {
             const newDocRef = doc(ref);
-            await setDoc(newDocRef, { id: newDocRef.id, name, icon, userId: user.uid });
+            const docId = newDocRef.id;
+            await setDocumentNonBlocking(newDocRef, { id: docId, name, icon, userId: user.uid });
             
             toast({ title: `${type} Added`, description: `"${name}" has been created.` });
 
             if (type === 'Category') {
-                form.setValue('categoryId', newDocRef.id, { shouldValidate: true });
+                form.setValue('categoryId', docId, { shouldValidate: true });
             } else {
                 const currentTagIds = form.getValues('tagIds') || [];
-                form.setValue('tagIds', [...currentTagIds, newDocRef.id], { shouldValidate: true });
+                form.setValue('tagIds', [...currentTagIds, docId], { shouldValidate: true });
             }
-            return newDocRef.id;
+            return docId;
         } catch (error: any) {
             toast({ variant: 'destructive', title: `Error Adding ${type}`, description: error.message });
             return undefined;
@@ -318,7 +319,7 @@ function ExpenseForm({
                     name="date"
                     render={({ field }) => (
                          <FormItem className="flex flex-col space-y-2">
-                            <FormLabel>Date & Time</FormLabel>
+                            <FormLabel>Date &amp; Time</FormLabel>
                             <DateTimePicker field={field} />
                             <FormMessage />
                         </FormItem>
@@ -420,16 +421,35 @@ function ExpenseForm({
                                         <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10">
                                             {selectedTags.length > 0 ? (
                                                 <div className="flex flex-wrap gap-1">
-                                                    {selectedTags.map(tag => (
-                                                        <Badge
-                                                            key={tag.id}
-                                                            variant="secondary"
-                                                            className="flex items-center gap-1"
-                                                        >
-                                                            {renderIcon(tag.icon, "h-3 w-3")}
-                                                            {tag.name}
-                                                        </Badge>
-                                                    ))}
+                                                    {selectedTags.map(tag => {
+                                                        const tagColor = generateColorFromString(tag.name);
+                                                        return (
+                                                            <Badge
+                                                                key={tag.id}
+                                                                style={{ backgroundColor: tagColor.backgroundColor, color: tagColor.textColor }}
+                                                                className="flex items-center gap-1.5 border-transparent"
+                                                            >
+                                                                {renderIcon(tag.icon, "h-3 w-3")}
+                                                                {tag.name}
+                                                                <span
+                                                                    role="button"
+                                                                    tabIndex={0}
+                                                                    className="rounded-full -mr-1 focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") {
+                                                                        e.stopPropagation(); e.preventDefault();
+                                                                        field.onChange(field.value?.filter(id => id !== tag.id))
+                                                                    }}}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        e.preventDefault();
+                                                                        field.onChange(field.value?.filter(id => id !== tag.id))
+                                                                    }}
+                                                                >
+                                                                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground"/>
+                                                                </span>
+                                                            </Badge>
+                                                        )
+                                                    })}
                                                 </div>
                                             ) : (
                                                 "Select tags..."
@@ -499,11 +519,13 @@ export function AddExpenseDialog({
     expenseToEdit,
     sharedExpenseId,
     initialType,
+    onSaveSuccess,
 }: { 
     children: React.ReactNode, 
     expenseToEdit?: EnrichedExpense,
     sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
+    onSaveSuccess?: () => void;
 }) {
     const [open, setOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -514,14 +536,14 @@ export function AddExpenseDialog({
     
     if (isDesktop) {
         return (
-            <DesktopAddExpenseDialog open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType}>
+            <DesktopAddExpenseDialog open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType} onSaveSuccess={onSaveSuccess}>
                 {children}
             </DesktopAddExpenseDialog>
         );
     }
 
     return (
-        <MobileAddExpenseDrawer open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType}>
+        <MobileAddExpenseDrawer open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType} onSaveSuccess={onSaveSuccess}>
             {children}
         </MobileAddExpenseDrawer>
     );
@@ -535,20 +557,23 @@ function DesktopAddExpenseDialog({
     expenseToEdit,
     sharedExpenseId,
     initialType,
+    onSaveSuccess,
 }: { 
     children: React.ReactNode, 
     open: boolean, 
     setOpen: (open: boolean) => void,
     expenseToEdit?: EnrichedExpense,
     sharedExpenseId?: string,
-    initialType?: 'income' | 'expense';
+    initialType?: 'income' | 'expense',
+    onSaveSuccess?: () => void;
 }) {
     const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen, 
         expenseToEdit, 
         sharedExpenseId, 
         initialType,
-        open
+        open,
+        onSaveSuccess,
     });
 
     return (
@@ -614,6 +639,7 @@ function MobileAddExpenseDrawer({
     expenseToEdit,
     sharedExpenseId,
     initialType,
+    onSaveSuccess,
 }: { 
     children: React.ReactNode, 
     open: boolean, 
@@ -621,13 +647,15 @@ function MobileAddExpenseDrawer({
     expenseToEdit?: EnrichedExpense,
     sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
+    onSaveSuccess?: () => void;
 }) {
     const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen,
         expenseToEdit,
         sharedExpenseId,
         initialType,
-        open
+        open,
+        onSaveSuccess,
     });
     
     return (
@@ -690,6 +718,7 @@ interface UseExpenseFormProps {
     sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
     open: boolean;
+    onSaveSuccess?: () => void;
 }
 
 // Shared hook for form logic
@@ -698,7 +727,8 @@ function useExpenseForm({
     expenseToEdit,
     sharedExpenseId,
     initialType,
-    open
+    open,
+    onSaveSuccess,
 }: UseExpenseFormProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
@@ -777,8 +807,10 @@ function useExpenseForm({
             const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
 
             const selectedCategory = categories.find(c => c.id === values.categoryId);
-            const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
             const selectedAccount = accounts.find(a => a.id === values.accountId);
+
+            const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
+            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
 
             const isAddOperation = !isEditMode;
 
@@ -796,28 +828,41 @@ function useExpenseForm({
                 categoryId: values.categoryId === 'no-category' ? null : values.categoryId,
             };
             
-            // This property should not be in user expenses.
             delete expenseData.sharedExpenseId;
            
             if (isCreditLimitUpgrade) {
-                if (selectedAccount?.type === 'credit_card') {
+                 if (selectedAccount?.type === 'credit_card' && values.type === 'income') {
                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                    
                     if (isAddOperation) {
                         batch.update(accountRef, { limit: increment(values.amount) });
                     } else if (expenseToEdit) {
-                        const oldAmount = expenseToEdit.amount;
+                        const oldAmount = expenseToEdit.type === 'income' ? expenseToEdit.amount : -expenseToEdit.amount;
                         const difference = values.amount - oldAmount;
                         batch.update(accountRef, { limit: increment(difference) });
                     }
                 } else {
-                     toast({ variant: 'destructive', title: 'Invalid Account', description: 'Credit Limit Upgrade can only be applied to credit card accounts.'});
+                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Credit Limit Upgrade must be an "income" transaction for a credit card account.'});
                      setIsLoading(false);
                      return false;
                 }
+            } else if (isCreditCardPayment) {
+                 if (selectedAccount?.type === 'credit_card' && values.type === 'expense') {
+                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+                      if (isAddOperation) {
+                        batch.update(accountRef, { balance: increment(-values.amount) }); // Decrease outstanding
+                    } else if (expenseToEdit) {
+                        const oldAmount = expenseToEdit.type === 'expense' ? expenseToEdit.amount : 0;
+                        const difference = values.amount - oldAmount;
+                        batch.update(accountRef, { balance: increment(-difference) });
+                    }
+                 } else {
+                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Credit Card Payment must be an "expense" transaction applied to a credit card account.'});
+                     setIsLoading(false);
+                     return false;
+                 }
             }
             
-            if (!sharedExpenseId && !isCreditLimitUpgrade) {
+            if (!sharedExpenseId && !isCreditLimitUpgrade && !isCreditCardPayment) {
                 const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
                      if (accountType === 'credit_card') {
                         return type === 'expense' ? amount : -amount;
@@ -852,13 +897,16 @@ function useExpenseForm({
                 batch.update(expenseRef, expenseData);
             }
 
-            await batch.commit();
+            commitBatchNonBlocking(batch, collectionPath);
 
             if (isCreditLimitUpgrade) {
                 toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount?.name} has been increased.` });
+            } else if (isCreditCardPayment) {
+                 toast({ title: 'Bill Payment Recorded!', description: `The payment for ${selectedAccount?.name} has been applied.` });
             } else {
                  toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
             }
+            onSaveSuccess?.();
             return true;
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Uh oh! Something went wrong.', description: error.message || 'Could not save transaction.' });
@@ -900,6 +948,7 @@ function useExpenseForm({
 
             const selectedCategory = categories.find(c => c.id === expenseToEdit.categoryId);
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
+            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
             
             batch.delete(expenseRef);
 
@@ -909,6 +958,8 @@ function useExpenseForm({
 
                 if (isCreditLimitUpgrade) {
                      batch.update(accountRef, { limit: increment(-expenseToEdit.amount) });
+                } else if(isCreditCardPayment){
+                    batch.update(accountRef, { balance: increment(expenseToEdit.amount) }); // re-add to outstanding
                 } else {
                     if (selectedAccount) {
                         let amountToRevert: number;
@@ -923,8 +974,9 @@ function useExpenseForm({
             }
 
 
-            await batch.commit();
+            commitBatchNonBlocking(batch, collectionPath);
             toast({ title: 'Transaction Deleted', description: 'The transaction has been permanently removed.' });
+            onSaveSuccess?.();
             setOpen(false);
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Delete Failed', description: error.message });

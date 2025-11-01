@@ -33,6 +33,11 @@
           "type": "array",
           "description": "A list of IDs of the shared expenses this user is a member of.",
           "items": { "type": "string" }
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Indicates if the user has administrative privileges.",
+          "default": false
         }
       },
       "required": ["id", "name", "email"]
@@ -69,6 +74,7 @@
         "type": { "type": "string", "enum": ["bank", "credit_card", "wallet", "cash"] },
         "balance": { "type": "number", "description": "Current balance or outstanding amount." },
         "limit": { "type": "number", "description": "Credit limit for credit cards." },
+        "billingDate": { "type": "number", "description": "Day of the month for credit card billing cycle (1-31)." },
         "icon": { "type": "string", "description": "Name of the lucide-react icon." },
         "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the account." }
       },
@@ -179,6 +185,10 @@
     "/users/{userId}/contributions/{contributionId}": {
         "schema": { "$ref": "#/entities/Contribution" },
         "description": "Stores contribution records for shared expenses."
+    },
+    "/admin/{adminId}": {
+        "schema": { "$ref": "#/entities/UserProfile" },
+        "description": "Admin access control."
     }
   }
 }

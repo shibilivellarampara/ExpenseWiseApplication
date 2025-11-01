@@ -8,11 +8,16 @@ import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking 
 import { doc } from "firebase/firestore";
 import { UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function ExpenseFieldSettings() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const [isOpen, setIsOpen] = useState(false);
 
     const userProfileRef = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -42,48 +47,57 @@ export function ExpenseFieldSettings() {
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Expense Fields</CardTitle>
-                <CardDescription>Customize which fields are required when adding an expense.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                        <Label>Require Category</Label>
-                         <p className="text-[0.8rem] text-muted-foreground">
-                            Make the category field mandatory.
-                        </p>
-                    </div>
-                    <Switch
-                        checked={isCategoryRequired}
-                        onCheckedChange={(value) => handleSettingChange('isCategoryRequired', value)}
-                    />
-                </div>
-                <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                        <Label>Require Description</Label>
-                        <p className="text-[0.8rem] text-muted-foreground">
-                            Make the description field mandatory.
-                        </p>
-                    </div>
-                    <Switch
-                        checked={isDescriptionRequired}
-                        onCheckedChange={(value) => handleSettingChange('isDescriptionRequired', value)}
-                    />
-                </div>
-                <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                        <Label>Require Tag</Label>
-                         <p className="text-[0.8rem] text-muted-foreground">
-                            Make the tag/label field mandatory.
-                        </p>
-                    </div>
-                    <Switch
-                        checked={isTagRequired}
-                        onCheckedChange={(value) => handleSettingChange('isTagRequired', value)}
-                    />
-                </div>
-            </CardContent>
+            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                <CollapsibleTrigger asChild>
+                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
+                        <div>
+                            <h3 className="text-base font-semibold font-headline">Expense Fields</h3>
+                            <CardDescription className="text-sm">Customize which fields are required.</CardDescription>
+                        </div>
+                        <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
+                    </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    <CardContent className="p-4 pt-0 space-y-4">
+                        <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                                <Label>Require Category</Label>
+                                <p className="text-[0.8rem] text-muted-foreground">
+                                    Make the category field mandatory.
+                                </p>
+                            </div>
+                            <Switch
+                                checked={isCategoryRequired}
+                                onCheckedChange={(value) => handleSettingChange('isCategoryRequired', value)}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                                <Label>Require Description</Label>
+                                <p className="text-[0.8rem] text-muted-foreground">
+                                    Make the description field mandatory.
+                                </p>
+                            </div>
+                            <Switch
+                                checked={isDescriptionRequired}
+                                onCheckedChange={(value) => handleSettingChange('isDescriptionRequired', value)}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                                <Label>Require Tag</Label>
+                                <p className="text-[0.8rem] text-muted-foreground">
+                                    Make the tag/label field mandatory.
+                                </p>
+                            </div>
+                            <Switch
+                                checked={isTagRequired}
+                                onCheckedChange={(value) => handleSettingChange('isTagRequired', value)}
+                            />
+                        </div>
+                    </CardContent>
+                </CollapsibleContent>
+            </Collapsible>
         </Card>
     );
 }

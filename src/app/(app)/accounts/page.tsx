@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { Account } from '@/lib/types';
-import { collection } from 'firebase/firestore';
+import { collection, orderBy, query } from 'firebase/firestore';
 import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
 import { AccountsList } from '@/components/accounts/AccountsList';
 
@@ -14,7 +14,7 @@ export default function AccountsPage() {
     const firestore = useFirestore();
 
     const accountsQuery = useMemoFirebase(() => 
-        user ? collection(firestore, `users/${user.uid}/accounts`) : null
+        user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null
     , [firestore, user]);
 
     const { data: accounts, isLoading } = useCollection<Account>(accountsQuery);

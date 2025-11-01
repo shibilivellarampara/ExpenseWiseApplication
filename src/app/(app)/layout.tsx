@@ -4,10 +4,9 @@
 import AuthGuard from '@/components/auth/AuthGuard';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { Suspense } from 'react';
 import { PageLoader } from '@/components/PageLoader';
-
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 export default function AppLayout({
   children,
@@ -18,7 +17,7 @@ export default function AppLayout({
   return (
       <AuthGuard>
         <SidebarProvider>
-          <div className="flex h-screen w-full">
+          <div className="flex h-screen w-full bg-background">
             <AppSidebar />
             <div className="flex flex-1 flex-col">
               <AppHeader />

@@ -4,64 +4,103 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  useSidebar,
-} from '@/components/ui/sidebar';
-import {
   LayoutDashboard,
   Wallet,
-  Users,
   FileUp,
-  CircleUser,
+  Settings,
   ArrowRightLeft,
   Briefcase,
+  FileText,
 } from 'lucide-react';
 import { Logo } from '../Logo';
+import { cn } from '@/lib/utils';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
+import { useSidebar } from '../ui/sidebar';
+import packageJson from '../../../package.json';
 
 const navItems = [
-  { href: '/dashboard', icon: <LayoutDashboard />, label: 'Dashboard' },
-  { href: '/expenses', icon: <ArrowRightLeft />, label: 'Transactions' },
-  { href: '/accounts', icon: <Wallet />, label: 'Accounts' },
-  { href: '/shared-expenses', icon: <Briefcase />, label: 'Shared Expenses' },
-  { href: '/import', icon: <FileUp />, label: 'Import' },
-  { href: '/profile', icon: <CircleUser />, label: 'Profile' },
+  { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
+  { href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
+  { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
+  { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
+  { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
+  { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
+  { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
 ];
+
+export const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean, onClick?: () => void }) => {
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+    if (onClick) {
+      onClick();
+    }
+  };
+
+  const linkContent = (
+    <Button
+      variant="ghost"
+      className={cn(
+        "w-full justify-start text-base h-12 px-4 relative",
+        isActive && !disabled
+          ? "bg-sidebar-active text-sidebar-active-foreground"
+          : "text-sidebar-muted-foreground hover:bg-sidebar-active/20 hover:text-sidebar-foreground",
+        disabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-sidebar-muted-foreground"
+      )}
+      disabled={disabled}
+      asChild={!disabled}
+    >
+      <div className="flex w-full items-center gap-4">
+        {isActive && !disabled && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>}
+        {icon}
+        <span>{label}</span>
+      </div>
+    </Button>
+  );
+
+  if (disabled) {
+    return <div className="cursor-not-allowed">{linkContent}</div>;
+  }
+  
+  return (
+    <Link href={href} passHref onClick={handleClick}>
+      {linkContent}
+    </Link>
+  );
+};
+
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { setOpenMobile } = useSidebar();
-
-  const handleLinkClick = () => {
-    setOpenMobile(false);
-  }
+  const appVersion = packageJson.version;
 
   return (
-    <Sidebar className="border-r bg-card">
-      <SidebarHeader>
-        <Logo />
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          {navItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <Link href={item.href} passHref onClick={handleLinkClick}>
-                <SidebarMenuButton
-                  isActive={pathname.startsWith(item.href)}
-                  className="w-full"
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
-    </Sidebar>
+    <aside className="w-56 flex-shrink-0 hidden md:block">
+        <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
+            <div className="p-4 border-b border-sidebar-border">
+                <Logo />
+            </div>
+            <nav className="flex-grow space-y-2 mt-4 px-2">
+                {navItems.map((item) => (
+                <NavLink
+                    key={item.href}
+                    href={item.href}
+                    icon={item.icon}
+                    label={item.label}
+                    isActive={pathname.startsWith(item.href)}
+                    disabled={(item as any).disabled}
+                />
+                ))}
+            </nav>
+            <div className="mt-auto p-4 text-center text-xs text-sidebar-muted-foreground">
+                <Separator className='my-2 bg-sidebar-border' />
+                <span>Version {appVersion}</span>
+            </div>
+        </div>
+    </aside>
   );
 }

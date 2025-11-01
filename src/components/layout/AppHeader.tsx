@@ -1,13 +1,48 @@
+
 'use client';
 
-import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserNav } from '@/components/auth/UserNav';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/firebase';
+import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '../ui/skeleton';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
+import { Button } from '../ui/button';
+import { PanelLeft } from 'lucide-react';
+import { Logo } from '../Logo';
+import { NavLink } from './AppSidebar';
+import {
+  LayoutDashboard,
+  Wallet,
+  FileUp,
+  Settings,
+  ArrowRightLeft,
+  Briefcase,
+  FileText,
+} from 'lucide-react';
+import packageJson from '../../../package.json';
+import { Separator } from '../ui/separator';
+
+
+const navItems = [
+  { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
+  { href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
+  { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
+  { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
+  { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
+  { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
+  { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
+];
+
 
 function getPageTitle(path: string): string {
+    if (path.startsWith('/admin/users')) return 'User Management';
+    if (path.startsWith('/admin')) return 'Admin Dashboard';
+    if (path.startsWith('/profile')) return 'Settings';
     const title = path.split('/').pop()?.replace(/-/g, ' ');
+    if (path.includes('/shared-expenses/') && path.split('/').length > 2) {
+        return "Shared Space";
+    }
     return title ? title.charAt(0).toUpperCase() + title.slice(1) : 'Dashboard';
 }
 
@@ -15,11 +50,47 @@ export function AppHeader() {
   const pathname = usePathname();
   const title = getPageTitle(pathname);
   const { isUserLoading } = useUser();
-
+  const { openMobile, setOpenMobile } = useSidebar();
+  const appVersion = packageJson.version;
+    
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
-        <SidebarTrigger className="md:hidden" />
         
+         <div className="md:hidden">
+             <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+                <SheetTrigger asChild>
+                    <Button size="icon" variant="ghost">
+                        <PanelLeft />
+                        <span className="sr-only">Toggle Menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-64">
+                    <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
+                        <SheetHeader className="p-4 border-b border-sidebar-border">
+                          <SheetTitle>
+                            <Logo />
+                          </SheetTitle>
+                        </SheetHeader>
+                        <nav className="flex-grow space-y-2 mt-4 px-2">
+                            {navItems.map((item) => (
+                                <NavLink
+                                    key={item.href}
+                                    href={item.href}
+                                    icon={item.icon}
+                                    label={item.label}
+                                    isActive={pathname.startsWith(item.href)}
+                                />
+                            ))}
+                        </nav>
+                        <div className="mt-auto p-4 text-center text-xs text-sidebar-muted-foreground">
+                            <Separator className='my-2 bg-sidebar-border' />
+                            <span>Version {appVersion}</span>
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </div>
+
         <div className="flex-1">
             <h1 className="font-semibold text-lg md:text-xl">{title}</h1>
         </div>

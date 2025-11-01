@@ -1,41 +1,30 @@
 
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, ChevronDown, FilterX, ListFilter, Pilcrow } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { DateRange as ReactDateRange } from 'react-day-picker';
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, parseISO, isValid } from 'date-fns';
+import { ChevronDown, FilterX, ListFilter, Pilcrow } from 'lucide-react';
+import { Check, X } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Account, Category, Tag } from '@/lib/types';
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from '@/lib/utils';
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-  } from '@/components/ui/sheet';
 import { Separator } from '../ui/separator';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import * as LucideIcons from 'lucide-react';
 import { Badge } from '../ui/badge';
 
 
-export type DateRange = ReactDateRange;
+export type DateRange = { from: Date | undefined; to: Date | undefined; };
 
 type Filters = {
     dateRange: DateRange;
@@ -52,7 +41,8 @@ interface ExpensesFiltersProps {
     tags: Tag[];
 }
 
-const renderIcon = (iconName: string, className?: string) => {
+const renderIcon = (iconName: string | undefined, className?: string) => {
+    if (!iconName) return null;
     const IconComponent = (LucideIcons as any)[iconName];
     return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
 };
@@ -128,22 +118,24 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                 <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                     <Command>
                         <CommandInput placeholder={`Search ${title.toLowerCase()}...`} />
-                        <CommandEmpty>No results found.</CommandEmpty>
-                        <CommandGroup>
-                            {items.map(item => (
-                                <DropdownMenuCheckboxItem
-                                    key={item.id}
-                                    checked={filters[field].includes(item.id)}
-                                    onCheckedChange={() => handleMultiSelectChange(field, item.id)}
-                                    onSelect={(e) => e.preventDefault()}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        {'icon' in item && renderIcon(item.icon)}
-                                        {item.name}
-                                    </div>
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </CommandGroup>
+                        <CommandList>
+                            <CommandEmpty>No results found.</CommandEmpty>
+                            <CommandGroup>
+                                {items.map(item => (
+                                    <CommandItem
+                                        key={item.id}
+                                        onSelect={() => handleMultiSelectChange(field, item.id)}
+                                        className="flex justify-between cursor-pointer"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {'icon' in item && renderIcon(item.icon)}
+                                            {item.name}
+                                        </div>
+                                         {filters[field].includes(item.id) && <Check className="h-4 w-4" />}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </CommandList>
                     </Command>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -174,7 +166,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                 id="from-date"
                                 type="date"
                                 value={formatDateForInput(filters.dateRange?.from)}
-                                onChange={(e) => handleDateChange(e.target.value ? parseISO(e.target.value) : undefined, 'from')}
+                                onChange={(e) => handleDateChange(e.target.valueAsDate ?? undefined, 'from')}
                                 className="text-sm"
                             />
                         </div>
@@ -184,13 +176,19 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                 id="to-date"
                                 type="date"
                                 value={formatDateForInput(filters.dateRange?.to)}
-                                onChange={(e) => handleDateChange(e.target.value ? parseISO(e.target.value) : undefined, 'to')}
+                                onChange={(e) => handleDateChange(e.target.valueAsDate ?? undefined, 'to')}
                                 className="text-sm"
                             />
                         </div>
                      </div>
                 )}
             </div>
+            <Separator />
+            {createMultiSelect('Categories', 'categories', categories, 'Select categories')}
+            <Separator />
+            {createMultiSelect('Accounts', 'accounts', accounts, 'Select accounts')}
+            <Separator />
+            {createMultiSelect('Tags', 'tags', tags, 'Select tags')}
             <Separator />
             <div>
                 <h4 className="text-sm font-medium mb-2">Transaction Type</h4>
@@ -205,12 +203,6 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                     </SelectContent>
                 </Select>
             </div>
-            <Separator />
-            {createMultiSelect('Categories', 'categories', categories, 'Select categories')}
-            <Separator />
-            {createMultiSelect('Accounts', 'accounts', accounts, 'Select accounts')}
-            <Separator />
-            {createMultiSelect('Tags', 'tags', tags, 'Select tags')}
         </div>
     )
 }
@@ -218,14 +210,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
 export function ExpensesFilters({ filters, onFiltersChange, accounts, categories, tags }: ExpensesFiltersProps) {
 
     const [dateRangePreset, setDateRangePreset] = useState<string>('all');
-
-    const handleCustomDateChange = (range: DateRange | undefined) => {
-        if (range) {
-            setDateRangePreset('custom');
-            onFiltersChange({ ...filters, dateRange: range });
-        }
-    }
-
+    
     const clearFilters = () => {
         onFiltersChange({
             dateRange: { from: undefined, to: undefined },
@@ -237,179 +222,61 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
         setDateRangePreset('all');
     };
     
-    const hasActiveFilters = filters.dateRange.from || filters.type !== 'all' || filters.categories.length > 0 || filters.accounts.length > 0 || filters.tags.length > 0;
-    
     const activeFilterCount =
-        (filters.dateRange.from ? 1 : 0) +
+        (filters.dateRange.from || filters.dateRange.to ? 1 : 0) +
         (filters.type !== 'all' ? 1 : 0) +
-        (filters.categories.length > 0 ? 1 : 0) +
-        (filters.accounts.length > 0 ? 1 : 0) +
-        (filters.tags.length > 0 ? 1 : 0);
+        filters.categories.length +
+        filters.accounts.length +
+        filters.tags.length;
 
     return (
         <div className="flex flex-wrap gap-2 items-center">
-            {/* Filter Sheet for mobile */}
-            <Sheet>
-                <SheetTrigger asChild>
-                    <Button variant="outline" className="md:hidden flex-1 relative">
+            <Popover>
+                <PopoverTrigger asChild>
+                     <Button variant="outline" className="relative">
                         <ListFilter className="mr-2 h-4 w-4" />
                         Filters
                         {activeFilterCount > 0 && 
-                            <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0">{activeFilterCount}</Badge>
+                            <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0 rounded-full">{activeFilterCount}</Badge>
                         }
                     </Button>
-                </SheetTrigger>
-                <SheetContent>
-                    <SheetHeader>
-                        <SheetTitle>Filters</SheetTitle>
-                        <SheetDescription>
-                            Refine your transaction list.
-                        </SheetDescription>
-                    </SheetHeader>
-                    <div className="py-4">
-                        <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset }} />
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4" align="start">
+                    <div className="flex justify-between items-center mb-4">
+                         <h3 className="font-medium">Filter Transactions</h3>
+                         {activeFilterCount > 0 && (
+                            <Button variant="ghost" size="sm" onClick={clearFilters}>
+                                Clear all
+                            </Button>
+                         )}
                     </div>
-                </SheetContent>
-            </Sheet>
+                     <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset }} />
+                </PopoverContent>
+            </Popover>
             
-            {/* Inline filters for desktop */}
-            <div className="hidden md:flex gap-2">
-                <Popover>
-                    <PopoverTrigger asChild>
-                    <Button
-                        id="date"
-                        variant={"outline"}
-                        className={cn(
-                            "w-[260px] justify-start text-left font-normal",
-                            !filters.dateRange?.from && "text-muted-foreground"
-                        )}
-                        >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {filters.dateRange?.from ? (
-                            filters.dateRange.to ? (
-                            <>
-                                {format(filters.dateRange.from, "LLL dd, y")} -{" "}
-                                {format(filters.dateRange.to, "LLL dd, y")}
-                            </>
-                            ) : (
-                            format(filters.dateRange.from, "LLL dd, y")
-                            )
-                        ) : (
-                            <span>Pick a date range</span>
-                        )}
-                    </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                        initialFocus
-                        mode="range"
-                        defaultMonth={filters.dateRange?.from}
-                        selected={filters.dateRange}
-                        onSelect={handleCustomDateChange}
-                        numberOfMonths={2}
-                    />
-                    </PopoverContent>
-                </Popover>
-
-                <Select value={filters.type} onValueChange={(value) => onFiltersChange({...filters, type: value as any})}>
-                    <SelectTrigger className="w-auto">
-                        <SelectValue placeholder="Transaction Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="income">Income</SelectItem>
-                        <SelectItem value="expense">Expense</SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full md:w-auto">
-                            Category ({filters.categories.length || 'All'})
-                            <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56">
-                        <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {categories.map((category) => (
-                            <DropdownMenuCheckboxItem
-                                key={category.id}
-                                checked={filters.categories.includes(category.id)}
-                                onCheckedChange={() => {
-                                    const newCategories = filters.categories.includes(category.id)
-                                        ? filters.categories.filter(c => c !== category.id)
-                                        : [...filters.categories, category.id];
-                                    onFiltersChange({ ...filters, categories: newCategories });
-                                }}
-                            >
-                                {category.name}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full md:w-auto">
-                            Account ({filters.accounts.length || 'All'})
-                            <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56">
-                        <DropdownMenuLabel>Filter by Account</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {accounts.map((account) => (
-                            <DropdownMenuCheckboxItem
-                                key={account.id}
-                                checked={filters.accounts.includes(account.id)}
-                                onCheckedChange={() => {
-                                     const newAccounts = filters.accounts.includes(account.id)
-                                        ? filters.accounts.filter(a => a !== account.id)
-                                        : [...filters.accounts, account.id];
-                                    onFiltersChange({ ...filters, accounts: newAccounts });
-                                }}
-                            >
-                                {account.name}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full md:w-auto">
-                            Tags ({filters.tags.length || 'All'})
-                            <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56">
-                        <DropdownMenuLabel>Filter by Tag</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {tags.map((tag) => (
-                            <DropdownMenuCheckboxItem
-                                key={tag.id}
-                                checked={filters.tags.includes(tag.id)}
-                                onCheckedChange={() => {
-                                     const newTags = filters.tags.includes(tag.id)
-                                        ? filters.tags.filter(t => t !== tag.id)
-                                        : [...filters.tags, tag.id];
-                                    onFiltersChange({ ...filters, tags: newTags });
-                                }}
-                            >
-                                {tag.name}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                
-                {hasActiveFilters && (
-                    <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground">
-                        <FilterX className="mr-2 h-4 w-4" />
-                        Clear
-                    </Button>
-                )}
-            </div>
+            
+            {activeFilterCount > 0 && (
+                <>
+                <Separator orientation="vertical" className="h-6" />
+                <div className="flex flex-wrap gap-1 items-center">
+                    {filters.categories.map(id => {
+                        const item = categories.find(c => c.id === id);
+                        return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, categories: filters.categories.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
+                    })}
+                     {filters.accounts.map(id => {
+                        const item = accounts.find(c => c.id === id);
+                        return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, accounts: filters.accounts.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
+                    })}
+                     {filters.tags.map(id => {
+                        const item = tags.find(c => c.id === id);
+                        return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, tags: filters.tags.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
+                    })}
+                </div>
+                 <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground h-auto p-1">
+                    <FilterX className="h-4 w-4" />
+                </Button>
+                </>
+            )}
         </div>
     );
 }

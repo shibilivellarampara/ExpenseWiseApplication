@@ -110,7 +110,7 @@ export default function ExpensesPage() {
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
 
-        return enriched.filter(expense => {
+        const filtered = enriched.filter(expense => {
             const { dateRange, type, categories, accounts, tags } = filters;
             if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
             if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
@@ -120,6 +120,62 @@ export default function ExpensesPage() {
             if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
             return true;
         });
+
+        // Calculate running balance only if a single account is selected
+        if (filters.accounts.length === 1) {
+            const accountId = filters.accounts[0];
+            const account = accountMap.get(accountId);
+            
+            if (account) {
+                // Get all transactions for the selected account, sorted by date ascending to calculate running balance correctly
+                const accountTransactions = enriched
+                    .filter(tx => tx.accountId === accountId)
+                    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+                // Calculate running balances from oldest to newest
+                let runningBalance = 0;
+                const balances = new Map<string, number>();
+                accountTransactions.forEach(tx => {
+                    let amountChange = 0;
+                    if (tx.account?.type === 'credit_card') {
+                        amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
+                    } else {
+                        amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
+                    }
+                    runningBalance += amountChange;
+                    balances.set(tx.id, runningBalance);
+                });
+
+                // The starting balance should be the current account balance minus the sum of all transaction changes
+                const totalChange = runningBalance;
+                const startingBalance = account.balance - totalChange;
+
+                // Create a final map of running balances
+                const finalBalances = new Map<string, number>();
+                let currentBal = startingBalance;
+                accountTransactions.forEach(tx => {
+                     let amountChange = 0;
+                    if (tx.account?.type === 'credit_card') {
+                        amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
+                    } else {
+                        amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
+                    }
+                    currentBal += amountChange;
+                    finalBalances.set(tx.id, currentBal);
+                });
+
+                // Add running balances to the filtered transactions
+                return filtered.map(tx => {
+                    if (finalBalances.has(tx.id)) {
+                        return { ...tx, runningBalance: finalBalances.get(tx.id) };
+                    }
+                    return tx;
+                });
+            }
+        }
+        
+        return filtered;
+
     }, [allExpenses, filters, categoryMap, accountMap, tagMap]);
     
     const handleFiltersChange = (newFilters: any) => {
@@ -189,5 +245,7 @@ export default function ExpensesPage() {
         </div>
     );
 }
+
+    
 
     

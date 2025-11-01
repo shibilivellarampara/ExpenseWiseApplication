@@ -74,7 +74,6 @@ export default function ExpensesPage() {
 
         let q: Query = collection(firestore, `users/${user.uid}/expenses`);
         
-        // --- WHERE Clauses ---
         if (filters.dateRange.from) {
             q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
         }
@@ -94,18 +93,8 @@ export default function ExpensesPage() {
             q = query(q, where('tagIds', 'array-contains-any', filters.tags));
         }
         
-        // --- ORDER BY Clauses ---
-        if (filters.accounts.length > 0) {
-            q = query(q, orderBy('accountId', 'asc'), orderBy('date', 'desc'));
-        } else if (filters.categories.length > 0) {
-            q = query(q, orderBy('categoryId', 'asc'), orderBy('date', 'desc'));
-        } else if (filters.type !== 'all' && (filters.dateRange.from || filters.dateRange.to)) {
-             q = query(q, orderBy('type', 'asc'), orderBy('date', 'desc'));
-        } else {
-            q = query(q, orderBy('date', 'desc'));
-        }
+        q = query(q, orderBy('date', 'desc'));
         
-        // --- PAGINATION ---
         if (startAfterDoc) {
             q = query(q, startAfter(startAfterDoc));
         }
@@ -155,16 +144,17 @@ export default function ExpensesPage() {
     }, [categoryMap, accountMap, tagMap, accounts]);
 
     const loadExpenses = useCallback(async (loadMore = false) => {
+        let currentLastVisible = lastVisible;
         if (!loadMore) {
             setLastVisible(null);
             setAllEnrichedExpenses([]);
             setHasMore(true);
+            currentLastVisible = null;
         }
 
         setExpensesLoading(true);
         setQueryError(null);
         
-        const currentLastVisible = loadMore ? lastVisible : null;
         const q = buildQuery(currentLastVisible);
         
         if (!q || !accounts) {

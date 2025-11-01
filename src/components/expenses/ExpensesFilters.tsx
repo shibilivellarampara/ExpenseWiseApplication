@@ -14,7 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Account, Category, Tag } from '@/lib/types';
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from '@/lib/utils';
@@ -103,21 +106,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
         const newValues = currentValues.includes(value)
             ? currentValues.filter(v => v !== value)
             : [...currentValues, value];
-
-        // This logic allows combining filters, which might require complex indexes.
-        // For simplicity and to avoid index errors, we will reset other multi-select filters.
-        const updatedFilters: Filters = { 
-            ...filters, 
-            categories: field === 'categories' ? newValues : filters.categories,
-            accounts: field === 'accounts' ? newValues : filters.accounts,
-            tags: field === 'tags' ? newValues : filters.tags,
-        };
-
-        if (field === 'categories') updatedFilters.accounts = []; updatedFilters.tags = [];
-        if (field === 'accounts') updatedFilters.categories = []; updatedFilters.tags = [];
-        if (field === 'tags') updatedFilters.categories = []; updatedFilters.accounts = [];
-
-        onFiltersChange(updatedFilters);
+        onFiltersChange({ ...filters, [field]: newValues });
     }
     
     const formatDateForInput = (date: Date | undefined): string => {
@@ -134,11 +123,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
             <h4 className="text-sm font-medium mb-2">{title}</h4>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between"
-                        disabled={(field === 'accounts' && (filters.categories.length > 0 || filters.tags.length > 0)) ||
-                                  (field === 'categories' && (filters.accounts.length > 0 || filters.tags.length > 0)) ||
-                                  (field === 'tags' && (filters.accounts.length > 0 || filters.categories.length > 0))}
-                    >
+                    <Button variant="outline" className="w-full justify-between">
                         <span>{filters[field].length > 0 ? `${filters[field].length} selected` : placeholder}</span>
                         <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
@@ -152,9 +137,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                 {items.map(item => (
                                     <CommandItem
                                         key={item.id}
-                                        onSelect={(currentValue) => {
-                                            handleMultiSelectChange(field, item.id)
-                                        }}
+                                        onSelect={() => handleMultiSelectChange(field, item.id)}
                                         className="flex justify-between cursor-pointer"
                                     >
                                         <div className="flex items-center gap-2">
@@ -169,7 +152,6 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                     </Command>
                 </DropdownMenuContent>
             </DropdownMenu>
-            <p className="text-xs text-muted-foreground mt-1">You can only filter by one group (Categories, Accounts, or Tags) at a time.</p>
         </div>
     );
 
@@ -241,14 +223,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
 export function ExpensesFilters({ filters, onFiltersChange, accounts, categories, tags }: ExpensesFiltersProps) {
 
     const [dateRangePreset, setDateRangePreset] = useState<string>('all');
-
-    const handleCustomDateChange = (range: DateRange | undefined) => {
-        if (range) {
-            setDateRangePreset('custom');
-            onFiltersChange({ ...filters, dateRange: range });
-        }
-    }
-
+    
     const clearFilters = () => {
         onFiltersChange({
             dateRange: { from: undefined, to: undefined },
@@ -263,192 +238,59 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
     const activeFilterCount =
         (filters.dateRange.from || filters.dateRange.to ? 1 : 0) +
         (filters.type !== 'all' ? 1 : 0) +
-        (filters.categories.length > 0 ? 1 : 0) +
-        (filters.accounts.length > 0 ? 1 : 0) +
-        (filters.tags.length > 0 ? 1 : 0);
+        filters.categories.length +
+        filters.accounts.length +
+        filters.tags.length;
 
     return (
         <div className="flex flex-wrap gap-2 items-center">
-            {/* Filter Sheet for mobile */}
-            <Sheet>
-                <SheetTrigger asChild>
-                    <Button variant="outline" className="md:hidden flex-1 relative">
+            {/* Filter Sheet for mobile and a Popover for Desktop */}
+            <Popover>
+                <PopoverTrigger asChild>
+                     <Button variant="outline" className="relative">
                         <ListFilter className="mr-2 h-4 w-4" />
                         Filters
                         {activeFilterCount > 0 && 
-                            <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0">{activeFilterCount}</Badge>
+                            <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0 rounded-full">{activeFilterCount}</Badge>
                         }
                     </Button>
-                </SheetTrigger>
-                <SheetContent>
-                    <SheetHeader>
-                        <SheetTitle>Filters</SheetTitle>
-                        <SheetDescription>
-                            Refine your transaction list.
-                        </SheetDescription>
-                    </SheetHeader>
-                    <div className="py-4">
-                        <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset }} />
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4" align="start">
+                    <div className="flex justify-between items-center mb-4">
+                         <h3 className="font-medium">Filter Transactions</h3>
+                         {activeFilterCount > 0 && (
+                            <Button variant="ghost" size="sm" onClick={clearFilters}>
+                                Clear all
+                            </Button>
+                         )}
                     </div>
-                </SheetContent>
-            </Sheet>
+                     <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset }} />
+                </PopoverContent>
+            </Popover>
             
-            {/* Inline filters for desktop */}
-            <div className="hidden md:flex flex-wrap gap-2">
-                <Popover>
-                    <PopoverTrigger asChild>
-                    <Button
-                        id="date"
-                        variant={"outline"}
-                        className={cn(
-                            "w-[260px] justify-start text-left font-normal",
-                            !filters.dateRange?.from && "text-muted-foreground"
-                        )}
-                        >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {filters.dateRange?.from ? (
-                            filters.dateRange.to ? (
-                            <>
-                                {format(filters.dateRange.from, "LLL dd, y")} -{" "}
-                                {format(filters.dateRange.to, "LLL dd, y")}
-                            </>
-                            ) : (
-                            format(filters.dateRange.from, "LLL dd, y")
-                            )
-                        ) : (
-                            <span>Pick a date range</span>
-                        )}
-                    </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                        initialFocus
-                        mode="range"
-                        defaultMonth={filters.dateRange?.from}
-                        selected={filters.dateRange}
-                        onSelect={handleCustomDateChange}
-                        numberOfMonths={2}
-                    />
-                    </PopoverContent>
-                </Popover>
-
-                <Select value={filters.type} onValueChange={(value) => onFiltersChange({...filters, type: value as any})}>
-                    <SelectTrigger className="w-auto">
-                        <SelectValue placeholder="Transaction Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="income">Income</SelectItem>
-                        <SelectItem value="expense">Expense</SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full md:w-auto" disabled={filters.accounts.length > 0 || filters.tags.length > 0}>
-                            Category ({filters.categories.length || 'All'})
-                            <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56">
-                        <Command>
-                            <CommandInput placeholder="Filter by category..." />
-                            <CommandList>
-                                <CommandEmpty>No category found.</CommandEmpty>
-                                <CommandGroup>
-                                {categories.map((category) => (
-                                    <CommandItem
-                                        key={category.id}
-                                        onSelect={(currentValue) => {
-                                            const newSelection = filters.categories.includes(category.id) ? [] : [category.id];
-                                            onFiltersChange({ ...filters, categories: newSelection, accounts:[], tags: [] });
-                                        }}
-                                    >
-                                        <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.categories.includes(category.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                                            <Check className={cn("h-4 w-4")} />
-                                        </div>
-                                        {category.name}
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full md:w-auto" disabled={filters.categories.length > 0 || filters.tags.length > 0}>
-                            Account ({filters.accounts.length || 'All'})
-                            <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                     <DropdownMenuContent className="w-56">
-                        <Command>
-                            <CommandInput placeholder="Filter by account..." />
-                            <CommandList>
-                                <CommandEmpty>No account found.</CommandEmpty>
-                                <CommandGroup>
-                                {accounts.map((account) => (
-                                    <CommandItem
-                                        key={account.id}
-                                        onSelect={(currentValue) => {
-                                            const newSelection = filters.accounts.includes(account.id) ? filters.accounts.filter(a => a !== account.id) : [...filters.accounts, account.id];
-                                            onFiltersChange({ ...filters, accounts: newSelection, categories: [], tags: [] });
-                                        }}
-                                    >
-                                        <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.accounts.includes(account.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                                            <Check className={cn("h-4 w-4")} />
-                                        </div>
-                                        {account.name}
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full md:w-auto" disabled={filters.accounts.length > 0 || filters.categories.length > 0}>
-                            Tags ({filters.tags.length || 'All'})
-                            <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                     <DropdownMenuContent className="w-56">
-                        <Command>
-                            <CommandInput placeholder="Filter by tag..." />
-                            <CommandList>
-                                <CommandEmpty>No tag found.</CommandEmpty>
-                                <CommandGroup>
-                                {tags.map((tag) => (
-                                    <CommandItem
-                                        key={tag.id}
-                                        onSelect={(currentValue) => {
-                                            const newSelection = filters.tags.includes(tag.id) ? filters.tags.filter(t => t !== tag.id) : [...filters.tags, tag.id];
-                                            onFiltersChange({ ...filters, tags: newSelection, categories:[], accounts: [] });
-                                        }}
-                                    >
-                                        <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.tags.includes(tag.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                                            <Check className={cn("h-4 w-4")} />
-                                        </div>
-                                        {tag.name}
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                
-                {activeFilterCount > 0 && (
-                    <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground">
-                        <FilterX className="mr-2 h-4 w-4" />
-                        Clear
-                    </Button>
-                )}
-            </div>
+            
+            {activeFilterCount > 0 && (
+                <>
+                <Separator orientation="vertical" className="h-6" />
+                <div className="flex flex-wrap gap-1 items-center">
+                    {filters.categories.map(id => {
+                        const item = categories.find(c => c.id === id);
+                        return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, categories: filters.categories.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
+                    })}
+                     {filters.accounts.map(id => {
+                        const item = accounts.find(c => c.id === id);
+                        return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, accounts: filters.accounts.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
+                    })}
+                     {filters.tags.map(id => {
+                        const item = tags.find(c => c.id === id);
+                        return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, tags: filters.tags.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
+                    })}
+                </div>
+                 <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground h-auto p-1">
+                    <FilterX className="h-4 w-4" />
+                </Button>
+                </>
+            )}
         </div>
     );
 }

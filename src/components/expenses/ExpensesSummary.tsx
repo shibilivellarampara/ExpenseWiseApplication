@@ -59,7 +59,7 @@ export function ExpensesSummary({ isLoading, currency, expenses }: ExpensesSumma
             <CardContent className="p-4">
                 <div className="flex justify-between items-center text-sm">
                     <div>
-                        <p className="text-muted-foreground">Net Flow (In - Out)</p>
+                        <p className="text-muted-foreground">Net Balance</p>
                         <p className={cn(
                             "text-lg font-bold",
                             summary.netFlow >= 0 && "text-green-600",

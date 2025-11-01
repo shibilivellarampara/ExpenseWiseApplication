@@ -69,7 +69,7 @@ export default function ExpensesPage() {
                  const date = data.date && typeof (data.date as any).toDate === 'function' 
                     ? (data.date as any).toDate() 
                     : new Date();
-                 return { ...data, date };
+                 return { ...data, id: doc.id, date };
             });
             setAllExpenses(fetchedExpenses);
             setCache(cacheKey, fetchedExpenses.map(e => ({...e, date: e.date.toISOString()})), 60 * 5); // Cache for 5 minutes
@@ -105,8 +105,7 @@ export default function ExpensesPage() {
     const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses || !categoryMap.size || !accountMap.size) return [];
 
-        // 1. First, enrich all expenses with their related data
-        let enriched = allExpenses.map((expense): EnrichedExpense => ({
+        let processedExpenses: EnrichedExpense[] = allExpenses.map((expense): EnrichedExpense => ({
             ...expense,
             date: expense.date,
             category: categoryMap.get(expense.categoryId),
@@ -114,47 +113,32 @@ export default function ExpensesPage() {
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
 
-        // 2. If a single account is selected, calculate running balances for that account's transactions
         if (filters.accounts.length === 1 && accountMap.size > 0) {
             const accountId = filters.accounts[0];
             const account = accountMap.get(accountId);
 
             if (account) {
-                // Get all transactions for THIS account, sorted from oldest to newest
-                const accountTransactions = enriched
+                const accountTransactions = allExpenses
                     .filter(tx => tx.accountId === accountId)
                     .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-                let currentBal = account.balance;
-
-                // Create a map of balances by working backwards from the present
-                const balanceMap = new Map<string, number>();
+                let runningBalance = account.balance;
                 for (let i = accountTransactions.length - 1; i >= 0; i--) {
                     const tx = accountTransactions[i];
-                    balanceMap.set(tx.id, currentBal);
-
                     const amountChange = tx.account?.type === 'credit_card'
                         ? (tx.type === 'expense' ? tx.amount : -tx.amount)
                         : (tx.type === 'income' ? tx.amount : -tx.amount);
                     
-                    currentBal -= amountChange; // Subtract the change to get the previous balance
-                }
-                
-                // Add the running balance to each transaction in the main enriched list
-                enriched = enriched.map(tx => {
-                    if (balanceMap.has(tx.id)) {
-                        return {
-                            ...tx,
-                            runningBalance: balanceMap.get(tx.id),
-                        };
+                    const txIndex = processedExpenses.findIndex(p => p.id === tx.id);
+                    if (txIndex !== -1) {
+                        processedExpenses[txIndex].runningBalance = runningBalance;
                     }
-                    return tx;
-                });
+                    runningBalance -= amountChange;
+                }
             }
         }
         
-        // 3. Apply all filters to the enriched (and potentially balance-added) list
-        const filteredData = enriched.filter(expense => {
+        const filteredData = processedExpenses.filter(expense => {
             const { dateRange, type, categories, accounts, tags } = filters;
             if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
             if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
@@ -165,7 +149,6 @@ export default function ExpensesPage() {
             return true;
         });
 
-        // 4. Finally, sort for display (newest first)
         return filteredData.sort((a, b) => b.date.getTime() - a.date.getTime());
 
     }, [allExpenses, categoryMap, accountMap, tagMap, filters]);
@@ -177,7 +160,6 @@ export default function ExpensesPage() {
     const refreshTransactions = () => {
        if (user) {
          setCache(`expenses_${user.uid}`, null, 0); // Invalidate cache
-         // Re-fetch will be triggered by onSnapshot automatically after a delay, or you can add a manual re-fetch trigger here if needed.
        }
     };
 
@@ -240,5 +222,3 @@ export default function ExpensesPage() {
         </div>
     );
 }
-
-    

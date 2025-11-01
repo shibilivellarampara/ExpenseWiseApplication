@@ -122,19 +122,19 @@ export default function ExpensesPage() {
             return true;
         });
 
-        if (filters.accounts.length === 1) {
+        if (filters.accounts.length === 1 && accountMap.size > 0) {
             const accountId = filters.accounts[0];
             const account = accountMap.get(accountId);
 
             if (account) {
-                const accountTransactions = enrichedExpenses
+                const allAccountTransactions = enrichedExpenses
                     .filter(tx => tx.accountId === accountId)
                     .sort((a, b) => a.date.getTime() - b.date.getTime());
                 
                 let totalChange = 0;
-                accountTransactions.forEach(tx => {
+                allAccountTransactions.forEach(tx => {
                     let amountChange = 0;
-                    if (tx.account?.type === 'credit_card') {
+                     if (tx.account?.type === 'credit_card') {
                         amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
                     } else {
                         amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
@@ -144,29 +144,30 @@ export default function ExpensesPage() {
                 
                 const startingBalance = account.balance - totalChange;
                 
-                const balances = new Map<string, number>();
+                const runningBalances = new Map<string, number>();
                 let currentBal = startingBalance;
-                accountTransactions.forEach(tx => {
+
+                allAccountTransactions.forEach(tx => {
                     let amountChange = 0;
-                    if (tx.account?.type === 'credit_card') {
+                     if (tx.account?.type === 'credit_card') {
                         amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
                     } else {
                         amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
                     }
                     currentBal += amountChange;
-                    balances.set(tx.id, currentBal);
+                    runningBalances.set(tx.id, currentBal);
                 });
                 
-                filtered = filtered.map(tx => {
-                    if (balances.has(tx.id)) {
-                        return { ...tx, runningBalance: balances.get(tx.id) };
+                return filtered.map(tx => {
+                    if (runningBalances.has(tx.id)) {
+                        return { ...tx, runningBalance: runningBalances.get(tx.id) };
                     }
                     return tx;
                 });
             }
         }
         
-        return filtered;
+        return filtered.map(tx => ({ ...tx, runningBalance: undefined }));
     }, [enrichedExpenses, filters, accountMap]);
     
     const handleFiltersChange = (newFilters: any) => {
@@ -236,9 +237,3 @@ export default function ExpensesPage() {
         </div>
     );
 }
-
-    
-
-    
-
-

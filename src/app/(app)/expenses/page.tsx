@@ -71,12 +71,12 @@ export default function ExpensesPage() {
 
     const buildQuery = useCallback((startAfterDoc: any = null) => {
         if (!user) return null;
-
+    
         let q: Query = collection(firestore, `users/${user.uid}/expenses`);
-        
-        // Combine all 'where' clauses first.
-        let whereClauses: any[] = [];
-        
+    
+        // Array to hold all our 'where' clauses
+        const whereClauses = [];
+    
         if (filters.dateRange.from) {
             whereClauses.push(where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
         }
@@ -86,32 +86,39 @@ export default function ExpensesPage() {
         if (filters.type !== 'all') {
             whereClauses.push(where('type', '==', filters.type));
         }
-        if (filters.categories.length > 0) {
+    
+        // Firestore limitation: You can only use one 'in' or 'array-contains-any' clause per query.
+        // We must prioritize which filter to apply on the backend if multiple are selected.
+        const categoryFilter = filters.categories.length > 0;
+        const accountFilter = filters.accounts.length > 0;
+        const tagFilter = filters.tags.length > 0;
+    
+        if (categoryFilter) {
             whereClauses.push(where('categoryId', 'in', filters.categories));
         }
-        if (filters.accounts.length > 0) {
+        if (accountFilter && !categoryFilter) { // Apply if it's the only array-based filter
             whereClauses.push(where('accountId', 'in', filters.accounts));
         }
-        if (filters.tags.length > 0) {
-            whereClauses.push(where('tagIds', 'array-contains-any', filters.tags));
+        if (tagFilter && !categoryFilter && !accountFilter) { // Apply if it's the only array-based filter
+             whereClauses.push(where('tagIds', 'array-contains-any', filters.tags));
         }
-
-        // Apply all 'where' clauses in a single query() call.
+    
+        // Apply all collected 'where' clauses.
         if (whereClauses.length > 0) {
             q = query(q, ...whereClauses);
         }
-        
-        // Apply orderBy, startAfter, and limit after all filters.
+    
+        // Add ordering
         q = query(q, orderBy('date', 'desc'));
-        
+    
+        // Add pagination
         if (startAfterDoc) {
             q = query(q, startAfter(startAfterDoc));
         }
-        
-        q = query(q, limit(PAGE_SIZE));
-        
-        return q;
     
+        q = query(q, limit(PAGE_SIZE));
+    
+        return q;
     }, [user, firestore, filters]);
 
 
@@ -190,8 +197,25 @@ export default function ExpensesPage() {
                 };
             });
 
+            // Client-side filtering for the clauses we couldn't add to the query
+            const clientFilteredExpenses = newExpenses.filter(expense => {
+                const categoryFilter = filters.categories.length > 0;
+                const accountFilter = filters.accounts.length > 0;
+                const tagFilter = filters.tags.length > 0;
+
+                let pass = true;
+                if (accountFilter && categoryFilter) {
+                    pass = pass && filters.accounts.includes(expense.accountId);
+                }
+                if (tagFilter && (categoryFilter || accountFilter)) {
+                    pass = pass && expense.tagIds?.some(tagId => filters.tags.includes(tagId));
+                }
+                return pass;
+            });
+
+
             setAllEnrichedExpenses(prevExpenses => {
-                const combined = loadMore ? [...prevExpenses, ...newExpenses] : newExpenses;
+                const combined = loadMore ? [...prevExpenses, ...clientFilteredExpenses] : clientFilteredExpenses;
                 // Deduplicate just in case
                 const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
                 return unique.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -210,7 +234,7 @@ export default function ExpensesPage() {
                 setExpensesLoading(false);
             }
         }
-    }, [buildQuery, accounts, lastVisible, categoryMap, accountMap, tagMap]);
+    }, [buildQuery, accounts, lastVisible, categoryMap, accountMap, tagMap, filters]);
     
     // Initial load and filter change handler
     const handleFiltersChange = (newFilters: any) => {

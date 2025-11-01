@@ -99,18 +99,60 @@ export default function ExpensesPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
-    const filteredAndEnrichedExpenses = useMemo(() => {
+    const enrichedExpenses = useMemo(() => {
         if (!allExpenses || !categoryMap.size || !accountMap.size) return [];
-
-        const enriched = allExpenses.map((expense: Expense): EnrichedExpense => ({
+        return allExpenses.map((expense: Expense): EnrichedExpense => ({
             ...expense,
             date: expense.date, // Already a Date object
             category: categoryMap.get(expense.categoryId),
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
+    }, [allExpenses, categoryMap, accountMap, tagMap]);
 
-        const filtered = enriched.filter(expense => {
+    const runningBalances = useMemo(() => {
+        if (filters.accounts.length !== 1) return new Map<string, number>();
+
+        const accountId = filters.accounts[0];
+        const account = accountMap.get(accountId);
+        if (!account) return new Map<string, number>();
+
+        const accountTransactions = enrichedExpenses
+            .filter(tx => tx.accountId === accountId)
+            .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+        let totalChange = 0;
+        accountTransactions.forEach(tx => {
+            let amountChange = 0;
+            if (tx.account?.type === 'credit_card') {
+                amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
+            } else {
+                amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
+            }
+            totalChange += amountChange;
+        });
+        
+        const startingBalance = account.balance - totalChange;
+        
+        const balances = new Map<string, number>();
+        let currentBal = startingBalance;
+        accountTransactions.forEach(tx => {
+            let amountChange = 0;
+            if (tx.account?.type === 'credit_card') {
+                amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
+            } else {
+                amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
+            }
+            currentBal += amountChange;
+            balances.set(tx.id, currentBal);
+        });
+
+        return balances;
+
+    }, [filters.accounts, enrichedExpenses, accountMap]);
+
+    const filteredAndEnrichedExpenses = useMemo(() => {
+        const filtered = enrichedExpenses.filter(expense => {
             const { dateRange, type, categories, accounts, tags } = filters;
             if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
             if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
@@ -121,62 +163,18 @@ export default function ExpensesPage() {
             return true;
         });
 
-        // Calculate running balance only if a single account is selected
-        if (filters.accounts.length === 1) {
-            const accountId = filters.accounts[0];
-            const account = accountMap.get(accountId);
-            
-            if (account) {
-                // Get all transactions for the selected account, sorted by date ascending to calculate running balance correctly
-                const accountTransactions = enriched
-                    .filter(tx => tx.accountId === accountId)
-                    .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-                // Calculate running balances from oldest to newest
-                let runningBalance = 0;
-                const balances = new Map<string, number>();
-                accountTransactions.forEach(tx => {
-                    let amountChange = 0;
-                    if (tx.account?.type === 'credit_card') {
-                        amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
-                    } else {
-                        amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
-                    }
-                    runningBalance += amountChange;
-                    balances.set(tx.id, runningBalance);
-                });
-
-                // The starting balance should be the current account balance minus the sum of all transaction changes
-                const totalChange = runningBalance;
-                const startingBalance = account.balance - totalChange;
-
-                // Create a final map of running balances
-                const finalBalances = new Map<string, number>();
-                let currentBal = startingBalance;
-                accountTransactions.forEach(tx => {
-                     let amountChange = 0;
-                    if (tx.account?.type === 'credit_card') {
-                        amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
-                    } else {
-                        amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
-                    }
-                    currentBal += amountChange;
-                    finalBalances.set(tx.id, currentBal);
-                });
-
-                // Add running balances to the filtered transactions
-                return filtered.map(tx => {
-                    if (finalBalances.has(tx.id)) {
-                        return { ...tx, runningBalance: finalBalances.get(tx.id) };
-                    }
-                    return tx;
-                });
-            }
+        if (runningBalances.size > 0) {
+            return filtered.map(tx => {
+                if (runningBalances.has(tx.id)) {
+                    return { ...tx, runningBalance: runningBalances.get(tx.id) };
+                }
+                return tx;
+            });
         }
         
         return filtered;
 
-    }, [allExpenses, filters, categoryMap, accountMap, tagMap]);
+    }, [enrichedExpenses, filters, runningBalances]);
     
     const handleFiltersChange = (newFilters: any) => {
         setFilters(newFilters);

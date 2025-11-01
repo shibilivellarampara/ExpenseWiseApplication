@@ -74,25 +74,34 @@ export default function ExpensesPage() {
 
         let q: Query = collection(firestore, `users/${user.uid}/expenses`);
         
+        // Combine all 'where' clauses first.
+        let whereClauses: any[] = [];
+        
         if (filters.dateRange.from) {
-            q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
+            whereClauses.push(where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
         }
         if (filters.dateRange.to) {
-            q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
+            whereClauses.push(where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
         }
         if (filters.type !== 'all') {
-            q = query(q, where('type', '==', filters.type));
+            whereClauses.push(where('type', '==', filters.type));
         }
         if (filters.categories.length > 0) {
-            q = query(q, where('categoryId', 'in', filters.categories));
+            whereClauses.push(where('categoryId', 'in', filters.categories));
         }
         if (filters.accounts.length > 0) {
-            q = query(q, where('accountId', 'in', filters.accounts));
+            whereClauses.push(where('accountId', 'in', filters.accounts));
         }
         if (filters.tags.length > 0) {
-            q = query(q, where('tagIds', 'array-contains-any', filters.tags));
+            whereClauses.push(where('tagIds', 'array-contains-any', filters.tags));
+        }
+
+        // Apply all 'where' clauses in a single query() call.
+        if (whereClauses.length > 0) {
+            q = query(q, ...whereClauses);
         }
         
+        // Apply orderBy, startAfter, and limit after all filters.
         q = query(q, orderBy('date', 'desc'));
         
         if (startAfterDoc) {

@@ -43,12 +43,9 @@ export function Pagination({ onLoadMore, isLoading, hasMore }: PaginationProps) 
         };
     }, [isLoading, hasMore, onLoadMore]);
 
+    // Do not render anything if we are not showing a loading state or end-of-list message.
     if (!hasMore && !isLoading) {
-        return (
-            <div className="text-center text-muted-foreground text-sm py-8">
-                You've reached the end of the list.
-            </div>
-        );
+        return null;
     }
     
     return (

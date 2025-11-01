@@ -5,30 +5,17 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, ChevronDown, FilterX, ListFilter, Pilcrow, X } from 'lucide-react';
-import { Check } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { DateRange as ReactDateRange } from 'react-day-picker';
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, parseISO, isValid } from 'date-fns';
+import { ChevronDown, FilterX, ListFilter, Pilcrow } from 'lucide-react';
+import { Check, X } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Account, Category, Tag } from '@/lib/types';
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from '@/lib/utils';
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-  } from '@/components/ui/sheet';
 import { Separator } from '../ui/separator';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -37,7 +24,7 @@ import * as LucideIcons from 'lucide-react';
 import { Badge } from '../ui/badge';
 
 
-export type DateRange = ReactDateRange;
+export type DateRange = { from: Date | undefined; to: Date | undefined; };
 
 type Filters = {
     dateRange: DateRange;
@@ -244,7 +231,6 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
 
     return (
         <div className="flex flex-wrap gap-2 items-center">
-            {/* Filter Sheet for mobile and a Popover for Desktop */}
             <Popover>
                 <PopoverTrigger asChild>
                      <Button variant="outline" className="relative">

@@ -7,19 +7,18 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc } from "firebase/firestore";
+import { collection, orderBy, query, doc, onSnapshot } from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
-import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
-import { Pagination } from "@/components/ui/pagination";
+import { getCache, setCache } from "@/lib/cache";
 
 
 export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const isMounted = useRef(true);
 
     const [filters, setFilters] = useState({
         dateRange: { from: undefined, to: undefined } as DateRange,
@@ -47,7 +46,41 @@ export default function ExpensesPage() {
         user ? query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc')) : null
     , [firestore, user]);
 
-    const { data: allExpenses, isLoading: expensesLoading } = useCollection<Expense>(expensesBaseQuery);
+    const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
+    const [expensesLoading, setExpensesLoading] = useState(true);
+
+    useEffect(() => {
+        if (!user) return;
+
+        const cacheKey = `expenses_${user.uid}`;
+        const cachedExpenses = getCache<any[]>(cacheKey);
+
+        if (cachedExpenses) {
+            setAllExpenses(cachedExpenses.map(e => ({ ...e, date: new Date(e.date) } as Expense)));
+            setExpensesLoading(false);
+        } else {
+            setExpensesLoading(true);
+        }
+
+        const unsubscribe = expensesBaseQuery ? onSnapshot(expensesBaseQuery, (snapshot) => {
+            const fetchedExpenses = snapshot.docs.map(doc => {
+                 const data = doc.data() as Expense;
+                 // Firestore timestamps need to be converted to JS Dates for serialization and usage
+                 return { ...data, date: data.date.toDate() };
+            });
+            setAllExpenses(fetchedExpenses);
+            setCache(cacheKey, fetchedExpenses, 60 * 5); // Cache for 5 minutes
+            setExpensesLoading(false);
+        }, (error) => {
+            console.error("Error fetching expenses: ", error);
+            setExpensesLoading(false);
+        }) : () => {};
+
+        return () => unsubscribe();
+
+    }, [user, expensesBaseQuery]);
+
+
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
     const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
@@ -64,7 +97,7 @@ export default function ExpensesPage() {
 
         const enriched = allExpenses.map((expense: Expense): EnrichedExpense => ({
             ...expense,
-            date: expense.date.toDate(),
+            date: expense.date, // Already a Date object
             category: categoryMap.get(expense.categoryId),
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
@@ -87,8 +120,7 @@ export default function ExpensesPage() {
     };
     
     const refreshTransactions = () => {
-       // Data is real-time, so no explicit refresh is needed.
-       // This function is kept for prop compatibility.
+       // Data is real-time with snapshot listener, so no explicit refresh is needed.
     };
 
     return (
@@ -146,3 +178,5 @@ export default function ExpensesPage() {
         </div>
     );
 }
+
+    

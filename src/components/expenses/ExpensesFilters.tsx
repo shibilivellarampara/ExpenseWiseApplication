@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, ChevronDown, FilterX, ListFilter, Pilcrow } from 'lucide-react';
+import { CalendarIcon, ChevronDown, FilterX, ListFilter, Pilcrow, X } from 'lucide-react';
 import { Check } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { DateRange as ReactDateRange } from 'react-day-picker';

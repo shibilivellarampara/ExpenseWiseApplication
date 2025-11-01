@@ -104,41 +104,15 @@ export default function ExpensesPage() {
     
     const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses.length || !accounts?.length) return [];
-
-        let runningBalanceMap = new Map<string, number>();
-
-        // Calculate running balance ONLY when a single account is selected
-        if (filters.accounts.length === 1) {
-            const accountId = filters.accounts[0];
-            const account = accountMap.get(accountId);
-
-            if (account) {
-                // Get all transactions for this account, sorted from newest to oldest
-                const accountTransactions = allExpenses
-                    .filter(tx => tx.accountId === accountId)
-                    .sort((a, b) => b.date.getTime() - a.date.getTime());
-
-                let currentBalance = account.balance;
-
-                for (const tx of accountTransactions) {
-                    runningBalanceMap.set(tx.id, currentBalance);
-                    const amountChange = account.type === 'credit_card'
-                        ? (tx.type === 'expense' ? tx.amount : -tx.amount)
-                        : (tx.type === 'income' ? tx.amount : -tx.amount);
-                    currentBalance -= amountChange;
-                }
-            }
-        }
-
-        // Apply all filters and enrich data
-        const enrichedAndFiltered = allExpenses
+        
+        // 1. Initial Filtering and Enrichment
+        let filtered = allExpenses
             .map((expense): EnrichedExpense => ({
                 ...expense,
                 date: expense.date, // Already a Date object
                 category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
                 account: accountMap.get(expense.accountId),
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
-                runningBalance: runningBalanceMap.get(expense.id), // Get from map
             }))
             .filter(expense => {
                 const { dateRange, type, categories, accounts: accountIds, tags } = filters;
@@ -149,10 +123,46 @@ export default function ExpensesPage() {
                 if (accountIds.length > 0 && !accountIds.includes(expense.accountId)) return false;
                 if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
                 return true;
-            });
+            })
+            .sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort newest to oldest
+
+        // 2. Calculate Running Balance if a single account is selected
+        if (filters.accounts.length === 1) {
+            const accountId = filters.accounts[0];
+            const account = accountMap.get(accountId);
+
+            if (account) {
+                // Determine the balance at the start of the visible (filtered) transactions
+                const newestVisibleTransaction = filtered[0];
+                const allTransactionsForAccount = allExpenses
+                    .filter(tx => tx.accountId === accountId)
+                    .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+                let balanceAtNewest = account.balance;
+                for (const tx of allTransactionsForAccount) {
+                    if (tx.date.getTime() > newestVisibleTransaction.date.getTime()) {
+                         const amountChange = account.type === 'credit_card'
+                            ? (tx.type === 'expense' ? tx.amount : -tx.amount)
+                            : (tx.type === 'income' ? tx.amount : -tx.amount);
+                        balanceAtNewest -= amountChange;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Calculate running balance backwards for the visible transactions
+                let runningBalance = balanceAtNewest;
+                for (const tx of filtered) {
+                    tx.runningBalance = runningBalance;
+                    const amountChange = account.type === 'credit_card'
+                        ? (tx.type === 'expense' ? tx.amount : -tx.amount)
+                        : (tx.type === 'income' ? tx.amount : -tx.amount);
+                    runningBalance -= amountChange;
+                }
+            }
+        }
         
-        // Final sort of the displayed data from newest to oldest
-        return enrichedAndFiltered.sort((a, b) => b.date.getTime() - a.date.getTime());
+        return filtered;
 
     }, [allExpenses, categoryMap, accountMap, tagMap, filters, accounts]);
     

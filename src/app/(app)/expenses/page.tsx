@@ -110,49 +110,56 @@ export default function ExpensesPage() {
         }));
     }, [allExpenses, categoryMap, accountMap, tagMap]);
 
-    const runningBalances = useMemo(() => {
-        if (filters.accounts.length !== 1) return new Map<string, number>();
-
-        const accountId = filters.accounts[0];
-        const account = accountMap.get(accountId);
-        if (!account) return new Map<string, number>();
-
-        const accountTransactions = enrichedExpenses
-            .filter(tx => tx.accountId === accountId)
-            .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-        let totalChange = 0;
-        accountTransactions.forEach(tx => {
-            let amountChange = 0;
-            if (tx.account?.type === 'credit_card') {
-                amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
-            } else {
-                amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
-            }
-            totalChange += amountChange;
-        });
-        
-        const startingBalance = account.balance - totalChange;
-        
-        const balances = new Map<string, number>();
-        let currentBal = startingBalance;
-        accountTransactions.forEach(tx => {
-            let amountChange = 0;
-            if (tx.account?.type === 'credit_card') {
-                amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
-            } else {
-                amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
-            }
-            currentBal += amountChange;
-            balances.set(tx.id, currentBal);
-        });
-
-        return balances;
-
-    }, [filters.accounts, enrichedExpenses, accountMap]);
-
     const filteredAndEnrichedExpenses = useMemo(() => {
-        const filtered = enrichedExpenses.filter(expense => {
+        const hasSingleAccountFilter = filters.accounts.length === 1;
+        
+        let processedExpenses = enrichedExpenses;
+
+        if (hasSingleAccountFilter) {
+            const accountId = filters.accounts[0];
+            const account = accountMap.get(accountId);
+
+            if (account) {
+                 const accountTransactions = enrichedExpenses
+                    .filter(tx => tx.accountId === accountId)
+                    .sort((a, b) => a.date.getTime() - b.date.getTime());
+                
+                let totalChange = 0;
+                accountTransactions.forEach(tx => {
+                    let amountChange = 0;
+                    if (tx.account?.type === 'credit_card') {
+                        amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
+                    } else {
+                        amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
+                    }
+                    totalChange += amountChange;
+                });
+                
+                const startingBalance = account.balance - totalChange;
+                
+                const balances = new Map<string, number>();
+                let currentBal = startingBalance;
+                accountTransactions.forEach(tx => {
+                    let amountChange = 0;
+                    if (tx.account?.type === 'credit_card') {
+                        amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
+                    } else {
+                        amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
+                    }
+                    currentBal += amountChange;
+                    balances.set(tx.id, currentBal);
+                });
+                
+                processedExpenses = processedExpenses.map(tx => {
+                    if (balances.has(tx.id)) {
+                        return { ...tx, runningBalance: balances.get(tx.id) };
+                    }
+                    return tx;
+                });
+            }
+        }
+        
+        return processedExpenses.filter(expense => {
             const { dateRange, type, categories, accounts, tags } = filters;
             if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
             if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
@@ -163,18 +170,7 @@ export default function ExpensesPage() {
             return true;
         });
 
-        if (runningBalances.size > 0) {
-            return filtered.map(tx => {
-                if (runningBalances.has(tx.id)) {
-                    return { ...tx, runningBalance: runningBalances.get(tx.id) };
-                }
-                return tx;
-            });
-        }
-        
-        return filtered;
-
-    }, [enrichedExpenses, filters, runningBalances]);
+    }, [enrichedExpenses, filters, accountMap]);
     
     const handleFiltersChange = (newFilters: any) => {
         setFilters(newFilters);
@@ -247,3 +243,4 @@ export default function ExpensesPage() {
     
 
     
+

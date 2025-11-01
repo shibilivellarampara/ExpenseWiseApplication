@@ -809,7 +809,7 @@ function useExpenseForm({
             const selectedAccount = accounts.find(a => a.id === values.accountId);
 
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
-            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Bill Payment';
+            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
 
             const isAddOperation = !isEditMode;
 
@@ -855,7 +855,7 @@ function useExpenseForm({
                         batch.update(accountRef, { balance: increment(-difference) });
                     }
                  } else {
-                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Credit Card Bill Payment must be an "expense" transaction applied to a credit card account.'});
+                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Credit Card Payment must be an "expense" transaction applied to a credit card account.'});
                      setIsLoading(false);
                      return false;
                  }
@@ -947,7 +947,7 @@ function useExpenseForm({
 
             const selectedCategory = categories.find(c => c.id === expenseToEdit.categoryId);
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
-            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Bill Payment';
+            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
             
             batch.delete(expenseRef);
 

@@ -8,7 +8,7 @@ export const defaultCategories = [
   { name: 'Entertainment', icon: 'PartyPopper' },
   { name: 'Health', icon: 'HeartPulse' },
   { name: 'Credit Limit Upgrade', icon: 'TrendingUp' },
-  { name: 'Credit Card Bill Payment', icon: 'Landmark' },
+  { name: 'Credit Card Payment', icon: 'Landmark' },
   { name: 'Other', icon: 'MoreHorizontal' },
 ];
 

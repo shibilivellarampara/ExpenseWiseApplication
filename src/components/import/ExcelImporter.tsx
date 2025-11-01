@@ -212,14 +212,27 @@ export function ExcelImporter() {
         
         return rawData.map((row) => {
             const dateValue = row[mapping.date];
-            let date = dateValue instanceof Date ? dateValue : new Date(dateValue);
-            if(isNaN(date.getTime())){
-                if(typeof dateValue === 'number' && dateValue > 0) {
-                   date = XLSX.SSF.parse_date_code(dateValue);
-                } else {
-                   date = new Date();
-                }
+            let date;
+
+            if (dateValue instanceof Date) {
+                date = dateValue;
+            } else if (typeof dateValue === 'string') {
+                // For "YYYY-MM-DD" or "MM/DD/YYYY" formats, to prevent timezone shift.
+                // This assumes local timezone if no time is specified.
+                date = new Date(dateValue.replace(/-/g, '/'));
+            } else if (typeof dateValue === 'number' && dateValue > 0) {
+                // Handle Excel's serial date format
+                date = XLSX.SSF.parse_date_code(dateValue);
+            } else {
+                // Fallback for other unexpected formats
+                date = new Date();
             }
+
+            // If date is invalid after parsing, use today's date as a fallback
+            if (isNaN(date.getTime())) {
+                date = new Date();
+            }
+
 
             const description = row[mapping.description] || 'Imported Transaction';
             const categoryName = row[mapping.category] || 'Other';

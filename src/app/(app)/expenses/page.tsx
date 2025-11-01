@@ -103,9 +103,9 @@ export default function ExpensesPage() {
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
     const filteredAndEnrichedExpenses = useMemo(() => {
-        if (!allExpenses || !categoryMap.size || !accountMap.size) return [];
+        if (!allExpenses || !categoryMap.size || !accountMap.size || !accounts) return [];
 
-        let processedExpenses: EnrichedExpense[] = allExpenses.map((expense): EnrichedExpense => ({
+        let enrichedData: EnrichedExpense[] = allExpenses.map((expense): EnrichedExpense => ({
             ...expense,
             date: expense.date,
             category: categoryMap.get(expense.categoryId),
@@ -113,32 +113,30 @@ export default function ExpensesPage() {
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
 
-        if (filters.accounts.length === 1 && accountMap.size > 0) {
+        if (filters.accounts.length === 1) {
             const accountId = filters.accounts[0];
             const account = accountMap.get(accountId);
 
             if (account) {
-                const accountTransactions = allExpenses
+                const accountTransactions = enrichedData
                     .filter(tx => tx.accountId === accountId)
                     .sort((a, b) => a.date.getTime() - b.date.getTime());
 
                 let runningBalance = account.balance;
                 for (let i = accountTransactions.length - 1; i >= 0; i--) {
                     const tx = accountTransactions[i];
+                    tx.runningBalance = runningBalance;
+                    
                     const amountChange = tx.account?.type === 'credit_card'
                         ? (tx.type === 'expense' ? tx.amount : -tx.amount)
                         : (tx.type === 'income' ? tx.amount : -tx.amount);
                     
-                    const txIndex = processedExpenses.findIndex(p => p.id === tx.id);
-                    if (txIndex !== -1) {
-                        processedExpenses[txIndex].runningBalance = runningBalance;
-                    }
                     runningBalance -= amountChange;
                 }
             }
         }
         
-        const filteredData = processedExpenses.filter(expense => {
+        const filteredData = enrichedData.filter(expense => {
             const { dateRange, type, categories, accounts, tags } = filters;
             if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
             if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
@@ -151,7 +149,7 @@ export default function ExpensesPage() {
 
         return filteredData.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    }, [allExpenses, categoryMap, accountMap, tagMap, filters]);
+    }, [allExpenses, categoryMap, accountMap, tagMap, filters, accounts]);
     
     const handleFiltersChange = (newFilters: any) => {
         setFilters(newFilters);

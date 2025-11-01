@@ -105,7 +105,7 @@ export default function ExpensesPage() {
     const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses.length || !accounts?.length) return [];
         
-        // 1. Initial Filtering and Enrichment
+        // 1. Filter and enrich the transactions first
         let filtered = allExpenses
             .map((expense): EnrichedExpense => ({
                 ...expense,
@@ -126,31 +126,29 @@ export default function ExpensesPage() {
             })
             .sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort newest to oldest
 
-        // 2. Calculate Running Balance if a single account is selected
+        // 2. If a single account is selected, calculate running balance for the filtered items
         if (filters.accounts.length === 1) {
             const accountId = filters.accounts[0];
             const account = accountMap.get(accountId);
 
             if (account) {
-                // Determine the balance at the start of the visible (filtered) transactions
-                const newestVisibleTransaction = filtered[0];
-                const allTransactionsForAccount = allExpenses
-                    .filter(tx => tx.accountId === accountId)
-                    .sort((a, b) => b.date.getTime() - a.date.getTime());
-
+                // Find all transactions for this account AFTER the last visible transaction to calculate the starting balance
+                const newestVisibleDate = filtered.length > 0 ? filtered[0].date.getTime() : new Date().getTime();
+                
                 let balanceAtNewest = account.balance;
-                for (const tx of allTransactionsForAccount) {
-                    if (tx.date.getTime() > newestVisibleTransaction.date.getTime()) {
-                         const amountChange = account.type === 'credit_card'
+
+                allExpenses
+                    .filter(tx => tx.accountId === accountId && tx.date.getTime() > newestVisibleDate)
+                    .sort((a,b) => a.date.getTime() - b.date.getTime())
+                    .forEach(tx => {
+                        const amountChange = account.type === 'credit_card'
                             ? (tx.type === 'expense' ? tx.amount : -tx.amount)
                             : (tx.type === 'income' ? tx.amount : -tx.amount);
                         balanceAtNewest -= amountChange;
-                    } else {
-                        break;
-                    }
-                }
-                
-                // Calculate running balance backwards for the visible transactions
+                    });
+
+
+                // Now, iterate backwards through the VISIBLE transactions to set the running balance
                 let runningBalance = balanceAtNewest;
                 for (const tx of filtered) {
                     tx.runningBalance = runningBalance;

@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ChevronDown, FilterX, ListFilter, Pilcrow } from 'lucide-react';
@@ -184,6 +184,12 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                 )}
             </div>
             <Separator />
+            {createMultiSelect('Categories', 'categories', categories, 'Select categories')}
+            <Separator />
+            {createMultiSelect('Accounts', 'accounts', accounts, 'Select accounts')}
+            <Separator />
+            {createMultiSelect('Tags', 'tags', tags, 'Select tags')}
+            <Separator />
             <div>
                 <h4 className="text-sm font-medium mb-2">Transaction Type</h4>
                 <Select value={filters.type} onValueChange={handleTypeChange}>
@@ -197,12 +203,6 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                     </SelectContent>
                 </Select>
             </div>
-            <Separator />
-            {createMultiSelect('Categories', 'categories', categories, 'Select categories')}
-            <Separator />
-            {createMultiSelect('Accounts', 'accounts', accounts, 'Select accounts')}
-            <Separator />
-            {createMultiSelect('Tags', 'tags', tags, 'Select tags')}
         </div>
     )
 }

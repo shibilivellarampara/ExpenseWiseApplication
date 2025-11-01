@@ -1,10 +1,12 @@
 
+
 'use client';
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, ChevronDown, FilterX, ListFilter, Pilcrow, Check } from 'lucide-react';
+import { CalendarIcon, ChevronDown, FilterX, ListFilter, Pilcrow } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { DateRange as ReactDateRange } from 'react-day-picker';
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, parseISO, isValid } from 'date-fns';
@@ -150,7 +152,9 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                 {items.map(item => (
                                     <CommandItem
                                         key={item.id}
-                                        onSelect={() => handleMultiSelectChange(field, item.id)}
+                                        onSelect={(currentValue) => {
+                                            handleMultiSelectChange(field, item.id)
+                                        }}
                                         className="flex justify-between cursor-pointer"
                                     >
                                         <div className="flex items-center gap-2">
@@ -355,7 +359,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                                 {categories.map((category) => (
                                     <CommandItem
                                         key={category.id}
-                                        onSelect={() => {
+                                        onSelect={(currentValue) => {
                                             const newSelection = filters.categories.includes(category.id) ? [] : [category.id];
                                             onFiltersChange({ ...filters, categories: newSelection, accounts:[], tags: [] });
                                         }}
@@ -388,7 +392,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                                 {accounts.map((account) => (
                                     <CommandItem
                                         key={account.id}
-                                        onSelect={() => {
+                                        onSelect={(currentValue) => {
                                             const newSelection = filters.accounts.includes(account.id) ? filters.accounts.filter(a => a !== account.id) : [...filters.accounts, account.id];
                                             onFiltersChange({ ...filters, accounts: newSelection, categories: [], tags: [] });
                                         }}
@@ -421,7 +425,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                                 {tags.map((tag) => (
                                     <CommandItem
                                         key={tag.id}
-                                        onSelect={() => {
+                                        onSelect={(currentValue) => {
                                             const newSelection = filters.tags.includes(tag.id) ? filters.tags.filter(t => t !== tag.id) : [...filters.tags, tag.id];
                                             onFiltersChange({ ...filters, tags: newSelection, categories:[], accounts: [] });
                                         }}

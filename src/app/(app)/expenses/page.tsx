@@ -135,7 +135,11 @@ export default function ExpensesPage() {
                 tags={tags || []}
             />
 
-            <ExpensesSummary currency={userProfile?.defaultCurrency} isLoading={isLoading} />
+            <ExpensesSummary 
+                expenses={filteredAndEnrichedExpenses}
+                currency={userProfile?.defaultCurrency} 
+                isLoading={isLoading} 
+            />
 
             <ExpensesTable 
                 expenses={filteredAndEnrichedExpenses} 

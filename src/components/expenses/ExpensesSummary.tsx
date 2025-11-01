@@ -1,53 +1,41 @@
+
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Account } from "@/lib/types";
+import { EnrichedExpense } from "@/lib/types";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { cn } from "@/lib/utils";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection } from "firebase/firestore";
 
 interface ExpensesSummaryProps {
+    expenses: EnrichedExpense[];
     currency?: string;
     isLoading?: boolean;
 }
 
-export function ExpensesSummary({ isLoading, currency }: ExpensesSummaryProps) {
-    const { user } = useUser();
-    const firestore = useFirestore();
-
-    const accountsQuery = useMemoFirebase(() => 
-        user ? collection(firestore, `users/${user.uid}/accounts`) : null
-    , [firestore, user]);
-    const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
-
+export function ExpensesSummary({ isLoading, currency, expenses }: ExpensesSummaryProps) {
     const currencySymbol = getCurrencySymbol(currency);
 
     const summary = useMemo(() => {
-        if (!accounts) {
-            return { totalIn: 0, totalOut: 0, netBalance: 0 };
+        if (!expenses) {
+            return { totalIn: 0, totalOut: 0, netFlow: 0 };
         }
 
-        const totalAssets = accounts
-            .filter(acc => acc.status === 'active' && acc.type !== 'credit_card')
-            .reduce((sum, acc) => sum + acc.balance, 0);
-
-        const totalLiabilities = accounts
-            .filter(acc => acc.status === 'active' && acc.type === 'credit_card')
-            .reduce((sum, acc) => sum + acc.balance, 0);
+        const totalIn = expenses
+            .filter(exp => exp.type === 'income')
+            .reduce((sum, exp) => sum + exp.amount, 0);
         
-        const netBalance = totalAssets - totalLiabilities;
+        const totalOut = expenses
+            .filter(exp => exp.type === 'expense')
+            .reduce((sum, exp) => sum + exp.amount, 0);
 
-        return {
-            totalIn: totalAssets,
-            totalOut: totalLiabilities,
-            netBalance: netBalance
-        };
-    }, [accounts]);
+        const netFlow = totalIn - totalOut;
 
-    if (isLoading || accountsLoading) {
+        return { totalIn, totalOut, netFlow };
+    }, [expenses]);
+
+    if (isLoading) {
         return (
             <Card>
                 <CardContent className="p-4">
@@ -71,13 +59,13 @@ export function ExpensesSummary({ isLoading, currency }: ExpensesSummaryProps) {
             <CardContent className="p-4">
                 <div className="flex justify-between items-center text-sm">
                     <div>
-                        <p className="text-muted-foreground">Net Balance</p>
+                        <p className="text-muted-foreground">Net Flow (In - Out)</p>
                         <p className={cn(
                             "text-lg font-bold",
-                            summary.netBalance >= 0 && "text-green-600",
-                            summary.netBalance < 0 && "text-red-500"
+                            summary.netFlow >= 0 && "text-green-600",
+                            summary.netFlow < 0 && "text-red-500"
                         )}>
-                            {currencySymbol}{summary.netBalance.toFixed(2)}
+                            {currencySymbol}{summary.netFlow.toFixed(2)}
                         </p>
                     </div>
                     <div className="text-right">

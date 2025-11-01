@@ -103,34 +103,37 @@ export default function ExpensesPage() {
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
     const filteredAndEnrichedExpenses = useMemo(() => {
-        if (!allExpenses || !categoryMap.size || !accountMap.size || !accounts) return [];
+        if (!allExpenses.length || !accounts?.length) return [];
 
-        let enrichedData: EnrichedExpense[] = allExpenses.map((expense): EnrichedExpense => ({
+        // 1. First, enrich all expenses with their related data.
+        const enriched = allExpenses.map((expense): EnrichedExpense => ({
             ...expense,
-            date: expense.date,
-            category: categoryMap.get(expense.categoryId),
+            date: expense.date, // Already a Date object from the onSnapshot listener
+            category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
-        
-        const filteredData = enrichedData.filter(expense => {
-            const { dateRange, type, categories, accounts, tags } = filters;
+
+        // 2. Apply all filters
+        let filtered = enriched.filter(expense => {
+            const { dateRange, type, categories, accounts: accountIds, tags } = filters;
             if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
             if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
             if (type !== 'all' && expense.type !== type) return false;
             if (categories.length > 0 && !categories.includes(expense.categoryId || '')) return false;
-            if (accounts.length > 0 && !accounts.includes(expense.accountId)) return false;
+            if (accountIds.length > 0 && !accountIds.includes(expense.accountId)) return false;
             if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
             return true;
         });
 
+        // 3. If a single account is selected, calculate running balance for its transactions
         if (filters.accounts.length === 1) {
             const accountId = filters.accounts[0];
             const account = accountMap.get(accountId);
 
             if (account) {
-                // Get all transactions for this account and sort them from newest to oldest
-                const accountTransactions = allExpenses
+                // Get all transactions for this account, sorted from newest to oldest
+                const accountTransactions = enriched
                     .filter(tx => tx.accountId === accountId)
                     .sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -139,23 +142,24 @@ export default function ExpensesPage() {
 
                 for (const tx of accountTransactions) {
                     balanceMap.set(tx.id, runningBalance);
-                    const amountChange = account?.type === 'credit_card'
+                    const amountChange = account.type === 'credit_card'
                         ? (tx.type === 'expense' ? tx.amount : -tx.amount)
                         : (tx.type === 'income' ? tx.amount : -tx.amount);
                     runningBalance -= amountChange;
                 }
 
                 // Add the running balance to each transaction in the main (potentially filtered) list
-                return filteredData.map(tx => {
+                filtered = filtered.map(tx => {
                     if (balanceMap.has(tx.id)) {
                         return { ...tx, runningBalance: balanceMap.get(tx.id) };
                     }
                     return tx;
-                }).sort((a, b) => b.date.getTime() - a.date.getTime());
+                });
             }
         }
         
-        return filteredData.sort((a, b) => b.date.getTime() - a.date.getTime());
+        // Final sort of the displayed data from newest to oldest
+        return filtered.sort((a, b) => b.date.getTime() - a.date.getTime());
 
     }, [allExpenses, categoryMap, accountMap, tagMap, filters, accounts]);
     
@@ -228,5 +232,3 @@ export default function ExpensesPage() {
         </div>
     );
 }
-
-    

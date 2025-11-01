@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
+import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, orderBy, query, doc, onSnapshot } from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
@@ -48,9 +48,10 @@ export default function ExpensesPage() {
 
     const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
     const [expensesLoading, setExpensesLoading] = useState(true);
+    const [expensesError, setExpensesError] = useState<Error | null>(null);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !expensesBaseQuery) return;
 
         const cacheKey = `expenses_${user.uid}`;
         const cachedExpenses = getCache<any[]>(cacheKey);
@@ -62,19 +63,25 @@ export default function ExpensesPage() {
             setExpensesLoading(true);
         }
 
-        const unsubscribe = expensesBaseQuery ? onSnapshot(expensesBaseQuery, (snapshot) => {
+        const unsubscribe = onSnapshot(expensesBaseQuery, (snapshot) => {
             const fetchedExpenses = snapshot.docs.map(doc => {
                  const data = doc.data() as Expense;
-                 // Firestore timestamps need to be converted to JS Dates for serialization and usage
                  return { ...data, date: data.date.toDate() };
             });
             setAllExpenses(fetchedExpenses);
             setCache(cacheKey, fetchedExpenses, 60 * 5); // Cache for 5 minutes
             setExpensesLoading(false);
+            setExpensesError(null);
         }, (error) => {
             console.error("Error fetching expenses: ", error);
+            const contextualError = new FirestorePermissionError({
+                path: `users/${user.uid}/expenses`,
+                operation: 'list',
+            });
+            setExpensesError(contextualError);
+            errorEmitter.emit('permission-error', contextualError);
             setExpensesLoading(false);
-        }) : () => {};
+        });
 
         return () => unsubscribe();
 
@@ -145,7 +152,7 @@ export default function ExpensesPage() {
                 expenses={filteredAndEnrichedExpenses} 
                 isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
                 onDataChange={refreshTransactions} 
-                error={null}
+                error={expensesError ? 'Error loading transactions' : null}
             />
 
             <div className="fixed bottom-0 left-0 right-0 p-4 z-40 md:hidden">

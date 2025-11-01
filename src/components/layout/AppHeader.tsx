@@ -1,3 +1,4 @@
+
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
@@ -19,6 +20,8 @@ import {
   Briefcase,
   FileText,
 } from 'lucide-react';
+import packageJson from '../../../package.json';
+import { Separator } from '../ui/separator';
 
 
 const navItems = [
@@ -48,6 +51,7 @@ export function AppHeader() {
   const title = getPageTitle(pathname);
   const { isUserLoading } = useUser();
   const { openMobile, setOpenMobile } = useSidebar();
+  const appVersion = packageJson.version;
     
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
@@ -78,8 +82,9 @@ export function AppHeader() {
                                 />
                             ))}
                         </nav>
-                        <div className="mt-auto">
-                            <div className='my-4 bg-sidebar-border' />
+                        <div className="mt-auto p-4 text-center text-xs text-sidebar-muted-foreground">
+                            <Separator className='my-2 bg-sidebar-border' />
+                            <span>Version {appVersion}</span>
                         </div>
                     </div>
                 </SheetContent>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -16,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { useSidebar } from '../ui/sidebar';
+import packageJson from '../../../package.json';
 
 const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
@@ -74,6 +76,7 @@ export const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { hr
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const appVersion = packageJson.version;
 
   return (
     <aside className="w-56 flex-shrink-0 hidden md:block">
@@ -93,8 +96,9 @@ export function AppSidebar() {
                 />
                 ))}
             </nav>
-            <div className="mt-auto">
-                <Separator className='my-4 bg-sidebar-border' />
+            <div className="mt-auto p-4 text-center text-xs text-sidebar-muted-foreground">
+                <Separator className='my-2 bg-sidebar-border' />
+                <span>Version {appVersion}</span>
             </div>
         </div>
     </aside>

@@ -26,6 +26,7 @@ import { Checkbox } from "../ui/checkbox";
 type RowData = { [key: string]: any };
 type ColumnMapping = {
     date: string;
+    time?: string | null;
     description: string;
     category: string;
     tags?: string | null;
@@ -40,22 +41,22 @@ type ColumnMapping = {
 const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, description: string } } = {
     'default': {
         name: 'Default Template',
-        mapping: { date: 'Date', amount: 'Amount', description: 'Description', category: 'Category', tags: 'Tags', mode: 'Account' },
-        description: "Standard: Date, Amount, Description, etc."
+        mapping: { date: 'Date', time: 'Time', amount: 'Amount', description: 'Description', category: 'Category', tags: 'Tags', mode: 'Account' },
+        description: "Standard: Date, Time, Amount, Description, etc."
     },
     'cashbook': {
         name: 'Cashbook App',
-        mapping: { date: 'Date', description: 'Remark', category: 'Category', cashIn: 'Cash In', cashOut: 'Cash Out', mode: 'Mode' },
+        mapping: { date: 'Date', time: 'Time', description: 'Remark', category: 'Category', cashIn: 'Cash In', cashOut: 'Cash Out', mode: 'Mode' },
         description: "For Cashbook app exports."
     },
     'spendee': {
         name: 'Spendee App',
-        mapping: { date: 'Date', amount: 'Amount', description: 'Notes', category: 'Category', tags: 'Tags', mode: 'Wallet' },
+        mapping: { date: 'Date', time: 'Time', amount: 'Amount', description: 'Notes', category: 'Category', tags: 'Tags', mode: 'Wallet' },
         description: "For Spendee exports."
     },
     'custom_detailed': {
         name: 'Custom Detailed',
-        mapping: { date: 'Date', description: 'Old Description', category: 'Category', tags: 'Tags', cashIn: 'CASH IN', cashOut: 'CASH OUT', mode: 'ACCOUNT'},
+        mapping: { date: 'Date', time: 'Time', description: 'Old Description', category: 'Category', tags: 'Tags', cashIn: 'CASH IN', cashOut: 'CASH OUT', mode: 'ACCOUNT'},
         description: "For detailed sheets with separate cash in/out."
     },
 };
@@ -138,12 +139,10 @@ export function ExcelImporter() {
 
                 const expectedMapping = TEMPLATES[template].mapping;
                 // Dynamically build the list of required columns from the selected template's mapping
-                const requiredColumns = Object.values(expectedMapping).filter(col => col && (
-                    ['date', 'description', 'category'].includes(Object.keys(expectedMapping).find(key => expectedMapping[key as keyof ColumnMapping] === col)!) ||
-                    (expectedMapping.amount && col === expectedMapping.amount) ||
-                    (expectedMapping.cashIn && col === expectedMapping.cashIn) ||
-                    (expectedMapping.cashOut && col === expectedMapping.cashOut)
-                ));
+                const requiredColumns = Object.entries(expectedMapping)
+                    .filter(([key, value]) => value && (key === 'date' || key === 'description' || key === 'category' || key === 'amount' || key === 'cashIn' || key === 'cashOut'))
+                    .map(([, value]) => value);
+
 
                 const missingColumns = requiredColumns.filter(col => col && !headers.includes(col));
 
@@ -212,25 +211,50 @@ export function ExcelImporter() {
         
         return rawData.map((row) => {
             const dateValue = row[mapping.date];
-            let date;
+            let datePart;
 
             if (dateValue instanceof Date) {
-                date = dateValue;
+                datePart = dateValue;
             } else if (typeof dateValue === 'string') {
-                // For "YYYY-MM-DD" or "MM/DD/YYYY" formats, to prevent timezone shift.
-                // This assumes local timezone if no time is specified.
-                date = new Date(dateValue.replace(/-/g, '/'));
+                datePart = new Date(dateValue.replace(/-/g, '/') + ' UTC');
             } else if (typeof dateValue === 'number' && dateValue > 0) {
-                // Handle Excel's serial date format
-                date = XLSX.SSF.parse_date_code(dateValue);
+                datePart = XLSX.SSF.parse_date_code(dateValue);
             } else {
-                // Fallback for other unexpected formats
-                date = new Date();
+                datePart = new Date();
             }
 
-            // If date is invalid after parsing, use today's date as a fallback
-            if (isNaN(date.getTime())) {
-                date = new Date();
+            if (isNaN(datePart.getTime())) {
+                datePart = new Date();
+            }
+
+            let finalDate = datePart;
+
+            if (mapping.time) {
+                const timeValue = row[mapping.time];
+                if (timeValue) {
+                    let hours = 0;
+                    let minutes = 0;
+
+                    if (timeValue instanceof Date) {
+                        hours = timeValue.getHours();
+                        minutes = timeValue.getMinutes();
+                    } else {
+                        const timeString = String(timeValue);
+                        const match = timeString.match(/(\d+):(\d+)\s*(am|pm)?/i);
+                        if (match) {
+                            let [ , h, m, ampm ] = match;
+                            hours = parseInt(h, 10);
+                            minutes = parseInt(m, 10);
+                            if (ampm && ampm.toLowerCase() === 'pm' && hours < 12) {
+                                hours += 12;
+                            }
+                            if (ampm && ampm.toLowerCase() === 'am' && hours === 12) {
+                                hours = 0;
+                            }
+                        }
+                    }
+                    finalDate.setHours(hours, minutes, 0, 0);
+                }
             }
 
 
@@ -260,7 +284,7 @@ export function ExcelImporter() {
                 }
             }
             
-            return { date, amount, description, categoryName, tags, type, accountName };
+            return { date: finalDate, amount, description, categoryName, tags, type, accountName };
         }).filter(item => !isNaN(item.amount) && item.amount > 0);
     }, [rawData, template]);
 
@@ -633,7 +657,7 @@ export function ExcelImporter() {
                                 <TableBody>
                                     {processedData.slice(0, 10).map((row, index) => (
                                         <TableRow key={index}>
-                                            <TableCell>{row.date.toLocaleDateString()}</TableCell>
+                                            <TableCell>{row.date.toLocaleString()}</TableCell>
                                             <TableCell>{row.description}</TableCell>
                                             <TableCell>{row.accountName || "Default"}</TableCell>
                                             <TableCell className={`text-right font-medium ${row.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>

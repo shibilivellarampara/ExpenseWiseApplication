@@ -213,19 +213,21 @@ export function ExcelImporter() {
         
         return rawData.map((row) => {
             const dateValue = row[mapping.date];
-            let datePart;
+            let datePart: Date;
 
             // Handle Excel's numeric date format or string format
             if (typeof dateValue === 'number') {
-                // XLSX.SSF.parse_date_code handles Excel's date serial numbers
                 const parsed = XLSX.SSF.parse_date_code(dateValue);
-                 // Create date in UTC to avoid timezone shifts from local time
-                datePart = new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d, parsed.H, parsed.M, parsed.S));
-            } else if (typeof dateValue === 'string') {
-                 // Try to parse string dates; append UTC to hint the parser
-                datePart = new Date(dateValue.includes('T') ? dateValue : dateValue + 'T00:00:00Z');
+                datePart = new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d, 0, 0, 0));
             } else if (dateValue instanceof Date) {
-                datePart = dateValue;
+                datePart = new Date(Date.UTC(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate()));
+            } else if (typeof dateValue === 'string') {
+                const parsedDate = new Date(dateValue + 'T00:00:00Z'); // Assume UTC to avoid timezone shifts
+                if (!isNaN(parsedDate.getTime())) {
+                    datePart = new Date(Date.UTC(parsedDate.getUTCFullYear(), parsedDate.getUTCMonth(), parsedDate.getUTCDate()));
+                } else {
+                    datePart = new Date(); // Fallback
+                }
             } else {
                 datePart = new Date(); // Fallback
             }
@@ -238,32 +240,27 @@ export function ExcelImporter() {
 
             if (mapping.time && row[mapping.time]) {
                 const timeValue = row[mapping.time];
-                if (timeValue instanceof Date) { // If time is already a Date object
+                if (timeValue instanceof Date) { 
                     finalDate.setUTCHours(timeValue.getUTCHours(), timeValue.getUTCMinutes(), timeValue.getUTCSeconds());
-                } else if (typeof timeValue === 'number') { // Handle Excel time as a fraction of a day
+                } else if (typeof timeValue === 'number') { 
                     const secondsInDay = timeValue * 86400;
                     const hours = Math.floor(secondsInDay / 3600);
                     const minutes = Math.floor((secondsInDay % 3600) / 60);
                     const seconds = Math.round(secondsInDay % 60);
                     finalDate.setUTCHours(hours, minutes, seconds);
-                } else if (typeof timeValue === 'string') { // Handle string time
+                } else if (typeof timeValue === 'string') {
                     const timeMatch = timeValue.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?/i);
                     if (timeMatch) {
                         let [_, hoursStr, minutesStr, secondsStr, ampm] = timeMatch;
                         let hours = parseInt(hoursStr, 10);
                         const minutes = parseInt(minutesStr, 10);
                         const seconds = secondsStr ? parseInt(secondsStr, 10) : 0;
-                        if (ampm && ampm.toUpperCase() === 'PM' && hours < 12) {
-                            hours += 12;
-                        }
-                        if (ampm && ampm.toUpperCase() === 'AM' && hours === 12) {
-                            hours = 0;
-                        }
+                        if (ampm && ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
+                        if (ampm && ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
                         finalDate.setUTCHours(hours, minutes, seconds);
                     }
                 }
             }
-
 
             const description = row[mapping.description] || 'Imported Transaction';
             const categoryName = row[mapping.category] || 'Other';

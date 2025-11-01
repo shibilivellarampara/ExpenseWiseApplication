@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
-import { FileUp, Loader2, CheckCircle, ArrowRight, ListChecks, FileCheck2, AlertTriangle, Sparkles, Pilcrow } from "lucide-react";
+import { FileUp, Loader2, CheckCircle, ArrowRight, ListChecks, FileCheck2, AlertTriangle, Sparkles, Pilcrow, ArrowLeft, Send } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { useDoc, useFirestore, useUser, useMemoFirebase, useCollection } from "@/firebase";
 import { doc } from 'firebase/firestore';
@@ -21,6 +21,7 @@ import * as LucideIcons from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Progress } from "../ui/progress";
 import { Checkbox } from "../ui/checkbox";
+import Link from "next/link";
 
 
 type RowData = { [key: string]: any };
@@ -90,6 +91,7 @@ export function ExcelImporter() {
     
     const [importAccountId, setImportAccountId] = useState<string>(''); // For single account import
     const [importedCount, setImportedCount] = useState(0);
+    const [importComplete, setImportComplete] = useState(false);
 
     const { toast } = useToast();
 
@@ -213,47 +215,52 @@ export function ExcelImporter() {
             const dateValue = row[mapping.date];
             let datePart;
 
-            if (dateValue instanceof Date) {
-                datePart = dateValue;
+            // Handle Excel's numeric date format or string format
+            if (typeof dateValue === 'number') {
+                // XLSX.SSF.parse_date_code handles Excel's date serial numbers
+                const parsed = XLSX.SSF.parse_date_code(dateValue);
+                 // Create date in UTC to avoid timezone shifts from local time
+                datePart = new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d, parsed.H, parsed.M, parsed.S));
             } else if (typeof dateValue === 'string') {
-                datePart = new Date(dateValue.replace(/-/g, '/') + ' UTC');
-            } else if (typeof dateValue === 'number' && dateValue > 0) {
-                datePart = XLSX.SSF.parse_date_code(dateValue);
+                 // Try to parse string dates; append UTC to hint the parser
+                datePart = new Date(dateValue.includes('T') ? dateValue : dateValue + 'T00:00:00Z');
+            } else if (dateValue instanceof Date) {
+                datePart = dateValue;
             } else {
-                datePart = new Date();
+                datePart = new Date(); // Fallback
             }
 
             if (isNaN(datePart.getTime())) {
-                datePart = new Date();
+                datePart = new Date(); // Final fallback for invalid dates
             }
 
             let finalDate = datePart;
 
-            if (mapping.time) {
+            if (mapping.time && row[mapping.time]) {
                 const timeValue = row[mapping.time];
-                if (timeValue) {
-                    let hours = 0;
-                    let minutes = 0;
-
-                    if (timeValue instanceof Date) {
-                        hours = timeValue.getHours();
-                        minutes = timeValue.getMinutes();
-                    } else {
-                        const timeString = String(timeValue);
-                        const match = timeString.match(/(\d+):(\d+)\s*(am|pm)?/i);
-                        if (match) {
-                            let [ , h, m, ampm ] = match;
-                            hours = parseInt(h, 10);
-                            minutes = parseInt(m, 10);
-                            if (ampm && ampm.toLowerCase() === 'pm' && hours < 12) {
-                                hours += 12;
-                            }
-                            if (ampm && ampm.toLowerCase() === 'am' && hours === 12) {
-                                hours = 0;
-                            }
+                if (timeValue instanceof Date) { // If time is already a Date object
+                    finalDate.setUTCHours(timeValue.getUTCHours(), timeValue.getUTCMinutes(), timeValue.getUTCSeconds());
+                } else if (typeof timeValue === 'number') { // Handle Excel time as a fraction of a day
+                    const secondsInDay = timeValue * 86400;
+                    const hours = Math.floor(secondsInDay / 3600);
+                    const minutes = Math.floor((secondsInDay % 3600) / 60);
+                    const seconds = Math.round(secondsInDay % 60);
+                    finalDate.setUTCHours(hours, minutes, seconds);
+                } else if (typeof timeValue === 'string') { // Handle string time
+                    const timeMatch = timeValue.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?/i);
+                    if (timeMatch) {
+                        let [_, hoursStr, minutesStr, secondsStr, ampm] = timeMatch;
+                        let hours = parseInt(hoursStr, 10);
+                        const minutes = parseInt(minutesStr, 10);
+                        const seconds = secondsStr ? parseInt(secondsStr, 10) : 0;
+                        if (ampm && ampm.toUpperCase() === 'PM' && hours < 12) {
+                            hours += 12;
                         }
+                        if (ampm && ampm.toUpperCase() === 'AM' && hours === 12) {
+                            hours = 0;
+                        }
+                        finalDate.setUTCHours(hours, minutes, seconds);
                     }
-                    finalDate.setHours(hours, minutes, 0, 0);
                 }
             }
 
@@ -303,6 +310,7 @@ export function ExcelImporter() {
         if (processedData.length === 0 || !user || !firestore || !accounts || !existingCategories || !existingTags) return;
         setIsImporting(true);
         setImportedCount(0);
+        setImportComplete(false);
     
         const BATCH_SIZE = 499; // Firestore batch limit is 500
         const totalBatches = Math.ceil(processedData.length / BATCH_SIZE);
@@ -414,9 +422,10 @@ export function ExcelImporter() {
                 title: 'Import Successful',
                 description: `${processedData.length} expenses were added.`,
             });
-            resetState();
+            setImportComplete(true);
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Import Error', description: error.message });
+            setImportComplete(false);
         } finally {
             setIsImporting(false);
         }
@@ -435,7 +444,7 @@ export function ExcelImporter() {
         setAccountMappings({});
         setImportAccountId('');
         setImportedCount(0);
-        setSelectedAccountsToImport([]);
+        setImportComplete(false);
     }
 
     const renderIcon = (iconName: string | undefined, className?: string) => {
@@ -482,220 +491,246 @@ export function ExcelImporter() {
                     {step === 1 && 'Choose a template that matches your file format.'}
                     {step === 2 && `Ready to upload a file.`}
                     {step === 3 && 'We found some new items in your file. Review and map them before importing.'}
-                    {step === 4 && `A summary of your import. Ready to add ${processedData.length} transactions.`}
+                    {step === 4 && (importComplete ? 'Import complete!' : `A summary of your import. Ready to add ${processedData.length} transactions.`)}
                 </CardDescription>
             </CardHeader>
              <CardContent className="space-y-4">
-                {isImporting && (
+                 {importComplete ? (
+                    <div className="flex flex-col items-center justify-center text-center p-8">
+                        <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
+                        <h3 className="text-xl font-semibold">Import Successful</h3>
+                        <p className="text-muted-foreground mt-2">{importedCount} transactions have been added to your records.</p>
+                        <div className="flex gap-2 mt-6">
+                             <Button onClick={resetState} variant="outline">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Import Another File
+                            </Button>
+                             <Button asChild>
+                                <Link href="/expenses">
+                                    <Send className="mr-2 h-4 w-4" />
+                                    Go to Transactions
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
+                ) : isImporting ? (
                      <div className="space-y-2">
                         <Label>Importing transactions...</Label>
                         <Progress value={(importedCount / (processedData.length || 1)) * 100} />
                         <p className="text-sm text-muted-foreground text-center">{importedCount} of {processedData.length} imported.</p>
                     </div>
-                )}
-
-                {!isImporting && step === 1 && (
-                    <div>
-                        <Label>Import Template</Label>
-                        <Select value={template} onValueChange={setTemplate}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a template..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {Object.entries(TEMPLATES).map(([key, {name, description}]) => (
-                                    <SelectItem key={key} value={key}>
-                                        <div className="flex flex-col">
-                                            <span className="font-medium">{name}</span>
-                                            <span className="text-xs text-muted-foreground">{description}</span>
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                )}
-                {!isImporting && step === 2 && (
-                    <div className="space-y-4">
-                         <div className="rounded-md border bg-muted/50 p-3">
-                            <p className="text-sm font-medium text-muted-foreground">Selected Template: <span className="font-semibold text-foreground">{TEMPLATES[template]?.name}</span></p>
-                        </div>
-                         <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 flex flex-col items-center justify-center text-center">
-                            <FileUp className="w-12 h-12 text-muted-foreground" />
-                            <p className="mt-4 text-muted-foreground">Drag & drop your file or click to browse</p>
-                            <Input id="file-upload" type="file" accept=".xlsx, .csv" onChange={(e) => e.target.files && handleFileParseAndValidate(e.target.files[0])} className="hidden" />
-                            <Button variant="outline" className="mt-4" onClick={() => document.getElementById('file-upload')?.click()} disabled={isProcessing}>
-                                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Browse File'}
-                            </Button>
-                        </div>
-                    </div>
-                )}
-                {!isImporting && step === 3 && (
-                     <div className="space-y-6">
-                        {validationError && (
-                             <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
-                                <div className="flex items-start gap-3">
-                                    <AlertTriangle className="h-5 w-5 flex-shrink-0" />
-                                    <div>
-                                        <h4 className="font-semibold">Validation Failed</h4>
-                                        <p className="text-sm">{validationError}</p>
-                                    </div>
+                ) : (
+                    <>
+                        {step === 1 && (
+                            <div>
+                                <Label>Import Template</Label>
+                                <Select value={template} onValueChange={setTemplate}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a template..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(TEMPLATES).map(([key, {name, description}]) => (
+                                            <SelectItem key={key} value={key}>
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium">{name}</span>
+                                                    <span className="text-xs text-muted-foreground">{description}</span>
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div className="space-y-4">
+                                <div className="rounded-md border bg-muted/50 p-3">
+                                    <p className="text-sm font-medium text-muted-foreground">Selected Template: <span className="font-semibold text-foreground">{TEMPLATES[template]?.name}</span></p>
+                                </div>
+                                <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 flex flex-col items-center justify-center text-center">
+                                    <FileUp className="w-12 h-12 text-muted-foreground" />
+                                    <p className="mt-4 text-muted-foreground">Drag & drop your file or click to browse</p>
+                                    <Input id="file-upload" type="file" accept=".xlsx, .csv" onChange={(e) => e.target.files && handleFileParseAndValidate(e.target.files[0])} className="hidden" />
+                                    <Button variant="outline" className="mt-4" onClick={() => document.getElementById('file-upload')?.click()} disabled={isProcessing}>
+                                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Browse File'}
+                                    </Button>
                                 </div>
                             </div>
                         )}
-                        <div className="rounded-lg border p-4 space-y-2">
-                             <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Categories ({newCategories.length})</h4>
-                            {newCategories.length > 0 ? (
-                                <div className="flex flex-wrap gap-2">
-                                    {newCategories.map(c => <Badge key={c} variant="secondary">{c}</Badge>)}
-                                </div>
-                            ) : <p className="text-sm text-muted-foreground">No new categories found. Existing categories will be used.</p>}
-                             <p className="text-xs text-muted-foreground pt-1">New categories will be created automatically.</p>
-                        </div>
-                         <div className="rounded-lg border p-4 space-y-2">
-                             <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Tags ({newTags.length})</h4>
-                            {newTags.length > 0 ? (
-                                <div className="flex flex-wrap gap-2">
-                                    {newTags.map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
-                                </div>
-                            ) : <p className="text-sm text-muted-foreground">No new tags found. Existing tags will be used.</p>}
-                            <p className="text-xs text-muted-foreground pt-1">New tags will be created automatically.</p>
-                        </div>
-                         {newAccounts.length > 0 && (
-                             <div className="rounded-lg border p-4 space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Accounts ({newAccounts.length})</h4>
-                                    <div className="flex gap-2">
-                                        <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport(newAccounts)}>Select All</Button>
-                                        <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport([])}>Deselect All</Button>
+                        {step === 3 && (
+                            <div className="space-y-6">
+                                {validationError && (
+                                    <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
+                                        <div className="flex items-start gap-3">
+                                            <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+                                            <div>
+                                                <h4 className="font-semibold">Validation Failed</h4>
+                                                <p className="text-sm">{validationError}</p>
+                                            </div>
+                                        </div>
                                     </div>
+                                )}
+                                <div className="rounded-lg border p-4 space-y-2">
+                                    <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Categories ({newCategories.length})</h4>
+                                    {newCategories.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {newCategories.map(c => <Badge key={c} variant="secondary">{c}</Badge>)}
+                                        </div>
+                                    ) : <p className="text-sm text-muted-foreground">No new categories found. Existing categories will be used.</p>}
+                                    <p className="text-xs text-muted-foreground pt-1">New categories will be created automatically.</p>
                                 </div>
-                                <p className="text-sm text-muted-foreground">Select accounts to import and map them to existing accounts, or create new ones.</p>
-                                {newAccounts.map(accName => (
-                                    <div key={accName} className="grid grid-cols-[auto_1fr_auto_1fr] items-center gap-x-4 gap-y-2">
-                                        <Checkbox
-                                            id={`select-acc-${accName}`}
-                                            checked={selectedAccountsToImport.includes(accName)}
-                                            onCheckedChange={() => handleAccountSelectionChange(accName)}
-                                        />
-                                        <Label htmlFor={`select-acc-${accName}`} className="truncate font-medium">{accName}</Label>
-                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                                        <div className="flex gap-2">
-                                            <Select 
-                                                onValueChange={(value) => handleAccountMappingChange(accName, value)}
-                                                defaultValue="create_new"
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue />
+                                <div className="rounded-lg border p-4 space-y-2">
+                                    <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Tags ({newTags.length})</h4>
+                                    {newTags.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {newTags.map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
+                                        </div>
+                                    ) : <p className="text-sm text-muted-foreground">No new tags found. Existing tags will be used.</p>}
+                                    <p className="text-xs text-muted-foreground pt-1">New tags will be created automatically.</p>
+                                </div>
+                                {newAccounts.length > 0 && (
+                                    <div className="rounded-lg border p-4 space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Accounts ({newAccounts.length})</h4>
+                                            <div className="flex gap-2">
+                                                <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport(newAccounts)}>Select All</Button>
+                                                <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport([])}>Deselect All</Button>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">Select accounts to import and map them to existing accounts, or create new ones.</p>
+                                        {newAccounts.map(accName => (
+                                            <div key={accName} className="grid grid-cols-[auto_1fr_auto_1fr] items-center gap-x-4 gap-y-2">
+                                                <Checkbox
+                                                    id={`select-acc-${accName}`}
+                                                    checked={selectedAccountsToImport.includes(accName)}
+                                                    onCheckedChange={() => handleAccountSelectionChange(accName)}
+                                                />
+                                                <Label htmlFor={`select-acc-${accName}`} className="truncate font-medium">{accName}</Label>
+                                                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                                <div className="flex gap-2">
+                                                    <Select 
+                                                        onValueChange={(value) => handleAccountMappingChange(accName, value)}
+                                                        defaultValue="create_new"
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="create_new">Create New Account</SelectItem>
+                                                            {accounts?.filter(a => a.status === 'active').map(existingAcc => (
+                                                                <SelectItem key={existingAcc.id} value={existingAcc.id}>Merge with "{existingAcc.name}"</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {accountMappings[accName]?.action === 'create' && (
+                                                        <Select
+                                                            onValueChange={(value) => handleAccountTypeChange(accName, value as Account['type'])}
+                                                            defaultValue="bank"
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="bank">Bank</SelectItem>
+                                                                <SelectItem value="credit_card">Credit Card</SelectItem>
+                                                                <SelectItem value="wallet">Wallet</SelectItem>
+                                                                <SelectItem value="cash">Cash</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {step === 4 && (
+                            <div>
+                                <h3 className="text-lg font-semibold mb-2">Final Preview</h3>
+
+                                <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                    {!TEMPLATES[template]?.mapping.mode && (
+                                        <div className="space-y-2">
+                                            <Label htmlFor="import-account">Import into Account</Label>
+                                            <Select onValueChange={setImportAccountId} defaultValue={importAccountId}>
+                                                <SelectTrigger id="import-account">
+                                                    <SelectValue placeholder="Select an account..." />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="create_new">Create New Account</SelectItem>
-                                                    {accounts?.filter(a => a.status === 'active').map(existingAcc => (
-                                                        <SelectItem key={existingAcc.id} value={existingAcc.id}>Merge with "{existingAcc.name}"</SelectItem>
+                                                    {accounts?.filter(a => a.status === 'active').map(acc => (
+                                                        <SelectItem key={acc.id} value={acc.id}>
+                                                            <div className="flex items-center gap-2">
+                                                                {renderIcon(acc.icon)}
+                                                                {acc.name}
+                                                            </div>
+                                                        </SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
-                                            {accountMappings[accName]?.action === 'create' && (
-                                                <Select
-                                                    onValueChange={(value) => handleAccountTypeChange(accName, value as Account['type'])}
-                                                    defaultValue="bank"
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="bank">Bank</SelectItem>
-                                                        <SelectItem value="credit_card">Credit Card</SelectItem>
-                                                        <SelectItem value="wallet">Wallet</SelectItem>
-                                                        <SelectItem value="cash">Cash</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
                                         </div>
-                                    </div>
-                                ))}
+                                    )}
+                                </div>
+
+                                <div className="max-h-60 overflow-y-auto border rounded-md">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Date</TableHead>
+                                                <TableHead>Description</TableHead>
+                                                <TableHead>Account</TableHead>
+                                                <TableHead className="text-right">Amount</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {processedData.slice(0, 10).map((row, index) => (
+                                                <TableRow key={index}>
+                                                    <TableCell>{row.date.toLocaleString()}</TableCell>
+                                                    <TableCell>{row.description}</TableCell>
+                                                    <TableCell>{row.accountName || "Default"}</TableCell>
+                                                    <TableCell className={`text-right font-medium ${row.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
+                                                        {row.type === 'income' ? '+' : '-'}{currencySymbol}{Number(row.amount).toFixed(2)}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-2">Showing first 10 of {processedData.length} total records to be imported.</p>
                             </div>
                         )}
-                    </div>
-                )}
-                 {!isImporting && step === 4 && (
-                     <div>
-                        <h3 className="text-lg font-semibold mb-2">Final Preview</h3>
-
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                             {!TEMPLATES[template]?.mapping.mode && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="import-account">Import into Account</Label>
-                                    <Select onValueChange={setImportAccountId} defaultValue={importAccountId}>
-                                        <SelectTrigger id="import-account">
-                                            <SelectValue placeholder="Select an account..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {accounts?.filter(a => a.status === 'active').map(acc => (
-                                                <SelectItem key={acc.id} value={acc.id}>
-                                                    <div className="flex items-center gap-2">
-                                                        {renderIcon(acc.icon)}
-                                                        {acc.name}
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-                        </div>
-
-                         <div className="max-h-60 overflow-y-auto border rounded-md">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Account</TableHead>
-                                        <TableHead className="text-right">Amount</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {processedData.slice(0, 10).map((row, index) => (
-                                        <TableRow key={index}>
-                                            <TableCell>{row.date.toLocaleString()}</TableCell>
-                                            <TableCell>{row.description}</TableCell>
-                                            <TableCell>{row.accountName || "Default"}</TableCell>
-                                            <TableCell className={`text-right font-medium ${row.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
-                                                {row.type === 'income' ? '+' : '-'}{currencySymbol}{Number(row.amount).toFixed(2)}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                         </div>
-                         <p className="text-sm text-muted-foreground mt-2">Showing first 10 of {processedData.length} total records to be imported.</p>
-                    </div>
+                    </>
                 )}
             </CardContent>
             <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => step > 1 ? setStep(step - 1) : resetState()} disabled={isProcessing || isImporting}>
+                 <Button 
+                    variant="outline" 
+                    onClick={() => step > 1 ? setStep(step - 1) : resetState()} 
+                    disabled={isProcessing || isImporting}
+                    className={cn(importComplete && "hidden")}
+                >
                     Back
                 </Button>
-                 <div>
-                    {!isImporting && step === 1 && (
+                 <div className={cn(importComplete && "w-full flex justify-center")}>
+                    {step === 1 && (
                         <Button onClick={() => setStep(2)} disabled={!template}>
                             Next <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     )}
-                    {!isImporting && step === 2 && (
+                    {step === 2 && (
                          <Button onClick={() => document.getElementById('file-upload')?.click()} disabled={isProcessing}>
                             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Browse File'}
                         </Button>
                     )}
-                    {!isImporting && step === 3 && (
+                    {step === 3 && (
                         <Button onClick={() => setStep(4)} disabled={validationError !== null}>
                              Next: Final Confirmation <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     )}
-                    {!isImporting && step === 4 && (
+                    {step === 4 && (
                         <Button 
                             onClick={handleImport} 
                             disabled={isImporting || processedData.length === 0 || (!TEMPLATES[template]?.mapping.mode && !importAccountId)}
+                             className={cn(importComplete && "hidden")}
                         >
                             {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileCheck2 className="mr-2 h-4 w-4" />}
                             Confirm & Import {processedData.length > 0 ? `${processedData.length} Records` : ''}

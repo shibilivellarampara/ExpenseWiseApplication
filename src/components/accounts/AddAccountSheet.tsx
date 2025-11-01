@@ -13,7 +13,7 @@ import { Button } from '../ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '../ui/form';
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -31,6 +31,7 @@ const accountSchemaBase = z.object({
     type: z.enum(['bank', 'credit_card', 'wallet', 'cash']),
     balance: z.coerce.number(),
     limit: z.coerce.number().optional(),
+    billingDate: z.coerce.number().min(1).max(31).optional(),
     icon: z.string().min(1, "Icon is required."),
     status: z.enum(['active', 'inactive']).default('active'),
 });
@@ -80,6 +81,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             balance: 0,
             icon: 'Landmark',
             limit: undefined,
+            billingDate: undefined,
             status: 'active',
         },
     });
@@ -95,6 +97,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     balance: accountToEdit.balance,
                     icon: accountToEdit.icon,
                     limit: accountToEdit.limit,
+                    billingDate: accountToEdit.billingDate,
                     status: accountToEdit.status,
                 });
             } else {
@@ -104,6 +107,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     balance: 0,
                     icon: 'Landmark',
                     limit: undefined,
+                    billingDate: undefined,
                     status: 'active',
                 });
             }
@@ -125,6 +129,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
         
         if (values.type !== 'credit_card') {
             delete accountData.limit;
+            delete accountData.billingDate;
         }
 
         try {
@@ -255,20 +260,35 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                             )}
                         />
                         {accountType === 'credit_card' && (
-                             <FormField
-                                control={form.control}
-                                name="limit"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Credit Limit</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
-                                        </FormControl>
-                                        {isEditMode && <FormDescription>Limit can only be changed via a "Credit Limit Upgrade" transaction.</FormDescription>}
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                             <>
+                                <FormField
+                                    control={form.control}
+                                    name="limit"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Credit Limit</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
+                                            </FormControl>
+                                            {isEditMode && <FormDescription>Limit can only be changed via a "Credit Limit Upgrade" transaction.</FormDescription>}
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="billingDate"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Billing Date (Day of Month)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" min="1" max="31" placeholder="e.g., 15" {...field} value={field.value ?? ''}/>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                             </>
                         )}
                          <FormField
                             control={form.control}

@@ -8,7 +8,7 @@ import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
 import { doc, setDoc } from 'firebase/firestore';
 import { Progress } from "../ui/progress";
-import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw } from "lucide-react";
+import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
@@ -229,9 +229,15 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                                 {currencySymbol}{balance.toFixed(2)}
                                             </div>
                                         </div>
-                                        <p className="text-sm text-muted-foreground capitalize">
-                                            Outstanding Amount
-                                        </p>
+                                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                            <span>Outstanding Amount</span>
+                                            {item.billingDate && (
+                                                <div className="flex items-center gap-1">
+                                                    <CalendarDays className="h-4 w-4" />
+                                                    <span>Bills on the {item.billingDate}th</span>
+                                                </div>
+                                            )}
+                                        </div>
                                         {limit > 0 && (
                                             <div className="mt-1">
                                                 <Progress value={availablePercentage} className="h-2 [&>div]:bg-green-500" />

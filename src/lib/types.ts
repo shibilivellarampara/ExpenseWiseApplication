@@ -36,6 +36,7 @@ export type Account = {
   type: 'bank' | 'credit_card' | 'wallet' | 'cash';
   balance: number;
   limit?: number; // For credit cards
+  billingDate?: number; // Day of the month (1-31) for credit cards
   icon: string; // lucide-react icon name
   userId: string;
   status: 'active' | 'inactive';

@@ -32,6 +32,8 @@ export function CategorySettings() {
     const [editingItem, setEditingItem] = useState<{ id: string; name: string; icon: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
+    const SYSTEM_CATEGORIES = ['Credit Limit Upgrade', 'Credit Card Bill Payment'];
+
     const renderIcon = (iconName: string) => {
         const IconComponent = (LucideIcons as any)[iconName];
         return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
@@ -75,8 +77,8 @@ export function CategorySettings() {
         if (!user || !firestore) return;
 
         const itemToRemove = categories?.find(i => i.id === itemId);
-        if (itemToRemove?.name === 'Credit Limit Upgrade') {
-            toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'The "Credit Limit Upgrade" category is a system category and cannot be removed.' });
+        if (SYSTEM_CATEGORIES.includes(itemToRemove?.name || '')) {
+            toast({ variant: 'destructive', title: 'Action Not Allowed', description: `"${itemToRemove?.name}" is a system category and cannot be removed.` });
             return;
         }
 
@@ -105,8 +107,8 @@ export function CategorySettings() {
         if (!editingItem || !user || !firestore) return;
 
         const originalItem = categories?.find(i => i.id === editingItem.id);
-        if (originalItem?.name === 'Credit Limit Upgrade') {
-            toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'The "Credit Limit Upgrade" category is a system category and cannot be edited.' });
+        if (SYSTEM_CATEGORIES.includes(originalItem?.name || '')) {
+            toast({ variant: 'destructive', title: 'Action Not Allowed', description: `"${originalItem?.name}" is a system category and cannot be edited.` });
             setEditingItem(null);
             return;
         }
@@ -183,6 +185,7 @@ export function CategorySettings() {
                                                     onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
                                                     className="flex-1"
                                                     autoFocus
+                                                    disabled={SYSTEM_CATEGORIES.includes(item.name)}
                                                 />
                                                 <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
                                                     <Check className="h-4 w-4" />
@@ -197,10 +200,10 @@ export function CategorySettings() {
                                                     {renderIcon(item.icon)}
                                                     <span>{item.name}</span>
                                                 </div>
-                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
                                                     <Edit className="h-4 w-4" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)}>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </>

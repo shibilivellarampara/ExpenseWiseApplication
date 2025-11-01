@@ -8,6 +8,7 @@ export const defaultCategories = [
   { name: 'Entertainment', icon: 'PartyPopper' },
   { name: 'Health', icon: 'HeartPulse' },
   { name: 'Credit Limit Upgrade', icon: 'TrendingUp' },
+  { name: 'Credit Card Bill Payment', icon: 'Landmark' },
   { name: 'Other', icon: 'MoreHorizontal' },
 ];
 
@@ -43,5 +44,3 @@ export const defaultPaymentMethods = [
   { name: 'UPI', icon: 'IndianRupee' },
   { name: 'Bank Transfer', icon: 'Landmark' },
 ];
-
-    

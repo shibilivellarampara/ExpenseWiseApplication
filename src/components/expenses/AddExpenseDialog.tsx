@@ -806,8 +806,10 @@ function useExpenseForm({
             const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
 
             const selectedCategory = categories.find(c => c.id === values.categoryId);
-            const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
             const selectedAccount = accounts.find(a => a.id === values.accountId);
+
+            const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
+            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Bill Payment';
 
             const isAddOperation = !isEditMode;
 
@@ -825,28 +827,41 @@ function useExpenseForm({
                 categoryId: values.categoryId === 'no-category' ? null : values.categoryId,
             };
             
-            // This property should not be in user expenses.
             delete expenseData.sharedExpenseId;
            
             if (isCreditLimitUpgrade) {
-                if (selectedAccount?.type === 'credit_card') {
+                 if (selectedAccount?.type === 'credit_card' && values.type === 'income') {
                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                    
                     if (isAddOperation) {
                         batch.update(accountRef, { limit: increment(values.amount) });
                     } else if (expenseToEdit) {
-                        const oldAmount = expenseToEdit.amount;
+                        const oldAmount = expenseToEdit.type === 'income' ? expenseToEdit.amount : -expenseToEdit.amount;
                         const difference = values.amount - oldAmount;
                         batch.update(accountRef, { limit: increment(difference) });
                     }
                 } else {
-                     toast({ variant: 'destructive', title: 'Invalid Account', description: 'Credit Limit Upgrade can only be applied to credit card accounts.'});
+                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Credit Limit Upgrade must be an "income" transaction for a credit card account.'});
                      setIsLoading(false);
                      return false;
                 }
+            } else if (isCreditCardPayment) {
+                 if (selectedAccount?.type === 'credit_card' && values.type === 'expense') {
+                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
+                      if (isAddOperation) {
+                        batch.update(accountRef, { balance: increment(-values.amount) }); // Decrease outstanding
+                    } else if (expenseToEdit) {
+                        const oldAmount = expenseToEdit.type === 'expense' ? expenseToEdit.amount : 0;
+                        const difference = values.amount - oldAmount;
+                        batch.update(accountRef, { balance: increment(-difference) });
+                    }
+                 } else {
+                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Credit Card Bill Payment must be an "expense" transaction applied to a credit card account.'});
+                     setIsLoading(false);
+                     return false;
+                 }
             }
             
-            if (!sharedExpenseId && !isCreditLimitUpgrade) {
+            if (!sharedExpenseId && !isCreditLimitUpgrade && !isCreditCardPayment) {
                 const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
                      if (accountType === 'credit_card') {
                         return type === 'expense' ? amount : -amount;
@@ -885,6 +900,8 @@ function useExpenseForm({
 
             if (isCreditLimitUpgrade) {
                 toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount?.name} has been increased.` });
+            } else if (isCreditCardPayment) {
+                 toast({ title: 'Bill Payment Recorded!', description: `The payment for ${selectedAccount?.name} has been applied.` });
             } else {
                  toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
             }
@@ -930,6 +947,7 @@ function useExpenseForm({
 
             const selectedCategory = categories.find(c => c.id === expenseToEdit.categoryId);
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
+            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Bill Payment';
             
             batch.delete(expenseRef);
 
@@ -939,6 +957,8 @@ function useExpenseForm({
 
                 if (isCreditLimitUpgrade) {
                      batch.update(accountRef, { limit: increment(-expenseToEdit.amount) });
+                } else if(isCreditCardPayment){
+                    batch.update(accountRef, { balance: increment(expenseToEdit.amount) }); // re-add to outstanding
                 } else {
                     if (selectedAccount) {
                         let amountToRevert: number;

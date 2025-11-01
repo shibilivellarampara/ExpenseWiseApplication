@@ -74,6 +74,7 @@
         "type": { "type": "string", "enum": ["bank", "credit_card", "wallet", "cash"] },
         "balance": { "type": "number", "description": "Current balance or outstanding amount." },
         "limit": { "type": "number", "description": "Credit limit for credit cards." },
+        "billingDate": { "type": "number", "description": "Day of the month for credit card billing cycle (1-31)." },
         "icon": { "type": "string", "description": "Name of the lucide-react icon." },
         "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the account." }
       },

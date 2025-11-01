@@ -525,7 +525,13 @@ export function ExcelImporter() {
                         </div>
                          {newAccounts.length > 0 && (
                              <div className="rounded-lg border p-4 space-y-4">
-                                <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Accounts ({newAccounts.length})</h4>
+                                <div className="flex justify-between items-center">
+                                    <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Accounts ({newAccounts.length})</h4>
+                                    <div className="flex gap-2">
+                                        <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport(newAccounts)}>Select All</Button>
+                                        <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport([])}>Deselect All</Button>
+                                    </div>
+                                </div>
                                 <p className="text-sm text-muted-foreground">Select accounts to import and map them to existing accounts, or create new ones.</p>
                                 {newAccounts.map(accName => (
                                     <div key={accName} className="grid grid-cols-[auto_1fr_auto_1fr] items-center gap-x-4 gap-y-2">

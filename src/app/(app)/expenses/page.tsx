@@ -105,61 +105,54 @@ export default function ExpensesPage() {
     const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses.length || !accounts?.length) return [];
 
-        // 1. First, enrich all expenses with their related data.
-        const enriched = allExpenses.map((expense): EnrichedExpense => ({
-            ...expense,
-            date: expense.date, // Already a Date object from the onSnapshot listener
-            category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
-            account: accountMap.get(expense.accountId),
-            tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
-        }));
+        let runningBalanceMap = new Map<string, number>();
 
-        // 2. Apply all filters
-        let filtered = enriched.filter(expense => {
-            const { dateRange, type, categories, accounts: accountIds, tags } = filters;
-            if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
-            if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
-            if (type !== 'all' && expense.type !== type) return false;
-            if (categories.length > 0 && !categories.includes(expense.categoryId || '')) return false;
-            if (accountIds.length > 0 && !accountIds.includes(expense.accountId)) return false;
-            if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
-            return true;
-        });
-
-        // 3. If a single account is selected, calculate running balance for its transactions
+        // Calculate running balance ONLY when a single account is selected
         if (filters.accounts.length === 1) {
             const accountId = filters.accounts[0];
             const account = accountMap.get(accountId);
 
             if (account) {
                 // Get all transactions for this account, sorted from newest to oldest
-                const accountTransactions = enriched
+                const accountTransactions = allExpenses
                     .filter(tx => tx.accountId === accountId)
                     .sort((a, b) => b.date.getTime() - a.date.getTime());
 
-                let runningBalance = account.balance;
-                const balanceMap = new Map<string, number>();
+                let currentBalance = account.balance;
 
                 for (const tx of accountTransactions) {
-                    balanceMap.set(tx.id, runningBalance);
+                    runningBalanceMap.set(tx.id, currentBalance);
                     const amountChange = account.type === 'credit_card'
                         ? (tx.type === 'expense' ? tx.amount : -tx.amount)
                         : (tx.type === 'income' ? tx.amount : -tx.amount);
-                    runningBalance -= amountChange;
+                    currentBalance -= amountChange;
                 }
-
-                // Add the running balance to each transaction in the main (potentially filtered) list
-                filtered = filtered.map(tx => {
-                    if (balanceMap.has(tx.id)) {
-                        return { ...tx, runningBalance: balanceMap.get(tx.id) };
-                    }
-                    return tx;
-                });
             }
         }
+
+        // Apply all filters and enrich data
+        const enrichedAndFiltered = allExpenses
+            .map((expense): EnrichedExpense => ({
+                ...expense,
+                date: expense.date, // Already a Date object
+                category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
+                account: accountMap.get(expense.accountId),
+                tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
+                runningBalance: runningBalanceMap.get(expense.id), // Get from map
+            }))
+            .filter(expense => {
+                const { dateRange, type, categories, accounts: accountIds, tags } = filters;
+                if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
+                if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
+                if (type !== 'all' && expense.type !== type) return false;
+                if (categories.length > 0 && !categories.includes(expense.categoryId || '')) return false;
+                if (accountIds.length > 0 && !accountIds.includes(expense.accountId)) return false;
+                if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
+                return true;
+            });
         
         // Final sort of the displayed data from newest to oldest
-        return filtered.sort((a, b) => b.date.getTime() - a.date.getTime());
+        return enrichedAndFiltered.sort((a, b) => b.date.getTime() - a.date.getTime());
 
     }, [allExpenses, categoryMap, accountMap, tagMap, filters, accounts]);
     

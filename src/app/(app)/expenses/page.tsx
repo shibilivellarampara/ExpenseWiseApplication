@@ -105,56 +105,56 @@ export default function ExpensesPage() {
     const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses || !categoryMap.size || !accountMap.size) return [];
 
-        let dataToProcess = allExpenses.map((expense): EnrichedExpense => ({
+        // 1. First, enrich all expenses with their related data
+        let enriched = allExpenses.map((expense): EnrichedExpense => ({
             ...expense,
             date: expense.date,
             category: categoryMap.get(expense.categoryId),
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
-        
-        // Calculate running balance IF a single account is selected
+
+        // 2. If a single account is selected, calculate running balances for that account's transactions
         if (filters.accounts.length === 1 && accountMap.size > 0) {
             const accountId = filters.accounts[0];
             const account = accountMap.get(accountId);
 
             if (account) {
-                 // 1. Get all transactions for this account, sorted chronologically
-                const allAccountTransactions = allExpenses
+                // Get all transactions for THIS account, sorted from oldest to newest
+                const accountTransactions = enriched
                     .filter(tx => tx.accountId === accountId)
                     .sort((a, b) => a.date.getTime() - b.date.getTime());
-                
-                // 2. Calculate total change to find the starting balance
-                let totalChange = 0;
-                allAccountTransactions.forEach(tx => {
+
+                let currentBal = account.balance;
+
+                // Create a map of balances by working backwards from the present
+                const balanceMap = new Map<string, number>();
+                for (let i = accountTransactions.length - 1; i >= 0; i--) {
+                    const tx = accountTransactions[i];
+                    balanceMap.set(tx.id, currentBal);
+
                     const amountChange = tx.account?.type === 'credit_card'
                         ? (tx.type === 'expense' ? tx.amount : -tx.amount)
                         : (tx.type === 'income' ? tx.amount : -tx.amount);
-                    totalChange += amountChange;
-                });
-                const startingBalance = account.balance - totalChange;
-
-                // 3. Create a map of running balances
-                const balances = new Map<string, number>();
-                let currentBal = startingBalance;
-                allAccountTransactions.forEach(tx => {
-                     const amountChange = tx.account?.type === 'credit_card'
-                        ? (tx.type === 'expense' ? tx.amount : -tx.amount)
-                        : (tx.type === 'income' ? tx.amount : -tx.amount);
-                    currentBal += amountChange;
-                    balances.set(tx.id, currentBal);
-                });
+                    
+                    currentBal -= amountChange; // Subtract the change to get the previous balance
+                }
                 
-                // 4. Enrich the data with the calculated balances
-                dataToProcess = dataToProcess.map(tx => ({
-                    ...tx,
-                    runningBalance: balances.get(tx.id),
-                }));
+                // Add the running balance to each transaction in the main enriched list
+                enriched = enriched.map(tx => {
+                    if (balanceMap.has(tx.id)) {
+                        return {
+                            ...tx,
+                            runningBalance: balanceMap.get(tx.id),
+                        };
+                    }
+                    return tx;
+                });
             }
         }
         
-        // Apply all filters
-        const filteredData = dataToProcess.filter(expense => {
+        // 3. Apply all filters to the enriched (and potentially balance-added) list
+        const filteredData = enriched.filter(expense => {
             const { dateRange, type, categories, accounts, tags } = filters;
             if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
             if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
@@ -165,7 +165,7 @@ export default function ExpensesPage() {
             return true;
         });
 
-        // Finally, sort for display
+        // 4. Finally, sort for display (newest first)
         return filteredData.sort((a, b) => b.date.getTime() - a.date.getTime());
 
     }, [allExpenses, categoryMap, accountMap, tagMap, filters]);

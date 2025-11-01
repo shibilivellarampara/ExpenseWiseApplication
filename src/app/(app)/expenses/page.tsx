@@ -69,7 +69,7 @@ export default function ExpensesPage() {
                  return { ...data, date: data.date.toDate() };
             });
             setAllExpenses(fetchedExpenses);
-            setCache(cacheKey, fetchedExpenses, 60 * 5); // Cache for 5 minutes
+            setCache(cacheKey, fetchedExpenses.map(e => ({...e, date: e.date.toISOString()})), 60 * 5); // Cache for 5 minutes
             setExpensesLoading(false);
             setExpensesError(null);
         }, (error) => {
@@ -99,19 +99,54 @@ export default function ExpensesPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
-    const enrichedExpenses = useMemo(() => {
+    const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses || !categoryMap.size || !accountMap.size) return [];
-        return allExpenses.map((expense: Expense): EnrichedExpense => ({
+
+        let enrichedData = allExpenses.map((expense: Expense): EnrichedExpense => ({
             ...expense,
-            date: expense.date, // Already a Date object
+            date: expense.date,
             category: categoryMap.get(expense.categoryId),
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
-    }, [allExpenses, categoryMap, accountMap, tagMap]);
 
-    const filteredAndEnrichedExpenses = useMemo(() => {
-        let filtered = enrichedExpenses.filter(expense => {
+        if (filters.accounts.length === 1 && accountMap.size > 0) {
+            const accountId = filters.accounts[0];
+            const account = accountMap.get(accountId);
+
+            if (account) {
+                const allAccountTransactions = enrichedData
+                    .filter(tx => tx.accountId === accountId)
+                    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+                let totalChange = 0;
+                allAccountTransactions.forEach(tx => {
+                    const amountChange = tx.account?.type === 'credit_card'
+                        ? (tx.type === 'expense' ? tx.amount : -tx.amount)
+                        : (tx.type === 'income' ? tx.amount : -tx.amount);
+                    totalChange += amountChange;
+                });
+                
+                const startingBalance = account.balance - totalChange;
+                
+                const balances = new Map<string, number>();
+                let currentBal = startingBalance;
+                allAccountTransactions.forEach(tx => {
+                    const amountChange = tx.account?.type === 'credit_card'
+                        ? (tx.type === 'expense' ? tx.amount : -tx.amount)
+                        : (tx.type === 'income' ? tx.amount : -tx.amount);
+                    currentBal += amountChange;
+                    balances.set(tx.id, currentBal);
+                });
+                
+                enrichedData = enrichedData.map(tx => ({
+                    ...tx,
+                    runningBalance: balances.has(tx.id) ? balances.get(tx.id) : undefined,
+                }));
+            }
+        }
+
+        return enrichedData.filter(expense => {
             const { dateRange, type, categories, accounts, tags } = filters;
             if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
             if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
@@ -120,62 +155,18 @@ export default function ExpensesPage() {
             if (accounts.length > 0 && !accounts.includes(expense.accountId)) return false;
             if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
             return true;
-        });
+        }).sort((a, b) => b.date.getTime() - a.date.getTime());
 
-        if (filters.accounts.length === 1 && accountMap.size > 0) {
-            const accountId = filters.accounts[0];
-            const account = accountMap.get(accountId);
-
-            if (account) {
-                const allAccountTransactions = enrichedExpenses
-                    .filter(tx => tx.accountId === accountId)
-                    .sort((a, b) => a.date.getTime() - b.date.getTime());
-                
-                let totalChange = 0;
-                allAccountTransactions.forEach(tx => {
-                    let amountChange = 0;
-                     if (tx.account?.type === 'credit_card') {
-                        amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
-                    } else {
-                        amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
-                    }
-                    totalChange += amountChange;
-                });
-                
-                const startingBalance = account.balance - totalChange;
-                
-                const runningBalances = new Map<string, number>();
-                let currentBal = startingBalance;
-
-                allAccountTransactions.forEach(tx => {
-                    let amountChange = 0;
-                     if (tx.account?.type === 'credit_card') {
-                        amountChange = tx.type === 'expense' ? tx.amount : -tx.amount;
-                    } else {
-                        amountChange = tx.type === 'income' ? tx.amount : -tx.amount;
-                    }
-                    currentBal += amountChange;
-                    runningBalances.set(tx.id, currentBal);
-                });
-                
-                return filtered.map(tx => {
-                    if (runningBalances.has(tx.id)) {
-                        return { ...tx, runningBalance: runningBalances.get(tx.id) };
-                    }
-                    return tx;
-                });
-            }
-        }
-        
-        return filtered.map(tx => ({ ...tx, runningBalance: undefined }));
-    }, [enrichedExpenses, filters, accountMap]);
+    }, [allExpenses, categoryMap, accountMap, tagMap, filters]);
     
     const handleFiltersChange = (newFilters: any) => {
         setFilters(newFilters);
     };
     
     const refreshTransactions = () => {
-       // Data is real-time with snapshot listener, so no explicit refresh is needed.
+       if (user) {
+         clearCache(`expenses_${user.uid}`);
+       }
     };
 
     return (

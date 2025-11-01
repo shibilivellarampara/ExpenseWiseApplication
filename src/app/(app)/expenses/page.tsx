@@ -116,16 +116,20 @@ export default function ExpensesPage() {
         if (filters.accounts.length === 1) {
             const accountId = filters.accounts[0];
             const account = accountMap.get(accountId);
-
+            
             if (account) {
+                // Get all transactions for this account and sort them from newest to oldest
                 const accountTransactions = enrichedData
                     .filter(tx => tx.accountId === accountId)
-                    .sort((a, b) => a.date.getTime() - b.date.getTime());
+                    .sort((a, b) => b.date.getTime() - a.date.getTime());
 
                 let runningBalance = account.balance;
-                for (let i = accountTransactions.length - 1; i >= 0; i--) {
-                    const tx = accountTransactions[i];
-                    tx.runningBalance = runningBalance;
+
+                // Create a map of transaction IDs to their running balance
+                const balanceMap = new Map<string, number>();
+
+                for (const tx of accountTransactions) {
+                    balanceMap.set(tx.id, runningBalance);
                     
                     const amountChange = tx.account?.type === 'credit_card'
                         ? (tx.type === 'expense' ? tx.amount : -tx.amount)
@@ -133,6 +137,14 @@ export default function ExpensesPage() {
                     
                     runningBalance -= amountChange;
                 }
+                
+                // Add the running balance to each transaction in the main (potentially filtered) list
+                enrichedData = enrichedData.map(tx => {
+                    if (balanceMap.has(tx.id)) {
+                        return { ...tx, runningBalance: balanceMap.get(tx.id) };
+                    }
+                    return tx;
+                });
             }
         }
         

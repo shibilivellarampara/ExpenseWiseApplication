@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
@@ -213,27 +214,29 @@ export function ExcelImporter() {
         
         return rawData.map((row) => {
             const dateValue = row[mapping.date];
-            let datePart: Date;
-
-            // Handle Excel's numeric date format or string format
-            if (typeof dateValue === 'number') {
-                const parsed = XLSX.SSF.parse_date_code(dateValue);
-                datePart = new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d, 0, 0, 0));
-            } else if (dateValue instanceof Date) {
-                datePart = new Date(Date.UTC(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate()));
+            let datePart: Date | null = null;
+    
+            if (dateValue instanceof Date) {
+                // If it's already a Date object, it might have timezone issues.
+                // Reconstruct it using UTC values to be safe.
+                datePart = new Date(Date.UTC(dateValue.getUTCFullYear(), dateValue.getUTCMonth(), dateValue.getUTCDate()));
+            } else if (typeof dateValue === 'number') {
+                // Handle Excel's serial number format for dates.
+                // The formula for converting Excel serial number to JS timestamp is:
+                // (excelDateNumber - 25569) * 86400 * 1000
+                // 25569 is the number of days between JS epoch (1970-01-01) and Excel epoch (1900-01-01), accounting for Excel's 1900 leap year bug.
+                const jsTimestamp = (dateValue - 25569) * 86400 * 1000;
+                datePart = new Date(jsTimestamp);
             } else if (typeof dateValue === 'string') {
-                const parsedDate = new Date(dateValue + 'T00:00:00Z'); // Assume UTC to avoid timezone shifts
+                // Handle string dates. Adding 'Z' to parse as UTC.
+                const parsedDate = new Date(dateValue + 'T00:00:00Z');
                 if (!isNaN(parsedDate.getTime())) {
                     datePart = new Date(Date.UTC(parsedDate.getUTCFullYear(), parsedDate.getUTCMonth(), parsedDate.getUTCDate()));
-                } else {
-                    datePart = new Date(); // Fallback
                 }
-            } else {
-                datePart = new Date(); // Fallback
             }
-
-            if (isNaN(datePart.getTime())) {
-                datePart = new Date(); // Final fallback for invalid dates
+            
+            if (!datePart || isNaN(datePart.getTime())) {
+                datePart = new Date(); // Fallback for any unhandled cases
             }
 
             let finalDate = datePart;
@@ -243,10 +246,11 @@ export function ExcelImporter() {
                 if (timeValue instanceof Date) { 
                     finalDate.setUTCHours(timeValue.getUTCHours(), timeValue.getUTCMinutes(), timeValue.getUTCSeconds());
                 } else if (typeof timeValue === 'number') { 
-                    const secondsInDay = timeValue * 86400;
-                    const hours = Math.floor(secondsInDay / 3600);
-                    const minutes = Math.floor((secondsInDay % 3600) / 60);
-                    const seconds = Math.round(secondsInDay % 60);
+                    // This number is a fraction of a 24-hour day.
+                    const totalSeconds = Math.round(timeValue * 86400);
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    const seconds = totalSeconds % 60;
                     finalDate.setUTCHours(hours, minutes, seconds);
                 } else if (typeof timeValue === 'string') {
                     const timeMatch = timeValue.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?/i);

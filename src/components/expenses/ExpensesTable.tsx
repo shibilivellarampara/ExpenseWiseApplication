@@ -249,3 +249,5 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
 
   return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} />;
 }
+
+    

@@ -7,7 +7,7 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc, onSnapshot } from "firebase/firestore";
+import { collection, orderBy, query, doc, onSnapshot }from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";
@@ -66,7 +66,10 @@ export default function ExpensesPage() {
         const unsubscribe = onSnapshot(expensesBaseQuery, (snapshot) => {
             const fetchedExpenses = snapshot.docs.map(doc => {
                  const data = doc.data() as Expense;
-                 return { ...data, date: data.date.toDate() };
+                 const date = data.date && typeof (data.date as any).toDate === 'function' 
+                    ? (data.date as any).toDate() 
+                    : new Date();
+                 return { ...data, date };
             });
             setAllExpenses(fetchedExpenses);
             setCache(cacheKey, fetchedExpenses.map(e => ({...e, date: e.date.toISOString()})), 60 * 5); // Cache for 5 minutes
@@ -102,23 +105,26 @@ export default function ExpensesPage() {
     const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses || !categoryMap.size || !accountMap.size) return [];
 
-        let enrichedData = allExpenses.map((expense: Expense): EnrichedExpense => ({
+        let dataToProcess = allExpenses.map((expense): EnrichedExpense => ({
             ...expense,
             date: expense.date,
             category: categoryMap.get(expense.categoryId),
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
-
+        
+        // Calculate running balance IF a single account is selected
         if (filters.accounts.length === 1 && accountMap.size > 0) {
             const accountId = filters.accounts[0];
             const account = accountMap.get(accountId);
 
             if (account) {
-                const allAccountTransactions = enrichedData
+                 // 1. Get all transactions for this account, sorted chronologically
+                const allAccountTransactions = allExpenses
                     .filter(tx => tx.accountId === accountId)
                     .sort((a, b) => a.date.getTime() - b.date.getTime());
-
+                
+                // 2. Calculate total change to find the starting balance
                 let totalChange = 0;
                 allAccountTransactions.forEach(tx => {
                     const amountChange = tx.account?.type === 'credit_card'
@@ -126,27 +132,29 @@ export default function ExpensesPage() {
                         : (tx.type === 'income' ? tx.amount : -tx.amount);
                     totalChange += amountChange;
                 });
-                
                 const startingBalance = account.balance - totalChange;
-                
+
+                // 3. Create a map of running balances
                 const balances = new Map<string, number>();
                 let currentBal = startingBalance;
                 allAccountTransactions.forEach(tx => {
-                    const amountChange = tx.account?.type === 'credit_card'
+                     const amountChange = tx.account?.type === 'credit_card'
                         ? (tx.type === 'expense' ? tx.amount : -tx.amount)
                         : (tx.type === 'income' ? tx.amount : -tx.amount);
                     currentBal += amountChange;
                     balances.set(tx.id, currentBal);
                 });
                 
-                enrichedData = enrichedData.map(tx => ({
+                // 4. Enrich the data with the calculated balances
+                dataToProcess = dataToProcess.map(tx => ({
                     ...tx,
-                    runningBalance: balances.has(tx.id) ? balances.get(tx.id) : undefined,
+                    runningBalance: balances.get(tx.id),
                 }));
             }
         }
-
-        return enrichedData.filter(expense => {
+        
+        // Apply all filters
+        const filteredData = dataToProcess.filter(expense => {
             const { dateRange, type, categories, accounts, tags } = filters;
             if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
             if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
@@ -155,7 +163,10 @@ export default function ExpensesPage() {
             if (accounts.length > 0 && !accounts.includes(expense.accountId)) return false;
             if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
             return true;
-        }).sort((a, b) => b.date.getTime() - a.date.getTime());
+        });
+
+        // Finally, sort for display
+        return filteredData.sort((a, b) => b.date.getTime() - a.date.getTime());
 
     }, [allExpenses, categoryMap, accountMap, tagMap, filters]);
     
@@ -165,7 +176,8 @@ export default function ExpensesPage() {
     
     const refreshTransactions = () => {
        if (user) {
-         clearCache(`expenses_${user.uid}`);
+         setCache(`expenses_${user.uid}`, null, 0); // Invalidate cache
+         // Re-fetch will be triggered by onSnapshot automatically after a delay, or you can add a manual re-fetch trigger here if needed.
        }
     };
 
@@ -228,3 +240,5 @@ export default function ExpensesPage() {
         </div>
     );
 }
+
+    

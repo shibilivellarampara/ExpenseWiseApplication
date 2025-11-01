@@ -129,28 +129,22 @@ export default function ExpensesPage() {
             const account = accountMap.get(accountId);
 
             if (account) {
-                // Get all transactions for this account, sorted newest to oldest
-                const accountTransactions = allExpenses
-                    .filter(tx => tx.accountId === accountId)
-                    .sort((a, b) => b.date.getTime() - a.date.getTime());
-                
-                const runningBalanceMap = new Map<string, number>();
                 let currentBalance = account.balance;
-
-                for (const tx of accountTransactions) {
-                    runningBalanceMap.set(tx.id, currentBalance);
+                enriched.sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort newest first
+                enriched.forEach(tx => {
+                    tx.runningBalance = currentBalance;
                     const amountChange = account.type === 'credit_card'
                         ? (tx.type === 'expense' ? tx.amount : -tx.amount)
                         : (tx.type === 'income' ? tx.amount : -tx.amount);
-                    currentBalance -= amountChange;
-                }
-                
-                enriched.forEach(tx => {
-                    if (runningBalanceMap.has(tx.id)) {
-                        tx.runningBalance = runningBalanceMap.get(tx.id);
-                    }
+                    currentBalance += amountChange; // Work backwards
                 });
             }
+        } else {
+             enriched.forEach(tx => {
+                if (tx.account) {
+                    tx.accountBalance = tx.account.balance;
+                }
+            });
         }
         
         return enriched.sort((a, b) => b.date.getTime() - a.date.getTime());

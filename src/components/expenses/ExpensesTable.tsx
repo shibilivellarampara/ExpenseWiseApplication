@@ -120,6 +120,11 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                                         Bal: {currencySymbol}{formatAmount(expense.runningBalance)}
                                                     </div>
                                                 )}
+                                                {typeof expense.accountBalance === 'number' && typeof expense.runningBalance !== 'number' && (
+                                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                                        Acct. Bal: {currencySymbol}{formatAmount(expense.accountBalance)}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 

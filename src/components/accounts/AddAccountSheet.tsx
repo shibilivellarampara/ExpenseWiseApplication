@@ -18,7 +18,7 @@ import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useCollection, useFirestore, useUser, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { collection, addDoc, doc, setDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { Loader2, Pilcrow } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
@@ -141,8 +141,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     description: 'Your account details have been saved.',
                 });
             } else {
-                const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
-                const newAccountRef = await addDoc(accountsCol, {});
+                const newAccountRef = await addDocumentNonBlocking(collection(firestore, `users/${user.uid}/accounts`), {});
                 
                 setDocumentNonBlocking(newAccountRef, { ...accountData, id: newAccountRef.id });
                 

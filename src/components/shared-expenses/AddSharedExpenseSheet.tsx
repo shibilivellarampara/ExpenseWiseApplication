@@ -71,7 +71,7 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
         try {
             const sharedExpensesCol = collection(firestore, `shared_expenses`);
             
-            addDocumentNonBlocking(sharedExpensesCol, {
+            await addDocumentNonBlocking(sharedExpensesCol, {
                 name: values.name,
                 ownerId: user.uid,
                 memberIds: [user.uid],

@@ -9,6 +9,8 @@ import {
   CollectionReference,
   DocumentReference,
   SetOptions,
+  writeBatch,
+  WriteBatch
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {FirestorePermissionError} from '@/firebase/errors';
@@ -24,7 +26,7 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
       'permission-error',
       new FirestorePermissionError({
         path: docRef.path,
-        operation: 'write', // or 'create'/'update' based on options
+        operation: options && 'merge' in options ? 'update' : 'create',
         requestResourceData: data,
       })
     )
@@ -35,10 +37,10 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
 
 /**
  * Initiates an addDoc operation for a collection reference.
+ * The promise resolves with the new DocumentReference.
  * Does NOT await the write operation internally.
- * Returns the Promise for the new doc ref, but typically not awaited by caller.
  */
-export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
+export function addDocumentNonBlocking(colRef: CollectionReference, data: any): Promise<DocumentReference> {
   const promise = addDoc(colRef, data)
   promise.catch(error => {
       errorEmitter.emit(
@@ -90,4 +92,24 @@ export function deleteDocumentNonBlocking(docRef: DocumentReference) {
       )
     });
   return promise;
+}
+
+/**
+ * Commits a write batch and handles errors.
+ * @param batch The WriteBatch to commit.
+ * @param contextPath A representative path for error reporting (e.g., a base collection path).
+ */
+export function commitBatchNonBlocking(batch: WriteBatch, contextPath: string = 'batch operation') {
+    const promise = batch.commit();
+    promise.catch(error => {
+        errorEmitter.emit(
+            'permission-error',
+            new FirestorePermissionError({
+                path: contextPath,
+                operation: 'write',
+                requestResourceData: { note: 'This was a batch write. See component logic for details.' }
+            })
+        );
+    });
+    return promise;
 }

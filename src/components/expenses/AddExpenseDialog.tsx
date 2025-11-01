@@ -41,8 +41,8 @@ import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, serverTimestamp, writeBatch, increment, deleteDoc, addDoc, setDoc } from 'firebase/firestore';
+import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
+import { collection, doc, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import * as LucideIcons from 'lucide-react';
@@ -244,17 +244,18 @@ function ExpenseForm({
         const ref = collection(firestore, `users/${user.uid}/${collectionName}`);
         try {
             const newDocRef = doc(ref);
-            await setDoc(newDocRef, { id: newDocRef.id, name, icon, userId: user.uid });
+            const docId = newDocRef.id;
+            await setDocumentNonBlocking(newDocRef, { id: docId, name, icon, userId: user.uid });
             
             toast({ title: `${type} Added`, description: `"${name}" has been created.` });
 
             if (type === 'Category') {
-                form.setValue('categoryId', newDocRef.id, { shouldValidate: true });
+                form.setValue('categoryId', docId, { shouldValidate: true });
             } else {
                 const currentTagIds = form.getValues('tagIds') || [];
-                form.setValue('tagIds', [...currentTagIds, newDocRef.id], { shouldValidate: true });
+                form.setValue('tagIds', [...currentTagIds, docId], { shouldValidate: true });
             }
-            return newDocRef.id;
+            return docId;
         } catch (error: any) {
             toast({ variant: 'destructive', title: `Error Adding ${type}`, description: error.message });
             return undefined;
@@ -896,7 +897,7 @@ function useExpenseForm({
                 batch.update(expenseRef, expenseData);
             }
 
-            await batch.commit();
+            commitBatchNonBlocking(batch, collectionPath);
 
             if (isCreditLimitUpgrade) {
                 toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount?.name} has been increased.` });
@@ -973,7 +974,7 @@ function useExpenseForm({
             }
 
 
-            await batch.commit();
+            commitBatchNonBlocking(batch, collectionPath);
             toast({ title: 'Transaction Deleted', description: 'The transaction has been permanently removed.' });
             onSaveSuccess?.();
             setOpen(false);

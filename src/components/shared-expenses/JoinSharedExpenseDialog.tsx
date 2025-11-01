@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { useFirestore, useUser, errorEmitter, FirestorePermissionError, commitBatchNonBlocking } from '@/firebase';
 import { collection, query, where, getDocs, writeBatch, arrayUnion } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { SharedExpense } from '@/lib/types';
@@ -70,17 +70,10 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
                 memberIds: arrayUnion(user.uid),
             });
 
-            batch.commit().then(() => {
+            commitBatchNonBlocking(batch, `shared_expenses/${spaceDoc.id}`).then(() => {
                 toast({ title: 'Successfully Joined!', description: `You are now a member of "${spaceData.name}".` });
                 setOpen(false);
                 form.reset();
-            }).catch(commitError => {
-                 const permissionError = new FirestorePermissionError({
-                    path: `shared_expenses/${spaceDoc.id}`,
-                    operation: 'update',
-                    requestResourceData: { memberIds: `(arrayUnion: ${user.uid})` }
-                });
-                errorEmitter.emit('permission-error', permissionError);
             }).finally(() => {
                 setIsLoading(false);
             });

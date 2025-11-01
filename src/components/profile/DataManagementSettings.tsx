@@ -15,7 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
+import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase, errorEmitter, FirestorePermissionError, commitBatchNonBlocking } from "@/firebase";
 import { Account, UserProfile } from "@/lib/types";
 import { collection, doc, writeBatch, getDocs, query, where } from "firebase/firestore";
 import { useState } from "react";
@@ -79,7 +79,7 @@ export function DataManagementSettings() {
                 });
             }
             
-            await batch.commit();
+            await commitBatchNonBlocking(batch, `users/${user.uid}`);
             setProgress(100);
             toast({ title: 'All data cleared', description: 'All your transactions have been deleted and balances reset.' });
         } catch (error: any) {
@@ -112,7 +112,7 @@ export function DataManagementSettings() {
             const accountRef = doc(firestore, `users/${user.uid}/accounts`, selectedAccount);
             batch.update(accountRef, { balance: 0 });
             
-            await batch.commit();
+            await commitBatchNonBlocking(batch, `users/${user.uid}`);
             setProgress(100);
 
             const accountName = accounts?.find(a => a.id === selectedAccount)?.name || "the account";
@@ -152,7 +152,7 @@ export function DataManagementSettings() {
             const userProfileRef = doc(firestore, `users/${user.uid}`);
             batch.delete(userProfileRef);
 
-            await batch.commit();
+            await commitBatchNonBlocking(batch, `/users/${user.uid}`);
             setProgress(100);
             
             await deleteUser(user);

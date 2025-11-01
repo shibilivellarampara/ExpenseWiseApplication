@@ -135,7 +135,7 @@ export function ExcelImporter() {
         reader.onload = (e) => {
             try {
                 const data = e.target?.result;
-                const workbook = XLSX.read(data, { type: 'binary', cellDates: true });
+                const workbook = XLSX.read(data, { type: 'binary', cellDates: false });
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 const headers = (XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1, raw: false })[0] || []);
@@ -153,7 +153,7 @@ export function ExcelImporter() {
                     throw new Error(`The following required columns are missing for the selected template: ${missingColumns.join(', ')}`);
                 }
 
-                const jsonData = XLSX.utils.sheet_to_json<RowData>(worksheet, { raw: false, dateNF: 'yyyy-mm-dd' });
+                const jsonData = XLSX.utils.sheet_to_json<RowData>(worksheet, { raw: false });
                 setRawData(jsonData);
 
                 const existingCategoryNames = new Set(existingCategories?.map(c => c.name.toLowerCase()));
@@ -214,37 +214,18 @@ export function ExcelImporter() {
         
         return rawData.map((row) => {
             const dateValue = row[mapping.date];
-            let datePart: Date | null = null;
-    
-            if (dateValue instanceof Date) {
-                datePart = new Date(Date.UTC(dateValue.getUTCFullYear(), dateValue.getUTCMonth(), dateValue.getUTCDate()));
-            } else if (typeof dateValue === 'number') {
-                const jsTimestamp = (dateValue - 25569) * 86400 * 1000;
-                datePart = new Date(jsTimestamp);
-            } else if (typeof dateValue === 'string') {
-                const parsedDate = new Date(dateValue + 'T00:00:00Z');
-                if (!isNaN(parsedDate.getTime())) {
-                    datePart = new Date(Date.UTC(parsedDate.getUTCFullYear(), parsedDate.getUTCMonth(), parsedDate.getUTCDate()));
-                }
-            }
-            
-            if (!datePart || isNaN(datePart.getTime())) {
-                datePart = new Date(); // Fallback for any unhandled cases
-            }
+            const timeValue = mapping.time ? row[mapping.time] : null;
 
-            let finalDate = datePart;
+            let finalDate: Date;
 
-            if (mapping.time && row[mapping.time]) {
-                const timeValue = row[mapping.time];
-                if (timeValue instanceof Date) { 
-                    finalDate.setUTCHours(timeValue.getUTCHours(), timeValue.getUTCMinutes(), timeValue.getUTCSeconds());
-                } else if (typeof timeValue === 'number') { 
-                    const totalSeconds = Math.round(timeValue * 86400);
-                    const hours = Math.floor(totalSeconds / 3600);
-                    const minutes = Math.floor((totalSeconds % 3600) / 60);
-                    const seconds = totalSeconds % 60;
-                    finalDate.setUTCHours(hours, minutes, seconds);
-                } else if (typeof timeValue === 'string') {
+            if (typeof dateValue === 'number') {
+                const dateStruct = XLSX.SSF.parse_date_code(dateValue);
+                finalDate = new Date(dateStruct.y, dateStruct.m - 1, dateStruct.d, dateStruct.H, dateStruct.M, dateStruct.S);
+
+                if (timeValue && typeof timeValue === 'number') {
+                    const timeStruct = XLSX.SSF.parse_date_code(timeValue);
+                    finalDate.setHours(timeStruct.H, timeStruct.M, timeStruct.S);
+                } else if (timeValue && typeof timeValue === 'string') {
                     const timeMatch = timeValue.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?/i);
                     if (timeMatch) {
                         let [_, hoursStr, minutesStr, secondsStr, ampm] = timeMatch;
@@ -253,9 +234,13 @@ export function ExcelImporter() {
                         const seconds = secondsStr ? parseInt(secondsStr, 10) : 0;
                         if (ampm && ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
                         if (ampm && ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
-                        finalDate.setUTCHours(hours, minutes, seconds);
+                        finalDate.setHours(hours, minutes, seconds);
                     }
                 }
+            } else if (typeof dateValue === 'string') {
+                finalDate = new Date(dateValue);
+            } else {
+                finalDate = new Date(); // Fallback
             }
 
             const description = row[mapping.description] || 'Imported Transaction';
@@ -285,7 +270,7 @@ export function ExcelImporter() {
             }
             
             return { date: finalDate, amount, description, categoryName, tags, type, accountName };
-        }).filter(item => !isNaN(item.amount) && item.amount > 0);
+        }).filter(item => !isNaN(item.amount) && item.amount > 0 && !isNaN(item.date.getTime()));
     }, [rawData, template]);
 
     const processedData = useMemo(() => {

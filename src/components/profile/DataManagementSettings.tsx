@@ -297,7 +297,7 @@ export function DataManagementSettings() {
                             <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete your account and all associated data. This action is irreversible.</p>
                              {isDeleting && (
                                 <div className="space-y-2 mt-2">
-                                    <Progress value={progress} />
+                                    <Progress value={progress} className="[&>div]:bg-destructive" />
                                     <p className="text-xs text-muted-foreground text-center">Deleting your data...</p>
                                 </div>
                             )}

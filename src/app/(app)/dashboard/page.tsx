@@ -125,7 +125,7 @@ export default function DashboardPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
 
-    const enrichExpenses = (expenseList: Expense[] | null) => {
+    const enrichExpenses = (expenseList: Expense[] | null): EnrichedExpense[] => {
         if (!expenseList || !categoryMap.size || !accountMap.size) return [];
         return expenseList.map(expense => {
             const date = expense.date instanceof Date ? expense.date : expense.date.toDate();
@@ -273,5 +273,4 @@ export default function DashboardPage() {
             )}
         </div>
     );
-
-    
+}

@@ -108,7 +108,14 @@ export default function ExpensesPage() {
             if (categories.length > 0 && !categories.includes(expense.categoryId || '')) return false;
             if (accountIds.length > 0 && !accountIds.includes(expense.accountId)) return false;
             if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
-            if (debouncedSearchQuery && !expense.description?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) return false;
+            if (debouncedSearchQuery) {
+                const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
+                const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
+                const amountMatch = String(expense.amount).includes(lowerCaseQuery);
+                if (!descriptionMatch && !amountMatch) {
+                    return false;
+                }
+            }
             return true;
         });
 

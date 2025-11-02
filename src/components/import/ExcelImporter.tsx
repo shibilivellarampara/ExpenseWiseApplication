@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
-import { FileUp, Loader2, CheckCircle, ArrowRight, ListChecks, FileCheck2, AlertTriangle, Sparkles, Pilcrow, ArrowLeft, Send, MoreVertical } from "lucide-react";
+import { FileUp, Loader2, CheckCircle, ArrowRight, ListChecks, FileCheck2, AlertTriangle, Sparkles, Pilcrow, ArrowLeft, Send } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { useDoc, useFirestore, useUser, useMemoFirebase, useCollection } from "@/firebase";
 import { doc } from 'firebase/firestore';
@@ -22,7 +22,6 @@ import { cn } from "@/lib/utils";
 import { Progress } from "../ui/progress";
 import { Checkbox } from "../ui/checkbox";
 import Link from "next/link";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 
 type RowData = { [key: string]: any };
@@ -458,15 +457,6 @@ export function ExcelImporter() {
         );
     }
 
-    const handleSelectAllAccounts = (checked: boolean) => {
-        if (checked) {
-            setSelectedAccountsToImport(newAccounts);
-        } else {
-            setSelectedAccountsToImport([]);
-        }
-    };
-
-
     return (
         <Card>
             <CardHeader>
@@ -577,13 +567,9 @@ export function ExcelImporter() {
                                     <div className="rounded-lg border p-4 space-y-4">
                                         <div className="flex justify-between items-center">
                                             <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Accounts ({newAccounts.length})</h4>
-                                            <div className="flex items-center space-x-2">
-                                                <Checkbox
-                                                    id="select-all-accounts"
-                                                    checked={selectedAccountsToImport.length === newAccounts.length && newAccounts.length > 0}
-                                                    onCheckedChange={(checked) => handleSelectAllAccounts(Boolean(checked))}
-                                                />
-                                                <Label htmlFor="select-all-accounts">Select all</Label>
+                                            <div className="flex items-center gap-2">
+                                                <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport(newAccounts)} className="p-0 h-auto">Select All</Button>
+                                                <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport([])} className="p-0 h-auto">Deselect All</Button>
                                             </div>
                                         </div>
                                         <p className="text-sm text-muted-foreground">Select accounts to import and map them to existing accounts, or create new ones.</p>

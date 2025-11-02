@@ -82,7 +82,7 @@ export function ExcelImporter() {
 
     const [newCategories, setNewCategories] = useState<string[]>([]);
     const [newTags, setNewTags] = useState<string[]>([]);
-    const [newAccounts, setNewAccounts] = useState<string[]>([]);
+    const [allAccountsFromFile, setAllAccountsFromFile] = useState<string[]>([]);
     
     const [selectedAccountsToImport, setSelectedAccountsToImport] = useState<string[]>([]);
 
@@ -112,15 +112,15 @@ export function ExcelImporter() {
 
 
     useEffect(() => {
-        if (newAccounts.length > 0) {
+        if (allAccountsFromFile.length > 0) {
             const initialMappings: AccountMapping = {};
-            newAccounts.forEach(accName => {
+            allAccountsFromFile.forEach(accName => {
                 initialMappings[accName] = { action: 'create', type: 'bank' };
             });
             setAccountMappings(initialMappings);
-            setSelectedAccountsToImport(newAccounts); // By default, select all new accounts for import
+            setSelectedAccountsToImport(allAccountsFromFile);
         }
-    }, [newAccounts]);
+    }, [allAccountsFromFile]);
 
 
     const handleFileParseAndValidate = (fileToParse: File) => {
@@ -157,11 +157,10 @@ export function ExcelImporter() {
 
                 const existingCategoryNames = new Set(existingCategories?.map(c => c.name.toLowerCase()));
                 const existingTagNames = new Set(existingTags?.map(t => t.name.toLowerCase()));
-                const existingAccountNames = new Set(accounts?.map(a => a.name.toLowerCase()));
                 
                 const foundNewCategories = new Set<string>();
                 const foundNewTags = new Set<string>();
-                const foundNewAccounts = new Set<string>();
+                const foundAllAccounts = new Set<string>();
 
                 jsonData.forEach(row => {
                     const categoryName = row[expectedMapping.category];
@@ -181,15 +180,15 @@ export function ExcelImporter() {
                     }
                     if (expectedMapping.mode) {
                         const accountName = row[expectedMapping.mode];
-                        if(accountName && !existingAccountNames.has(String(accountName).toLowerCase())){
-                            foundNewAccounts.add(String(accountName));
+                        if(accountName){
+                            foundAllAccounts.add(String(accountName));
                         }
                     }
                 });
 
                 setNewCategories(Array.from(foundNewCategories));
                 setNewTags(Array.from(foundNewTags));
-                setNewAccounts(Array.from(foundNewAccounts));
+                setAllAccountsFromFile(Array.from(foundAllAccounts));
                 setFile(fileToParse);
                 setStep(3);
 
@@ -426,7 +425,7 @@ export function ExcelImporter() {
         setTemplate('');
         setNewCategories([]);
         setNewTags([]);
-        setNewAccounts([]);
+        setAllAccountsFromFile([]);
         setAccountMappings({});
         setImportAccountId('');
         setImportedCount(0);
@@ -468,11 +467,13 @@ export function ExcelImporter() {
     
      const handleSelectAllAccounts = (checked: boolean | string) => {
         if (checked) {
-            setSelectedAccountsToImport(newAccounts);
+            setSelectedAccountsToImport(allAccountsFromFile);
         } else {
             setSelectedAccountsToImport([]);
         }
     };
+
+    const existingAccountNamesLower = useMemo(() => new Set(accounts?.map(a => a.name.toLowerCase())), [accounts]);
 
 
     return (
@@ -581,15 +582,15 @@ export function ExcelImporter() {
                                     ) : <p className="text-sm text-muted-foreground">No new tags found. Existing tags will be used.</p>}
                                     <p className="text-xs text-muted-foreground pt-1">New tags will be created automatically.</p>
                                 </div>
-                                {newAccounts.length > 0 && (
+                                {allAccountsFromFile.length > 0 && (
                                     <div className="rounded-lg border p-4 space-y-4">
-                                        <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Accounts ({newAccounts.length})</h4>
+                                        <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> Accounts in File ({allAccountsFromFile.length})</h4>
                                         <p className="text-sm text-muted-foreground">Select accounts to import and map them to existing accounts, or create new ones.</p>
                                         
                                         <div className="flex items-center space-x-2">
                                             <Checkbox
                                                 id="select-all-accounts"
-                                                checked={selectedAccountsToImport.length === newAccounts.length}
+                                                checked={selectedAccountsToImport.length === allAccountsFromFile.length}
                                                 onCheckedChange={handleSelectAllAccounts}
                                             />
                                             <Label htmlFor="select-all-accounts" className="font-medium">
@@ -597,14 +598,19 @@ export function ExcelImporter() {
                                             </Label>
                                         </div>
                                         
-                                        {newAccounts.map(accName => (
+                                        {allAccountsFromFile.map(accName => (
                                             <div key={accName} className="grid grid-cols-[auto_1fr_auto_1fr] items-center gap-x-4 gap-y-2">
                                                 <Checkbox
                                                     id={`select-acc-${accName}`}
                                                     checked={selectedAccountsToImport.includes(accName)}
                                                     onCheckedChange={() => handleAccountSelectionChange(accName)}
                                                 />
-                                                <Label htmlFor={`select-acc-${accName}`} className="truncate font-medium">{accName}</Label>
+                                                <Label htmlFor={`select-acc-${accName}`} className="truncate font-medium">
+                                                    {accName}
+                                                    {existingAccountNamesLower.has(accName.toLowerCase()) && 
+                                                        <span className="text-xs text-muted-foreground ml-2">(Already exists)</span>
+                                                    }
+                                                </Label>
                                                 <ArrowRight className="h-4 w-4 text-muted-foreground" />
                                                 <div className="flex gap-2">
                                                     <Select 

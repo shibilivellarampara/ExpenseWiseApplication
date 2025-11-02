@@ -111,31 +111,25 @@ export function DataManagementSettings() {
         try {
             const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), where('accountId', '==', selectedAccount));
             const expensesSnapshot = await getDocs(expensesQuery);
-            const totalDocs = expensesSnapshot.size;
+            const totalDocs = expensesSnapshot.size + 1; // +1 for the account itself
             let processedDocs = 0;
             
             const batch = writeBatch(firestore);
             expensesSnapshot.forEach(expenseDoc => {
                 batch.delete(expenseDoc.ref);
                 processedDocs++;
-                setProgress((processedDocs / totalDocs) * 50);
+                setProgress((processedDocs / totalDocs) * 100);
             });
 
             const accountRef = doc(firestore, `users/${user.uid}/accounts`, selectedAccount);
-            
-            if (accountToClear.type === 'credit_card') {
-                batch.delete(accountRef);
-            } else {
-                 batch.update(accountRef, { balance: 0 });
-            }
+            batch.delete(accountRef);
+            processedDocs++;
+            setProgress((processedDocs / totalDocs) * 100);
             
             await commitBatchNonBlocking(batch, `users/${user.uid}`);
-            setProgress(100);
-
+            
             const accountName = accountToClear.name || "the account";
-            const actionText = accountToClear.type === 'credit_card'
-                ? `Transactions for ${accountName} have been deleted and the account removed.`
-                : `Transactions for ${accountName} have been deleted and its balance reset.`;
+            const actionText = `All transactions for ${accountName} have been deleted, and the account has been removed.`;
 
             toast({ title: 'Account Data Cleared', description: actionText });
             setSelectedAccount(null);
@@ -267,7 +261,7 @@ export function DataManagementSettings() {
 
                         <div className="rounded-lg border border-destructive/50 p-4">
                             <h4 className="font-semibold">Clear Specific Account Data</h4>
-                            <p className="text-sm text-muted-foreground mt-1 mb-3">Select an account to delete all its associated transactions and reset its balance to zero. Credit card accounts will be deleted entirely.</p>
+                            <p className="text-sm text-muted-foreground mt-1 mb-3">Select an account to delete all its associated transactions. The account itself will also be removed.</p>
                              {isClearing && selectedAccount && (
                                 <div className="space-y-2 my-2">
                                     <Progress value={progress} className="[&>div]:bg-destructive" />
@@ -299,7 +293,7 @@ export function DataManagementSettings() {
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>Clear data for "{accounts?.find(a => a.id === selectedAccount)?.name}"?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This will permanently delete all transactions for this account. The account's balance will be reset to zero, or if it is a credit card, the account will be deleted. This action cannot be undone.
+                                                This will permanently delete this account and all transactions associated with it. This action cannot be undone.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>

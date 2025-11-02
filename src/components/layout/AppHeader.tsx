@@ -1,4 +1,3 @@
-
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
@@ -19,6 +18,7 @@ import {
   ArrowRightLeft,
   Briefcase,
   FileText,
+  Info,
 } from 'lucide-react';
 import packageJson from '../../../package.json';
 import { Separator } from '../ui/separator';
@@ -32,6 +32,7 @@ const navItems = [
   { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
+  { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
 ];
 
 

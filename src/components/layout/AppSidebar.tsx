@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -11,6 +10,7 @@ import {
   ArrowRightLeft,
   Briefcase,
   FileText,
+  Info,
 } from 'lucide-react';
 import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,7 @@ const navItems = [
   { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
+  { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
 ];
 
 export const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean, onClick?: () => void }) => {

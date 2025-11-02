@@ -99,6 +99,13 @@ export function DataManagementSettings() {
             toast({ variant: 'destructive', title: 'Error', description: 'Please select an account to clear.' });
             return;
         }
+
+        const accountToClear = accounts?.find(a => a.id === selectedAccount);
+        if (!accountToClear) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Selected account not found.' });
+            return;
+        }
+
         setIsClearing(true);
         setProgress(0);
         try {
@@ -115,13 +122,22 @@ export function DataManagementSettings() {
             });
 
             const accountRef = doc(firestore, `users/${user.uid}/accounts`, selectedAccount);
-            batch.update(accountRef, { balance: 0 });
+            
+            if (accountToClear.type === 'credit_card') {
+                batch.delete(accountRef);
+            } else {
+                 batch.update(accountRef, { balance: 0 });
+            }
             
             await commitBatchNonBlocking(batch, `users/${user.uid}`);
             setProgress(100);
 
-            const accountName = accounts?.find(a => a.id === selectedAccount)?.name || "the account";
-            toast({ title: 'Account Data Cleared', description: `Transactions for ${accountName} have been deleted and its balance reset.` });
+            const accountName = accountToClear.name || "the account";
+            const actionText = accountToClear.type === 'credit_card'
+                ? `Transactions for ${accountName} have been deleted and the account removed.`
+                : `Transactions for ${accountName} have been deleted and its balance reset.`;
+
+            toast({ title: 'Account Data Cleared', description: actionText });
             setSelectedAccount(null);
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
@@ -222,7 +238,7 @@ export function DataManagementSettings() {
                         <div className="rounded-lg border border-destructive/50 p-4">
                             <h4 className="font-semibold">Clear All Transaction Data</h4>
                             <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete all your transactions and all of your accounts.</p>
-                            {isClearing && (
+                            {isClearing && !selectedAccount && (
                                 <div className="space-y-2 mt-2">
                                     <Progress value={progress} className="[&>div]:bg-destructive" />
                                     <p className="text-xs text-muted-foreground text-center">Processing...</p>
@@ -251,7 +267,7 @@ export function DataManagementSettings() {
 
                         <div className="rounded-lg border border-destructive/50 p-4">
                             <h4 className="font-semibold">Clear Specific Account Data</h4>
-                            <p className="text-sm text-muted-foreground mt-1 mb-3">Select an account to delete all its associated transactions and reset its balance to zero.</p>
+                            <p className="text-sm text-muted-foreground mt-1 mb-3">Select an account to delete all its associated transactions and reset its balance to zero. Credit card accounts will be deleted entirely.</p>
                              {isClearing && selectedAccount && (
                                 <div className="space-y-2 my-2">
                                     <Progress value={progress} className="[&>div]:bg-destructive" />
@@ -283,7 +299,7 @@ export function DataManagementSettings() {
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>Clear data for "{accounts?.find(a => a.id === selectedAccount)?.name}"?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This will permanently delete all transactions for this account and reset its balance. This action cannot be undone.
+                                                This will permanently delete all transactions for this account. The account's balance will be reset to zero, or if it is a credit card, the account will be deleted. This action cannot be undone.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>

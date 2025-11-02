@@ -100,7 +100,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                     </div>
                                     <div className="flex-grow space-y-1 w-full min-w-0">
                                         <div className="flex justify-between items-start">
-                                            <div className="font-semibold truncate flex-1 pr-4">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
+                                            <div className="font-semibold break-words flex-1 pr-4">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
                                             <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
                                                 <div className="flex items-center">
                                                     <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId} onSaveSuccess={onDataChange}>

@@ -14,8 +14,6 @@ import { useMemo, useState, useCallback, useEffect } from "react";
 import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
-import { getCache, setCache } from "@/lib/cache";
-
 
 export default function ExpensesPage() {
     const { user } = useUser();
@@ -54,15 +52,7 @@ export default function ExpensesPage() {
     useEffect(() => {
         if (!user || !expensesBaseQuery) return;
 
-        const cacheKey = `expenses_${user.uid}`;
-        const cachedExpenses = getCache<any[]>(cacheKey);
-
-        if (cachedExpenses) {
-            setAllExpenses(cachedExpenses.map(e => ({ ...e, date: new Date(e.date) } as Expense)));
-            setExpensesLoading(false);
-        } else {
-            setExpensesLoading(true);
-        }
+        setExpensesLoading(true);
 
         const unsubscribe = onSnapshot(expensesBaseQuery, (snapshot) => {
             const fetchedExpenses = snapshot.docs.map(doc => {
@@ -73,7 +63,6 @@ export default function ExpensesPage() {
                  return { ...data, id: doc.id, date };
             });
             setAllExpenses(fetchedExpenses);
-            setCache(cacheKey, fetchedExpenses.map(e => ({...e, date: e.date.toISOString()})), 60 * 5); // Cache for 5 minutes
             setExpensesLoading(false);
             setExpensesError(null);
         }, (error) => {
@@ -191,9 +180,7 @@ export default function ExpensesPage() {
     };
     
     const refreshTransactions = () => {
-       if (user) {
-         setCache(`expenses_${user.uid}`, null, 0); // Invalidate cache
-       }
+       // This function is now a placeholder but can be used for manual refresh triggers in the future.
     };
 
     return (

@@ -237,7 +237,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Search by description or amount..."
+                    placeholder="Search..."
                     value={filters.searchQuery}
                     onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
                     className="pl-8 sm:w-[200px] md:w-[250px] lg:w-[300px]"

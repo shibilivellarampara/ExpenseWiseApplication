@@ -7,6 +7,14 @@ import packageJson from '../../../../package.json';
 
 const changelog = [
     {
+        version: "1.2.2",
+        date: "2024-08-02",
+        changes: [
+            { type: 'Feature', description: "Added search functionality to the transactions page to filter by description and amount." },
+            { type: 'Fix', description: "Changed the search input placeholder to be more concise." },
+        ]
+    },
+    {
         version: "1.2.1",
         date: "2024-08-01",
         changes: [

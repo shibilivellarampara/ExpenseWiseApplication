@@ -129,14 +129,30 @@ export default function ExpensesPage() {
             const account = accountMap.get(accountId);
 
             if (account) {
-                let currentBalance = account.balance;
-                enriched.sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort newest first
+                 // Sort oldest to newest for calculation
+                enriched.sort((a, b) => a.date.getTime() - b.date.getTime());
+                
+                // First pass: Find the balance before the oldest visible transaction
+                const oldestVisibleDate = enriched.length > 0 ? enriched[0].date : new Date();
+                const priorTransactions = allExpenses.filter(tx => 
+                    tx.accountId === accountId && tx.date < oldestVisibleDate
+                );
+
+                const getAmountChange = (tx: Expense, accType: Account['type']) => {
+                    if (accType === 'credit_card') {
+                        return tx.type === 'expense' ? tx.amount : -tx.amount;
+                    }
+                    return tx.type === 'income' ? tx.amount : -tx.amount;
+                };
+
+                const priorBalanceChange = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);
+                let runningBalance = account.balance - priorBalanceChange;
+
+                // Second pass: Calculate running balance for visible transactions
                 enriched.forEach(tx => {
-                    tx.runningBalance = currentBalance;
-                    const amountChange = account.type === 'credit_card'
-                        ? (tx.type === 'expense' ? tx.amount : -tx.amount)
-                        : (tx.type === 'income' ? tx.amount : -tx.amount);
-                    currentBalance += amountChange; // Work backwards
+                    const amountChange = getAmountChange(tx, account.type);
+                    runningBalance += amountChange;
+                    tx.runningBalance = runningBalance;
                 });
             }
         } else {

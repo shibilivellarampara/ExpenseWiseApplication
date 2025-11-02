@@ -220,26 +220,35 @@ export function ExcelImporter() {
             if (typeof dateValue === 'number') {
                 const dateStruct = XLSX.SSF.parse_date_code(dateValue);
                 finalDate = new Date(dateStruct.y, dateStruct.m - 1, dateStruct.d, dateStruct.H, dateStruct.M, dateStruct.S);
-
-                if (timeValue && typeof timeValue === 'number') {
-                    const timeStruct = XLSX.SSF.parse_date_code(timeValue);
-                    finalDate.setHours(timeStruct.H, timeStruct.M, timeStruct.S);
-                } else if (timeValue && typeof timeValue === 'string') {
-                    const timeMatch = timeValue.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?/i);
-                    if (timeMatch) {
-                        let [_, hoursStr, minutesStr, secondsStr, ampm] = timeMatch;
-                        let hours = parseInt(hoursStr, 10);
-                        const minutes = parseInt(minutesStr, 10);
-                        const seconds = secondsStr ? parseInt(secondsStr, 10) : 0;
-                        if (ampm && ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
-                        if (ampm && ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
-                        finalDate.setHours(hours, minutes, seconds);
-                    }
-                }
             } else if (typeof dateValue === 'string') {
                 finalDate = new Date(dateValue);
             } else {
                 finalDate = new Date(); // Fallback
+            }
+
+            // If time is a separate column and is a valid string, parse and apply it
+            if (timeValue) {
+                let hours = 0;
+                let minutes = 0;
+                let seconds = 0;
+
+                if (typeof timeValue === 'number') { // Excel time serial number
+                     const timeStruct = XLSX.SSF.parse_date_code(timeValue);
+                     hours = timeStruct.H;
+                     minutes = timeStruct.M;
+                     seconds = timeStruct.S;
+                } else if (typeof timeValue === 'string') { // String time like "10:30 AM"
+                     const timeMatch = timeValue.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?/i);
+                    if (timeMatch) {
+                        let [_, hoursStr, minutesStr, secondsStr, ampm] = timeMatch;
+                        hours = parseInt(hoursStr, 10);
+                        minutes = parseInt(minutesStr, 10);
+                        seconds = secondsStr ? parseInt(secondsStr, 10) : 0;
+                        if (ampm && ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
+                        if (ampm && ampm.toUpperCase() === 'AM' && hours === 12) hours = 0; // Midnight case
+                    }
+                }
+                finalDate.setHours(hours, minutes, seconds, 0);
             }
 
             const description = row[mapping.description] || 'Imported Transaction';
@@ -456,6 +465,15 @@ export function ExcelImporter() {
                 : [...prev, accountName]
         );
     }
+    
+     const handleSelectAllAccounts = (checked: boolean | string) => {
+        if (checked) {
+            setSelectedAccountsToImport(newAccounts);
+        } else {
+            setSelectedAccountsToImport([]);
+        }
+    };
+
 
     return (
         <Card>
@@ -565,14 +583,20 @@ export function ExcelImporter() {
                                 </div>
                                 {newAccounts.length > 0 && (
                                     <div className="rounded-lg border p-4 space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Accounts ({newAccounts.length})</h4>
-                                            <div className="flex items-center gap-2">
-                                                <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport(newAccounts)} className="p-0 h-auto">Select All</Button>
-                                                <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport([])} className="p-0 h-auto">Deselect All</Button>
-                                            </div>
-                                        </div>
+                                        <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Accounts ({newAccounts.length})</h4>
                                         <p className="text-sm text-muted-foreground">Select accounts to import and map them to existing accounts, or create new ones.</p>
+                                        
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="select-all-accounts"
+                                                checked={selectedAccountsToImport.length === newAccounts.length}
+                                                onCheckedChange={handleSelectAllAccounts}
+                                            />
+                                            <Label htmlFor="select-all-accounts" className="font-medium">
+                                                Select all
+                                            </Label>
+                                        </div>
+                                        
                                         {newAccounts.map(accName => (
                                             <div key={accName} className="grid grid-cols-[auto_1fr_auto_1fr] items-center gap-x-4 gap-y-2">
                                                 <Checkbox

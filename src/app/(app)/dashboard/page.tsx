@@ -64,7 +64,8 @@ export default function DashboardPage() {
         }
     }, [timeRange]);
 
-    const expensesQuery = useMemoFirebase(() => {
+    // Query for the selected time range for the bar chart
+    const chartExpensesQuery = useMemoFirebase(() => {
         if (!user) return null;
         return query(
             collection(firestore, `users/${user.uid}/expenses`),
@@ -73,13 +74,25 @@ export default function DashboardPage() {
         );
     }, [user, firestore, dateRangeStart, dateRangeEnd]);
 
+    // --- Separate Queries for Stats and Pie Chart ---
+    const thisMonthRange = useMemo(() => {
+        const now = new Date();
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+    }, []);
+
     const lastMonthRange = useMemo(() => {
         const now = new Date();
-        return {
-            start: startOfMonth(subMonths(now, 1)),
-            end: endOfMonth(subMonths(now, 1)),
-        };
+        return { start: startOfMonth(subMonths(now, 1)), end: endOfMonth(subMonths(now, 1)) };
     }, []);
+
+    const thisMonthExpensesQuery = useMemoFirebase(() => {
+        if (!user) return null;
+        return query(
+            collection(firestore, `users/${user.uid}/expenses`),
+            where('date', '>=', Timestamp.fromDate(thisMonthRange.start)),
+            where('date', '<=', Timestamp.fromDate(thisMonthRange.end))
+        );
+    }, [user, firestore, thisMonthRange]);
 
     const lastMonthExpensesQuery = useMemoFirebase(() => {
         if (!user) return null;
@@ -96,14 +109,15 @@ export default function DashboardPage() {
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [firestore, user]);
     const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [firestore, user]);
 
-    const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
+    const { data: chartExpenses, isLoading: chartExpensesLoading } = useCollection<Expense>(chartExpensesQuery);
+    const { data: thisMonthExpenses, isLoading: thisMonthLoading } = useCollection<Expense>(thisMonthExpensesQuery);
     const { data: lastMonthExpenses, isLoading: lastMonthLoading } = useCollection<Expense>(lastMonthExpensesQuery);
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
     const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
-    const isLoading = expensesLoading || categoriesLoading || profileLoading || accountsLoading || tagsLoading || lastMonthLoading;
+    const isLoading = chartExpensesLoading || thisMonthLoading || lastMonthLoading || categoriesLoading || profileLoading || accountsLoading || tagsLoading;
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
     const show5YearView = userProfile?.dashboardSettings?.show5YearView ?? false;
 
@@ -125,17 +139,13 @@ export default function DashboardPage() {
         });
     }
 
-    const currentMonthExpenses = useMemo(() => {
-        if (timeRange !== 'month' || !expenses) return [];
-        return enrichExpenses(expenses);
-    }, [timeRange, expenses, categoryMap, accountMap, tagMap]);
-    
-    const enrichedChartExpenses = useMemo(() => enrichExpenses(expenses), [expenses, categoryMap, accountMap, tagMap]);
+    const enrichedChartExpenses = useMemo(() => enrichExpenses(chartExpenses), [chartExpenses, categoryMap, accountMap, tagMap]);
+    const enrichedThisMonthExpenses = useMemo(() => enrichExpenses(thisMonthExpenses), [thisMonthExpenses, categoryMap, accountMap, tagMap]);
     const enrichedLastMonthExpenses = useMemo(() => enrichExpenses(lastMonthExpenses), [lastMonthExpenses, categoryMap, accountMap, tagMap]);
 
 
     const generatePieChartData = (grouping: PieChartGrouping) => {
-        const expenseOnly = currentMonthExpenses.filter(e => e.type === 'expense');
+        const expenseOnly = enrichedThisMonthExpenses.filter(e => e.type === 'expense');
         const dataMap = new Map<string, number>();
 
         expenseOnly.forEach(item => {
@@ -169,9 +179,9 @@ export default function DashboardPage() {
         return Array.from(dataMap, ([name, value]) => ({ name, value }));
     };
     
-    const pieChartCategoryData = useMemo(() => generatePieChartData('category'), [currentMonthExpenses, categories]);
-    const pieChartAccountData = useMemo(() => generatePieChartData('account'), [currentMonthExpenses, accounts]);
-    const pieChartTagData = useMemo(() => generatePieChartData('tag'), [currentMonthExpenses, tags]);
+    const pieChartCategoryData = useMemo(() => generatePieChartData('category'), [enrichedThisMonthExpenses, categories]);
+    const pieChartAccountData = useMemo(() => generatePieChartData('account'), [enrichedThisMonthExpenses, accounts]);
+    const pieChartTagData = useMemo(() => generatePieChartData('tag'), [enrichedThisMonthExpenses, tags]);
 
     const useCategoryColors = userProfile?.dashboardSettings?.useCategoryColorsInChart ?? true;
 
@@ -186,7 +196,7 @@ export default function DashboardPage() {
             {accounts && accounts.length > 0 && (
                 <>
                     <DashboardStats 
-                        currentMonthExpenses={currentMonthExpenses} 
+                        currentMonthExpenses={enrichedThisMonthExpenses} 
                         lastMonthExpenses={enrichedLastMonthExpenses}
                         isLoading={isLoading}
                         currency={userProfile?.defaultCurrency}
@@ -263,5 +273,5 @@ export default function DashboardPage() {
             )}
         </div>
     );
-}
 
+    

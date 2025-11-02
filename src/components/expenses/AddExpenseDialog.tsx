@@ -810,7 +810,6 @@ function useExpenseForm({
             const selectedAccount = accounts.find(a => a.id === values.accountId);
 
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
-            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
 
             const isAddOperation = !isEditMode;
 
@@ -845,28 +844,15 @@ function useExpenseForm({
                      setIsLoading(false);
                      return false;
                 }
-            } else if (isCreditCardPayment) {
-                 if (selectedAccount?.type === 'credit_card' && values.type === 'expense') {
-                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                      if (isAddOperation) {
-                        batch.update(accountRef, { balance: increment(-values.amount) }); // Decrease outstanding
-                    } else if (expenseToEdit) {
-                        const oldAmount = expenseToEdit.type === 'expense' ? expenseToEdit.amount : 0;
-                        const difference = values.amount - oldAmount;
-                        batch.update(accountRef, { balance: increment(-difference) });
-                    }
-                 } else {
-                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Credit Card Payment must be an "expense" transaction applied to a credit card account.'});
-                     setIsLoading(false);
-                     return false;
-                 }
             }
             
-            if (!sharedExpenseId && !isCreditLimitUpgrade && !isCreditCardPayment) {
+            if (!sharedExpenseId && !isCreditLimitUpgrade) {
                 const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
+                     // For credit card, balance is available credit. Expenses DECREASE it, payments INCREASE it.
                      if (accountType === 'credit_card') {
-                        return type === 'expense' ? amount : -amount;
+                        return type === 'income' ? amount : -amount;
                      }
+                     // For other accounts, balance is cash. Income INCREASES it, expenses DECREASE it.
                      return type === 'income' ? amount : -amount;
                 };
 
@@ -901,8 +887,6 @@ function useExpenseForm({
 
             if (isCreditLimitUpgrade) {
                 toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount?.name} has been increased.` });
-            } else if (isCreditCardPayment) {
-                 toast({ title: 'Bill Payment Recorded!', description: `The payment for ${selectedAccount?.name} has been applied.` });
             } else {
                  toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
             }
@@ -948,7 +932,6 @@ function useExpenseForm({
 
             const selectedCategory = categories.find(c => c.id === expenseToEdit.categoryId);
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
-            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
             
             batch.delete(expenseRef);
 
@@ -958,14 +941,16 @@ function useExpenseForm({
 
                 if (isCreditLimitUpgrade) {
                      batch.update(accountRef, { limit: increment(-expenseToEdit.amount) });
-                } else if(isCreditCardPayment){
-                    batch.update(accountRef, { balance: increment(expenseToEdit.amount) }); // re-add to outstanding
                 } else {
                     if (selectedAccount) {
                         let amountToRevert: number;
-                        if (selectedAccount.type === 'credit_card') {
-                            amountToRevert = expenseToEdit.type === 'expense' ? -expenseToEdit.amount : expenseToEdit.amount;
+                         if (selectedAccount.type === 'credit_card') {
+                            // Reverting a transaction on a CC means doing the opposite of the original
+                            // Deleting an expense (purchase) INCREASES available credit
+                            // Deleting an income (payment) DECREASES available credit
+                            amountToRevert = expenseToEdit.type === 'expense' ? expenseToEdit.amount : -expenseToEdit.amount;
                         } else {
+                             // For regular accounts, it's the standard reversal
                             amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
                         }
                         batch.update(accountRef, { balance: increment(amountToRevert) });

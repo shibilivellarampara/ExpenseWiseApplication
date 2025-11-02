@@ -213,9 +213,9 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                     <div className="divide-y">
                         {creditCards.length > 0 ? creditCards.map(item => {
                              const limit = item.limit || 0;
-                             const balance = item.balance; // Outstanding amount
-                             const availableCredit = limit - balance;
-                             const availablePercentage = limit > 0 ? (availableCredit / limit) * 100 : 0;
+                             const availableCredit = item.balance; // 'balance' for CC is available credit
+                             const outstandingAmount = limit - availableCredit;
+                             const usedPercentage = limit > 0 ? (outstandingAmount / limit) * 100 : 0;
                             
                             return (
                                 <div key={item.id} className="p-4 flex items-center gap-4 group">
@@ -226,7 +226,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                         <div className="flex items-center justify-between">
                                             <div className="font-semibold">{item.name}</div>
                                             <div className="font-bold text-lg text-red-500">
-                                                {currencySymbol}{balance.toFixed(2)}
+                                                {currencySymbol}{outstandingAmount.toFixed(2)}
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -240,7 +240,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                         </div>
                                         {limit > 0 && (
                                             <div className="mt-1">
-                                                <Progress value={availablePercentage} className="h-2 [&>div]:bg-green-500" />
+                                                <Progress value={100 - usedPercentage} className="h-2 [&>div]:bg-green-500" />
                                                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                                     <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
                                                     <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>

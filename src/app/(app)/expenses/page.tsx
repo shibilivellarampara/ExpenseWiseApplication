@@ -132,21 +132,27 @@ export default function ExpensesPage() {
                  // Sort oldest to newest for calculation
                 enriched.sort((a, b) => a.date.getTime() - b.date.getTime());
                 
-                // First pass: Find the balance before the oldest visible transaction
                 const oldestVisibleDate = enriched.length > 0 ? enriched[0].date : new Date();
                 const priorTransactions = allExpenses.filter(tx => 
                     tx.accountId === accountId && tx.date < oldestVisibleDate
                 );
 
                 const getAmountChange = (tx: Expense, accType: Account['type']) => {
+                    // For credit card, balance is available credit. Expenses DECREASE it, payments INCREASE it.
                     if (accType === 'credit_card') {
-                        return tx.type === 'expense' ? tx.amount : -tx.amount;
+                        return tx.type === 'income' ? tx.amount : -tx.amount;
                     }
+                    // For other accounts, balance is cash. Income INCREASES it, expenses DECREASE it.
                     return tx.type === 'income' ? tx.amount : -tx.amount;
                 };
 
+                // For credit cards, starting point is the limit. For others, it's the current balance.
+                const startingBalance = account.type === 'credit_card' ? account.limit || 0 : account.balance;
+
                 const priorBalanceChange = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);
-                let runningBalance = account.balance - priorBalanceChange;
+                
+                // We start with the account's current balance and work backwards to find the balance *before* all visible transactions
+                let runningBalance = startingBalance - priorBalanceChange;
 
                 // Second pass: Calculate running balance for visible transactions
                 enriched.forEach(tx => {
@@ -158,7 +164,12 @@ export default function ExpensesPage() {
         } else {
              enriched.forEach(tx => {
                 if (tx.account) {
-                    tx.accountBalance = tx.account.balance;
+                    if (tx.account.type === 'credit_card') {
+                        // For CC, display outstanding balance, not available credit
+                        tx.accountBalance = (tx.account.limit || 0) - tx.account.balance;
+                    } else {
+                        tx.accountBalance = tx.account.balance;
+                    }
                 }
             });
         }

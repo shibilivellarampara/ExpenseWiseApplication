@@ -94,7 +94,10 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                  form.reset({
                     name: accountToEdit.name,
                     type: accountToEdit.type,
-                    balance: accountToEdit.balance,
+                    // For CC, 'balance' in Firestore is available credit. We show outstanding to user.
+                    balance: accountToEdit.type === 'credit_card' 
+                        ? (accountToEdit.limit || 0) - accountToEdit.balance
+                        : accountToEdit.balance,
                     icon: accountToEdit.icon,
                     limit: accountToEdit.limit,
                     billingDate: accountToEdit.billingDate,
@@ -116,8 +119,8 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
 
     async function onSubmit(values: AccountFormData) {
         setIsLoading(true);
-        if (!firestore || !user || !categories) {
-             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in and categories must be loaded.' });
+        if (!firestore || !user) {
+             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
              setIsLoading(false);
              return;
         }
@@ -127,28 +130,38 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             userId: user.uid,
         };
         
+        if (values.type === 'credit_card' && values.limit) {
+            // For credit cards, the stored balance is the *available credit*.
+            // We calculate it from the limit and the user-provided outstanding amount.
+            accountData.balance = values.limit - values.balance;
+        }
+
         if (values.type !== 'credit_card') {
             delete accountData.limit;
             delete accountData.billingDate;
         }
 
+
         try {
             if (isEditMode && accountToEdit) {
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountToEdit.id);
+                // Don't allow changing balance or limit directly when editing
+                delete accountData.balance;
+                delete accountData.limit;
                 setDocumentNonBlocking(accountRef, accountData, { merge: true });
                 toast({
                     title: 'Account Updated!',
                     description: 'Your account details have been saved.',
                 });
             } else {
-                const newAccountRef = await addDocumentNonBlocking(collection(firestore, `users/${user.uid}/accounts`), {});
+                const newAccountRef = doc(collection(firestore, `users/${user.uid}/accounts`));
                 
-                setDocumentNonBlocking(newAccountRef, { ...accountData, id: newAccountRef.id });
+                await setDocumentNonBlocking(newAccountRef, { ...accountData, id: newAccountRef.id });
                 
-                const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
-                
+                // Only create initial balance transaction for non-credit card accounts
                 if (values.type !== 'credit_card' && values.balance !== 0) {
-                    addDocumentNonBlocking(expensesCol, {
+                    const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
+                    await addDocumentNonBlocking(expensesCol, {
                         userId: user.uid,
                         type: 'income',
                         amount: Math.abs(values.balance),
@@ -157,22 +170,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                         createdAt: serverTimestamp(),
                         accountId: newAccountRef.id,
                     });
-                }
-                
-                if (values.type === 'credit_card' && values.limit && values.limit > 0) {
-                    const upgradeCategory = categories.find(c => c.name === 'Credit Limit Upgrade');
-                    if (upgradeCategory) {
-                        addDocumentNonBlocking(expensesCol, {
-                            userId: user.uid,
-                            type: 'income',
-                            amount: values.limit,
-                            description: 'Initial Credit Limit',
-                            date: new Date(),
-                            createdAt: serverTimestamp(),
-                            accountId: newAccountRef.id,
-                            categoryId: upgradeCategory.id,
-                        });
-                    }
                 }
                 
                 toast({
@@ -242,22 +239,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="balance"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>
-                                        {accountType === 'credit_card' ? 'Current Outstanding Amount' : 'Current Balance'}
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input type="number" placeholder="0.00" {...field} disabled={isEditMode} />
-                                    </FormControl>
-                                     {isEditMode && <FormDescription>Balance can only be changed by adding transactions.</FormDescription>}
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
                         {accountType === 'credit_card' && (
                              <>
                                 <FormField
@@ -274,20 +255,39 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={form.control}
-                                    name="billingDate"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Billing Date (Day of Month)</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" min="1" max="31" placeholder="e.g., 15" {...field} value={field.value ?? ''}/>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
                              </>
+                        )}
+                        <FormField
+                            control={form.control}
+                            name="balance"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>
+                                        {accountType === 'credit_card' ? 'Current Outstanding Amount' : 'Current Balance'}
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input type="number" placeholder="0.00" {...field} disabled={isEditMode} />
+                                    </FormControl>
+                                     {isEditMode && <FormDescription>Balance can only be changed by adding transactions.</FormDescription>}
+                                     {accountType !== 'credit_card' && !isEditMode && <FormDescription>An initial transaction will be created for this amount.</FormDescription>}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {accountType === 'credit_card' && (
+                            <FormField
+                                control={form.control}
+                                name="billingDate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Billing Date (Day of Month)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" min="1" max="31" placeholder="e.g., 15" {...field} value={field.value ?? ''}/>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         )}
                          <FormField
                             control={form.control}

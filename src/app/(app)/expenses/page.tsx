@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -152,7 +153,7 @@ export default function ExpensesPage() {
                 const getAmountChange = (tx: Expense, accType: Account['type']) => {
                     if (accType === 'credit_card') {
                        // For CC, expenses DECREASE available credit, payments INCREASE it.
-                       return tx.type === 'expense' ? -tx.amount : tx.amount;
+                       return tx.type === 'income' ? tx.amount : -tx.amount;
                     }
                      // For other accounts, income INCREASES balance, expenses DECREASE it.
                     return tx.type === 'income' ? tx.amount : -tx.amount;
@@ -161,11 +162,18 @@ export default function ExpensesPage() {
                 // Calculate the total change in balance from all transactions *prior* to the visible ones
                 const priorBalanceChange = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);
                 
-                // For CC, starting point is the limit. For others, it's the current balance.
-                const currentBalanceOrLimit = account.type === 'credit_card' ? account.limit || 0 : account.balance;
-                
-                // Work backwards from the current balance to find the balance at the start of the visible period
-                let startingBalanceForVisiblePeriod = currentBalanceOrLimit - priorBalanceChange;
+                let startingBalanceForVisiblePeriod;
+
+                if (account.type === 'credit_card') {
+                    // For CC, starting point is the limit.
+                    const currentBalanceOrLimit = account.limit || 0;
+                    // Work backwards from the current available credit to find the available credit at the start of the visible period
+                    startingBalanceForVisiblePeriod = currentBalanceOrLimit - priorBalanceChange;
+                } else {
+                    // For bank accounts, start from zero and add prior transactions.
+                    startingBalanceForVisiblePeriod = priorTransactions.reduce((sum, tx) => sum + (tx.type === 'income' ? tx.amount : -tx.amount), 0);
+                }
+
 
                 // Second pass: Calculate running balance for visible transactions
                 enriched.forEach(tx => {

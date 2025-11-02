@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, FilterX, ListFilter, Pilcrow } from 'lucide-react';
+import { ChevronDown, FilterX, ListFilter, Pilcrow, Search } from 'lucide-react';
 import { Check, X } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -32,6 +32,7 @@ type Filters = {
     categories: string[];
     accounts: string[];
     tags: string[];
+    searchQuery: string;
 }
 interface ExpensesFiltersProps {
     filters: Filters;
@@ -218,6 +219,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
             categories: [],
             accounts: [],
             tags: [],
+            searchQuery: '',
         });
         setDateRangePreset('all');
     };
@@ -231,6 +233,16 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
 
     return (
         <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-grow md:flex-grow-0">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search by description..."
+                    value={filters.searchQuery}
+                    onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
+                    className="pl-8 sm:w-[200px] md:w-[250px] lg:w-[300px]"
+                />
+            </div>
             <Popover>
                 <PopoverTrigger asChild>
                      <Button variant="outline" className="relative">
@@ -245,8 +257,8 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                     <div className="flex justify-between items-center mb-4">
                          <h3 className="font-medium">Filter Transactions</h3>
                          {activeFilterCount > 0 && (
-                            <Button variant="ghost" size="sm" onClick={clearFilters}>
-                                Clear all
+                            <Button variant="ghost" size="sm" onClick={() => onFiltersChange({ ...filters, dateRange: {from: undefined, to: undefined}, type: 'all', categories: [], accounts: [], tags: []})}>
+                                Clear filters
                             </Button>
                          )}
                     </div>

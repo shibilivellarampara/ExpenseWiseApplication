@@ -14,6 +14,7 @@ import { useMemo, useState, useCallback, useEffect } from "react";
 import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
+import { useDebounce } from "use-debounce";
 
 export default function ExpensesPage() {
     const { user } = useUser();
@@ -25,7 +26,11 @@ export default function ExpensesPage() {
         categories: [] as string[],
         accounts: [] as string[],
         tags: [] as string[],
+        searchQuery: '',
     });
+    
+    const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
+
 
     const categoriesQuery = useMemoFirebase(() => 
         user ? collection(firestore, `users/${user.uid}/categories`) : null
@@ -103,6 +108,7 @@ export default function ExpensesPage() {
             if (categories.length > 0 && !categories.includes(expense.categoryId || '')) return false;
             if (accountIds.length > 0 && !accountIds.includes(expense.accountId)) return false;
             if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
+            if (debouncedSearchQuery && !expense.description?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) return false;
             return true;
         });
 
@@ -148,14 +154,13 @@ export default function ExpensesPage() {
                     tx.accountId === accountId && tx.date < oldestVisibleDate
                 );
 
-                // Calculate starting balance from prior transactions
                 let startingBalance;
+                // For CC, we start with the limit and subtract prior spending
                 if (account.type === 'credit_card') {
-                    // For CC, we start with the limit and subtract prior spending
                     const priorBalanceChange = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);
                     startingBalance = (account.limit || 0) + priorBalanceChange;
                 } else {
-                    // For bank accounts, we start from 0 and sum up prior transactions
+                    // For bank accounts, we start with 0 and sum up prior transactions
                     startingBalance = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);
                 }
 
@@ -173,7 +178,7 @@ export default function ExpensesPage() {
         // Sort the final combined list back to newest first for display
         return finalEnrichedWithBalance.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    }, [allExpenses, categoryMap, accountMap, tagMap, filters, accounts]);
+    }, [allExpenses, categoryMap, accountMap, tagMap, filters, debouncedSearchQuery, accounts]);
     
     const handleFiltersChange = (newFilters: any) => {
         setFilters(newFilters);

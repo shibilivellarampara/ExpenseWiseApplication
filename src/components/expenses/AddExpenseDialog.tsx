@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -810,6 +811,16 @@ function useExpenseForm({
             const selectedAccount = accounts.find(a => a.id === values.accountId);
 
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
+            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
+
+            if (isCreditCardPayment) {
+                if (selectedAccount?.type !== 'credit_card' || values.type !== 'income') {
+                    toast({ variant: 'destructive', title: 'Invalid Operation', description: '"Credit Card Payment" must be an "income" transaction to a credit card account.'});
+                    setIsLoading(false);
+                    return false;
+                }
+            }
+
 
             const isAddOperation = !isEditMode;
 

@@ -123,6 +123,18 @@ export default function ExpensesPage() {
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
+        
+        // Always attach the current account balance, regardless of filters
+        enriched.forEach(tx => {
+            if (tx.account) {
+                if (tx.account.type === 'credit_card') {
+                    // For CC, display outstanding balance, not available credit
+                    tx.accountBalance = (tx.account.limit || 0) - tx.account.balance;
+                } else {
+                    tx.accountBalance = tx.account.balance;
+                }
+            }
+        });
 
         if (filters.accounts.length === 1) {
             const accountId = filters.accounts[0];
@@ -136,42 +148,32 @@ export default function ExpensesPage() {
                 const priorTransactions = allExpenses.filter(tx => 
                     tx.accountId === accountId && tx.date < oldestVisibleDate
                 );
-
+                
                 const getAmountChange = (tx: Expense, accType: Account['type']) => {
-                    // For credit card, balance is available credit. Expenses DECREASE it, payments INCREASE it.
                     if (accType === 'credit_card') {
-                        return tx.type === 'income' ? tx.amount : -tx.amount;
+                       // For CC, expenses DECREASE available credit, payments INCREASE it.
+                       return tx.type === 'expense' ? -tx.amount : tx.amount;
                     }
-                    // For other accounts, balance is cash. Income INCREASES it, expenses DECREASE it.
+                     // For other accounts, income INCREASES balance, expenses DECREASE it.
                     return tx.type === 'income' ? tx.amount : -tx.amount;
                 };
 
-                // For credit cards, starting point is the limit. For others, it's the current balance.
-                const startingBalance = account.type === 'credit_card' ? account.limit || 0 : account.balance;
-
+                // Calculate the total change in balance from all transactions *prior* to the visible ones
                 const priorBalanceChange = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);
                 
-                // We start with the account's current balance and work backwards to find the balance *before* all visible transactions
-                let runningBalance = startingBalance - priorBalanceChange;
+                // For CC, starting point is the limit. For others, it's the current balance.
+                const currentBalanceOrLimit = account.type === 'credit_card' ? account.limit || 0 : account.balance;
+                
+                // Work backwards from the current balance to find the balance at the start of the visible period
+                let startingBalanceForVisiblePeriod = currentBalanceOrLimit - priorBalanceChange;
 
                 // Second pass: Calculate running balance for visible transactions
                 enriched.forEach(tx => {
                     const amountChange = getAmountChange(tx, account.type);
-                    runningBalance += amountChange;
-                    tx.runningBalance = runningBalance;
+                    startingBalanceForVisiblePeriod += amountChange;
+                    tx.runningBalance = startingBalanceForVisiblePeriod;
                 });
             }
-        } else {
-             enriched.forEach(tx => {
-                if (tx.account) {
-                    if (tx.account.type === 'credit_card') {
-                        // For CC, display outstanding balance, not available credit
-                        tx.accountBalance = (tx.account.limit || 0) - tx.account.balance;
-                    } else {
-                        tx.accountBalance = tx.account.balance;
-                    }
-                }
-            });
         }
         
         return enriched.sort((a, b) => b.date.getTime() - a.date.getTime());

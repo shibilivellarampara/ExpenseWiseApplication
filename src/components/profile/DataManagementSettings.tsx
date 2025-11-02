@@ -224,7 +224,7 @@ export function DataManagementSettings() {
                             <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete all your transactions and all of your accounts.</p>
                             {isClearing && (
                                 <div className="space-y-2 mt-2">
-                                    <Progress value={progress} />
+                                    <Progress value={progress} className="[&>div]:bg-destructive" />
                                     <p className="text-xs text-muted-foreground text-center">Processing...</p>
                                 </div>
                             )}
@@ -254,7 +254,7 @@ export function DataManagementSettings() {
                             <p className="text-sm text-muted-foreground mt-1 mb-3">Select an account to delete all its associated transactions and reset its balance to zero.</p>
                              {isClearing && selectedAccount && (
                                 <div className="space-y-2 my-2">
-                                    <Progress value={progress} />
+                                    <Progress value={progress} className="[&>div]:bg-destructive" />
                                     <p className="text-xs text-muted-foreground text-center">Processing...</p>
                                 </div>
                             )}

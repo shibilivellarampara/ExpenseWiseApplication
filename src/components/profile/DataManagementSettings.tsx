@@ -60,28 +60,33 @@ export function DataManagementSettings() {
         setIsClearing(true);
         setProgress(0);
         try {
+            const batch = writeBatch(firestore);
+
+            // Delete expenses
             const expensesQuery = collection(firestore, `users/${user.uid}/expenses`);
             const expensesSnapshot = await getDocs(expensesQuery);
-            const totalDocs = expensesSnapshot.size;
             let processedDocs = 0;
-            
-            const batch = writeBatch(firestore);
+            const totalDocs = expensesSnapshot.size + (accounts?.length || 0);
+
             expensesSnapshot.forEach(doc => {
                 batch.delete(doc.ref);
                 processedDocs++;
-                setProgress((processedDocs / totalDocs) * 50);
+                setProgress((processedDocs / totalDocs) * 100);
             });
             
+            // Delete accounts
             if (accounts) {
                 accounts.forEach(account => {
                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
-                    batch.update(accountRef, { balance: 0 });
+                    batch.delete(accountRef);
+                    processedDocs++;
+                    setProgress((processedDocs / totalDocs) * 100);
                 });
             }
             
             await commitBatchNonBlocking(batch, `users/${user.uid}`);
             setProgress(100);
-            toast({ title: 'All data cleared', description: 'All your transactions have been deleted and balances reset.' });
+            toast({ title: 'All Data Cleared', description: 'All your transactions and accounts have been deleted.' });
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
@@ -216,7 +221,7 @@ export function DataManagementSettings() {
                     <CardContent className="p-4 pt-0 space-y-4">
                         <div className="rounded-lg border border-destructive/50 p-4">
                             <h4 className="font-semibold">Clear All Transaction Data</h4>
-                            <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete all your transactions and reset every account balance to zero.</p>
+                            <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete all your transactions and all of your accounts.</p>
                             {isClearing && (
                                 <div className="space-y-2 mt-2">
                                     <Progress value={progress} />
@@ -231,7 +236,7 @@ export function DataManagementSettings() {
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This action cannot be undone. All transactions will be deleted and account balances will be set to 0.
+                                            This action cannot be undone. All transactions and accounts will be deleted.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>

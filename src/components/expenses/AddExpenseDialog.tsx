@@ -840,15 +840,23 @@ function useExpenseForm({
             
             delete expenseData.sharedExpenseId;
            
+            // Handle special category logic
             if (isCreditLimitUpgrade) {
                  if (selectedAccount?.type === 'credit_card' && values.type === 'income') {
                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
                     if (isAddOperation) {
                         batch.update(accountRef, { limit: increment(values.amount) });
                     } else if (expenseToEdit) {
-                        const oldAmount = expenseToEdit.type === 'income' ? expenseToEdit.amount : -expenseToEdit.amount;
-                        const difference = values.amount - oldAmount;
-                        batch.update(accountRef, { limit: increment(difference) });
+                        // On edit, calculate the difference from the old amount to the new amount.
+                        // Only adjust if the category was also "Credit Limit Upgrade" previously.
+                        const oldCategory = categories.find(c => c.id === expenseToEdit.categoryId);
+                        if (oldCategory?.name === 'Credit Limit Upgrade' && expenseToEdit.type === 'income') {
+                           const difference = values.amount - expenseToEdit.amount;
+                           batch.update(accountRef, { limit: increment(difference) });
+                        } else {
+                            // If category changed TO limit upgrade, just increment by new amount
+                           batch.update(accountRef, { limit: increment(values.amount) });
+                        }
                     }
                 } else {
                      toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Credit Limit Upgrade must be an "income" transaction for a credit card account.'});
@@ -857,6 +865,7 @@ function useExpenseForm({
                 }
             }
             
+            // Handle regular balance changes if it's NOT a credit limit upgrade
             if (!sharedExpenseId && !isCreditLimitUpgrade) {
                 const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
                      // For credit card, balance is available credit. Expenses DECREASE it, payments INCREASE it.
@@ -950,7 +959,7 @@ function useExpenseForm({
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
                 const selectedAccount = accounts.find(acc => acc.id === expenseToEdit.accountId);
 
-                if (isCreditLimitUpgrade) {
+                if (isCreditLimitUpgrade && selectedAccount?.type === 'credit_card' && expenseToEdit.type === 'income') {
                      batch.update(accountRef, { limit: increment(-expenseToEdit.amount) });
                 } else {
                     if (selectedAccount) {

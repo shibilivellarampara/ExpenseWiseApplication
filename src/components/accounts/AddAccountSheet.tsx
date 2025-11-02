@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -36,10 +37,22 @@ const accountSchemaBase = z.object({
     status: z.enum(['active', 'inactive']).default('active'),
 });
 
-const accountSchema = accountSchemaBase.refine(data => data.type !== 'credit_card' || (data.limit !== undefined && data.limit > 0), {
-    message: "Credit limit is required for credit card accounts and must be positive.",
+const accountSchema = accountSchemaBase.refine(data => {
+    // For non-credit cards, limit is not required.
+    if (data.type !== 'credit_card') return true;
+    
+    // For new credit cards, limit is required and must be positive if balance (outstanding) is entered.
+    // If no outstanding amount is entered, a limit of 0 is acceptable (to be set later).
+    if (data.balance > 0) {
+        return data.limit !== undefined && data.limit > 0;
+    }
+    
+    return true; // Limit can be 0 or undefined if there's no initial outstanding amount.
+}, {
+    message: "A positive credit limit is required if you enter an initial outstanding amount.",
     path: ["limit"],
 });
+
 
 type AccountFormData = z.infer<typeof accountSchema>;
 
@@ -130,10 +143,10 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             userId: user.uid,
         };
         
-        if (values.type === 'credit_card' && values.limit) {
+        if (values.type === 'credit_card') {
             // For credit cards, the stored balance is the *available credit*.
             // We calculate it from the limit and the user-provided outstanding amount.
-            accountData.balance = values.limit - values.balance;
+            accountData.balance = (values.limit || 0) - values.balance;
         }
 
         if (values.type !== 'credit_card') {
@@ -251,6 +264,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                                 <Input type="number" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
                                             </FormControl>
                                             {isEditMode && <FormDescription>Limit can only be changed via a "Credit Limit Upgrade" transaction.</FormDescription>}
+                                            {!isEditMode && <FormDescription>Set to 0 if you plan to set it later with a "Credit Limit Upgrade" transaction.</FormDescription>}
                                             <FormMessage />
                                         </FormItem>
                                     )}

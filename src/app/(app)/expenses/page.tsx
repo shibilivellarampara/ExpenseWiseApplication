@@ -125,66 +125,64 @@ export default function ExpensesPage() {
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
         
-        // Always attach the current account balance, regardless of filters
-        enriched.forEach(tx => {
-            if (tx.account) {
-                if (tx.account.type === 'credit_card') {
-                    // For CC, display outstanding balance, not available credit
-                    tx.accountBalance = (tx.account.limit || 0) - tx.account.balance;
-                } else {
-                    tx.accountBalance = tx.account.balance;
-                }
+        const getAmountChange = (tx: Expense, accType: Account['type']) => {
+            if (accType === 'credit_card') {
+               return tx.type === 'income' ? tx.amount : -tx.amount;
             }
-        });
+            return tx.type === 'income' ? tx.amount : -tx.amount;
+        };
+        
+        // Group transactions by account
+        const transactionsByAccount = enriched.reduce((acc, tx) => {
+            if (!acc[tx.accountId]) {
+                acc[tx.accountId] = [];
+            }
+            acc[tx.accountId].push(tx);
+            return acc;
+        }, {} as Record<string, EnrichedExpense[]>);
 
-        if (filters.accounts.length === 1) {
-            const accountId = filters.accounts[0];
+        let finalEnrichedWithBalance: EnrichedExpense[] = [];
+
+        // Calculate running balance for each account group
+        for (const accountId in transactionsByAccount) {
+            const accountTransactions = transactionsByAccount[accountId];
             const account = accountMap.get(accountId);
 
             if (account) {
-                 // Sort oldest to newest for calculation
-                enriched.sort((a, b) => a.date.getTime() - b.date.getTime());
+                // Sort this account's transactions oldest to newest for calculation
+                accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
                 
-                const oldestVisibleDate = enriched.length > 0 ? enriched[0].date : new Date();
+                const oldestVisibleDate = accountTransactions.length > 0 ? accountTransactions[0].date : new Date();
+                
+                // Find all transactions for this account *before* the visible ones
                 const priorTransactions = allExpenses.filter(tx => 
                     tx.accountId === accountId && tx.date < oldestVisibleDate
                 );
-                
-                const getAmountChange = (tx: Expense, accType: Account['type']) => {
-                    if (accType === 'credit_card') {
-                       // For CC, expenses DECREASE available credit, payments INCREASE it.
-                       return tx.type === 'income' ? tx.amount : -tx.amount;
-                    }
-                     // For other accounts, income INCREASES balance, expenses DECREASE it.
-                    return tx.type === 'income' ? tx.amount : -tx.amount;
-                };
 
-                // Calculate the total change in balance from all transactions *prior* to the visible ones
-                const priorBalanceChange = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);
-                
-                let startingBalanceForVisiblePeriod;
-
+                // Calculate starting balance from prior transactions
+                let startingBalance;
                 if (account.type === 'credit_card') {
-                    // For CC, starting point is the limit.
-                    const currentBalanceOrLimit = account.limit || 0;
-                    // Work backwards from the current available credit to find the available credit at the start of the visible period
-                    startingBalanceForVisiblePeriod = currentBalanceOrLimit - priorBalanceChange;
+                    // For CC, we start with the limit and subtract prior spending
+                    const priorBalanceChange = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);
+                    startingBalance = (account.limit || 0) + priorBalanceChange;
                 } else {
-                    // For bank accounts, start from zero and add prior transactions.
-                    startingBalanceForVisiblePeriod = priorTransactions.reduce((sum, tx) => sum + (tx.type === 'income' ? tx.amount : -tx.amount), 0);
+                    // For bank accounts, we start from 0 and sum up prior transactions
+                    startingBalance = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);
                 }
 
-
-                // Second pass: Calculate running balance for visible transactions
-                enriched.forEach(tx => {
+                // Calculate running balance for the visible transactions
+                accountTransactions.forEach(tx => {
                     const amountChange = getAmountChange(tx, account.type);
-                    startingBalanceForVisiblePeriod += amountChange;
-                    tx.runningBalance = startingBalanceForVisiblePeriod;
+                    startingBalance += amountChange;
+                    tx.runningBalance = startingBalance;
                 });
+                
+                finalEnrichedWithBalance.push(...accountTransactions);
             }
         }
         
-        return enriched.sort((a, b) => b.date.getTime() - a.date.getTime());
+        // Sort the final combined list back to newest first for display
+        return finalEnrichedWithBalance.sort((a, b) => b.date.getTime() - a.date.getTime());
 
     }, [allExpenses, categoryMap, accountMap, tagMap, filters, accounts]);
     

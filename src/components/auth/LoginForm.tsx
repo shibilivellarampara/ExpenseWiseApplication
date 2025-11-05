@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../ui/dialog';
-import PhoneInput from 'react-phone-number-input';
+import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React from 'react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '../ui/input-otp';
@@ -388,7 +388,3 @@ export function LoginForm() {
     </div>
   );
 }
-
-    
-
-    

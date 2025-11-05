@@ -16,7 +16,7 @@ import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { generateColorFromString } from "@/lib/utils";
+import { generateColorClasses } from "@/lib/utils";
 
 
 interface ExpensesTableProps {
@@ -91,7 +91,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
     });
 
     return (
-        <div ref={parentRef} className="h-[70vh] overflow-y-auto">
+        <div ref={parentRef} className="h-[70vh] overflow-y-auto bg-card rounded-lg border">
             <div
                 style={{
                     height: `${rowVirtualizer.getTotalSize()}px`,
@@ -115,7 +115,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                             }}
                         >
                             {row.type === 'header' ? (
-                                <div className="py-3 px-4 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b border-t">
+                                <div className="py-3 px-4 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b">
                                     <h3 className="text-base font-semibold">
                                         {new Date(row.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                     </h3>
@@ -190,8 +190,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                         <div className="flex flex-wrap items-center gap-2 pt-1 w-full">
                                             {row.expense.category && (
                                                 <Badge 
-                                                    style={generateColorFromString(row.expense.category.name)}
-                                                    className="flex items-center gap-1 border-transparent"
+                                                    className={cn("flex items-center gap-1 border-transparent", generateColorClasses(row.expense.category.name))}
                                                 >
                                                     {renderIcon(row.expense.category.icon, "h-3 w-3")}
                                                     {row.expense.category.name}
@@ -201,8 +200,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                                 return (
                                                 <Badge 
                                                     key={tag.id}
-                                                    style={generateColorFromString(tag.name)}
-                                                    className="flex items-center gap-1 border-transparent"
+                                                    className={cn("flex items-center gap-1 border-transparent", generateColorClasses(tag.name))}
                                                 >
                                                     {renderIcon(tag.icon, "h-3 w-3")}
                                                     {tag.name}
@@ -229,25 +227,23 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-                <CardContent className="p-4 space-y-2">
-                    {Array.from({length: 2}).map((_, j) => (
-                        <div key={j} className="p-4 flex items-center gap-4">
-                            <Skeleton className="w-10 h-10 rounded-full" />
-                            <div className="flex-grow grid grid-cols-2 gap-2">
-                                <Skeleton className="h-5 w-3/4" />
-                                <Skeleton className="h-5 w-1/2 ml-auto" />
-                                <Skeleton className="h-4 w-1/2" />
-                                <Skeleton className="h-4 w-1/3 ml-auto" />
-                            </div>
+      <Card>
+        <CardContent className="pt-6">
+            <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="p-4 flex items-center gap-4">
+                        <Skeleton className="w-10 h-10 rounded-full" />
+                        <div className="flex-grow grid grid-cols-2 gap-2">
+                            <Skeleton className="h-5 w-3/4" />
+                            <Skeleton className="h-5 w-1/2 ml-auto" />
+                            <Skeleton className="h-4 w-1/2" />
+                            <Skeleton className="h-4 w-1/3 ml-auto" />
                         </div>
-                    ))}
-                </CardContent>
-            </Card>
-        ))}
-      </div>
+                    </div>
+                ))}
+            </div>
+        </CardContent>
+      </Card>
     )
   }
 

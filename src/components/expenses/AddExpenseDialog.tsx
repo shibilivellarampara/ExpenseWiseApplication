@@ -56,7 +56,7 @@ import { availableIcons } from '@/lib/defaults';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
-import { generateColorFromString } from '@/lib/utils';
+import { generateColorClasses } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 
 
@@ -403,12 +403,10 @@ function ExpenseForm({
                                         {selectedTags.length > 0 ? (
                                             <div className="flex flex-wrap gap-1">
                                                 {selectedTags.map(tag => {
-                                                    const tagColor = generateColorFromString(tag.name);
                                                     return (
                                                         <Badge
                                                             key={tag.id}
-                                                            style={{ backgroundColor: tagColor.backgroundColor, color: tagColor.textColor }}
-                                                            className="flex items-center gap-1.5 border-transparent"
+                                                            className={cn("flex items-center gap-1.5 border-transparent", generateColorClasses(tag.name))}
                                                         >
                                                             {renderIcon(tag.icon, "h-3 w-3")}
                                                             {tag.name}

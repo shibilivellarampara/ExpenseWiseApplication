@@ -406,6 +406,7 @@ function ExpenseForm({
                                                     return (
                                                         <Badge
                                                             key={tag.id}
+                                                            variant="colorful"
                                                             className={cn("flex items-center gap-1.5", generateColorClasses(tag.name))}
                                                         >
                                                             {renderIcon(tag.icon, "h-3 w-3")}

@@ -9,15 +9,19 @@ import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, errorEmi
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, orderBy, query, doc, onSnapshot }from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
+import { cn } from "@/lib/utils";
 
 export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const mainContentRef = useRef<HTMLElement | null>(null);
+    const [isScrolled, setIsScrolled] = useState(false);
+
 
     const [filters, setFilters] = useState({
         dateRange: { from: undefined, to: undefined } as DateRange,
@@ -86,6 +90,28 @@ export default function ExpensesPage() {
         return () => unsubscribe();
 
     }, [user, expensesBaseQuery]);
+
+    useEffect(() => {
+        // Find the main scrollable element from the layout
+        const mainElement = document.querySelector('main');
+        mainContentRef.current = mainElement;
+
+        const handleScroll = () => {
+            if (mainContentRef.current) {
+                setIsScrolled(mainContentRef.current.scrollTop > 5);
+            }
+        };
+
+        if (mainContentRef.current) {
+            mainContentRef.current.addEventListener('scroll', handleScroll);
+        }
+
+        return () => {
+            if (mainContentRef.current) {
+                mainContentRef.current.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, []);
 
 
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
@@ -203,21 +229,41 @@ export default function ExpensesPage() {
 
     return (
         <div className="w-full space-y-4 pb-24">
-            <PageHeader title="Transactions" description="A detailed list of your recent income and expenses." />
+            <div
+                className={cn(
+                    "transition-all duration-300 ease-in-out",
+                    isScrolled ? "max-h-0 opacity-0 overflow-hidden" : "max-h-96 opacity-100"
+                )}
+            >
+                <PageHeader title="Transactions" description="A detailed list of your recent income and expenses." />
+            </div>
 
-            <ExpensesFilters 
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                accounts={accounts || []}
-                categories={categories || []}
-                tags={tags || []}
-            />
+            <div className={cn(
+                "sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/90 backdrop-blur-sm transition-all duration-300 ease-in-out",
+                 isScrolled && "pt-2 pb-3 shadow-sm"
+            )}>
+                <ExpensesFilters 
+                    filters={filters}
+                    onFiltersChange={handleFiltersChange}
+                    accounts={accounts || []}
+                    categories={categories || []}
+                    tags={tags || []}
+                />
+            </div>
+            
+            <div
+                 className={cn(
+                    "transition-all duration-300 ease-in-out",
+                    isScrolled ? "max-h-0 opacity-0 overflow-hidden" : "max-h-96 opacity-100"
+                )}
+            >
+                <ExpensesSummary 
+                    expenses={filteredAndEnrichedExpenses}
+                    currency={userProfile?.defaultCurrency} 
+                    isLoading={isLoading} 
+                />
+            </div>
 
-            <ExpensesSummary 
-                expenses={filteredAndEnrichedExpenses}
-                currency={userProfile?.defaultCurrency} 
-                isLoading={isLoading} 
-            />
 
             <ExpensesTable 
                 expenses={filteredAndEnrichedExpenses} 
@@ -259,4 +305,5 @@ export default function ExpensesPage() {
             </div>
         </div>
     );
-}
+
+    

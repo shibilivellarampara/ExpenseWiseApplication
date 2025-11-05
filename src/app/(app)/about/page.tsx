@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -6,6 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import packageJson from '../../../../package.json';
 
 const changelog = [
+    {
+        version: "1.2.4",
+        date: "2024-08-06",
+        changes: [
+            { type: 'Feature', description: "Optimized transaction list performance by implementing list virtualization for large datasets." },
+        ]
+    },
     {
         version: "1.2.3",
         date: "2024-08-05",

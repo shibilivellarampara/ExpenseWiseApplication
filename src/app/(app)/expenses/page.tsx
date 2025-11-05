@@ -298,5 +298,4 @@ export default function ExpensesPage() {
             </div>
         </div>
     );
-
-    
+}

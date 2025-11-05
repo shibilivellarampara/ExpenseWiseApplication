@@ -182,7 +182,7 @@ export function SignUpForm() {
           await provisionNewUser(user, values.name, values.email, values.phoneNumber);
 
           setShowOtpDialog(false);
-          toast({ title: "Account created!", description: "You're all set and have been logged in." });
+          toast({ title: "Account created!", description: "You're all set and have been logged in.", duration: 1000 });
           router.push('/dashboard');
       } catch (error: any) {
           toast({ variant: 'destructive', title: 'Verification failed.', description: error.message });
@@ -327,4 +327,5 @@ export function SignUpForm() {
     
 
     
+
 

@@ -130,7 +130,7 @@ export function LoginForm() {
 
     try {
         await signInWithEmailAndPassword(auth, values.loginId, values.password);
-        toast({ title: 'Success!', description: 'You are now signed in.' });
+        toast({ title: 'Success!', description: 'You are now signed in.', duration: 1000 });
         router.push('/dashboard');
     } catch (error: any) {
         handleLoginError(error);
@@ -163,7 +163,7 @@ export function LoginForm() {
       try {
           await confirmationResult.confirm(otp);
           setShowOtpDialog(false);
-          toast({ title: "Success!", description: "You are now signed in." });
+          toast({ title: "Success!", description: "You are now signed in.", duration: 1000 });
           router.push('/dashboard');
       } catch (error: any) {
           handleLoginError(error);
@@ -184,7 +184,7 @@ export function LoginForm() {
         const provider = new GoogleAuthProvider();
          try {
             await signInWithPopup(auth, provider);
-            toast({ title: 'Success!', description: 'You are now signed in with Google.' });
+            toast({ title: 'Success!', description: 'You are now signed in with Google.', duration: 1000 });
             router.push('/dashboard');
         } catch (error: any) {
             handleLoginError(error)
@@ -398,3 +398,4 @@ export function LoginForm() {
     </div>
   );
 }
+

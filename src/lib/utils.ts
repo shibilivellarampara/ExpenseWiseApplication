@@ -17,8 +17,8 @@ export const generateColorClasses = (str: string): string => {
     }
     const hue = hash % 360;
 
-    // Generate more vibrant colors by adjusting saturation and lightness.
-    // Light mode: High saturation, medium-light background.
-    // Dark mode: Higher saturation and lightness for the background to stand out.
-    return `bg-[hsl(${hue},90%,88%)] text-[hsl(${hue},60%,30%)] dark:bg-[hsl(${hue},30%,30%)] dark:text-[hsl(${hue},80%,90%)]`;
+    // This is a reliable way to generate distinct colors.
+    // Light mode: High saturation, very light background.
+    // Dark mode: Lower saturation, dark background.
+    return `bg-[hsl(${hue},90%,96%)] text-[hsl(${hue},70%,35%)] dark:bg-[hsl(${hue},30%,20%)] dark:text-[hsl(${hue},70%,85%)]`;
 };

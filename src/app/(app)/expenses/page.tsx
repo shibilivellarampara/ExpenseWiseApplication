@@ -33,15 +33,15 @@ export default function ExpensesPage() {
 
 
     const categoriesQuery = useMemoFirebase(() => 
-        user ? collection(firestore, `users/${user.uid}/categories`) : null
+        user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null
     , [firestore, user]);
 
     const accountsQuery = useMemoFirebase(() => 
-        user ? collection(firestore, `users/${user.uid}/accounts`) : null
+        user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null
     , [firestore, user]);
     
     const tagsQuery = useMemoFirebase(() => 
-        user ? collection(firestore, `users/${user.uid}/tags`) : null
+        user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null
     , [firestore, user]);
     
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -62,6 +62,7 @@ export default function ExpensesPage() {
         const unsubscribe = onSnapshot(expensesBaseQuery, (snapshot) => {
             const fetchedExpenses = snapshot.docs.map(doc => {
                  const data = doc.data() as Expense;
+                 // Firestore Timestamps need to be converted to JS Date objects
                  const date = data.date && typeof (data.date as any).toDate === 'function' 
                     ? (data.date as any).toDate() 
                     : new Date();
@@ -72,6 +73,7 @@ export default function ExpensesPage() {
             setExpensesError(null);
         }, (error) => {
             console.error("Error fetching expenses: ", error);
+            // Create and emit a structured permission error for the global error handler
             const contextualError = new FirestorePermissionError({
                 path: `users/${user.uid}/expenses`,
                 operation: 'list',
@@ -81,6 +83,7 @@ export default function ExpensesPage() {
             setExpensesLoading(false);
         });
 
+        // Cleanup the listener when the component unmounts or dependencies change
         return () => unsubscribe();
 
     }, [user, expensesBaseQuery]);
@@ -217,7 +220,7 @@ export default function ExpensesPage() {
                 expenses={filteredAndEnrichedExpenses} 
                 isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
                 onDataChange={refreshTransactions} 
-                error={expensesError ? 'Error loading transactions' : null}
+                error={expensesError ? 'Error loading transactions. Check permissions or simplify filters.' : null}
             />
 
             <div className="fixed bottom-0 left-0 right-0 p-4 z-40 md:hidden">
@@ -254,5 +257,3 @@ export default function ExpensesPage() {
         </div>
     );
 }
-
-    

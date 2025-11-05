@@ -1,4 +1,5 @@
 
+
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -232,7 +233,7 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
                 <div className="h-48 flex flex-col items-center justify-center text-center text-destructive">
                    <AlertTriangle className="h-10 w-10 mb-4" />
                    <h3 className="text-lg font-semibold">Could not load transactions</h3>
-                   <p className="text-sm">There was an issue fetching your data. This may be due to the combination of filters selected. Try simplifying your filter.</p>
+                   <p className="text-sm">{error}</p>
                 </div>
             </CardContent>
         </Card>

@@ -104,9 +104,10 @@ export default function ExpensesPage() {
         if (!allExpenses.length || !accounts?.length) return [];
         
         let filtered = allExpenses.filter(expense => {
+            const expenseDate = expense.date instanceof Date ? expense.date : (expense.date as any).toDate();
             const { dateRange, type, categories, accounts: accountIds, tags } = filters;
-            if (dateRange.from && expense.date < startOfDay(dateRange.from)) return false;
-            if (dateRange.to && expense.date > endOfDay(dateRange.to)) return false;
+            if (dateRange.from && expenseDate < startOfDay(dateRange.from)) return false;
+            if (dateRange.to && expenseDate > endOfDay(dateRange.to)) return false;
             if (type !== 'all' && expense.type !== type) return false;
             if (categories.length > 0 && !categories.includes(expense.categoryId || '')) return false;
             if (accountIds.length > 0 && !accountIds.includes(expense.accountId)) return false;
@@ -122,13 +123,16 @@ export default function ExpensesPage() {
             return true;
         });
 
-        let enriched = filtered.map((expense): EnrichedExpense => ({
-            ...expense,
-            date: expense.date,
-            category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
-            account: accountMap.get(expense.accountId),
-            tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
-        }));
+        let enriched = filtered.map((expense): EnrichedExpense => {
+            const date = expense.date instanceof Date ? expense.date : (expense.date as any).toDate();
+            return {
+                ...expense,
+                date: date,
+                category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
+                account: accountMap.get(expense.accountId),
+                tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
+            };
+        });
         
         const getAmountChange = (tx: Expense, accType: Account['type']) => {
             if (accType === 'credit_card') {
@@ -161,7 +165,7 @@ export default function ExpensesPage() {
                 
                 // Find all transactions for this account *before* the visible ones
                 const priorTransactions = allExpenses.filter(tx => 
-                    tx.accountId === accountId && tx.date < oldestVisibleDate
+                    tx.accountId === accountId && (tx.date as Date) < oldestVisibleDate
                 );
 
                 let startingBalance;

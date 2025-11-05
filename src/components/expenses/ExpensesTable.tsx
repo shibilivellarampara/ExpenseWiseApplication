@@ -89,6 +89,11 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
             return 60 + (group.length * 120);
         },
         overscan: 5,
+        measureElement:
+            typeof window !== 'undefined' &&
+            navigator.userAgent.indexOf('Firefox') === -1
+            ? (element) => element.getBoundingClientRect().height
+            : undefined,
     });
 
     return (
@@ -106,6 +111,8 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                     return (
                         <div
                             key={groupKey}
+                            data-index={virtualItem.index}
+                            ref={rowVirtualizer.measureElement}
                             style={{
                                 position: 'absolute',
                                 top: 0,

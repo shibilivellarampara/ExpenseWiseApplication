@@ -86,7 +86,7 @@ export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps
       <PieChart>
         <Pie
           activeIndex={activeIndex}
-          activeShape={(props: any) => renderActiveShape(props, currencySymbol)}
+          activeShape={(props) => renderActiveShape(props, currencySymbol)}
           data={data}
           cx="50%"
           cy="50%"
@@ -102,7 +102,6 @@ export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps
           ))}
         </Pie>
         <Tooltip
-          cursor={null}
           contentStyle={{
             background: "hsl(var(--background))",
             border: "1px solid hsl(var(--border))",

@@ -126,7 +126,7 @@ export function SignUpForm() {
 
   async function handleEmailSubmit(values: z.infer<typeof emailSchema>) {
     setIsLoading(true);
-    if (!auth || !firestore) {
+    if (!auth || !firestore || !values.password) {
         toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.'});
         setIsLoading(false);
         return;
@@ -201,7 +201,7 @@ export function SignUpForm() {
                 <TabsTrigger value="phone">Phone & OTP</TabsTrigger>
             </TabsList>
              <Form {...form}>
-                <form onSubmit={form.handleSubmit(signupMethod === 'email' ? handleEmailSubmit : handlePhoneSubmit)} className="space-y-4 pt-4">
+                <form onSubmit={form.handleSubmit((data) => (signupMethod === 'email' ? handleEmailSubmit(data as z.infer<typeof emailSchema>) : handlePhoneSubmit(data as z.infer<typeof phoneSchema>)))} className="space-y-4 pt-4">
                      <FormField
                         control={form.control}
                         name="name"
@@ -320,5 +320,7 @@ export function SignUpForm() {
     </>
   );
 }
+
+    
 
     

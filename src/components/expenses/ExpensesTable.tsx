@@ -229,9 +229,8 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-            <div className="space-y-2">
+        <div className="bg-card rounded-lg border">
+            <div className="space-y-2 p-4">
                 {Array.from({ length: 5 }).map((_, i) => (
                     <div key={i} className="p-4 flex items-center gap-4">
                         <Skeleton className="w-10 h-10 rounded-full" />
@@ -244,35 +243,30 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
                     </div>
                 ))}
             </div>
-        </CardContent>
-      </Card>
+        </div>
     )
   }
 
   if (error) {
     return (
-        <Card>
-            <CardContent className="pt-6">
-                <div className="h-48 flex flex-col items-center justify-center text-center text-destructive">
-                   <AlertTriangle className="h-10 w-10 mb-4" />
-                   <h3 className="text-lg font-semibold">Could not load transactions</h3>
-                   <p className="text-sm">{error}</p>
-                </div>
-            </CardContent>
-        </Card>
+        <div className="bg-card rounded-lg border">
+            <div className="h-48 flex flex-col items-center justify-center text-center text-destructive p-4">
+               <AlertTriangle className="h-10 w-10 mb-4" />
+               <h3 className="text-lg font-semibold">Could not load transactions</h3>
+               <p className="text-sm">{error}</p>
+            </div>
+        </div>
     );
   }
 
   if (expenses.length === 0) {
     return (
-       <Card>
-          <CardContent className="pt-6">
-              <div className="h-48 flex flex-col items-center justify-center text-center">
-                 <h3 className="text-lg font-semibold">No transactions found.</h3>
-                 <p className="text-muted-foreground">Try adjusting your filters or add a new transaction.</p>
-              </div>
-          </CardContent>
-       </Card>
+       <div className="bg-card rounded-lg border">
+          <div className="h-48 flex flex-col items-center justify-center text-center p-4">
+             <h3 className="text-lg font-semibold">No transactions found.</h3>
+             <p className="text-muted-foreground">Try adjusting your filters or add a new transaction.</p>
+          </div>
+       </div>
     );
   }
 

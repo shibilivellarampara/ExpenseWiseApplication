@@ -16,7 +16,7 @@ import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { generateColorClasses } from "@/lib/utils";
+import { generateColorStyle } from '@/lib/utils';
 
 
 interface ExpensesTableProps {
@@ -190,8 +190,8 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                         <div className="flex flex-wrap items-center gap-2 pt-1 w-full">
                                             {row.expense.category && (
                                                 <Badge
-                                                    variant="colorful"
-                                                    className={cn("flex items-center gap-1", generateColorClasses(row.expense.category.name))}
+                                                    style={generateColorStyle(row.expense.category.name)}
+                                                    className="badge-colorful"
                                                 >
                                                     {renderIcon(row.expense.category.icon, "h-3 w-3")}
                                                     {row.expense.category.name}
@@ -201,8 +201,8 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                                 return (
                                                 <Badge
                                                     key={tag.id}
-                                                    variant="colorful"
-                                                    className={cn("flex items-center gap-1", generateColorClasses(tag.name))}
+                                                    style={generateColorStyle(tag.name)}
+                                                    className="badge-colorful"
                                                 >
                                                     {renderIcon(tag.icon, "h-3 w-3")}
                                                     {tag.name}

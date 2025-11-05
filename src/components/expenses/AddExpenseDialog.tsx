@@ -56,7 +56,7 @@ import { availableIcons } from '@/lib/defaults';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
-import { generateColorClasses } from '@/lib/utils';
+import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 
 
@@ -406,8 +406,8 @@ function ExpenseForm({
                                                     return (
                                                         <Badge
                                                             key={tag.id}
-                                                            variant="colorful"
-                                                            className={cn("flex items-center gap-1.5", generateColorClasses(tag.name))}
+                                                            style={generateColorStyle(tag.name)}
+                                                            className="badge-colorful flex items-center gap-1.5"
                                                         >
                                                             {renderIcon(tag.icon, "h-3 w-3")}
                                                             {tag.name}

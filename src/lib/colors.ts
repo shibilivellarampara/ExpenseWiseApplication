@@ -1,16 +1,20 @@
 
-export const COLORS = [
-  // Each element is a tuple: [background class, text color class]
-  'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
-  'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
-  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
-  'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
-  'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
-  'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300',
-  'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
-  'bg-pink-100 text-pink-800 dark:bg-pink-900/50 dark:text-pink-300',
-  'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300',
-  'bg-lime-100 text-lime-800 dark:bg-lime-900/50 dark:text-lime-300',
-  'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300',
-  'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300',
+type ColorInfo = {
+  light: { bg: string; text: string };
+  dark: { bg: string; text: string };
+};
+
+export const COLORS: ColorInfo[] = [
+  { light: { bg: '24.6 95% 53.1%', text: '15.8 88.9% 95.3%' }, dark: { bg: '24.6 95% 53.1%', text: '15.8 88.9% 95.3%' } }, // Orange
+  { light: { bg: '142.1 76.2% 36.3%', text: '142.1 76.2% 95%' }, dark: { bg: '142.1 76.2% 36.3%', text: '142.1 76.2% 95%' } }, // Green
+  { light: { bg: '262.1 83.3% 57.8%', text: '262.1 83.3% 95%' }, dark: { bg: '262.1 83.3% 57.8%', text: '262.1 83.3% 95%' } }, // Violet
+  { light: { bg: '346.8 77.2% 49.8%', text: '346.8 77.2% 95%' }, dark: { bg: '346.8 77.2% 49.8%', text: '346.8 77.2% 95%' } }, // Rose
+  { light: { bg: '217.2 91.2% 59.8%', text: '217.2 91.2% 95%' }, dark: { bg: '217.2 91.2% 59.8%', text: '217.2 91.2% 95%' } }, // Blue
+  { light: { bg: '47.9 95.8% 53.1%', text: '47.9 95.8% 5%' }, dark: { bg: '47.9 95.8% 53.1%', text: '47.9 95.8% 5%' } }, // Amber
+  { light: { bg: '172.8 82.3% 34.5%', text: '172.8 82.3% 95%' }, dark: { bg: '172.8 82.3% 34.5%', text: '172.8 82.3% 95%' } }, // Teal
+  { light: { bg: '312.4 81.3% 54.5%', text: '312.4 81.3% 95%' }, dark: { bg: '312.4 81.3% 54.5%', text: '312.4 81.3% 95%' } }, // Fuchsia
+  { light: { bg: '73.4 95.8% 38.4%', text: '73.4 95.8% 5%' }, dark: { bg: '73.4 95.8% 38.4%', text: '73.4 95.8% 5%' } }, // Lime
+  { light: { bg: '197.6 91.1% 47.1%', text: '197.6 91.1% 95%' }, dark: { bg: '197.6 91.1% 47.1%', text: '197.6 91.1% 95%' } }, // Sky
+  { light: { bg: '0 84.2% 60.2%', text: '0 84.2% 95%' }, dark: { bg: '0 84.2% 60.2%', text: '0 84.2% 95%' } }, // Red
+  { light: { bg: '240 5.9% 10%', text: '0 0% 98%' }, dark: { bg: '0 0% 98%', text: '240 5.9% 10%' } }, // Slate (for contrast)
 ];

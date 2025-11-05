@@ -107,6 +107,18 @@
   }
 }
 
+@layer components {
+  .badge-colorful {
+    background-color: var(--badge-bg-light);
+    color: var(--badge-text-light);
+    border: none;
+  }
+  .dark .badge-colorful {
+    background-color: var(--badge-bg-dark);
+    color: var(--badge-text-dark);
+  }
+}
+
 
 /* Custom styles for react-phone-number-input */
 .PhoneInput {
@@ -149,4 +161,5 @@
 .PhoneInputCountrySelectArrow {
     display: none;
 }
+
 

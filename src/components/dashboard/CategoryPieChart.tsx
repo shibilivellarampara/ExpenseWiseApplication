@@ -1,7 +1,7 @@
 
 'use client';
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector, PieSectorDataItem } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
 import { useMemo, useState } from 'react';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { COLORS } from '@/lib/colors';
@@ -15,7 +15,7 @@ interface CategoryPieChartProps {
   currencySymbol: string;
 }
 
-const renderActiveShape = (props: PieSectorDataItem, currencySymbol: string) => {
+const renderActiveShape = (props: any, currencySymbol: string) => {
   const RADIAN = Math.PI / 180;
   const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
   const sin = Math.sin(-RADIAN * midAngle!);
@@ -86,7 +86,7 @@ export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps
       <PieChart>
         <Pie
           activeIndex={activeIndex}
-          activeShape={(props: PieSectorDataItem) => renderActiveShape(props, currencySymbol)}
+          activeShape={(props: any) => renderActiveShape(props, currencySymbol)}
           data={data}
           cx="50%"
           cy="50%"

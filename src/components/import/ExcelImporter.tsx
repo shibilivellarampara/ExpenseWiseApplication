@@ -73,7 +73,7 @@ type AccountMapping = { [key:string]: AccountAction };
 export function ExcelImporter() {
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
     const [template, setTemplate] = useState<string>('');
-    const [file, setFile] useState<File | null>(null);
+    const [file, setFile] = useState<File | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
@@ -750,5 +750,3 @@ export function ExcelImporter() {
         </Card>
     );
 }
-
-    

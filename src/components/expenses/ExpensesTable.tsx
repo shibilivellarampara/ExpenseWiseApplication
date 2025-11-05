@@ -189,8 +189,8 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                         
                                         <div className="flex flex-wrap items-center gap-2 pt-1 w-full">
                                             {row.expense.category && (
-                                                <Badge 
-                                                    className={cn("flex items-center gap-1 border-transparent", generateColorClasses(row.expense.category.name))}
+                                                <Badge
+                                                    className={cn("flex items-center gap-1", generateColorClasses(row.expense.category.name))}
                                                 >
                                                     {renderIcon(row.expense.category.icon, "h-3 w-3")}
                                                     {row.expense.category.name}
@@ -198,9 +198,9 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                             )}
                                             {row.expense.tags?.map(tag => {
                                                 return (
-                                                <Badge 
+                                                <Badge
                                                     key={tag.id}
-                                                    className={cn("flex items-center gap-1 border-transparent", generateColorClasses(tag.name))}
+                                                    className={cn("flex items-center gap-1", generateColorClasses(tag.name))}
                                                 >
                                                     {renderIcon(tag.icon, "h-3 w-3")}
                                                     {tag.name}

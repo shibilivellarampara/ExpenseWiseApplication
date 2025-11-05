@@ -406,7 +406,7 @@ function ExpenseForm({
                                                     return (
                                                         <Badge
                                                             key={tag.id}
-                                                            className={cn("flex items-center gap-1.5 border-transparent", generateColorClasses(tag.name))}
+                                                            className={cn("flex items-center gap-1.5", generateColorClasses(tag.name))}
                                                         >
                                                             {renderIcon(tag.icon, "h-3 w-3")}
                                                             {tag.name}
@@ -1029,5 +1029,3 @@ function useExpenseForm({
       tags: tags || []
     };
 }
-
-    

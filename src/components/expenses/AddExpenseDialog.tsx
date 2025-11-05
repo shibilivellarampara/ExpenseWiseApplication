@@ -284,7 +284,7 @@ function ExpenseForm({
     const selectedTagIds = form.watch('tagIds') || [];
 
     const selectedTags = useMemo(() => {
-        return selectedTagIds.map(id => tags.find(t => t.id === id)).filter(Boolean) as Tag[];
+        return selectedTagIds.map((id: string) => tags.find(t => t.id === id)).filter(Boolean) as Tag[];
     }, [selectedTagIds, tags]);
 
     const fieldOrder = userProfile?.transactionFieldOrder || ['description', 'accountId', 'categoryId', 'tagIds'];
@@ -416,12 +416,12 @@ function ExpenseForm({
                                                                 className="rounded-full -mr-1 focus:ring-2 focus:ring-ring focus:ring-offset-2"
                                                                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") {
                                                                     e.stopPropagation(); e.preventDefault();
-                                                                    field.onChange(field.value?.filter(id => id !== tag.id))
+                                                                    field.onChange(field.value?.filter((id: string) => id !== tag.id))
                                                                 }}}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     e.preventDefault();
-                                                                    field.onChange(field.value?.filter(id => id !== tag.id))
+                                                                    field.onChange(field.value?.filter((id: string) => id !== tag.id))
                                                                 }}
                                                             >
                                                                 <X className="h-3 w-3 text-muted-foreground hover:text-foreground"/>
@@ -443,7 +443,7 @@ function ExpenseForm({
                                             onCheckedChange={(checked) => {
                                                 const newValue = checked
                                                     ? [...(field.value || []), tag.id]
-                                                    : (field.value || []).filter(id => id !== tag.id);
+                                                    : (field.value || []).filter((id: string) => id !== tag.id);
                                                 field.onChange(newValue);
                                             }}
                                             onSelect={(e) => e.preventDefault()}

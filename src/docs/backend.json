@@ -26,7 +26,9 @@
           "type": "object",
           "description": "User preferences for the dashboard.",
           "properties": {
-            "useCategoryColorsInChart": { "type": "boolean", "default": true }
+            "useCategoryColorsInChart": { "type": "boolean", "default": true },
+            "show5YearView": { "type": "boolean", "default": false },
+            "isAiSuggestionEnabled": { "type": "boolean", "default": true }
           }
         },
         "sharedExpenseIds": {

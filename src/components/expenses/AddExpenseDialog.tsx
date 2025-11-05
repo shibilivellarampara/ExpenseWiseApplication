@@ -215,9 +215,12 @@ function ExpenseForm({
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
      
     const activeAccounts = useMemo(() => accounts?.filter(acc => acc.status === 'active' || acc.status === undefined) || [], [accounts]);
+    
+    const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? true;
+
 
     useEffect(() => {
-        if (!debouncedDescription || isShared || categories.length === 0 || accounts.length === 0 || tags.length === 0) {
+        if (!debouncedDescription || isShared || !isAiSuggestionEnabled || categories.length === 0 || accounts.length === 0 || tags.length === 0) {
             return;
         }
 
@@ -234,9 +237,8 @@ function ExpenseForm({
                 if (suggestions.categoryId && !form.getFieldState('categoryId').isDirty) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
                 if (suggestions.accountId && !form.getFieldState('accountId').isDirty) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
                 if (suggestions.tagIds && !form.getFieldState('tagIds').isDirty) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
-                if (suggestions.description && suggestions.description !== debouncedDescription) {
-                    // Cautious about overwriting user's typing
-                    // form.setValue('description', suggestions.description, { shouldValidate: true });
+                if (suggestions.description && suggestions.description !== debouncedDescription && !form.getFieldState('description').isDirty) {
+                    form.setValue('description', suggestions.description, { shouldValidate: true });
                 }
 
             } catch (error) {
@@ -244,7 +246,7 @@ function ExpenseForm({
             }
         });
 
-    }, [debouncedDescription, form, categories, tags, activeAccounts, isShared]);
+    }, [debouncedDescription, form, categories, tags, activeAccounts, isShared, isAiSuggestionEnabled]);
 
 
     const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string): Promise<string | undefined> => {

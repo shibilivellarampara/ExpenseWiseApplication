@@ -5,11 +5,11 @@ import { UserNav } from '@/components/auth/UserNav';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { useSidebar } from '@/components/ui/sidebar';
-import { Skeleton } from '../ui/skeleton';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
-import { Button } from '../ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
 import { PanelLeft } from 'lucide-react';
-import { Logo } from '../Logo';
+import { Logo } from '@/components/Logo';
 import { NavLink } from './AppSidebar';
 import {
   LayoutDashboard,
@@ -21,8 +21,8 @@ import {
   FileText,
   Info,
 } from 'lucide-react';
-import packageJson from '../../../package.json';
-import { Separator } from '../ui/separator';
+import { version as appVersion } from '../../../package.json';
+import { Separator } from '@/components/ui/separator';
 
 
 const navItems = [
@@ -53,7 +53,6 @@ export function AppHeader() {
   const title = getPageTitle(pathname);
   const { isUserLoading } = useUser();
   const { openMobile, setOpenMobile } = useSidebar();
-  const appVersion = packageJson.version;
     
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">

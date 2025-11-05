@@ -4,7 +4,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import packageJson from '../../../../package.json';
+import { version as appVersion } from '../../../../package.json';
 
 const changelog = [
     {
@@ -56,8 +56,6 @@ const changelog = [
 ];
 
 export default function AboutPage() {
-    const appVersion = packageJson.version;
-
     return (
         <div className="w-full space-y-8">
             <PageHeader

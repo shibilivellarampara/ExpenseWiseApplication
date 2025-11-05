@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { useSidebar } from '../ui/sidebar';
-import packageJson from '../../../package.json';
+import { version as appVersion } from '../../../package.json';
 
 const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
@@ -78,7 +78,6 @@ export const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { hr
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const appVersion = packageJson.version;
 
   return (
     <aside className="w-56 flex-shrink-0 hidden md:block">

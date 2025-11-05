@@ -47,6 +47,7 @@ export default function ReportsPage() {
         
         const enriched = rawExpenses.map((expense: Expense): EnrichedExpense => ({
             ...expense,
+            date: expense.date as Date,
             category: categoryMap.get(expense.categoryId || ''),
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],

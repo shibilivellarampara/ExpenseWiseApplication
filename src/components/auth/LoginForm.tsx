@@ -227,7 +227,13 @@ export function LoginForm() {
             <TabsTrigger value="phone">Phone</TabsTrigger>
         </TabsList>
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(loginMethod === 'email' ? handleEmailSubmit : handlePhoneSubmit)} className="space-y-4 pt-4">
+            <form onSubmit={form.handleSubmit((data) => {
+                if (loginMethod === 'email') {
+                    handleEmailSubmit(data as z.infer<typeof emailSchema>);
+                } else {
+                    handlePhoneSubmit(data as z.infer<typeof phoneSchema>);
+                }
+            })} className="space-y-4 pt-4">
                 <TabsContent value="email" className="space-y-4 m-0">
                     <FormField
                         control={form.control}

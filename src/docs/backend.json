@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "UserProfile": {
@@ -40,6 +39,11 @@
           "type": "boolean",
           "description": "Indicates if the user has administrative privileges.",
           "default": false
+        },
+        "transactionFieldOrder": {
+            "type": "array",
+            "description": "User's preferred order for transaction fields.",
+            "items": { "type": "string" }
         }
       },
       "required": ["id", "name", "email"]

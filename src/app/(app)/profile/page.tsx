@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -9,6 +8,7 @@ import { TagSettings } from "@/components/profile/TagSettings";
 import { DashboardSettings } from "@/components/profile/DashboardSettings";
 import { DataManagementSettings } from "@/components/profile/DataManagementSettings";
 import { SecuritySettings } from "@/components/profile/SecuritySettings";
+import { TransactionFieldOrderSettings } from "@/components/profile/TransactionFieldOrderSettings";
 
 export default function ProfilePage() {
     return (
@@ -27,6 +27,7 @@ export default function ProfilePage() {
                 {/* Right Column */}
                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     <ExpenseFieldSettings />
+                    <TransactionFieldOrderSettings />
                     <CategorySettings />
                     <TagSettings />
                     <DashboardSettings />

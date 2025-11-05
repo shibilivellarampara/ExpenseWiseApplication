@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -289,6 +287,186 @@ function ExpenseForm({
         return selectedTagIds.map(id => tags.find(t => t.id === id)).filter(Boolean) as Tag[];
     }, [selectedTagIds, tags]);
 
+    const fieldOrder = userProfile?.transactionFieldOrder || ['description', 'accountId', 'categoryId', 'tagIds'];
+
+    const formFields: Record<string, React.ReactNode> = {
+        description: (
+            <FormField
+                key="description"
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                    <FormItem>
+                        <div className="flex justify-between items-center">
+                            <FormLabel>
+                                Description {isDescriptionRequired ? '' : '(Optional)'}
+                            </FormLabel>
+                            {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                        </div>
+                    <FormControl>
+                        <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        ),
+        accountId: (
+            <FormField
+                key="accountId"
+                control={form.control}
+                name="accountId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Account</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select an account" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {activeAccounts?.map(acc => (
+                            <SelectItem key={acc.id} value={acc.id}>
+                                <div className="flex items-center">
+                                    {renderIcon(acc.icon)}
+                                    {acc.name}
+                                </div>
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        ),
+        categoryId: (
+            <FormField
+                key="categoryId"
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>
+                            Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
+                        </FormLabel>
+                        <div className="flex gap-2">
+                            <Select onValueChange={field.onChange} value={field.value || 'no-category'}>
+                                <FormControl>
+                                <SelectTrigger className="w-full">
+                                    {field.value && field.value !== 'no-category' ? (
+                                        <div className="flex items-center">
+                                            {renderIcon(categories.find(c => c.id === field.value)?.icon)}
+                                            {categories.find(c => c.id === field.value)?.name || "Select a category"}
+                                        </div>
+                                    ) : <SelectValue placeholder="Select a category" />}
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
+                                    {categories?.map(cat => (
+                                        <SelectItem key={cat.id} value={cat.id}>
+                                            <div className="flex items-center">
+                                                {renderIcon(cat.icon)}
+                                                {cat.name}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <QuickAddItemDialog type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)}>
+                                <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
+                            </QuickAddItemDialog>
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        ),
+        tagIds: (
+             <FormField
+                key="tagIds"
+                control={form.control}
+                name="tagIds"
+                render={({ field }) => (
+                     <FormItem>
+                        <FormLabel>
+                            Tags {isTagRequired ? '' : '(Optional)'}
+                        </FormLabel>
+                        <div className="flex gap-2">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10">
+                                        {selectedTags.length > 0 ? (
+                                            <div className="flex flex-wrap gap-1">
+                                                {selectedTags.map(tag => {
+                                                    const tagColor = generateColorFromString(tag.name);
+                                                    return (
+                                                        <Badge
+                                                            key={tag.id}
+                                                            style={{ backgroundColor: tagColor.backgroundColor, color: tagColor.textColor }}
+                                                            className="flex items-center gap-1.5 border-transparent"
+                                                        >
+                                                            {renderIcon(tag.icon, "h-3 w-3")}
+                                                            {tag.name}
+                                                            <span
+                                                                role="button"
+                                                                tabIndex={0}
+                                                                className="rounded-full -mr-1 focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") {
+                                                                    e.stopPropagation(); e.preventDefault();
+                                                                    field.onChange(field.value?.filter(id => id !== tag.id))
+                                                                }}}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    e.preventDefault();
+                                                                    field.onChange(field.value?.filter(id => id !== tag.id))
+                                                                }}
+                                                            >
+                                                                <X className="h-3 w-3 text-muted-foreground hover:text-foreground"/>
+                                                            </span>
+                                                        </Badge>
+                                                    )
+                                                })}
+                                            </div>
+                                        ) : (
+                                            "Select tags..."
+                                        )}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+                                    {tags.map(tag => (
+                                        <DropdownMenuCheckboxItem
+                                            key={tag.id}
+                                            checked={field.value?.includes(tag.id)}
+                                            onCheckedChange={(checked) => {
+                                                const newValue = checked
+                                                    ? [...(field.value || []), tag.id]
+                                                    : (field.value || []).filter(id => id !== tag.id);
+                                                field.onChange(newValue);
+                                            }}
+                                            onSelect={(e) => e.preventDefault()}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                {renderIcon(tag.icon)}
+                                                <span>{tag.name}</span>
+                                            </div>
+                                        </DropdownMenuCheckboxItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
+                               <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
+                            </QuickAddItemDialog>
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )
+    }
 
     return (
         <Form {...form}>
@@ -350,172 +528,7 @@ function ExpenseForm({
                     )}
                     />
                 
-                 <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <div className="flex justify-between items-center">
-                                <FormLabel>
-                                    Description {isDescriptionRequired ? '' : '(Optional)'}
-                                </FormLabel>
-                                {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                            </div>
-                        <FormControl>
-                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                
-                <FormField
-                    control={form.control}
-                    name="accountId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Account</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select an account" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {activeAccounts?.map(acc => (
-                                <SelectItem key={acc.id} value={acc.id}>
-                                    <div className="flex items-center">
-                                        {renderIcon(acc.icon)}
-                                        {acc.name}
-                                    </div>
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />    
-                
-                 <FormField
-                    control={form.control}
-                    name="categoryId"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>
-                                Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
-                            </FormLabel>
-                            <div className="flex gap-2">
-                                <Select onValueChange={field.onChange} value={field.value || 'no-category'}>
-                                    <FormControl>
-                                    <SelectTrigger className="w-full">
-                                        {field.value && field.value !== 'no-category' ? (
-                                            <div className="flex items-center">
-                                                {renderIcon(categories.find(c => c.id === field.value)?.icon)}
-                                                {categories.find(c => c.id === field.value)?.name || "Select a category"}
-                                            </div>
-                                        ) : <SelectValue placeholder="Select a category" />}
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
-                                        {categories?.map(cat => (
-                                            <SelectItem key={cat.id} value={cat.id}>
-                                                <div className="flex items-center">
-                                                    {renderIcon(cat.icon)}
-                                                    {cat.name}
-                                                </div>
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <QuickAddItemDialog type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)}>
-                                    <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
-                                </QuickAddItemDialog>
-                            </div>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="tagIds"
-                    render={({ field }) => (
-                         <FormItem>
-                            <FormLabel>
-                                Tags {isTagRequired ? '' : '(Optional)'}
-                            </FormLabel>
-                            <div className="flex gap-2">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10">
-                                            {selectedTags.length > 0 ? (
-                                                <div className="flex flex-wrap gap-1">
-                                                    {selectedTags.map(tag => {
-                                                        const tagColor = generateColorFromString(tag.name);
-                                                        return (
-                                                            <Badge
-                                                                key={tag.id}
-                                                                style={{ backgroundColor: tagColor.backgroundColor, color: tagColor.textColor }}
-                                                                className="flex items-center gap-1.5 border-transparent"
-                                                            >
-                                                                {renderIcon(tag.icon, "h-3 w-3")}
-                                                                {tag.name}
-                                                                <span
-                                                                    role="button"
-                                                                    tabIndex={0}
-                                                                    className="rounded-full -mr-1 focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") {
-                                                                        e.stopPropagation(); e.preventDefault();
-                                                                        field.onChange(field.value?.filter(id => id !== tag.id))
-                                                                    }}}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        e.preventDefault();
-                                                                        field.onChange(field.value?.filter(id => id !== tag.id))
-                                                                    }}
-                                                                >
-                                                                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground"/>
-                                                                </span>
-                                                            </Badge>
-                                                        )
-                                                    })}
-                                                </div>
-                                            ) : (
-                                                "Select tags..."
-                                            )}
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
-                                        {tags.map(tag => (
-                                            <DropdownMenuCheckboxItem
-                                                key={tag.id}
-                                                checked={field.value?.includes(tag.id)}
-                                                onCheckedChange={(checked) => {
-                                                    const newValue = checked
-                                                        ? [...(field.value || []), tag.id]
-                                                        : (field.value || []).filter(id => id !== tag.id);
-                                                    field.onChange(newValue);
-                                                }}
-                                                onSelect={(e) => e.preventDefault()}
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    {renderIcon(tag.icon)}
-                                                    <span>{tag.name}</span>
-                                                </div>
-                                            </DropdownMenuCheckboxItem>
-                                        ))}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-
-                                <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
-                                   <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
-                                </QuickAddItemDialog>
-                            </div>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                 {fieldOrder.map(fieldName => formFields[fieldName])}
             </form>
         </Form>
     );

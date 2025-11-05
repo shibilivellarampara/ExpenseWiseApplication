@@ -1,4 +1,3 @@
-
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -19,6 +18,7 @@ export type UserProfile = {
     show5YearView?: boolean;
     isAiSuggestionEnabled?: boolean;
   };
+  transactionFieldOrder?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
   createdAt?: Timestamp;
   sharedExpenseIds?: string[];
   isAdmin?: boolean;

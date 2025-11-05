@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
@@ -74,7 +73,7 @@ type AccountMapping = { [key:string]: AccountAction };
 export function ExcelImporter() {
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
     const [template, setTemplate] = useState<string>('');
-    const [file, setFile] = useState<File | null>(null);
+    const [file, setFile] useState<File | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
@@ -714,7 +713,7 @@ export function ExcelImporter() {
             <CardFooter className="flex justify-between">
                  <Button 
                     variant="outline" 
-                    onClick={() => step > 1 ? setStep(step - 1) : resetState()} 
+                    onClick={() => step > 1 ? setStep((step - 1) as 1 | 2 | 3) : resetState()} 
                     disabled={isProcessing || isImporting}
                     className={cn(importComplete && "hidden")}
                 >
@@ -751,3 +750,5 @@ export function ExcelImporter() {
         </Card>
     );
 }
+
+    

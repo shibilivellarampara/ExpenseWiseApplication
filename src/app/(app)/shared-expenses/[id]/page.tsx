@@ -85,9 +85,10 @@ export default function SharedExpenseDetailPage() {
         if (!expenses) return [];
     
         return expenses.map(expense => {
+            const date = (expense.date as any).toDate ? (expense.date as any).toDate() : expense.date;
              return {
                 ...expense,
-                date: expense.date.toDate(),
+                date: date,
                 category: categoryMap.get(expense.categoryId ?? ''),
                 account: accountMap.get(expense.accountId),
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],

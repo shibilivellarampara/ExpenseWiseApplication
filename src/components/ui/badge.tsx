@@ -15,7 +15,7 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
-        colorful: "", // Allow dynamic classes to be passed
+        colorful: "border-transparent", // Ensures no default border interferes
       },
     },
     defaultVariants: {

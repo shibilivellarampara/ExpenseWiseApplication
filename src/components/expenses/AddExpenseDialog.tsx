@@ -905,9 +905,9 @@ function useExpenseForm({
                      const amountToUpdate = getAmountChange(values.type, values.amount, selectedAccount!.type);
                      batch.update(accountRef, { balance: increment(amountToUpdate) });
                 } else if (expenseToEdit) {
-                    const oldAccount = accounts.find(a => a.id === expenseToEdit.accountId);
+                    const oldAccount = accounts.find(a => a.id === expenseToEdit.account?.id);
                     if (oldAccount) {
-                        const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
+                        const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account!.id);
                         const oldAmountReversal = -getAmountChange(expenseToEdit.type, expenseToEdit.amount, oldAccount.type);
                         batch.update(oldAccountRef, { balance: increment(oldAmountReversal) });
                     }
@@ -980,8 +980,8 @@ function useExpenseForm({
             batch.delete(expenseRef);
 
             if (!sharedExpenseId) {
-                const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.accountId);
-                const selectedAccount = accounts.find(acc => acc.id === expenseToEdit.accountId);
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account!.id);
+                const selectedAccount = accounts.find(acc => acc.id === expenseToEdit.account!.id);
 
                 if (isCreditLimitUpgrade && selectedAccount?.type === 'credit_card' && expenseToEdit.type === 'income') {
                      batch.update(accountRef, { limit: increment(-expenseToEdit.amount) });
@@ -1028,3 +1028,5 @@ function useExpenseForm({
       tags: tags || []
     };
 }
+
+    

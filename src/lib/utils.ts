@@ -20,7 +20,7 @@ export const generateColorFromString = (str: string): { backgroundColor: string,
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
     const hue = hash % 360;
-    const backgroundColor = `hsl(${hue}, 70%, 80%)`; // Lighter background
+    const backgroundColor = `hsl(${hue}, 70%, 90%)`; // Lighter background
     const textColor = `hsl(${hue}, 90%, 15%)`; // Darker text
     return { backgroundColor, textColor };
 };

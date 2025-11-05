@@ -16,6 +16,8 @@ import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { generateColorFromString } from "@/lib/utils";
+
 
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];
@@ -34,24 +36,6 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
 const getInitials = (name?: string | null) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-};
-
-const generateColorFromString = (str: string): { backgroundColor: string, textColor: string } => {
-    if (!str) {
-        const defaultHue = 0;
-        return {
-            backgroundColor: `hsl(${defaultHue}, 70%, 90%)`,
-            textColor: `hsl(${defaultHue}, 70%, 25%)`
-        };
-    }
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const hue = hash % 360;
-    const backgroundColor = `hsl(${hue}, 70%, 90%)`; 
-    const textColor = `hsl(${hue}, 90%, 15%)`; 
-    return { backgroundColor, textColor };
 };
 
 const formatAmount = (amount: number) => {

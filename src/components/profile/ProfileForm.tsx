@@ -20,7 +20,7 @@ import Image from "next/image";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Separator } from "../ui/separator";
 import { UserProfile } from "@/lib/types";
-import PhoneInput from 'react-phone-number-input';
+import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { AvatarList } from "./Avatars";
@@ -173,7 +173,10 @@ export function ProfileForm() {
     }
 
     const handleSendPhoneVerification = async () => {
-        if (!auth?.currentUser || !recaptchaVerifier.current || !newPhoneNumber) return;
+        if (!auth?.currentUser || !recaptchaVerifier.current || !newPhoneNumber || !isPossiblePhoneNumber(newPhoneNumber)) {
+            toast({ variant: "destructive", title: "Invalid Phone Number" });
+            return;
+        }
         setIsLoading(true);
         try {
             const phoneProvider = new PhoneAuthProvider(auth);
@@ -193,7 +196,7 @@ export function ProfileForm() {
     };
 
     const handleVerifyOtpAndUpdatePhone = async () => {
-        if (!auth?.currentUser || !confirmationResult || !otp) return;
+        if (!user || !auth?.currentUser || !confirmationResult || !otp) return;
         setIsLoading(true);
         try {
             const credential = PhoneAuthProvider.credential(confirmationResult.verificationId, otp);

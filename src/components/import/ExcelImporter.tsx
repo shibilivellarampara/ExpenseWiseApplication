@@ -389,7 +389,7 @@ export function ExcelImporter() {
                     });
                     
                     const change = accountForTx.type === 'credit_card'
-                        ? (item.type === 'expense' ? item.amount : -item.amount)
+                        ? (item.type === 'expense' ? -item.amount : item.amount)
                         : (item.type === 'income' ? item.amount : -item.amount);
                     balanceChanges.set(finalAccountId, (balanceChanges.get(finalAccountId) || 0) + change);
                 });
@@ -713,7 +713,7 @@ export function ExcelImporter() {
             <CardFooter className="flex justify-between">
                  <Button 
                     variant="outline" 
-                    onClick={() => step > 1 ? setStep((step - 1) as 1 | 2 | 3) : resetState()} 
+                    onClick={() => step > 1 ? setStep(s => (s - 1) as 1 | 2 | 3) : resetState()} 
                     disabled={isProcessing || isImporting}
                     className={cn(importComplete && "hidden")}
                 >

@@ -97,7 +97,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
     });
 
     return (
-        <div ref={parentRef} className="h-[70vh] overflow-y-auto">
+        <div ref={parentRef} className="h-[70vh] overflow-y-auto space-y-4">
             <div
                 style={{
                     height: `${rowVirtualizer.getTotalSize()}px`,
@@ -120,14 +120,15 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                 width: '100%',
                                 transform: `translateY(${virtualItem.start}px)`,
                             }}
+                            className="rounded-lg border bg-card text-card-foreground shadow-sm"
                         >
-                            <Card>
-                                <CardHeader className="py-3 px-4 border-b sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-                                    <CardTitle className="text-base">
+                            
+                                <div className="py-3 px-4 border-b sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+                                    <h3 className="text-base font-semibold">
                                          {new Date(groupKey).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-0">
+                                    </h3>
+                                </div>
+                                <div className="p-0">
                                     <div className="divide-y">
                                         {group.map(expense => {
                                             const categoryColor = expense.category ? generateColorFromString(expense.category.name) : null;
@@ -225,8 +226,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                             </div>
                                         )})}
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
                         </div>
                     )
                 })}

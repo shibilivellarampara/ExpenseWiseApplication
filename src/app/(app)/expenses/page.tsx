@@ -150,14 +150,14 @@ export default function ExpensesPage() {
                 // Sort this account's transactions oldest to newest for calculation
                 accountTransactions.sort((a, b) => (a.date as Date).getTime() - (b.date as Date).getTime());
                 
-                const oldestVisibleDate = accountTransactions.length > 0 ? accountTransactions[0].date : new Date();
+                const oldestVisibleDate = accountTransactions.length > 0 ? (accountTransactions[0].date as Date) : new Date();
                 
                 // Find all transactions for this account *before* the visible ones
                 const priorTransactions = allExpenses.filter(tx => 
                     tx.accountId === accountId && (tx.date as Date) < oldestVisibleDate
                 );
 
-                let startingBalance;
+                let startingBalance: number;
                 // For CC, we start with the limit and subtract prior spending
                 if (account.type === 'credit_card') {
                     const priorBalanceChange = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);

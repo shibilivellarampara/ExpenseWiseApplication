@@ -36,7 +36,7 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
   const handleAdminToggle = (user: UserProfile, isAdmin: boolean) => {
     if (!firestore || !currentUser) return;
 
-    if (user.id === currentUser.id) {
+    if (user.id === currentUser.uid) {
         toast({
             variant: 'destructive',
             title: "Action Forbidden",
@@ -109,9 +109,9 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
                          <Switch
                             checked={user.isAdmin}
                             onCheckedChange={(checked) => handleAdminToggle(user, checked)}
-                            disabled={user.id === currentUser?.id}
+                            disabled={user.id === currentUser?.uid}
                         />
-                        {user.id === currentUser?.id && <Badge variant="secondary">You</Badge>}
+                        {user.id === currentUser?.uid && <Badge variant="secondary">You</Badge>}
                     </div>
                 </TableCell>
               </TableRow>

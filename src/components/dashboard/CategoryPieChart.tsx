@@ -101,7 +101,7 @@ export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps
       <PieChart>
         <Pie
           activeIndex={activeIndex}
-          activeShape={(props) => renderActiveShape(props as ActiveShapeProps, currencySymbol)}
+          activeShape={(props: ActiveShapeProps) => renderActiveShape(props, currencySymbol)}
           data={data}
           cx="50%"
           cy="50%"

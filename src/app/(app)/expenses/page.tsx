@@ -239,32 +239,25 @@ export default function ExpensesPage() {
             </div>
 
             <div className={cn(
-                "sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/90 backdrop-blur-sm transition-all duration-300 ease-in-out",
-                 isScrolled && "pt-2 pb-3 shadow-sm"
+                "sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out",
+                 isScrolled && "pt-4 pb-3 shadow-sm rounded-b-lg"
             )}>
-                <ExpensesFilters 
-                    filters={filters}
-                    onFiltersChange={handleFiltersChange}
-                    accounts={accounts || []}
-                    categories={categories || []}
-                    tags={tags || []}
-                />
+                <div className="space-y-4">
+                     <ExpensesSummary 
+                        expenses={filteredAndEnrichedExpenses}
+                        currency={userProfile?.defaultCurrency} 
+                        isLoading={isLoading} 
+                    />
+                    <ExpensesFilters 
+                        filters={filters}
+                        onFiltersChange={handleFiltersChange}
+                        accounts={accounts || []}
+                        categories={categories || []}
+                        tags={tags || []}
+                    />
+                </div>
             </div>
             
-            <div
-                 className={cn(
-                    "transition-all duration-300 ease-in-out",
-                    isScrolled ? "max-h-0 opacity-0 overflow-hidden" : "max-h-96 opacity-100"
-                )}
-            >
-                <ExpensesSummary 
-                    expenses={filteredAndEnrichedExpenses}
-                    currency={userProfile?.defaultCurrency} 
-                    isLoading={isLoading} 
-                />
-            </div>
-
-
             <ExpensesTable 
                 expenses={filteredAndEnrichedExpenses} 
                 isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 

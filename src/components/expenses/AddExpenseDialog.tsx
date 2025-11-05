@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -872,7 +873,7 @@ function useExpenseForm({
                     } else if (expenseToEdit) {
                         // On edit, calculate the difference from the old amount to the new amount.
                         // Only adjust if the category was also "Credit Limit Upgrade" previously.
-                        const oldCategory = categories.find(c => c.id === expenseToEdit.categoryId);
+                        const oldCategory = categories.find(c => c.id === expenseToEdit.category?.id);
                         if (oldCategory?.name === 'Credit Limit Upgrade' && expenseToEdit.type === 'income') {
                            const difference = values.amount - expenseToEdit.amount;
                            batch.update(accountRef, { limit: increment(difference) });
@@ -973,7 +974,7 @@ function useExpenseForm({
             const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
             const expenseRef = doc(firestore, collectionPath, expenseToEdit.id);
 
-            const selectedCategory = categories.find(c => c.id === expenseToEdit.categoryId);
+            const selectedCategory = categories.find(c => c.id === expenseToEdit.category?.id);
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
             
             batch.delete(expenseRef);

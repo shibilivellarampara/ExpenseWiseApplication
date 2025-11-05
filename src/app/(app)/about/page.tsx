@@ -7,6 +7,14 @@ import packageJson from '../../../../package.json';
 
 const changelog = [
     {
+        version: "1.2.3",
+        date: "2024-08-05",
+        changes: [
+            { type: 'Fix', description: "Resolved multiple TypeScript type errors that were causing persistent build failures." },
+            { type: 'Fix', description: "Corrected data handling in login, sign-up, and transaction forms to improve type safety." },
+        ]
+    },
+    {
         version: "1.2.2",
         date: "2024-08-02",
         changes: [

@@ -10,7 +10,7 @@ import { Account, EnrichedExpense, UserProfile } from '@/lib/types';
 import { FileDown, FileText, Bot, Loader2, UploadCloud, LogIn } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAuth, useUser } from '@/firebase';
-import { GoogleAuthProvider, getAdditionalUserInfo, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, getAdditionalUserInfo, signInWithPopup, OAuthProvider } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -91,24 +91,27 @@ export function ReportGenerator({ accounts, onGenerate, transactions, isLoading 
     const handleUpload = async () => {
         if (transactions.length === 0 || !user || !auth.currentUser) return;
         setIsUploading(true);
-
+    
         try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const accessToken = (getAdditionalUserInfo(await signInWithPopup(auth, new GoogleAuthProvider().addScope('https://www.googleapis.com/auth/drive.file')))?.oauthAccessToken)
+            const provider = new GoogleAuthProvider().addScope('https://www.googleapis.com/auth/drive.file');
+            const result = await signInWithPopup(auth, provider);
+            const credential = OAuthProvider.credentialFromResult(result);
+            const accessToken = credential?.accessToken;
+    
             if (!accessToken) {
                 throw new Error("Could not retrieve Google Drive access token. Please reconnect.");
             }
-
+    
             const fileName = `ExpenseWise_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
             const wb = createWorkbook();
             
-            const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const blob = new Blob([wbout], { type: 'application/octet-stream' });
         
             await uploadToGoogleDrive(accessToken, blob, fileName);
-
+    
             toast({ title: 'Upload Successful', description: 'Your report has been saved to Google Drive.' });
-
+    
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Upload Failed', description: error.message });
         } finally {

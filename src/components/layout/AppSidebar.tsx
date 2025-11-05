@@ -18,7 +18,9 @@ import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { useSidebar } from '../ui/sidebar';
-import { version as appVersion } from '../../../package.json';
+import pkg from '../../../package.json';
+const appVersion = pkg.version;
+
 
 const navItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },

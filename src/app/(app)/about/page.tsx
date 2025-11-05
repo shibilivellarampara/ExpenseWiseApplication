@@ -4,7 +4,9 @@
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { version as appVersion } from '../../../../package.json';
+import pkg from '../../../../package.json';
+const appVersion = pkg.version;
+
 
 const changelog = [
     {

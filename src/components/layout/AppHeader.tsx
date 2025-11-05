@@ -21,8 +21,10 @@ import {
   FileText,
   Info,
 } from 'lucide-react';
-import { version as appVersion } from '../../../package.json';
+import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
+
+const appVersion = pkg.version;
 
 
 const navItems = [

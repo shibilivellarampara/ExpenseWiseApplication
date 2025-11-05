@@ -109,7 +109,7 @@ export default function ExpensesPage() {
             if (dateRange.from && expenseDate < startOfDay(dateRange.from)) return false;
             if (dateRange.to && expenseDate > endOfDay(dateRange.to)) return false;
             if (type !== 'all' && expense.type !== type) return false;
-            if (categories.length > 0 && !categories.includes(expense.categoryId || '')) return false;
+            if (categories.length > 0 && !(expense.categoryId && categories.includes(expense.categoryId))) return false;
             if (accountIds.length > 0 && !accountIds.includes(expense.accountId)) return false;
             if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
             if (debouncedSearchQuery) {
@@ -122,17 +122,6 @@ export default function ExpensesPage() {
             }
             return true;
         });
-
-        let enriched = filtered.map((expense): EnrichedExpense => {
-            const date = expense.date instanceof Date ? expense.date : (expense.date as any).toDate();
-            return {
-                ...expense,
-                date: date,
-                category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
-                account: accountMap.get(expense.accountId),
-                tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
-            };
-        });
         
         const getAmountChange = (tx: Expense, accType: Account['type']) => {
             if (accType === 'credit_card') {
@@ -142,15 +131,15 @@ export default function ExpensesPage() {
         };
         
         // Group transactions by account
-        const transactionsByAccount = enriched.reduce((acc, tx) => {
+        const transactionsByAccount = filtered.reduce((acc, tx) => {
             if (!acc[tx.accountId]) {
                 acc[tx.accountId] = [];
             }
             acc[tx.accountId].push(tx);
             return acc;
-        }, {} as Record<string, EnrichedExpense[]>);
+        }, {} as Record<string, Expense[]>);
 
-        let finalEnrichedWithBalance: EnrichedExpense[] = [];
+        let finalWithBalance: Expense[] = [];
 
         // Calculate running balance for each account group
         for (const accountId in transactionsByAccount) {
@@ -159,7 +148,7 @@ export default function ExpensesPage() {
 
             if (account) {
                 // Sort this account's transactions oldest to newest for calculation
-                accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
+                accountTransactions.sort((a, b) => (a.date as Date).getTime() - (b.date as Date).getTime());
                 
                 const oldestVisibleDate = accountTransactions.length > 0 ? accountTransactions[0].date : new Date();
                 
@@ -185,12 +174,23 @@ export default function ExpensesPage() {
                     tx.runningBalance = startingBalance;
                 });
                 
-                finalEnrichedWithBalance.push(...accountTransactions);
+                finalWithBalance.push(...accountTransactions);
             }
         }
         
+        let enriched = finalWithBalance.map((expense): EnrichedExpense => {
+            const date = expense.date instanceof Date ? expense.date : (expense.date as any).toDate();
+            return {
+                ...expense,
+                date: date,
+                category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
+                account: accountMap.get(expense.accountId),
+                tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
+            };
+        });
+
         // Sort the final combined list back to newest first for display
-        return finalEnrichedWithBalance.sort((a, b) => b.date.getTime() - a.date.getTime());
+        return enriched.sort((a, b) => b.date.getTime() - a.date.getTime());
 
     }, [allExpenses, categoryMap, accountMap, tagMap, filters, debouncedSearchQuery, accounts]);
     

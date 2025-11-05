@@ -812,7 +812,7 @@ function useExpenseForm({
 
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
             const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
-
+            
             if (isCreditCardPayment) {
                 if (selectedAccount?.type !== 'credit_card' || values.type !== 'income') {
                     toast({ variant: 'destructive', title: 'Invalid Operation', description: '"Credit Card Payment" must be an "income" transaction to a credit card account.'});
@@ -828,10 +828,13 @@ function useExpenseForm({
             const expenseCol = collection(firestore, collectionPath);
             const expenseRef = isAddOperation ? doc(expenseCol) : doc(firestore, collectionPath, expenseToEdit!.id);
 
+            const finalDescription = (values.description || selectedCategory?.name || 'Transaction').trim();
+
             const expenseData: any = {
                 ...values,
                 id: expenseRef.id,
                 userId: user.uid,
+                description: finalDescription,
                 createdAt: isAddOperation ? serverTimestamp() : expenseToEdit!.createdAt,
                 updatedAt: serverTimestamp(),
                 tagIds: values.tagIds || [],

@@ -57,6 +57,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
 import { generateColorFromString } from '@/lib/utils';
+import { useDebounce } from 'use-debounce';
 
 
 // Function to create a dynamic schema
@@ -205,39 +206,46 @@ function ExpenseForm({
     const firestore = useFirestore();
     const { toast } = useToast();
     const transactionType = form.watch('type');
+    const descriptionValue = form.watch('description');
+    
+    const [debouncedDescription] = useDebounce(descriptionValue, 500);
+    const [isSuggesting, startSuggestionTransition] = useTransition();
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
      
     const activeAccounts = useMemo(() => accounts?.filter(acc => acc.status === 'active' || acc.status === undefined) || [], [accounts]);
-    
-    const [isSuggesting, startSuggestionTransition] = useTransition();
 
-    const handleSuggestion = useCallback(() => {
-        const currentDescription = form.getValues('description');
-        if (!currentDescription || categories.length === 0 || accounts.length === 0 || tags.length === 0) return;
-        
+    useEffect(() => {
+        if (!debouncedDescription || isShared || categories.length === 0 || accounts.length === 0 || tags.length === 0) {
+            return;
+        }
+
         startSuggestionTransition(async () => {
             try {
                 const suggestions = await suggestExpenseDetails({
-                    description: currentDescription,
+                    description: debouncedDescription,
                     categories: categories.map(({ id, name }) => ({ id, name })),
                     tags: tags.map(({ id, name }) => ({ id, name })),
                     accounts: activeAccounts.map(({ id, name }) => ({ id, name })),
                 });
                 
-                if (suggestions.categoryId) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
-                if (suggestions.accountId) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
-                if (suggestions.tagIds) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
-                if (suggestions.description && suggestions.description !== currentDescription) {
-                    form.setValue('description', suggestions.description, { shouldValidate: true });
+                // Only set value if user hasn't touched the field yet or it's empty
+                if (suggestions.categoryId && !form.getFieldState('categoryId').isDirty) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
+                if (suggestions.accountId && !form.getFieldState('accountId').isDirty) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
+                if (suggestions.tagIds && !form.getFieldState('tagIds').isDirty) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
+                if (suggestions.description && suggestions.description !== debouncedDescription) {
+                    // Cautious about overwriting user's typing
+                    // form.setValue('description', suggestions.description, { shouldValidate: true });
                 }
 
             } catch (error) {
                 console.error("AI suggestion failed:", error);
             }
         });
-    }, [form, categories, tags, activeAccounts]);
+
+    }, [debouncedDescription, form, categories, tags, activeAccounts, isShared]);
+
 
     const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string): Promise<string | undefined> => {
         if (!user || !firestore) return;
@@ -339,6 +347,25 @@ function ExpenseForm({
                         </FormItem>
                     )}
                     />
+                
+                 <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                            <div className="flex justify-between items-center">
+                                <FormLabel>
+                                    Description {isDescriptionRequired ? '' : '(Optional)'}
+                                </FormLabel>
+                                {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                            </div>
+                        <FormControl>
+                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 
                 <FormField
                     control={form.control}
@@ -484,29 +511,6 @@ function ExpenseForm({
                                 </QuickAddItemDialog>
                             </div>
                             <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <div className="flex justify-between items-center">
-                                <FormLabel>
-                                    Description {isDescriptionRequired ? '' : '(Optional)'}
-                                </FormLabel>
-                                {!isShared && (
-                                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={handleSuggestion} disabled={isSuggesting}>
-                                        {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-amber-500" />}
-                                        <span className="sr-only">Get Suggestions</span>
-                                    </Button>
-                                )}
-                            </div>
-                        <FormControl>
-                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
-                        </FormControl>
-                        <FormMessage />
                         </FormItem>
                     )}
                 />

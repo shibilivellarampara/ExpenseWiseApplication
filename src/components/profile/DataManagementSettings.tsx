@@ -170,7 +170,7 @@ export function DataManagementSettings() {
             await commitBatchNonBlocking(batch, `/users/${user.uid}`);
             setProgress(100);
             
-            await deleteUser(user);
+            await deleteUser(auth.currentUser);
             
             toast({ title: "Account Closed", description: "Your account and all data have been permanently deleted." });
         } catch (error: any) {

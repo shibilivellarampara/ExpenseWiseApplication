@@ -132,7 +132,7 @@ export default function DashboardPage() {
             return {
                 ...expense,
                 date,
-                category: categoryMap.get(expense.categoryId),
+                category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
                 account: accountMap.get(expense.accountId),
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             };

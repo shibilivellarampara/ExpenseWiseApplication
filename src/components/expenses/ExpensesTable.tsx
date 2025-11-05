@@ -51,7 +51,7 @@ const generateColorFromString = (str: string): { backgroundColor: string, textCo
     }
     const hue = hash % 360;
     const backgroundColor = `hsl(${hue}, 70%, 90%)`; // Lighter background
-    const textColor = `hsl(${hue}, 70%, 25%)`; // Darker text
+    const textColor = `hsl(${hue}, 90%, 15%)`; // Darker text
     return { backgroundColor, textColor };
 };
 
@@ -85,8 +85,8 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
         getScrollElement: () => parentRef.current,
         estimateSize: (index) => {
             const group = groupedExpenses[groupKeys[index]];
-            // Estimate size: 60px for header + 120px per expense item
-            return 60 + (group.length * 120);
+            // Estimate size: 48px for header + 125px per expense item
+            return 48 + (group.length * 125);
         },
         overscan: 5,
         measureElement:
@@ -122,7 +122,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                             }}
                         >
                             <Card>
-                                <CardHeader className="py-3 px-4 border-b sticky top-0 bg-background/95 z-10">
+                                <CardHeader className="py-3 px-4 border-b sticky top-0 bg-background/95 backdrop-blur-sm z-10">
                                     <CardTitle className="text-base">
                                          {new Date(groupKey).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                     </CardTitle>

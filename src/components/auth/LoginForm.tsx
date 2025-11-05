@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,9 @@ const phoneSchema = z.object({
   loginId: z.string().refine((value) => value ? isPossiblePhoneNumber(value) : true, { message: "Please enter a valid phone number." }),
   password: z.string().optional(), // Not used for phone, but keeps structure
 });
+
+const formSchema = z.union([emailSchema, phoneSchema]);
+
 
 // Create a stable component for the phone input to prevent re-renders
 const MemoizedPhoneInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>((props, ref) => (
@@ -66,7 +70,7 @@ export function LoginForm() {
     return zodResolver(phoneSchema)(data, context, options);
   }, [loginMethod]);
 
-  const form = useForm<{loginId: string, password?: string}>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: formResolver,
     defaultValues: {
       loginId: '',
@@ -116,7 +120,7 @@ export function LoginForm() {
         toast({ variant: 'destructive', title: title, description: description });
     }
 
-  async function handleEmailSubmit(values: z.infer<typeof emailSchema>) {
+  const handleEmailSubmit: SubmitHandler<z.infer<typeof emailSchema>> = async (values) => {
     setIsLoading(true);
     if (!auth) {
         toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.' });
@@ -135,7 +139,7 @@ export function LoginForm() {
     }
   }
 
-  async function handlePhoneSubmit(values: z.infer<typeof phoneSchema>) {
+  const handlePhoneSubmit: SubmitHandler<z.infer<typeof phoneSchema>> = async (values) => {
       if (!auth || !recaptchaVerifier.current || !values.loginId) {
           toast({ variant: "destructive", title: "Error", description: "Authentication service not ready." });
           return;

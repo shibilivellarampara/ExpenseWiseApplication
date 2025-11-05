@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
@@ -340,7 +341,7 @@ export function ExcelImporter() {
             // --- 2. Build comprehensive maps for all items (existing + new) ---
             const allAccounts: Account[] = [
                 ...(accounts || []),
-                ...Array.from(newAccountRefs.entries()).map(([name, { id, type }]) => ({ id, name, type, balance: 0, userId: user.uid, status: 'active', icon: 'Landmark' }))
+                ...Array.from(newAccountRefs.entries()).map(([name, { id, type }]) => ({ id, name, type, balance: 0, userId: user.uid, status: 'active' as const, icon: 'Landmark' }))
             ];
             const accountMap = new Map(allAccounts.map(a => [a.name.toLowerCase(), a]));
             

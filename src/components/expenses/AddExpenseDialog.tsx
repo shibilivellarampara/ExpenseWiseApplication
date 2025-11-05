@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -980,24 +981,26 @@ function useExpenseForm({
             batch.delete(expenseRef);
 
             if (!sharedExpenseId) {
-                const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account!.id);
-                const selectedAccount = accounts.find(acc => acc.id === expenseToEdit.account!.id);
-
-                if (isCreditLimitUpgrade && selectedAccount?.type === 'credit_card' && expenseToEdit.type === 'income') {
-                     batch.update(accountRef, { limit: increment(-expenseToEdit.amount) });
-                } else {
-                    if (selectedAccount) {
-                        let amountToRevert: number;
-                         if (selectedAccount.type === 'credit_card') {
-                            // Reverting a transaction on a CC means doing the opposite of the original
-                            // Deleting an expense (purchase) INCREASES available credit
-                            // Deleting an income (payment) DECREASES available credit
-                            amountToRevert = expenseToEdit.type === 'expense' ? expenseToEdit.amount : -expenseToEdit.amount;
-                        } else {
-                             // For regular accounts, it's the standard reversal
-                            amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
+                if (expenseToEdit.account?.id) {
+                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account.id);
+                    const selectedAccount = accounts.find(acc => acc.id === expenseToEdit.account!.id);
+    
+                    if (isCreditLimitUpgrade && selectedAccount?.type === 'credit_card' && expenseToEdit.type === 'income') {
+                         batch.update(accountRef, { limit: increment(-expenseToEdit.amount) });
+                    } else {
+                        if (selectedAccount) {
+                            let amountToRevert: number;
+                             if (selectedAccount.type === 'credit_card') {
+                                // Reverting a transaction on a CC means doing the opposite of the original
+                                // Deleting an expense (purchase) INCREASES available credit
+                                // Deleting an income (payment) DECREASES available credit
+                                amountToRevert = expenseToEdit.type === 'expense' ? expenseToEdit.amount : -expenseToEdit.amount;
+                            } else {
+                                 // For regular accounts, it's the standard reversal
+                                amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
+                            }
+                            batch.update(accountRef, { balance: increment(amountToRevert) });
                         }
-                        batch.update(accountRef, { balance: increment(amountToRevert) });
                     }
                 }
             }

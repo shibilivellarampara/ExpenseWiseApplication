@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,8 @@ const phoneSchema = z.object({
   password: z.string().optional(),
 });
 
+const formSchema = z.union([emailSchema, phoneSchema]);
+
 // Create a stable component for the phone input to prevent re-renders
 const MemoizedPhoneInput = React.forwardRef<HTMLInputElement>((props, ref) => (
     <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />
@@ -66,7 +69,7 @@ export function SignUpForm() {
     return zodResolver(phoneSchema)(data, context, options);
   }, [signupMethod]);
 
-  const form = useForm<z.infer<typeof emailSchema> | z.infer<typeof phoneSchema>>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: formResolver,
     defaultValues: {
       name: '',
@@ -124,7 +127,7 @@ export function SignUpForm() {
     await batch.commit();
   }
 
-  async function handleEmailSubmit(values: z.infer<typeof emailSchema>) {
+  const handleEmailSubmit: SubmitHandler<z.infer<typeof emailSchema>> = async (values) => {
     setIsLoading(true);
     if (!auth || !firestore || !values.password) {
         toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.'});
@@ -151,7 +154,7 @@ export function SignUpForm() {
     }
   }
 
-  async function handlePhoneSubmit(values: z.infer<typeof phoneSchema>) {
+  const handlePhoneSubmit: SubmitHandler<z.infer<typeof phoneSchema>> = async (values) => {
     if (!auth || !recaptchaVerifier.current || !values.phoneNumber) {
         toast({ variant: "destructive", title: "Error", description: "Authentication service not ready." });
         return;
@@ -324,3 +327,4 @@ export function SignUpForm() {
     
 
     
+

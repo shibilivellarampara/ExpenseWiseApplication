@@ -1,10 +1,10 @@
 
 'use client';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Pilcrow, TrendingUp, Edit, User as UserIcon, Wallet, AlertTriangle } from "lucide-react";
+import { Pilcrow, Edit, User as UserIcon, Wallet, AlertTriangle } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -36,7 +36,6 @@ const getInitials = (name?: string | null) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 };
 
-// Function to generate a color from a string
 const generateColorFromString = (str: string): { backgroundColor: string, textColor: string } => {
     if (!str) {
         const defaultHue = 0;
@@ -50,8 +49,8 @@ const generateColorFromString = (str: string): { backgroundColor: string, textCo
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
     const hue = hash % 360;
-    const backgroundColor = `hsl(${hue}, 70%, 90%)`; // Lighter background
-    const textColor = `hsl(${hue}, 90%, 15%)`; // Darker text
+    const backgroundColor = `hsl(${hue}, 70%, 90%)`; 
+    const textColor = `hsl(${hue}, 90%, 15%)`; 
     return { backgroundColor, textColor };
 };
 
@@ -62,42 +61,53 @@ const formatAmount = (amount: number) => {
     return amount.toFixed(2);
 };
 
-function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; }) {
+type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense: EnrichedExpense };
 
-    const groupedExpenses = useMemo(() => {
-        const groups: { [key: string]: EnrichedExpense[] } = {};
-        expenses.forEach(expense => {
+function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; }) {
+    
+    const allRows = useMemo(() => {
+        const rows: VirtualRow[] = [];
+        const groupedExpenses = expenses.reduce((acc, expense) => {
             const date = expense.date.toISOString().split('T')[0];
-            if (!groups[date]) {
-                groups[date] = [];
+            if (!acc[date]) {
+                acc[date] = [];
             }
-            groups[date].push(expense);
+            acc[date].push(expense);
+            return acc;
+        }, {} as { [key: string]: EnrichedExpense[] });
+
+        Object.keys(groupedExpenses).forEach(date => {
+            rows.push({ type: 'header', date });
+            groupedExpenses[date].forEach(expense => {
+                rows.push({ type: 'expense', expense });
+            });
         });
-        return groups;
+        return rows;
     }, [expenses]);
 
-    const groupKeys = useMemo(() => Object.keys(groupedExpenses).sort((a, b) => new Date(b).getTime() - new Date(a).getTime()), [groupedExpenses]);
 
     const parentRef = useRef<HTMLDivElement>(null);
 
     const rowVirtualizer = useVirtualizer({
-        count: groupKeys.length,
+        count: allRows.length,
         getScrollElement: () => parentRef.current,
         estimateSize: (index) => {
-            const group = groupedExpenses[groupKeys[index]];
-            // Estimate size: 48px for header + 125px per expense item
-            return 48 + (group.length * 125);
+             const row = allRows[index];
+             if (row.type === 'header') return 48; // Header height
+             // Estimate expense height
+             let height = 80; 
+             if (row.expense.tags && row.expense.tags.length > 0) height += 28;
+             if (row.expense.category) height += 28;
+             return height;
         },
         overscan: 5,
-        measureElement:
-            typeof window !== 'undefined' &&
-            navigator.userAgent.indexOf('Firefox') === -1
+        measureElement: typeof window !== 'undefined' && navigator.userAgent.indexOf('Firefox') === -1
             ? (element) => element.getBoundingClientRect().height
             : undefined,
     });
 
     return (
-        <div ref={parentRef} className="h-[70vh] overflow-y-auto space-y-4">
+        <div ref={parentRef} className="h-[70vh] overflow-y-auto">
             <div
                 style={{
                     height: `${rowVirtualizer.getTotalSize()}px`,
@@ -106,11 +116,10 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                 }}
             >
                 {rowVirtualizer.getVirtualItems().map(virtualItem => {
-                    const groupKey = groupKeys[virtualItem.index];
-                    const group = groupedExpenses[groupKey];
+                    const row = allRows[virtualItem.index];
                     return (
                         <div
-                            key={groupKey}
+                            key={virtualItem.key}
                             data-index={virtualItem.index}
                             ref={rowVirtualizer.measureElement}
                             style={{
@@ -120,113 +129,105 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                 width: '100%',
                                 transform: `translateY(${virtualItem.start}px)`,
                             }}
-                            className="rounded-lg border bg-card text-card-foreground shadow-sm"
                         >
-                            
-                                <div className="py-3 px-4 border-b sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+                            {row.type === 'header' ? (
+                                <div className="py-3 px-4 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b border-t">
                                     <h3 className="text-base font-semibold">
-                                         {new Date(groupKey).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        {new Date(row.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                     </h3>
                                 </div>
-                                <div className="p-0">
-                                    <div className="divide-y">
-                                        {group.map(expense => {
-                                            const categoryColor = expense.category ? generateColorFromString(expense.category.name) : null;
-                                            return (
-                                            <div key={expense.id} className="p-4 flex items-start gap-4 group">
-                                                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center mt-1">
-                                                    {expense.type === 'income' ?
-                                                        <Wallet className="h-5 w-5 text-green-500" /> :
-                                                        renderIcon(expense.category?.icon, 'h-5 w-5 text-gray-700')
-                                                    }
-                                                </div>
-                                                <div className="flex-grow space-y-1 w-full min-w-0">
-                                                    <div className="flex justify-between items-start">
-                                                        <div className="font-semibold break-words flex-1 pr-4">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
-                                                        <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
-                                                            <div className="flex items-center">
-                                                                <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId} onSaveSuccess={onDataChange}>
-                                                                    <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        <Edit className="h-4 w-4" />
-                                                                    </Button>
-                                                                </AddExpenseDialog>
-                                                                <div className={cn(
-                                                                    'font-bold text-lg',
-                                                                    expense.type === 'income' ? 'text-green-600' : 'text-red-500'
-                                                                )}>
-                                                                    {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}
-                                                                </div>
-                                                            </div>
-                                                             {typeof expense.runningBalance === 'number' && (
-                                                                <div className="text-xs text-muted-foreground mt-0.5">
-                                                                    Bal: {currencySymbol}{formatAmount(expense.runningBalance)}
-                                                                </div>
-                                                            )}
-                                                            {typeof expense.accountBalance === 'number' && typeof expense.runningBalance !== 'number' && (
-                                                                <div className="text-xs text-muted-foreground mt-0.5">
-                                                                    Bal: {currencySymbol}{formatAmount(expense.accountBalance)}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="text-xs text-muted-foreground flex items-center gap-4">
-                                                        <div className="flex items-center gap-1">
-                                                            {isShared && expense.user ? (
-                                                                <TooltipProvider>
-                                                                    <Tooltip>
-                                                                        <TooltipTrigger className="flex items-center gap-1">
-                                                                            <Avatar className="h-4 w-4">
-                                                                                <AvatarImage src={expense.user.photoURL || ''} alt={expense.user.name || 'user'}/>
-                                                                                <AvatarFallback>{getInitials(expense.user.name)}</AvatarFallback>
-                                                                            </Avatar>
-                                                                            <span>{expense.user.name}</span>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p>Transaction added by {expense.user.name}</p>
-                                                                        </TooltipContent>
-                                                                    </Tooltip>
-                                                                </TooltipProvider>
-                                                            ) : (
-                                                                <>
-                                                                    {renderIcon(expense.account?.icon, "h-3 w-3")}
-                                                                    <span>{expense.account?.name}</span>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            {expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="flex flex-wrap items-center gap-2 pt-1 w-full">
-                                                        {expense.category && categoryColor && (
-                                                            <Badge 
-                                                                style={{ backgroundColor: categoryColor.backgroundColor, color: categoryColor.textColor }}
-                                                                className="flex items-center gap-1 border-transparent"
-                                                            >
-                                                                {renderIcon(expense.category.icon, "h-3 w-3")}
-                                                                {expense.category.name}
-                                                            </Badge>
-                                                        )}
-                                                        {expense.tags?.map(tag => {
-                                                            const tagColor = generateColorFromString(tag.name);
-                                                            return (
-                                                            <Badge 
-                                                                key={tag.id}
-                                                                style={{ backgroundColor: tagColor.backgroundColor, color: tagColor.textColor }}
-                                                                className="flex items-center gap-1 border-transparent"
-                                                            >
-                                                                {renderIcon(tag.icon, "h-3 w-3")}
-                                                                {tag.name}
-                                                            </Badge>
-                                                        )})}
+                            ) : (
+                                <div className="p-4 flex items-start gap-4 group border-b">
+                                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center mt-1">
+                                        {row.expense.type === 'income' ?
+                                            <Wallet className="h-5 w-5 text-green-500" /> :
+                                            renderIcon(row.expense.category?.icon, 'h-5 w-5 text-gray-700')
+                                        }
+                                    </div>
+                                    <div className="flex-grow space-y-1 w-full min-w-0">
+                                        <div className="flex justify-between items-start">
+                                            <div className="font-semibold break-words flex-1 pr-4">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
+                                            <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
+                                                <div className="flex items-center">
+                                                    <AddExpenseDialog expenseToEdit={row.expense} sharedExpenseId={row.expense.sharedExpenseId} onSaveSuccess={onDataChange}>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                    </AddExpenseDialog>
+                                                    <div className={cn(
+                                                        'font-bold text-lg',
+                                                        row.expense.type === 'income' ? 'text-green-600' : 'text-red-500'
+                                                    )}>
+                                                        {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
                                                     </div>
                                                 </div>
+                                                 {typeof row.expense.runningBalance === 'number' && (
+                                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                                        Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
+                                                    </div>
+                                                )}
+                                                {typeof row.expense.accountBalance === 'number' && typeof row.expense.runningBalance !== 'number' && (
+                                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                                        Bal: {currencySymbol}{formatAmount(row.expense.accountBalance)}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )})}
+                                        </div>
+
+                                        <div className="text-xs text-muted-foreground flex items-center gap-4">
+                                            <div className="flex items-center gap-1">
+                                                {isShared && row.expense.user ? (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger className="flex items-center gap-1">
+                                                                <Avatar className="h-4 w-4">
+                                                                    <AvatarImage src={row.expense.user.photoURL || ''} alt={row.expense.user.name || 'user'}/>
+                                                                    <AvatarFallback>{getInitials(row.expense.user.name)}</AvatarFallback>
+                                                                </Avatar>
+                                                                <span>{row.expense.user.name}</span>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>Transaction added by {row.expense.user.name}</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                ) : (
+                                                    <>
+                                                        {renderIcon(row.expense.account?.icon, "h-3 w-3")}
+                                                        <span>{row.expense.account?.name}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                            <div>
+                                                {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex flex-wrap items-center gap-2 pt-1 w-full">
+                                            {row.expense.category && (
+                                                <Badge 
+                                                    style={generateColorFromString(row.expense.category.name)}
+                                                    className="flex items-center gap-1 border-transparent"
+                                                >
+                                                    {renderIcon(row.expense.category.icon, "h-3 w-3")}
+                                                    {row.expense.category.name}
+                                                </Badge>
+                                            )}
+                                            {row.expense.tags?.map(tag => {
+                                                return (
+                                                <Badge 
+                                                    key={tag.id}
+                                                    style={generateColorFromString(tag.name)}
+                                                    className="flex items-center gap-1 border-transparent"
+                                                >
+                                                    {renderIcon(tag.icon, "h-3 w-3")}
+                                                    {tag.name}
+                                                </Badge>
+                                            )})}
+                                        </div>
                                     </div>
                                 </div>
+                            )}
                         </div>
                     )
                 })}
@@ -247,10 +248,7 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
       <div className="space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
-                <CardHeader>
-                    <Skeleton className="h-5 w-1/3" />
-                </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="p-4 space-y-2">
                     {Array.from({length: 2}).map((_, j) => (
                         <div key={j} className="p-4 flex items-center gap-4">
                             <Skeleton className="w-10 h-10 rounded-full" />

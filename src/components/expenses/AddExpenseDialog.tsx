@@ -40,7 +40,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
+import { useState, useMemo, useEffect, useCallback, useTransition, Fragment } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy } from 'firebase/firestore';
@@ -315,7 +315,7 @@ function ExpenseForm({
             />
         ),
         accountId: (
-            <>
+            <Fragment key="accountIdFragment">
                 <FormField
                     key="amount"
                     control={form.control}
@@ -362,7 +362,7 @@ function ExpenseForm({
                         </FormItem>
                     )}
                 />
-            </>
+            </Fragment>
         ),
         categoryId: (
             <FormField

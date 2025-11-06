@@ -87,8 +87,8 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
 };
 
 // New FloatingLabelInput component
-const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string, rightIcon?: React.ReactNode }>(
-    ({ className, label, id, rightIcon, ...props }, ref) => {
+const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string, rightIcon?: React.ReactNode, currencySymbol?: string }>(
+    ({ className, label, id, rightIcon, currencySymbol, ...props }, ref) => {
         const hasValue = props.value && String(props.value) !== '';
         return (
             <div className="relative">
@@ -97,10 +97,9 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     id={id}
                     placeholder=" "
                     className={cn(
-                        "peer h-14 pt-5 text-base", 
+                        "peer h-14 pt-5 text-base floating-input", 
                         rightIcon ? "pr-10" : "", 
-                        // CSS to hide number input spinners
-                        "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+                        currencySymbol ? "pl-7" : "",
                         className
                     )}
                     {...props}
@@ -109,13 +108,12 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     htmlFor={id}
                     className={cn(
                         "absolute left-3 text-muted-foreground transition-all bg-transparent px-1 pointer-events-none",
-                        "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base",
-                        "peer-focus:top-1 peer-focus:-translate-y-0 peer-focus:text-xs",
-                        hasValue ? "top-1 -translate-y-0 text-xs" : "top-1/2 -translate-y-1/2 text-base"
+                         "top-1/2 -translate-y-1/2 text-base peer-focus:top-2 peer-focus:text-xs peer-focus:font-medium peer-data-[has-value=true]:top-2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium",
                     )}
                 >
                     {label}
                 </Label>
+                {currencySymbol && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground peer-focus:hidden peer-data-[has-value=true]:hidden">₹</span>}
                 {rightIcon && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                         {rightIcon}
@@ -127,14 +125,13 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
 );
 FloatingLabelInput.displayName = 'FloatingLabelInput';
 
-
 const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof SelectTrigger> & { label: string; children: React.ReactNode; onValueChange: (value: string) => void; value?: string }>(
     ({ className, label, id, children, onValueChange, value, ...props }, ref) => {
         const hasValue = value && value !== '';
         return (
             <div className="relative">
                  <Select onValueChange={onValueChange} value={value}>
-                    <SelectTrigger ref={ref} id={id} className={cn("peer h-14 pt-4 text-base", className)} {...props}>
+                    <SelectTrigger ref={ref} id={id} className={cn("peer h-14 pt-4 text-base floating-input", className)} data-has-value={hasValue} {...props}>
                         <SelectValue placeholder=" "/>
                     </SelectTrigger>
                     <SelectContent>
@@ -143,10 +140,10 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
                 </Select>
                  <Label
                     htmlFor={id}
-                    className={cn(
+                     className={cn(
                         "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
-                        hasValue ? "top-0 -translate-y-1/2 text-xs" : "top-1/2 -translate-y-1/2 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs",
-                        "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base"
+                        "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
+                        hasValue && "top-0 -translate-y-1/2 text-xs font-medium"
                     )}
                 >
                     {label}
@@ -343,6 +340,7 @@ function ExpenseForm({
                             id="description"
                             {...field}
                             value={field.value ?? ''}
+                            data-has-value={!!field.value}
                         />
                         <FormMessage />
                     </FormItem>
@@ -434,8 +432,7 @@ function ExpenseForm({
                     return (
                         <FormItem>
                             <div className="space-y-2">
-                                <Label>Tags {isTagRequired && <span className="text-destructive">*</span>}</Label>
-                                {selectedTagIds.length > 0 && (
+                                {selectedTagIds.length > 0 ? (
                                     <div className="flex flex-wrap gap-1.5 py-2">
                                     {selectedTagObjects.map(tag => (
                                         <Badge
@@ -455,12 +452,12 @@ function ExpenseForm({
                                         </Badge>
                                     ))}
                                     </div>
-                                )}
+                                ) : <Label>Tags {isTagRequired && <span className="text-destructive">*</span>}</Label> }
                             </div>
                            <Popover open={open} onOpenChange={setOpen}>
                                 <div className="flex gap-2">
                                 <PopoverTrigger asChild>
-                                    <Command>
+                                    <Command className='floating-input'>
                                         <CommandInput
                                             placeholder="Search tags..."
                                             value={inputValue}
@@ -553,50 +550,64 @@ function ExpenseForm({
                                 id="amount"
                                 type="number"
                                 {...field}
+                                data-has-value={!!field.value}
+                                currencySymbol="₹"
                             />
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                         <FormItem className="grid grid-cols-2 gap-2 pt-2">
-                             <Popover>
-                                <PopoverTrigger asChild>
-                                     <button type="button" className="w-full">
-                                         <FloatingLabelInput
-                                            label="Date"
-                                            id="date"
-                                            readOnly
-                                            value={format(field.value, "PPP")}
-                                            rightIcon={<CalendarIcon className="h-5 w-5"/>}
-                                        />
-                                     </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/>
-                                </PopoverContent>
-                            </Popover>
-                            <FloatingLabelInput
-                                label="Time"
-                                id="time"
-                                type="time"
-                                value={format(field.value, "HH:mm")}
-                                onChange={(e) => {
-                                    const [hours, minutes] = e.target.value.split(':').map(Number);
-                                    const newDate = new Date(field.value);
-                                    newDate.setHours(hours);
-                                    newDate.setMinutes(minutes);
-                                    field.onChange(newDate);
-                                }}
-                                rightIcon={<Clock className="h-5 w-5"/>}
-                            />
-                            <FormMessage className="col-span-2" />
-                        </FormItem>
-                    )}
-                />
+                 <div className="grid grid-cols-2 gap-2 pt-2">
+                    <FormField
+                        control={form.control}
+                        name="date"
+                        render={({ field }) => (
+                             <FormItem>
+                                 <Popover>
+                                    <PopoverTrigger asChild>
+                                         <button type="button" className="w-full">
+                                             <FloatingLabelInput
+                                                label="Date"
+                                                id="date"
+                                                readOnly
+                                                value={format(field.value, "PPP")}
+                                                rightIcon={<CalendarIcon className="h-5 w-5"/>}
+                                                data-has-value={true}
+                                            />
+                                         </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/>
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage className="col-span-2" />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="date"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FloatingLabelInput
+                                    label="Time"
+                                    id="time"
+                                    type="time"
+                                    value={format(field.value, "HH:mm")}
+                                    onChange={(e) => {
+                                        const [hours, minutes] = e.target.value.split(':').map(Number);
+                                        const newDate = new Date(field.value);
+                                        newDate.setHours(hours);
+                                        newDate.setMinutes(minutes);
+                                        field.onChange(newDate);
+                                    }}
+                                    rightIcon={<Clock className="h-5 w-5"/>}
+                                    data-has-value={true}
+                                />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 
                  {fieldOrder.map(fieldName => formFields[fieldName])}
             </form>

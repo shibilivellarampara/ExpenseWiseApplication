@@ -105,6 +105,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  .floating-input:focus-within {
+    @apply border-primary ring-1 ring-primary;
+  }
 }
 
 @layer components {
@@ -165,8 +168,3 @@
 .PhoneInputCountrySelectArrow {
     display: none;
 }
-
-
-
-
-

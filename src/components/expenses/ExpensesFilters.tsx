@@ -292,3 +292,5 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
         </div>
     );
 }
+
+    

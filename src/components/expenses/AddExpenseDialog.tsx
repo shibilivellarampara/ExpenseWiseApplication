@@ -57,6 +57,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '../ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
+import { ScrollArea } from '../ui/scroll-area';
 
 
 // Function to create a dynamic schema
@@ -80,6 +81,10 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
   if (settings?.isTagRequired) {
       schema.shape.tagIds = z.array(z.string()).min(1, 'At least one tag is required.');
   }
+  if (settings?.isCategoryRequired) {
+      schema.shape.categoryId = z.string().min(1, 'Category is required.');
+  }
+
 
   return schema;
 };
@@ -382,10 +387,10 @@ function ExpenseForm({
                             </div>
                         </FormLabel>
                         <div className="flex gap-2 col-span-3">
-                            <Select onValueChange={field.onChange} value={field.value || 'no-category'}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                 <SelectTrigger className="w-full">
-                                    {field.value && field.value !== 'no-category' ? (
+                                    {field.value ? (
                                         <div className="flex items-center">
                                             {renderIcon(categories.find(c => c.id === field.value)?.icon)}
                                             {categories.find(c => c.id === field.value)?.name || "Select a category"}
@@ -394,7 +399,7 @@ function ExpenseForm({
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
+                                    {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="">No Category</SelectItem>}
                                     {categories?.map(cat => (
                                         <SelectItem key={cat.id} value={cat.id}>
                                             <div className="flex items-center">
@@ -495,26 +500,29 @@ function ExpenseForm({
                                     </PopoverTrigger>
                                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                                         <Command>
+                                            <CommandInput placeholder="Search tags..." />
                                             <CommandList>
-                                                {filteredTags.length === 0 && <CommandEmpty>No results found.</CommandEmpty>}
-                                                <CommandGroup>
-                                                    <div className="p-1">
-                                                        <div className="grid grid-cols-2 gap-1">
-                                                            {filteredTags.map(tag => (
-                                                                <CommandItem
-                                                                    key={tag.id}
-                                                                    value={tag.name}
-                                                                    onSelect={() => handleSelect(tag.id)}
-                                                                    className="flex items-center gap-2"
-                                                                >
-                                                                    {renderIcon(tag.icon)}
-                                                                    <span>{tag.name}</span>
-                                                                    <Check className={cn("ml-auto h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
-                                                                </CommandItem>
-                                                            ))}
+                                                <ScrollArea className="h-48">
+                                                    <CommandEmpty>No results found.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        <div className="p-1">
+                                                            <div className="grid grid-cols-2 gap-1">
+                                                                {filteredTags.map(tag => (
+                                                                    <CommandItem
+                                                                        key={tag.id}
+                                                                        value={tag.name}
+                                                                        onSelect={() => handleSelect(tag.id)}
+                                                                        className="flex items-center gap-2"
+                                                                    >
+                                                                        {renderIcon(tag.icon)}
+                                                                        <span>{tag.name}</span>
+                                                                        <Check className={cn("ml-auto h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
+                                                                    </CommandItem>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </CommandGroup>
+                                                    </CommandGroup>
+                                                </ScrollArea>
                                             </CommandList>
                                         </Command>
                                     </PopoverContent>
@@ -839,7 +847,7 @@ function useExpenseForm({
             amount: '' as any,
             date: new Date(),
             accountId: '',
-            categoryId: 'no-category',
+            categoryId: '',
             description: '',
             tagIds: [],
         }
@@ -859,7 +867,7 @@ function useExpenseForm({
                     amount: expenseToEdit.amount,
                     date: expenseToEdit.date,
                     accountId: expenseToEdit.account?.id || '',
-                    categoryId: expenseToEdit.category?.id || 'no-category',
+                    categoryId: expenseToEdit.category?.id || '',
                     description: expenseToEdit.description || '',
                     tagIds: expenseToEdit.tags?.map(t => t.id) || [],
                 });
@@ -1083,3 +1091,5 @@ function useExpenseForm({
       tags: tags || []
     };
 }
+
+    

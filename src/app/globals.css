@@ -117,6 +117,10 @@
     background-color: var(--badge-bg-dark);
     color: var(--badge-text-dark);
   }
+  .chat .badge-colorful {
+    background-color: var(--badge-bg-light);
+    color: var(--badge-text-light);
+  }
 }
 
 
@@ -161,6 +165,7 @@
 .PhoneInputCountrySelectArrow {
     display: none;
 }
+
 
 
 

@@ -106,7 +106,7 @@
     @apply bg-background text-foreground;
   }
   .floating-input:focus-within {
-    @apply border-primary ring-1 ring-primary;
+    @apply border-primary;
   }
   /* Hide spinner arrows on number inputs */
   input[type=number]::-webkit-inner-spin-button,

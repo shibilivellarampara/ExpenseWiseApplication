@@ -35,7 +35,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
-import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, Check, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, Check, Calendar as CalendarIcon, Clock, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
@@ -57,6 +57,7 @@ import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '../ui/scroll-area';
 import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -90,14 +91,22 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
 interface QuickAddItemDialogProps {
     type: 'Category' | 'Tag';
     onSave: (name: string, icon: string) => Promise<string | undefined>;
+    onOpenChange?: (open: boolean) => void;
     children: React.ReactNode;
 }
 
-function QuickAddItemDialog({ type, onSave, children }: QuickAddItemDialogProps) {
+function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddItemDialogProps) {
     const [open, setOpen] = useState(false);
     const [name, setName] = useState('');
     const [icon, setIcon] = useState(type === 'Category' ? 'Shapes' : 'Tag');
     const [isSaving, setIsSaving] = useState(false);
+
+    const handleOpen = (newOpen: boolean) => {
+        setOpen(newOpen);
+        if (onOpenChange) {
+            onOpenChange(newOpen);
+        }
+    }
 
     const renderIcon = (iconName: string) => {
         const IconComponent = (LucideIcons as any)[iconName];
@@ -109,7 +118,7 @@ function QuickAddItemDialog({ type, onSave, children }: QuickAddItemDialogProps)
         setIsSaving(true);
         const newId = await onSave(name, icon);
         if (newId) {
-            setOpen(false);
+            handleOpen(false);
             setName('');
             setIcon(type === 'Category' ? 'Shapes' : 'Tag');
         }
@@ -117,7 +126,7 @@ function QuickAddItemDialog({ type, onSave, children }: QuickAddItemDialogProps)
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent>
                 <DialogHeader>
@@ -147,7 +156,7 @@ function QuickAddItemDialog({ type, onSave, children }: QuickAddItemDialogProps)
                     </Popover>
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => handleOpen(false)}>Cancel</Button>
                     <Button onClick={handleSave} disabled={isSaving || !name}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save
@@ -158,9 +167,37 @@ function QuickAddItemDialog({ type, onSave, children }: QuickAddItemDialogProps)
     );
 }
 
+function DateTimePicker({ field }: { field: any }) {
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const dateValue = e.target.value;
+        field.onChange(new Date(dateValue));
+    };
+
+    const formatForInput = (date: Date): string => {
+        if (!date) return '';
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    return (
+        <FormControl>
+            <Input
+                type="datetime-local"
+                value={formatForInput(field.value)}
+                onChange={handleDateChange}
+            />
+        </FormControl>
+    );
+}
+
+
 // New FloatingLabelInput component
-const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string, rightIcon?: React.ReactNode, currencySymbol?: string }>(
-    ({ className, label, id, rightIcon, currencySymbol, ...props }, ref) => {
+const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string, rightIcon?: React.ReactNode }>(
+    ({ className, label, id, rightIcon, ...props }, ref) => {
         const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
         return (
             <div className="relative">
@@ -170,7 +207,7 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     placeholder=" "
                     className={cn(
                         "peer h-14 pt-5 text-base floating-input", 
-                        rightIcon ? "pr-10" : "", 
+                        rightIcon ? "pr-10" : "",
                         className
                     )}
                     data-has-value={hasValue}
@@ -179,9 +216,9 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                 <Label
                     htmlFor={id}
                     className={cn(
-                        "absolute left-3 text-muted-foreground transition-all bg-transparent px-1 pointer-events-none",
-                         "top-1/2 -translate-y-1/2 text-base peer-focus:top-2 peer-focus:text-xs peer-focus:font-medium",
-                         "peer-data-[has-value=true]:top-2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium"
+                        "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
+                         "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
+                         "peer-data-[has-value=true]:top-0 peer-data-[has-value=true]:-translate-y-1/2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium"
                     )}
                 >
                     {label}
@@ -199,7 +236,7 @@ FloatingLabelInput.displayName = 'FloatingLabelInput';
 
 const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof SelectTrigger> & { label: string; children: React.ReactNode; onValueChange: (value: string) => void; value?: string }>(
     ({ className, label, id, children, onValueChange, value, ...props }, ref) => {
-        const hasValue = value && value !== '' && value !== 'no-category';
+        const hasValue = !!value;
         return (
             <div className="relative">
                  <Select onValueChange={onValueChange} value={value}>
@@ -325,6 +362,7 @@ function ExpenseForm({
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
     
     const selectedTagIds = form.watch('tagIds') || [];
+    const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
 
     const fieldOrder = userProfile?.transactionFieldOrder || ['description', 'accountId', 'categoryId', 'tagIds'];
 
@@ -384,10 +422,10 @@ function ExpenseForm({
                          <FloatingLabelSelect
                             label={`Category${isCategoryRequired && transactionType === 'expense' ? ' *' : ''}`}
                             id="categoryId"
-                            onValueChange={(value) => field.onChange(value === 'no-category' ? '' : value)}
-                            value={field.value || 'no-category'}
+                            onValueChange={field.onChange}
+                            value={field.value}
                         >
-                             {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
+                             {!isCategoryRequired && <SelectItem value="">No Category</SelectItem>}
                              {categories?.map(cat => (
                                  <SelectItem key={cat.id} value={cat.id}>
                                      <div className="flex items-center">
@@ -408,9 +446,7 @@ function ExpenseForm({
                 control={form.control}
                 name="tagIds"
                 render={({ field }) => {
-                    const [open, setOpen] = useState(false);
                     const [inputValue, setInputValue] = useState("");
-                    const inputRef = React.useRef<HTMLInputElement>(null);
 
                     const handleSelect = (tagId: string) => {
                         const currentTags = field.value || [];
@@ -420,60 +456,58 @@ function ExpenseForm({
                                 ? currentTags.filter(id => id !== tagId) 
                                 : [...currentTags, tagId]
                         );
-                        setInputValue("");
                     };
 
-                    const filteredTags = tags.filter(tag => 
-                        !selectedTagIds.includes(tag.id) &&
-                        tag.name.toLowerCase().includes(inputValue.toLowerCase())
-                    );
-                    
                     const selectedTagObjects = selectedTagIds.map(id => tags.find(t => t.id === id)).filter(Boolean) as Tag[];
 
                     return (
                         <FormItem>
-                             <div className="flex gap-2">
-                                <Popover open={open} onOpenChange={setOpen}>
-                                    <PopoverTrigger asChild>
-                                        <div 
-                                            className="flex flex-wrap items-center gap-1.5 p-2 border border-input rounded-md h-auto min-h-14 cursor-text floating-input flex-1"
-                                            onClick={() => inputRef.current?.focus()}
-                                        >
-                                            {selectedTagObjects.map(tag => (
-                                                <Badge
-                                                    key={tag.id}
-                                                    style={generateColorStyle(tag.name)}
-                                                    className="badge-colorful flex items-center gap-1"
-                                                >
-                                                    {renderIcon(tag.icon, "h-3 w-3")}
-                                                    {tag.name}
-                                                    <button
-                                                        type="button"
-                                                        className="focus:outline-none"
-                                                        onClick={(e) => { e.stopPropagation(); handleSelect(tag.id); }}
-                                                    >
-                                                        <X className="h-3 w-3" />
-                                                    </button>
-                                                </Badge>
-                                            ))}
-                                            <input
-                                                ref={inputRef}
-                                                type="text"
-                                                placeholder={selectedTagIds.length === 0 ? `Tags ${isTagRequired ? '*' : ''}`: 'Search...'}
-                                                value={inputValue}
-                                                onChange={(e) => setInputValue(e.target.value)}
-                                                onFocus={() => setOpen(true)}
-                                                className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
-                                            />
-                                        </div>
-                                    </PopoverTrigger>
-                                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                        <Command>
-                                          <CommandList>
+                            <DropdownMenu open={tagDropdownOpen} onOpenChange={setTagDropdownOpen}>
+                                <div className="relative">
+                                    <DropdownMenuTrigger asChild>
+                                        <button type="button" className={cn("peer h-14 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-between floating-input text-left")} data-has-value={selectedTagIds.length > 0}>
+                                            <div className="flex-1 pt-3">
+                                                 {selectedTagIds.length > 0 ? (
+                                                    <div className="flex flex-wrap items-center gap-1.5">
+                                                        {selectedTagObjects.map(tag => (
+                                                             <Badge
+                                                                key={tag.id}
+                                                                style={generateColorStyle(tag.name)}
+                                                                className="badge-colorful"
+                                                            >
+                                                                {tag.name}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-muted-foreground">&nbsp;</span>
+                                                )}
+                                            </div>
+                                            <ChevronDown className="h-4 w-4 opacity-50" />
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                     <Label className={cn(
+                                        "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
+                                        "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
+                                        selectedTagIds.length > 0 && "top-0 -translate-y-1/2 text-xs font-medium"
+                                    )}>
+                                        Tags {isTagRequired ? '*' : ''}
+                                    </Label>
+                                </div>
+                                <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] p-0" align="start">
+                                    <Command>
+                                        <CommandInput 
+                                            placeholder="Search tags..."
+                                            value={inputValue}
+                                            onValueChange={setInputValue}
+                                        />
+                                        <CommandList>
+                                            <CommandEmpty>No results found.</CommandEmpty>
                                             <ScrollArea className="h-48">
                                                 <CommandGroup>
-                                                    <div className="p-1">
-                                                        {filteredTags.map(tag => (
+                                                    {tags.map(tag => {
+                                                         if (!tag.name.toLowerCase().includes(inputValue.toLowerCase())) return null;
+                                                         return (
                                                             <CommandItem
                                                                 key={tag.id}
                                                                 value={tag.name}
@@ -486,18 +520,22 @@ function ExpenseForm({
                                                                 </div>
                                                                 <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
                                                             </CommandItem>
-                                                        ))}
-                                                    </div>
+                                                        )
+                                                    })}
                                                 </CommandGroup>
                                             </ScrollArea>
-                                          </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                                 <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
-                                    <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
-                                </QuickAddItemDialog>
-                                </div>
+                                            <div className="p-1 border-t">
+                                                <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} onOpenChange={(open) => !open && setTagDropdownOpen(true)}>
+                                                     <CommandItem onSelect={(e) => { e.preventDefault()}} className="flex items-center gap-2 text-primary">
+                                                        <PlusCircle className="h-4 w-4" />
+                                                        Create new tag
+                                                    </CommandItem>
+                                                </QuickAddItemDialog>
+                                            </div>
+                                        </CommandList>
+                                    </Command>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             <FormMessage />
                         </FormItem>
                     )
@@ -522,13 +560,13 @@ function ExpenseForm({
                                 className="grid grid-cols-2 gap-4"
                                 >
                                     <FormItem>
-                                        <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'expense' ? "border-destructive text-destructive" : "border-muted")}>
+                                        <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'expense' ? "border-destructive text-destructive" : "border-muted")}>
                                             <RadioGroupItem value="expense" className="sr-only" />
                                             <span>Cash Out</span>
                                         </Label>
                                     </FormItem>
                                      <FormItem>
-                                        <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground", field.value === 'income' ? "border-green-600 text-green-600" : "border-muted")}>
+                                        <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'income' ? "border-green-600 text-green-600" : "border-muted")}>
                                             <RadioGroupItem value="income" className="sr-only" />
                                             <span>Cash In</span>
                                         </Label>
@@ -556,55 +594,17 @@ function ExpenseForm({
                         </FormItem>
                     )}
                 />
-                 <div className="grid grid-cols-2 gap-2 pt-2">
-                    <FormField
-                        control={form.control}
-                        name="date"
-                        render={({ field }) => (
-                             <FormItem>
-                                 <Popover>
-                                    <PopoverTrigger asChild>
-                                         <button type="button" className="w-full">
-                                             <FloatingLabelInput
-                                                label="Date"
-                                                id="date"
-                                                readOnly
-                                                value={format(field.value, "PPP")}
-                                                rightIcon={<CalendarIcon className="h-5 w-5"/>}
-                                            />
-                                         </button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/>
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage className="col-span-2" />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="date"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FloatingLabelInput
-                                    label="Time"
-                                    id="time"
-                                    type="time"
-                                    value={format(field.value, "HH:mm")}
-                                    onChange={(e) => {
-                                        const [hours, minutes] = e.target.value.split(':').map(Number);
-                                        const newDate = new Date(field.value);
-                                        newDate.setHours(hours);
-                                        newDate.setMinutes(minutes);
-                                        field.onChange(newDate);
-                                    }}
-                                    rightIcon={<Clock className="h-5 w-5"/>}
-                                />
-                            </FormItem>
-                        )}
-                    />
-                </div>
+                
+                <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                        <FormItem>
+                            <DateTimePicker field={field} />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 
                  {fieldOrder.map(fieldName => formFields[fieldName])}
             </form>
@@ -934,7 +934,7 @@ function useExpenseForm({
                 createdAt: isAddOperation ? serverTimestamp() : expenseToEdit!.createdAt,
                 updatedAt: serverTimestamp(),
                 tagIds: values.tagIds || [],
-                categoryId: values.categoryId === 'no-category' ? null : values.categoryId,
+                categoryId: values.categoryId,
             };
             
             delete expenseData.sharedExpenseId;

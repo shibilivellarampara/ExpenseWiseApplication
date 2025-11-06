@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -381,10 +380,7 @@ function ExpenseForm({
                 render={({ field }) => (
                     <FormItem className="grid grid-cols-4 items-center gap-x-2">
                         <FormLabel className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                                Category
-                                {isCategoryRequired && transactionType === 'expense' && <span className="text-destructive">*</span>}
-                            </div>
+                            Category {isCategoryRequired && transactionType === 'expense' && <span className="text-destructive">*</span>}
                         </FormLabel>
                         <div className="flex gap-2 col-span-3">
                             <Select onValueChange={field.onChange} value={field.value}>
@@ -455,9 +451,7 @@ function ExpenseForm({
                     return (
                         <FormItem className="grid grid-cols-4 items-start gap-x-2">
                             <FormLabel className="text-right pt-2">
-                                <div className="flex items-center justify-end gap-1">
-                                    Tags {isTagRequired && <span className="text-destructive">*</span>}
-                                </div>
+                                Tags {isTagRequired && <span className="text-destructive">*</span>}
                             </FormLabel>
                             <div className="flex gap-2 col-span-3">
                                 <Popover open={open} onOpenChange={setOpen}>
@@ -1091,5 +1085,3 @@ function useExpenseForm({
       tags: tags || []
     };
 }
-
-    

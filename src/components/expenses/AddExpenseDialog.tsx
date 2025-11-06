@@ -171,7 +171,6 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     className={cn(
                         "peer h-14 pt-5 text-base floating-input", 
                         rightIcon ? "pr-10" : "", 
-                        currencySymbol ? "pl-7" : "",
                         className
                     )}
                     data-has-value={hasValue}
@@ -182,13 +181,11 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     className={cn(
                         "absolute left-3 text-muted-foreground transition-all bg-transparent px-1 pointer-events-none",
                          "top-1/2 -translate-y-1/2 text-base peer-focus:top-2 peer-focus:text-xs peer-focus:font-medium",
-                         "peer-data-[has-value=true]:top-2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium",
-                         currencySymbol ? "peer-focus:left-7 peer-data-[has-value=true]:left-7" : "peer-focus:left-3 peer-data-[has-value=true]:left-3"
+                         "peer-data-[has-value=true]:top-2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium"
                     )}
                 >
                     {label}
                 </Label>
-                {currencySymbol && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground peer-focus:opacity-100 peer-data-[has-value=true]:opacity-100">₹</span>}
                 {rightIcon && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                         {rightIcon}
@@ -202,7 +199,7 @@ FloatingLabelInput.displayName = 'FloatingLabelInput';
 
 const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof SelectTrigger> & { label: string; children: React.ReactNode; onValueChange: (value: string) => void; value?: string }>(
     ({ className, label, id, children, onValueChange, value, ...props }, ref) => {
-        const hasValue = value && value !== '';
+        const hasValue = value && value !== '' && value !== 'no-category';
         return (
             <div className="relative">
                  <Select onValueChange={onValueChange} value={value}>
@@ -475,7 +472,7 @@ function ExpenseForm({
                                           <CommandList>
                                             <ScrollArea className="h-48">
                                                 <CommandGroup>
-                                                    <div className="grid grid-cols-2 gap-1 p-1">
+                                                    <div className="p-1">
                                                         {filteredTags.map(tag => (
                                                             <CommandItem
                                                                 key={tag.id}
@@ -554,7 +551,6 @@ function ExpenseForm({
                                 id="amount"
                                 type="number"
                                 {...field}
-                                currencySymbol="₹"
                             />
                             <FormMessage />
                         </FormItem>

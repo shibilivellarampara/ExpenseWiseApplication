@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -24,12 +25,12 @@ export default function ExpensesPage() {
     const searchParams = useSearchParams();
 
     // Initialize filters from URL search params
-    const getInitialFilters = () => {
+    const getInitialFilters = (): Filters => {
         const accountsParam = searchParams.get('accounts');
         const typeParam = searchParams.get('type');
 
         return {
-            dateRange: { from: undefined, to: undefined } as DateRange,
+            dateRange: { from: undefined, to: undefined },
             type: (typeParam === 'income' || typeParam === 'expense') ? typeParam : 'all',
             categories: [] as string[],
             accounts: accountsParam ? accountsParam.split(',') : [] as string[],

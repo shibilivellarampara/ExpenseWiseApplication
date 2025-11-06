@@ -37,7 +37,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X } from 'lucide-react';
+import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition, Fragment } from 'react';
@@ -53,8 +53,7 @@ import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
 import { availableIcons } from '@/lib/defaults';
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { Checkbox } from '../ui/checkbox';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Badge } from '../ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
@@ -62,7 +61,7 @@ import { useDebounce } from 'use-debounce';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
-  return z.object({
+  const schema = z.object({
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
@@ -70,12 +69,19 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
     
     categoryId: z.string().optional(),
     
-    description: settings?.isDescriptionRequired
-      ? z.string().min(1, 'Description is required.')
-      : z.string().optional(),
-
+    description: z.string().optional(),
+    
     tagIds: z.array(z.string()).optional(),
   });
+
+  if (settings?.isDescriptionRequired) {
+    schema.shape.description = z.string().min(1, 'Description is required.');
+  }
+  if (settings?.isTagRequired) {
+      schema.shape.tagIds = z.array(z.string()).min(1, 'At least one tag is required.');
+  }
+
+  return schema;
 };
 
 
@@ -208,6 +214,7 @@ function ExpenseForm({
     const { toast } = useToast();
     const transactionType = form.watch('type');
     const descriptionValue = form.watch('description');
+    const [tagSearch, setTagSearch] = useState('');
     
     const [debouncedDescription] = useDebounce(descriptionValue, 500);
     const [isSuggesting, startSuggestionTransition] = useTransition();
@@ -429,8 +436,8 @@ function ExpenseForm({
                             </div>
                         </FormLabel>
                         <div className="flex gap-2 col-span-3">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
+                            <Popover>
+                                <PopoverTrigger asChild>
                                     <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10">
                                         {selectedTags.length > 0 ? (
                                             <div className="flex flex-wrap gap-1">
@@ -468,30 +475,50 @@ function ExpenseForm({
                                             "Select tags..."
                                         )}
                                     </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] p-0" align="start">
-                                    <div className="grid grid-cols-2 gap-1 p-1">
-                                    {tags.map(tag => (
-                                        <DropdownMenuCheckboxItem
-                                            key={tag.id}
-                                            checked={field.value?.includes(tag.id)}
-                                            onCheckedChange={(checked) => {
-                                                const newValue = checked
-                                                    ? [...(field.value || []), tag.id]
-                                                    : (field.value || []).filter((id: string) => id !== tag.id);
-                                                field.onChange(newValue);
-                                            }}
-                                            onSelect={(e) => e.preventDefault()}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                {renderIcon(tag.icon)}
-                                                <span>{tag.name}</span>
-                                            </div>
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-                                    </div>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                                     <Command>
+                                        <CommandInput 
+                                            placeholder="Search tags..." 
+                                            value={tagSearch}
+                                            onValueChange={setTagSearch}
+                                        />
+                                        <CommandList>
+                                            <CommandEmpty>No results found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {tags.filter(tag => tag.name.toLowerCase().includes(tagSearch.toLowerCase())).map(tag => {
+                                                    const isSelected = field.value?.includes(tag.id);
+                                                    return (
+                                                        <CommandItem
+                                                            key={tag.id}
+                                                            value={tag.name}
+                                                            onSelect={() => {
+                                                                const newValue = isSelected
+                                                                    ? (field.value || []).filter((id: string) => id !== tag.id)
+                                                                    : [...(field.value || []), tag.id];
+                                                                field.onChange(newValue);
+                                                            }}
+                                                        >
+                                                            <div className={cn(
+                                                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                                                isSelected
+                                                                    ? "bg-primary text-primary-foreground"
+                                                                    : "opacity-50 [&_svg]:invisible"
+                                                            )}>
+                                                              <Check className={cn("h-4 w-4")} />
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                {renderIcon(tag.icon)}
+                                                                <span>{tag.name}</span>
+                                                            </div>
+                                                        </CommandItem>
+                                                    )
+                                                })}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
 
                             <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
                                <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>

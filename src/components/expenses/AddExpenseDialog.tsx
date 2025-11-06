@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -379,7 +380,7 @@ function ExpenseForm({
                             onValueChange={field.onChange}
                             value={field.value}
                         >
-                             {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="">No Category</SelectItem>}
+                             {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
                              {categories?.map(cat => (
                                  <SelectItem key={cat.id} value={cat.id}>
                                      <div className="flex items-center">
@@ -464,29 +465,31 @@ function ExpenseForm({
                                 </QuickAddItemDialog>
                                 </div>
                                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                    <CommandList>
-                                        <ScrollArea className="h-48">
-                                            <CommandEmpty>No results found.</CommandEmpty>
-                                            <CommandGroup>
-                                                <div className="grid grid-cols-2 gap-1 p-1">
-                                                    {filteredTags.map(tag => (
-                                                        <CommandItem
-                                                            key={tag.id}
-                                                            value={tag.name}
-                                                            onSelect={() => handleSelect(tag.id)}
-                                                            className="flex items-center justify-between gap-2"
-                                                        >
-                                                            <div className="flex items-center gap-2 truncate">
-                                                                {renderIcon(tag.icon)}
-                                                                <span className="truncate">{tag.name}</span>
-                                                            </div>
-                                                            <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
-                                                        </CommandItem>
-                                                    ))}
-                                                </div>
-                                            </CommandGroup>
-                                        </ScrollArea>
-                                    </CommandList>
+                                    <Command>
+                                        <CommandList>
+                                            <ScrollArea className="h-48">
+                                                <CommandEmpty>No results found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    <div className="grid grid-cols-2 gap-1 p-1">
+                                                        {filteredTags.map(tag => (
+                                                            <CommandItem
+                                                                key={tag.id}
+                                                                value={tag.name}
+                                                                onSelect={() => handleSelect(tag.id)}
+                                                                className="flex items-center justify-between gap-2"
+                                                            >
+                                                                <div className="flex items-center gap-2 truncate">
+                                                                    {renderIcon(tag.icon)}
+                                                                    <span className="truncate">{tag.name}</span>
+                                                                </div>
+                                                                <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
+                                                            </CommandItem>
+                                                        ))}
+                                                    </div>
+                                                </CommandGroup>
+                                            </ScrollArea>
+                                        </CommandList>
+                                    </Command>
                                 </PopoverContent>
                             </Popover>
                             <FormMessage />

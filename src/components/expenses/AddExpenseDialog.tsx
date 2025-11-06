@@ -4,7 +4,6 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogFooter,
   DialogTrigger,
@@ -14,7 +13,6 @@ import {
   Drawer,
   DrawerTrigger,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -28,7 +26,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useForm, UseFormReturn } from 'react-hook-form';
@@ -40,7 +37,7 @@ import { Input, InputProps } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, Check, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as React from 'react';
-import { useState, useMemo, useEffect, useCallback, useTransition, Fragment, useRef } from 'react';
+import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy } from 'firebase/firestore';
@@ -59,7 +56,6 @@ import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '../ui/scroll-area';
 import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
-
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -85,7 +81,6 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
   if (settings?.isCategoryRequired) {
       schema = schema.extend({ categoryId: z.string().min(1, 'Category is required.') });
   }
-
 
   return schema;
 };
@@ -384,7 +379,7 @@ function ExpenseForm({
                             label={`Category${isCategoryRequired && transactionType === 'expense' ? ' *' : ''}`}
                             id="categoryId"
                             onValueChange={(value) => field.onChange(value === 'no-category' ? '' : value)}
-                            value={field.value}
+                            value={field.value || 'no-category'}
                         >
                              {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
                              {categories?.map(cat => (
@@ -472,7 +467,7 @@ function ExpenseForm({
                                 </div>
                                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                                     <Command>
-                                    <CommandList>
+                                      <CommandList>
                                         <ScrollArea className="h-48">
                                             <CommandGroup>
                                                 <div className="grid grid-cols-2 gap-1 p-1">
@@ -493,7 +488,7 @@ function ExpenseForm({
                                                 </div>
                                             </CommandGroup>
                                         </ScrollArea>
-                                    </CommandList>
+                                      </CommandList>
                                     </Command>
                                 </PopoverContent>
                             </Popover>

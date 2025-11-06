@@ -38,7 +38,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, CalendarIcon } from 'lucide-react';
+import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -58,8 +58,6 @@ import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
-import { Calendar } from '../ui/calendar';
-import { format, setHours, setMinutes, getHours, getMinutes } from 'date-fns';
 
 
 // Function to create a dynamic schema
@@ -82,81 +80,31 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
 
 
 function DateTimePicker({ field }: { field: any }) {
-    const [time, setTime] = useState(() => {
-        const date = field.value || new Date();
-        return format(date, "HH:mm");
-    });
-
-    const handleDateSelect = (selectedDate: Date | undefined) => {
-        if (!selectedDate) return;
-
-        const [hours, minutes] = time.split(':').map(Number);
-        const newDate = setMinutes(setHours(selectedDate, hours), minutes);
-        field.onChange(newDate);
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const dateValue = e.target.value;
+        // The input gives a string, so we convert it to a Date object
+        field.onChange(new Date(dateValue));
     };
 
-    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newTime = e.target.value;
-        setTime(newTime);
-        const [hours, minutes] = newTime.split(':').map(Number);
-        const newDate = setMinutes(setHours(field.value, hours), minutes);
-        field.onChange(newDate);
-    }
-    
+    // Format the date from the form state into 'YYYY-MM-DDTHH:mm' for the input
+    const formatForInput = (date: Date): string => {
+        if (!date) return '';
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
     return (
-        <div className="grid grid-cols-2 gap-2">
-            <FormField
-                name="date-day"
-                render={() => (
-                    <FormItem>
-                        <FormLabel>Date</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                        )}
-                                    >
-                                        {field.value ? (
-                                        format(field.value, "PPP")
-                                        ) : (
-                                        <span>Pick a date</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={handleDateSelect}
-                                initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
-                    </FormItem>
-                )}
+        <FormControl>
+            <Input
+                type="datetime-local"
+                value={formatForInput(field.value)}
+                onChange={handleDateChange}
             />
-            <FormField
-                name="date-time"
-                render={() => (
-                    <FormItem>
-                        <FormLabel>Time</FormLabel>
-                        <FormControl>
-                            <Input
-                                type="time"
-                                value={time}
-                                onChange={handleTimeChange}
-                            />
-                        </FormControl>
-                    </FormItem>
-                )}
-            />
-        </div>
+        </FormControl>
     );
 }
 
@@ -351,44 +299,48 @@ function ExpenseForm({
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                    <FormItem>
-                        <div className="flex justify-between items-center">
-                            <FormLabel>
-                                Description {isDescriptionRequired ? '' : '(Optional)'}
-                            </FormLabel>
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right flex items-center justify-end gap-1">
+                            Description {isDescriptionRequired ? '' : '(Optional)'}
                             {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                        </FormLabel>
+                        <FormControl className="col-span-3">
+                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
+                        </FormControl>
+                        <div className="col-start-2 col-span-3">
+                            <FormMessage />
                         </div>
-                    <FormControl>
-                        <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
-                    </FormControl>
-                    <FormMessage />
                     </FormItem>
                 )}
             />
         ),
         accountId: (
-             <div key="amount-account" className="grid grid-cols-2 gap-2">
+            <>
                 <FormField
+                    key="amount"
                     control={form.control}
                     name="amount"
                     render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Amount</FormLabel>
-                        <FormControl>
+                        <FormItem className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right">Amount</FormLabel>
+                        <FormControl className="col-span-3">
                            <Input type="number" placeholder="Enter amount" {...field} />
                         </FormControl>
-                        <FormMessage />
+                         <div className="col-start-2 col-span-3">
+                            <FormMessage />
+                        </div>
                         </FormItem>
                     )}
-                    />
-                <FormField
+                />
+                 <FormField
+                    key="accountId"
                     control={form.control}
                     name="accountId"
                     render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Account</FormLabel>
+                        <FormItem className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right">Account</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
+                            <FormControl className="col-span-3">
                             <SelectTrigger>
                                 <SelectValue placeholder="Select..." />
                             </SelectTrigger>
@@ -404,11 +356,13 @@ function ExpenseForm({
                             ))}
                             </SelectContent>
                         </Select>
-                        <FormMessage />
+                        <div className="col-start-2 col-span-3">
+                            <FormMessage />
+                        </div>
                         </FormItem>
                     )}
                 />
-            </div>
+            </>
         ),
         categoryId: (
             <FormField
@@ -416,11 +370,11 @@ function ExpenseForm({
                 control={form.control}
                 name="categoryId"
                 render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right">
                             Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
                         </FormLabel>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 col-span-3">
                             <Select onValueChange={field.onChange} value={field.value || 'no-category'}>
                                 <FormControl>
                                 <SelectTrigger className="w-full">
@@ -448,7 +402,9 @@ function ExpenseForm({
                                 <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
                             </QuickAddItemDialog>
                         </div>
-                        <FormMessage />
+                         <div className="col-start-2 col-span-3">
+                            <FormMessage />
+                        </div>
                     </FormItem>
                 )}
             />
@@ -459,11 +415,11 @@ function ExpenseForm({
                 control={form.control}
                 name="tagIds"
                 render={({ field }) => (
-                     <FormItem>
-                        <FormLabel>
+                     <FormItem className="grid grid-cols-4 items-start gap-4">
+                        <FormLabel className="text-right pt-2">
                             Tags {isTagRequired ? '' : '(Optional)'}
                         </FormLabel>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 col-span-3">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10">
@@ -529,7 +485,9 @@ function ExpenseForm({
                                <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
                             </QuickAddItemDialog>
                         </div>
-                        <FormMessage />
+                         <div className="col-start-2 col-span-3">
+                            <FormMessage />
+                        </div>
                     </FormItem>
                 )}
             />
@@ -575,9 +533,12 @@ function ExpenseForm({
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                         <FormItem className="flex flex-col space-y-2">
-                            <DateTimePicker field={field} />
-                            <FormMessage />
+                         <FormItem className="grid grid-cols-4 items-center gap-4">
+                            <FormLabel className="text-right">Date</FormLabel>
+                            <div className="col-span-3">
+                                <DateTimePicker field={field} />
+                                <FormMessage />
+                            </div>
                         </FormItem>
                     )}
                 />

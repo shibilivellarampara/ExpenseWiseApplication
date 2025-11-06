@@ -469,7 +469,7 @@ function ExpenseForm({
                                         )}
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+                                <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] p-0" align="start">
                                     <div className="grid grid-cols-2 gap-1 p-1">
                                     {tags.map(tag => (
                                         <DropdownMenuCheckboxItem

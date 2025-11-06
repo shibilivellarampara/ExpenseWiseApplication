@@ -299,10 +299,13 @@ function ExpenseForm({
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                    <FormItem className="grid grid-cols-4 items-center gap-x-2 gap-y-1">
-                        <FormLabel className="text-right flex items-center justify-end gap-1">
-                            Description {isDescriptionRequired ? '' : '(Optional)'}
-                            {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    <FormItem className="grid grid-cols-4 items-center gap-x-2">
+                        <FormLabel className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                                Description
+                                {isDescriptionRequired && <span className="text-destructive">*</span>}
+                                {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                            </div>
                         </FormLabel>
                         <FormControl className="col-span-3">
                             <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
@@ -321,8 +324,8 @@ function ExpenseForm({
                     control={form.control}
                     name="amount"
                     render={({ field }) => (
-                        <FormItem className="grid grid-cols-4 items-center gap-x-2 gap-y-1">
-                        <FormLabel className="text-right">Amount</FormLabel>
+                        <FormItem className="grid grid-cols-4 items-center gap-x-2">
+                        <FormLabel className="text-right">Amount <span className="text-destructive">*</span></FormLabel>
                         <FormControl className="col-span-3">
                            <Input type="number" placeholder="Enter amount" {...field} />
                         </FormControl>
@@ -337,8 +340,8 @@ function ExpenseForm({
                     control={form.control}
                     name="accountId"
                     render={({ field }) => (
-                        <FormItem className="grid grid-cols-4 items-center gap-x-2 gap-y-1">
-                        <FormLabel className="text-right">Account</FormLabel>
+                        <FormItem className="grid grid-cols-4 items-center gap-x-2">
+                        <FormLabel className="text-right">Account <span className="text-destructive">*</span></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl className="col-span-3">
                             <SelectTrigger>
@@ -370,9 +373,12 @@ function ExpenseForm({
                 control={form.control}
                 name="categoryId"
                 render={({ field }) => (
-                    <FormItem className="grid grid-cols-4 items-center gap-x-2 gap-y-1">
+                    <FormItem className="grid grid-cols-4 items-center gap-x-2">
                         <FormLabel className="text-right">
-                            Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
+                            <div className="flex items-center justify-end gap-1">
+                                Category
+                                {isCategoryRequired && transactionType === 'expense' && <span className="text-destructive">*</span>}
+                            </div>
                         </FormLabel>
                         <div className="flex gap-2 col-span-3">
                             <Select onValueChange={field.onChange} value={field.value || 'no-category'}>
@@ -415,9 +421,12 @@ function ExpenseForm({
                 control={form.control}
                 name="tagIds"
                 render={({ field }) => (
-                     <FormItem className="grid grid-cols-4 items-start gap-x-2 gap-y-1">
+                     <FormItem className="grid grid-cols-4 items-start gap-x-2">
                         <FormLabel className="text-right pt-2">
-                            Tags {isTagRequired ? '' : '(Optional)'}
+                            <div className="flex items-center justify-end gap-1">
+                                Tags
+                                {isTagRequired && <span className="text-destructive">*</span>}
+                            </div>
                         </FormLabel>
                         <div className="flex gap-2 col-span-3">
                             <DropdownMenu>
@@ -506,7 +515,7 @@ function ExpenseForm({
                         name="type"
                         render={({ field }) => (
                             <FormItem className="space-y-3">
-                            <FormLabel>Transaction Type</FormLabel>
+                            <FormLabel>Transaction Type <span className="text-destructive">*</span></FormLabel>
                             <FormControl>
                                 <RadioGroup
                                 onValueChange={field.onChange}
@@ -536,8 +545,8 @@ function ExpenseForm({
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                         <FormItem className="grid grid-cols-4 items-center gap-x-2 gap-y-1">
-                            <FormLabel className="text-right">Date</FormLabel>
+                         <FormItem className="grid grid-cols-4 items-center gap-x-2">
+                            <FormLabel className="text-right">Date <span className="text-destructive">*</span></FormLabel>
                             <div className="col-span-3">
                                 <DateTimePicker field={field} />
                                 <FormMessage />

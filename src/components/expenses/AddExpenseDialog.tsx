@@ -196,8 +196,8 @@ function DateTimePicker({ field }: { field: any }) {
 
 
 // New FloatingLabelInput component
-const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string, rightIcon?: React.ReactNode }>(
-    ({ className, label, id, rightIcon, ...props }, ref) => {
+const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string }>(
+    ({ className, label, id, ...props }, ref) => {
         const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
         return (
             <div className="relative">
@@ -207,7 +207,6 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     placeholder=" "
                     className={cn(
                         "peer h-14 pt-5 text-base floating-input", 
-                        rightIcon ? "pr-10" : "",
                         className
                     )}
                     data-has-value={hasValue}
@@ -223,11 +222,6 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                 >
                     {label}
                 </Label>
-                {rightIcon && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        {rightIcon}
-                    </div>
-                )}
             </div>
         );
     }
@@ -425,7 +419,7 @@ function ExpenseForm({
                             onValueChange={field.onChange}
                             value={field.value}
                         >
-                             {!isCategoryRequired && <SelectItem value="">No Category</SelectItem>}
+                             <SelectItem value="">No Category</SelectItem>
                              {categories?.map(cat => (
                                  <SelectItem key={cat.id} value={cat.id}>
                                      <div className="flex items-center">
@@ -578,7 +572,19 @@ function ExpenseForm({
                         )}
                     />
                 )}
-                 <FormField
+                 
+                <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                        <FormItem>
+                            <DateTimePicker field={field} />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
                     key="amount"
                     control={form.control}
                     name="amount"
@@ -590,17 +596,6 @@ function ExpenseForm({
                                 type="number"
                                 {...field}
                             />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                
-                <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                        <FormItem>
-                            <DateTimePicker field={field} />
                             <FormMessage />
                         </FormItem>
                     )}

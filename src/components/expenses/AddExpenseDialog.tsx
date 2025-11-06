@@ -39,6 +39,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition, Fragment } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
@@ -298,7 +299,7 @@ function ExpenseForm({
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                    <FormItem className="grid grid-cols-4 items-center gap-2">
+                    <FormItem className="grid grid-cols-4 items-center gap-x-2 gap-y-1">
                         <FormLabel className="text-right flex items-center justify-end gap-1">
                             Description {isDescriptionRequired ? '' : '(Optional)'}
                             {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
@@ -320,7 +321,7 @@ function ExpenseForm({
                     control={form.control}
                     name="amount"
                     render={({ field }) => (
-                        <FormItem className="grid grid-cols-4 items-center gap-2">
+                        <FormItem className="grid grid-cols-4 items-center gap-x-2 gap-y-1">
                         <FormLabel className="text-right">Amount</FormLabel>
                         <FormControl className="col-span-3">
                            <Input type="number" placeholder="Enter amount" {...field} />
@@ -336,7 +337,7 @@ function ExpenseForm({
                     control={form.control}
                     name="accountId"
                     render={({ field }) => (
-                        <FormItem className="grid grid-cols-4 items-center gap-2">
+                        <FormItem className="grid grid-cols-4 items-center gap-x-2 gap-y-1">
                         <FormLabel className="text-right">Account</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl className="col-span-3">
@@ -369,7 +370,7 @@ function ExpenseForm({
                 control={form.control}
                 name="categoryId"
                 render={({ field }) => (
-                    <FormItem className="grid grid-cols-4 items-center gap-2">
+                    <FormItem className="grid grid-cols-4 items-center gap-x-2 gap-y-1">
                         <FormLabel className="text-right">
                             Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
                         </FormLabel>
@@ -414,7 +415,7 @@ function ExpenseForm({
                 control={form.control}
                 name="tagIds"
                 render={({ field }) => (
-                     <FormItem className="grid grid-cols-4 items-start gap-2">
+                     <FormItem className="grid grid-cols-4 items-start gap-x-2 gap-y-1">
                         <FormLabel className="text-right pt-2">
                             Tags {isTagRequired ? '' : '(Optional)'}
                         </FormLabel>
@@ -498,7 +499,7 @@ function ExpenseForm({
 
     return (
         <Form {...form}>
-            <form id={id} onSubmit={onSubmit} className="grid items-start gap-4">
+            <form id={id} onSubmit={onSubmit} className="grid items-start gap-3">
                 {!isShared && (
                     <FormField
                         control={form.control}
@@ -535,7 +536,7 @@ function ExpenseForm({
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                         <FormItem className="grid grid-cols-4 items-center gap-2">
+                         <FormItem className="grid grid-cols-4 items-center gap-x-2 gap-y-1">
                             <FormLabel className="text-right">Date</FormLabel>
                             <div className="col-span-3">
                                 <DateTimePicker field={field} />

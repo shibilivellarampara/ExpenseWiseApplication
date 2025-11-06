@@ -10,6 +10,13 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.2.6",
+        date: "2024-08-08",
+        changes: [
+            { type: 'Feature', description: "Added a 'Payment History' option to credit card menus for quick access to payment transactions." },
+        ]
+    },
+    {
         version: "1.2.5",
         date: "2024-08-07",
         changes: [

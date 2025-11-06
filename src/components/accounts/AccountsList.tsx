@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -225,7 +226,10 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                     <div className="flex-grow">
                                         <div className="flex items-center justify-between">
                                             <div className="font-semibold">{item.name}</div>
-                                            <div className="font-bold text-lg text-red-500">
+                                            <div className={cn(
+                                                "font-bold text-lg",
+                                                outstandingAmount > 0 ? "text-red-500" : "text-green-600"
+                                            )}>
                                                 {currencySymbol}{outstandingAmount.toFixed(2)}
                                             </div>
                                         </div>

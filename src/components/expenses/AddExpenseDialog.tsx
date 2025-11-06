@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -349,50 +348,34 @@ function ExpenseForm({
             />
         ),
         accountId: (
-            <React.Fragment key="accountIdFragment">
-                 <FormField
-                    key="amount"
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Amount <span className="text-destructive">*</span></FormLabel>
+             <FormField
+                key="accountId"
+                control={form.control}
+                name="accountId"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Account <span className="text-destructive">*</span></FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                               <Input type="number" placeholder="Enter amount" {...field} />
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select..." />
+                                </SelectTrigger>
                             </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    key="accountId"
-                    control={form.control}
-                    name="accountId"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Account <span className="text-destructive">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select..." />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {activeAccounts?.map(acc => (
-                                    <SelectItem key={acc.id} value={acc.id}>
-                                        <div className="flex items-center">
-                                            {renderIcon(acc.icon)}
-                                            {acc.name}
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </React.Fragment>
+                            <SelectContent>
+                            {activeAccounts?.map(acc => (
+                                <SelectItem key={acc.id} value={acc.id}>
+                                    <div className="flex items-center">
+                                        {renderIcon(acc.icon)}
+                                        {acc.name}
+                                    </div>
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
         ),
         categoryId: (
             <FormField
@@ -466,7 +449,7 @@ function ExpenseForm({
 
                     return (
                         <FormItem>
-                            <FormLabel>
+                             <FormLabel>
                                 Tags {isTagRequired && <span className="text-destructive">*</span>}
                             </FormLabel>
                             {selectedTagIds.length > 0 && (
@@ -490,7 +473,7 @@ function ExpenseForm({
                                 ))}
                                 </div>
                             )}
-                            <Popover open={open} onOpenChange={setOpen}>
+                           <Popover open={open} onOpenChange={setOpen}>
                                 <div className="flex gap-2">
                                 <PopoverTrigger asChild>
                                     <Command>
@@ -582,8 +565,22 @@ function ExpenseForm({
                     name="date"
                     render={({ field }) => (
                          <FormItem>
-                            <FormLabel>Date <span className="text-destructive">*</span></FormLabel>
+                            <FormLabel>Date & Time <span className="text-destructive">*</span></FormLabel>
                             <DateTimePicker field={field} />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    key="amount"
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Amount <span className="text-destructive">*</span></FormLabel>
+                            <FormControl>
+                               <Input type="number" placeholder="Enter amount" {...field} />
+                            </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}

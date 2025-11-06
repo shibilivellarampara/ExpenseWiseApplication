@@ -493,27 +493,30 @@ function ExpenseForm({
                                             </Command>
                                         </div>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                        <CommandList>
-                                            {filteredTags.length === 0 && <CommandEmpty>No results found.</CommandEmpty>}
-                                            <CommandGroup>
-                                                <div className="p-1">
-                                                    <div className="grid grid-cols-2 gap-1">
-                                                        {filteredTags.map(tag => (
-                                                            <CommandItem
-                                                                key={tag.id}
-                                                                value={tag.name}
-                                                                onSelect={() => handleSelect(tag.id)}
-                                                                className="flex items-center gap-2"
-                                                            >
-                                                                {renderIcon(tag.icon)}
-                                                                <span>{tag.name}</span>
-                                                            </CommandItem>
-                                                        ))}
+                                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                                        <Command>
+                                            <CommandList>
+                                                {filteredTags.length === 0 && <CommandEmpty>No results found.</CommandEmpty>}
+                                                <CommandGroup>
+                                                    <div className="p-1">
+                                                        <div className="grid grid-cols-2 gap-1">
+                                                            {filteredTags.map(tag => (
+                                                                <CommandItem
+                                                                    key={tag.id}
+                                                                    value={tag.name}
+                                                                    onSelect={() => handleSelect(tag.id)}
+                                                                    className="flex items-center gap-2"
+                                                                >
+                                                                    {renderIcon(tag.icon)}
+                                                                    <span>{tag.name}</span>
+                                                                    <Check className={cn("ml-auto h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
+                                                                </CommandItem>
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </CommandGroup>
-                                        </CommandList>
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
                                     </PopoverContent>
                                 </Popover>
                                 <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -424,7 +425,7 @@ function ExpenseForm({
                                     Create new category
                                 </div>
                              </QuickAddItemDialog>
-                             <SelectItem value="">No Category</SelectItem>
+                             <SelectItem value="__none__">No Category</SelectItem>
                              {categories?.map(cat => (
                                  <SelectItem key={cat.id} value={cat.id}>
                                      <div className="flex items-center">
@@ -882,7 +883,8 @@ function useExpenseForm({
             const batch = writeBatch(firestore);
             const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
 
-            const selectedCategory = categories.find(c => c.id === values.categoryId);
+            const finalCategoryId = values.categoryId === '__none__' ? undefined : values.categoryId;
+            const selectedCategory = categories.find(c => c.id === finalCategoryId);
             const selectedAccount = accounts.find(a => a.id === values.accountId);
 
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
@@ -913,7 +915,7 @@ function useExpenseForm({
                 createdAt: isAddOperation ? serverTimestamp() : expenseToEdit!.createdAt,
                 updatedAt: serverTimestamp(),
                 tagIds: values.tagIds || [],
-                categoryId: values.categoryId,
+                categoryId: finalCategoryId,
             };
             
             delete expenseData.sharedExpenseId;

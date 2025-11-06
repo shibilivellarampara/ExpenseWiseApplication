@@ -74,13 +74,13 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
   });
 
   if (settings?.isDescriptionRequired) {
-    schema = schema.extend({ description: z.string().min(1, 'Description is required.') });
+    schema = schema.extend({ description: z.string().min(1, 'Description is required.').optional() });
   }
   if (settings?.isTagRequired) {
-      schema = schema.extend({ tagIds: z.array(z.string()).min(1, 'At least one tag is required.') });
+      schema = schema.extend({ tagIds: z.array(z.string()).min(1, 'At least one tag is required.').optional() });
   }
   if (settings?.isCategoryRequired) {
-      schema = schema.extend({ categoryId: z.string().min(1, 'Category is required.') });
+      schema = schema.extend({ categoryId: z.string().min(1, 'Category is required.').optional() });
   }
 
   return schema;
@@ -418,6 +418,12 @@ function ExpenseForm({
                             onValueChange={field.onChange}
                             value={field.value}
                         >
+                             <QuickAddItemDialog type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)}>
+                                 <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-accent rounded-md text-primary">
+                                    <PlusCircle className="h-4 w-4" />
+                                    Create new category
+                                </div>
+                             </QuickAddItemDialog>
                              <SelectItem value="">No Category</SelectItem>
                              {categories?.map(cat => (
                                  <SelectItem key={cat.id} value={cat.id}>

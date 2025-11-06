@@ -106,10 +106,10 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                 <Label
                     htmlFor={id}
                     className={cn(
-                        "absolute left-3 text-xs text-muted-foreground transition-all bg-transparent px-1 pointer-events-none",
-                        "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base",
-                        "peer-focus:top-0 peer-focus:-translate-y-0 peer-focus:text-xs",
-                         (hasValue || props.type === 'date' || props.type === 'time') && "top-0 -translate-y-0 text-xs"
+                        "absolute left-3 text-xs text-muted-foreground transition-all bg-transparent px-1 pointer-events-none top-1",
+                         "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base",
+                        "peer-focus:top-1 peer-focus:-translate-y-0 peer-focus:text-xs",
+                         (hasValue || props.type === 'date' || props.type === 'time') && "top-1 -translate-y-0 text-xs"
                     )}
                 >
                     {label}
@@ -141,7 +141,7 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
                  <Label
                     htmlFor={id}
                     className={cn(
-                        "absolute left-3 text-xs text-muted-foreground transition-all bg-background px-1 pointer-events-none",
+                        "absolute left-3 text-xs text-muted-foreground transition-all bg-background px-1 pointer-events-none top-0 -translate-y-1/2",
                          hasValue ? "top-0 -translate-y-1/2" : "top-1/2 -translate-y-1/2 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs",
                          "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base"
                     )}
@@ -383,7 +383,7 @@ function ExpenseForm({
                          <FloatingLabelSelect
                             label={`Category${isCategoryRequired && transactionType === 'expense' ? ' *' : ''}`}
                             id="categoryId"
-                            onValueChange={field.onChange}
+                            onValueChange={(value) => field.onChange(value === 'no-category' ? '' : value)}
                             value={field.value}
                         >
                              {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="no-category">No Category</SelectItem>}
@@ -474,7 +474,6 @@ function ExpenseForm({
                                     <Command>
                                     <CommandList>
                                         <ScrollArea className="h-48">
-                                            <CommandEmpty>No results found.</CommandEmpty>
                                             <CommandGroup>
                                                 <div className="grid grid-cols-2 gap-1 p-1">
                                                     {filteredTags.map(tag => (
@@ -995,9 +994,9 @@ function useExpenseForm({
             commitBatchNonBlocking(batch, collectionPath);
 
             if (isCreditLimitUpgrade) {
-                toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount?.name} has been increased.`, duration: 1000 });
+                toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount?.name} has been increased.`});
             } else {
-                 toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.`, duration: 1000 });
+                 toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
             }
             onSaveSuccess?.();
             return true;

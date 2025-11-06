@@ -456,34 +456,10 @@ function ExpenseForm({
                                 Tags {isTagRequired && <span className="text-destructive">*</span>}
                             </FormLabel>
                             <div className="col-span-3 space-y-2">
-                                 {selectedTagIds.length > 0 && (
-                                     <div className="flex flex-wrap gap-1.5">
-                                        {selectedTagObjects.map(tag => (
-                                            <Badge
-                                                key={tag.id}
-                                                style={generateColorStyle(tag.name)}
-                                                className="badge-colorful flex items-center gap-1"
-                                            >
-                                                {renderIcon(tag.icon, "h-3 w-3")}
-                                                {tag.name}
-                                                <button
-                                                    type="button"
-                                                    className="focus:outline-none"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleRemove(tag.id);
-                                                    }}
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </button>
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                 )}
-                                <div className="flex gap-2">
-                                    <Popover open={open} onOpenChange={setOpen}>
+                                <Popover open={open} onOpenChange={setOpen}>
+                                    <div className="flex gap-2">
                                         <PopoverTrigger asChild>
-                                            <div className="w-full">
+                                            <div className="flex-grow">
                                                 <Command>
                                                     <CommandInput
                                                         placeholder="Search tags..."
@@ -494,8 +470,37 @@ function ExpenseForm({
                                                 </Command>
                                             </div>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                             <CommandList>
+                                        <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
+                                            <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
+                                        </QuickAddItemDialog>
+                                    </div>
+                                    {selectedTagIds.length > 0 && (
+                                         <div className="flex flex-wrap gap-1.5">
+                                            {selectedTagObjects.map(tag => (
+                                                <Badge
+                                                    key={tag.id}
+                                                    style={generateColorStyle(tag.name)}
+                                                    className="badge-colorful flex items-center gap-1"
+                                                >
+                                                    {renderIcon(tag.icon, "h-3 w-3")}
+                                                    {tag.name}
+                                                    <button
+                                                        type="button"
+                                                        className="focus:outline-none"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRemove(tag.id);
+                                                        }}
+                                                    >
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                                        <Command>
+                                            <CommandList>
                                                 <ScrollArea className="h-48">
                                                     <CommandEmpty>No results found.</CommandEmpty>
                                                     <CommandGroup>
@@ -518,13 +523,10 @@ function ExpenseForm({
                                                     </CommandGroup>
                                                 </ScrollArea>
                                             </CommandList>
-                                        </PopoverContent>
-                                    </Popover>
-                                    <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
-                                        <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
-                                    </QuickAddItemDialog>
-                                </div>
-                                 <div className="col-start-2 col-span-3">
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                                <div className="col-start-2 col-span-3">
                                     <FormMessage />
                                 </div>
                             </div>
@@ -1085,5 +1087,3 @@ function useExpenseForm({
       tags: tags || []
     };
 }
-
-    

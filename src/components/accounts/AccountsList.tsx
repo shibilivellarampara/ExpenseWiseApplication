@@ -9,17 +9,18 @@ import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
 import { doc, setDoc } from 'firebase/firestore';
 import { Progress } from "../ui/progress";
-import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays } from "lucide-react";
+import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Separator } from "../ui/separator";
 import { getCurrencySymbol } from "@/lib/currencies";
+import Link from "next/link";
 
 interface AccountsListProps {
     accounts: Account[];
@@ -230,7 +231,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                                 "font-bold text-lg",
                                                 outstandingAmount > 0 ? "text-red-500" : "text-green-600"
                                             )}>
-                                                {outstandingAmount > 0 ? '-' : ''}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
+                                                 {outstandingAmount > 0 ? '-' : ''}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -266,6 +267,13 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                                         Edit
                                                     </DropdownMenuItem>
                                                 </AddAccountSheet>
+                                                 <DropdownMenuItem asChild>
+                                                    <Link href={`/expenses?accounts=${item.id}&type=income`}>
+                                                        <History className="mr-2 h-4 w-4" />
+                                                        Payment History
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
                                                 <DeactivateAccountButton account={item} />
                                             </DropdownMenuContent>
                                         </DropdownMenu>

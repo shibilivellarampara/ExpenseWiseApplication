@@ -15,22 +15,31 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 
 export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const mainContentRef = useRef<HTMLElement | null>(null);
     const [isScrolled, setIsScrolled] = useState(false);
+    const searchParams = useSearchParams();
 
+    // Initialize filters from URL search params
+    const getInitialFilters = () => {
+        const accountsParam = searchParams.get('accounts');
+        const typeParam = searchParams.get('type');
 
-    const [filters, setFilters] = useState({
-        dateRange: { from: undefined, to: undefined } as DateRange,
-        type: 'all' as 'all' | 'income' | 'expense',
-        categories: [] as string[],
-        accounts: [] as string[],
-        tags: [] as string[],
-        searchQuery: '',
-    });
+        return {
+            dateRange: { from: undefined, to: undefined } as DateRange,
+            type: (typeParam === 'income' || typeParam === 'expense') ? typeParam : 'all',
+            categories: [] as string[],
+            accounts: accountsParam ? accountsParam.split(',') : [] as string[],
+            tags: [] as string[],
+            searchQuery: '',
+        };
+    };
+
+    const [filters, setFilters] = useState(getInitialFilters);
     
     const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
 

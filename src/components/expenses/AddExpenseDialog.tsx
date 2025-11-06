@@ -96,16 +96,22 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     ref={ref}
                     id={id}
                     placeholder=" "
-                    className={cn("peer h-14 pt-4 text-base", rightIcon ? "pr-10" : "", className)}
+                    className={cn(
+                        "peer h-14 pt-5 text-base", 
+                        rightIcon ? "pr-10" : "", 
+                        // CSS to hide number input spinners
+                        "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+                        className
+                    )}
                     {...props}
                 />
                 <Label
                     htmlFor={id}
                     className={cn(
-                        "absolute left-3 text-xs text-muted-foreground transition-all bg-transparent px-1 pointer-events-none top-1",
-                         "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base",
+                        "absolute left-3 text-muted-foreground transition-all bg-transparent px-1 pointer-events-none",
+                        "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base",
                         "peer-focus:top-1 peer-focus:-translate-y-0 peer-focus:text-xs",
-                         (hasValue || props.type === 'date' || props.type === 'time') && "top-1 -translate-y-0 text-xs"
+                        hasValue ? "top-1 -translate-y-0 text-xs" : "top-1/2 -translate-y-1/2 text-base"
                     )}
                 >
                     {label}
@@ -120,6 +126,7 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
     }
 );
 FloatingLabelInput.displayName = 'FloatingLabelInput';
+
 
 const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof SelectTrigger> & { label: string; children: React.ReactNode; onValueChange: (value: string) => void; value?: string }>(
     ({ className, label, id, children, onValueChange, value, ...props }, ref) => {
@@ -137,9 +144,9 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
                  <Label
                     htmlFor={id}
                     className={cn(
-                        "absolute left-3 text-xs text-muted-foreground transition-all bg-background px-1 pointer-events-none top-0 -translate-y-1/2",
-                         hasValue ? "top-0 -translate-y-1/2" : "top-1/2 -translate-y-1/2 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs",
-                         "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base"
+                        "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
+                        hasValue ? "top-0 -translate-y-1/2 text-xs" : "top-1/2 -translate-y-1/2 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs",
+                        "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base"
                     )}
                 >
                     {label}

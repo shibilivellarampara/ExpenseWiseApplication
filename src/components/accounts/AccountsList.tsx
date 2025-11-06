@@ -216,7 +216,6 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                              const limit = item.limit || 0;
                              const availableCredit = item.balance; // 'balance' for CC is available credit
                              const outstandingAmount = limit - availableCredit;
-                             const usedPercentage = limit > 0 ? (outstandingAmount / limit) * 100 : 0;
                             
                             return (
                                 <div key={item.id} className="p-4 flex items-center gap-4 group">
@@ -230,7 +229,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                                 "font-bold text-lg",
                                                 outstandingAmount > 0 ? "text-red-500" : "text-green-600"
                                             )}>
-                                                {currencySymbol}{outstandingAmount.toFixed(2)}
+                                                {currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between text-sm text-muted-foreground">

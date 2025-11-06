@@ -38,7 +38,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X } from 'lucide-react';
+import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, CalendarIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -58,6 +58,8 @@ import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
+import { Calendar } from '../ui/calendar';
+import { format, setHours, setMinutes, getHours, getMinutes } from 'date-fns';
 
 
 // Function to create a dynamic schema
@@ -80,30 +82,81 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
 
 
 function DateTimePicker({ field }: { field: any }) {
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const dateValue = e.target.value;
-        field.onChange(new Date(dateValue));
+    const [time, setTime] = useState(() => {
+        const date = field.value || new Date();
+        return format(date, "HH:mm");
+    });
+
+    const handleDateSelect = (selectedDate: Date | undefined) => {
+        if (!selectedDate) return;
+
+        const [hours, minutes] = time.split(':').map(Number);
+        const newDate = setMinutes(setHours(selectedDate, hours), minutes);
+        field.onChange(newDate);
     };
 
-    const formatForInput = (date: Date): string => {
-        if (!date) return '';
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
-
+    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newTime = e.target.value;
+        setTime(newTime);
+        const [hours, minutes] = newTime.split(':').map(Number);
+        const newDate = setMinutes(setHours(field.value, hours), minutes);
+        field.onChange(newDate);
+    }
+    
     return (
-        <FormControl>
-            <Input
-                type="datetime-local"
-                className="w-full"
-                value={formatForInput(field.value)}
-                onChange={handleDateChange}
+        <div className="grid grid-cols-2 gap-2">
+            <FormField
+                name="date-day"
+                render={() => (
+                    <FormItem>
+                        <FormLabel>Date</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                        )}
+                                    >
+                                        {field.value ? (
+                                        format(field.value, "PPP")
+                                        ) : (
+                                        <span>Pick a date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={handleDateSelect}
+                                initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </FormItem>
+                )}
             />
-        </FormControl>
+            <FormField
+                name="date-time"
+                render={() => (
+                    <FormItem>
+                        <FormLabel>Time</FormLabel>
+                        <FormControl>
+                            <Input
+                                type="time"
+                                value={time}
+                                onChange={handleTimeChange}
+                            />
+                        </FormControl>
+                    </FormItem>
+                )}
+            />
+        </div>
     );
 }
 
@@ -314,34 +367,48 @@ function ExpenseForm({
             />
         ),
         accountId: (
-            <FormField
-                key="accountId"
-                control={form.control}
-                name="accountId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Account</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+             <div key="amount-account" className="grid grid-cols-2 gap-2">
+                <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Amount</FormLabel>
                         <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select an account" />
-                        </SelectTrigger>
+                           <Input type="number" placeholder="Enter amount" {...field} />
                         </FormControl>
-                        <SelectContent>
-                        {activeAccounts?.map(acc => (
-                            <SelectItem key={acc.id} value={acc.id}>
-                                <div className="flex items-center">
-                                    {renderIcon(acc.icon)}
-                                    {acc.name}
-                                </div>
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                <FormField
+                    control={form.control}
+                    name="accountId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Account</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {activeAccounts?.map(acc => (
+                                <SelectItem key={acc.id} value={acc.id}>
+                                    <div className="flex items-center">
+                                        {renderIcon(acc.icon)}
+                                        {acc.name}
+                                    </div>
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
         ),
         categoryId: (
             <FormField
@@ -509,25 +576,11 @@ function ExpenseForm({
                     name="date"
                     render={({ field }) => (
                          <FormItem className="flex flex-col space-y-2">
-                            <FormLabel>Date &amp; Time</FormLabel>
                             <DateTimePicker field={field} />
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Amount</FormLabel>
-                        <FormControl>
-                           <Input type="number" placeholder="Enter amount" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
                 
                  {fieldOrder.map(fieldName => formFields[fieldName])}
             </form>

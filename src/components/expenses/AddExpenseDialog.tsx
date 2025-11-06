@@ -450,7 +450,7 @@ function ExpenseForm({
                         const isSelected = currentTags.includes(tagId);
                         field.onChange(
                             isSelected 
-                                ? currentTags.filter(id => id !== tagId) 
+                                ? currentTags.filter((id: string) => id !== tagId) 
                                 : [...currentTags, tagId]
                         );
                     };

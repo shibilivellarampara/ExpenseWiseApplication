@@ -26,7 +26,7 @@ import { Badge } from '../ui/badge';
 
 export type DateRange = { from: Date | undefined; to: Date | undefined; };
 
-type Filters = {
+export type Filters = {
     dateRange: DateRange;
     type: 'all' | 'income' | 'expense';
     categories: string[];

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -10,7 +9,7 @@ import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@
 import { collection, orderBy, query, doc, onSnapshot }from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
-import { ExpensesFilters, DateRange } from "@/components/expenses/ExpensesFilters";
+import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
@@ -228,7 +227,7 @@ export default function ExpensesPage() {
 
     }, [allExpenses, categoryMap, accountMap, tagMap, filters, debouncedSearchQuery, accounts]);
     
-    const handleFiltersChange = (newFilters: any) => {
+    const handleFiltersChange = (newFilters: Filters) => {
         setFilters(newFilters);
     };
     

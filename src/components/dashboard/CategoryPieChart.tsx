@@ -5,7 +5,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
 import { useMemo, useState } from 'react';
 import { PieChart as PieChartIcon } from 'lucide-react';
-import { COLORS } from '@/lib/colors';
+import { CHART_COLORS } from '@/lib/colors';
 
 interface PieChartDataPoint {
   name: string;
@@ -114,7 +114,7 @@ export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps
           onMouseEnter={onPieEnter}
         >
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
           ))}
         </Pie>
         <Tooltip

@@ -32,7 +32,7 @@ export function CategorySettings() {
     const [editingItem, setEditingItem] = useState<{ id: string; name: string; icon: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    const SYSTEM_CATEGORIES = ['Credit Limit Upgrade', 'Credit Card Payment'];
+    const SYSTEM_CATEGORIES = ['Credit Limit Upgrade', 'Credit Card Payment', 'Credit Limit Downgrade'];
 
     const renderIcon = (iconName: string) => {
         const IconComponent = (LucideIcons as any)[iconName];

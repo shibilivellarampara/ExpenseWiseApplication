@@ -10,6 +10,13 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.2.7",
+        date: "2024-08-09",
+        changes: [
+            { type: 'Feature', description: "Added a 'Credit Limit Downgrade' category to reduce a credit card's limit via an expense transaction." },
+        ]
+    },
+    {
         version: "1.2.6",
         date: "2024-08-08",
         changes: [

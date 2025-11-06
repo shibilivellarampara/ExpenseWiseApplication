@@ -8,6 +8,7 @@ export const defaultCategories = [
   { name: 'Entertainment', icon: 'PartyPopper' },
   { name: 'Health', icon: 'HeartPulse' },
   { name: 'Credit Limit Upgrade', icon: 'TrendingUp' },
+  { name: 'Credit Limit Downgrade', icon: 'TrendingDown' },
   { name: 'Credit Card Payment', icon: 'Landmark' },
   { name: 'Other', icon: 'MoreHorizontal' },
 ];
@@ -33,7 +34,8 @@ export const availableIcons = [
   "Home", "Plane", "Book", "Gift", "Film", "Shirt", "Gamepad2", "Bus", "Train",
   "Briefcase", "Coffee", "Droplets", "Pizza", "GraduationCap", "PawPrint",
   "Wallet", "CreditCard", "Landmark", "Tag", "Ticket", "User", "IndianRupee",
-  "Contact", "Undo2", "Repeat", "MoreHorizontal", "Banknote", "Coins", "TrendingUp"
+  "Contact", "Undo2", "Repeat", "MoreHorizontal", "Banknote", "Coins", "TrendingUp",
+  "TrendingDown"
 ];
 
 // This is a legacy export and can be removed in the future

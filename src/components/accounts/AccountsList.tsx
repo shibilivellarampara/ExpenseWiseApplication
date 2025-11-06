@@ -230,7 +230,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                                 "font-bold text-lg",
                                                 outstandingAmount > 0 ? "text-red-500" : "text-green-600"
                                             )}>
-                                                {outstandingAmount === 0 ? '' : '-'}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
+                                                {outstandingAmount > 0 ? '-' : ''}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between text-sm text-muted-foreground">

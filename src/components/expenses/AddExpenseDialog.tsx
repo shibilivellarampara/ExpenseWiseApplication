@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -299,7 +298,7 @@ function ExpenseForm({
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                    <FormItem className="grid grid-cols-4 items-center gap-2">
                         <FormLabel className="text-right flex items-center justify-end gap-1">
                             Description {isDescriptionRequired ? '' : '(Optional)'}
                             {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
@@ -315,13 +314,13 @@ function ExpenseForm({
             />
         ),
         accountId: (
-            <Fragment key="accountIdFragment">
+            <React.Fragment key="accountIdFragment">
                 <FormField
                     key="amount"
                     control={form.control}
                     name="amount"
                     render={({ field }) => (
-                        <FormItem className="grid grid-cols-4 items-center gap-4">
+                        <FormItem className="grid grid-cols-4 items-center gap-2">
                         <FormLabel className="text-right">Amount</FormLabel>
                         <FormControl className="col-span-3">
                            <Input type="number" placeholder="Enter amount" {...field} />
@@ -337,7 +336,7 @@ function ExpenseForm({
                     control={form.control}
                     name="accountId"
                     render={({ field }) => (
-                        <FormItem className="grid grid-cols-4 items-center gap-4">
+                        <FormItem className="grid grid-cols-4 items-center gap-2">
                         <FormLabel className="text-right">Account</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl className="col-span-3">
@@ -362,7 +361,7 @@ function ExpenseForm({
                         </FormItem>
                     )}
                 />
-            </Fragment>
+            </React.Fragment>
         ),
         categoryId: (
             <FormField
@@ -370,7 +369,7 @@ function ExpenseForm({
                 control={form.control}
                 name="categoryId"
                 render={({ field }) => (
-                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                    <FormItem className="grid grid-cols-4 items-center gap-2">
                         <FormLabel className="text-right">
                             Category {isCategoryRequired && transactionType === 'expense' ? '' : '(Optional)'}
                         </FormLabel>
@@ -415,7 +414,7 @@ function ExpenseForm({
                 control={form.control}
                 name="tagIds"
                 render={({ field }) => (
-                     <FormItem className="grid grid-cols-4 items-start gap-4">
+                     <FormItem className="grid grid-cols-4 items-start gap-2">
                         <FormLabel className="text-right pt-2">
                             Tags {isTagRequired ? '' : '(Optional)'}
                         </FormLabel>
@@ -426,10 +425,11 @@ function ExpenseForm({
                                         {selectedTags.length > 0 ? (
                                             <div className="flex flex-wrap gap-1">
                                                 {selectedTags.map(tag => {
+                                                    const style = generateColorStyle(tag.name);
                                                     return (
                                                         <Badge
                                                             key={tag.id}
-                                                            style={generateColorStyle(tag.name)}
+                                                            style={style}
                                                             className="badge-colorful flex items-center gap-1.5"
                                                         >
                                                             {renderIcon(tag.icon, "h-3 w-3")}
@@ -460,6 +460,7 @@ function ExpenseForm({
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+                                    <div className="grid grid-cols-2 gap-1 p-1">
                                     {tags.map(tag => (
                                         <DropdownMenuCheckboxItem
                                             key={tag.id}
@@ -478,6 +479,7 @@ function ExpenseForm({
                                             </div>
                                         </DropdownMenuCheckboxItem>
                                     ))}
+                                    </div>
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
@@ -533,7 +535,7 @@ function ExpenseForm({
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                         <FormItem className="grid grid-cols-4 items-center gap-4">
+                         <FormItem className="grid grid-cols-4 items-center gap-2">
                             <FormLabel className="text-right">Date</FormLabel>
                             <div className="col-span-3">
                                 <DateTimePicker field={field} />

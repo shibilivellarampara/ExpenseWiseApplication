@@ -93,31 +93,36 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
 // New FloatingLabelInput component
 const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string, rightIcon?: React.ReactNode }>(
     ({ className, label, id, rightIcon, ...props }, ref) => {
-    return (
-        <div className="relative">
-            <Input
-                ref={ref}
-                id={id}
-                placeholder=" "
-                className={cn("peer h-14 pt-4 text-base", rightIcon ? "pr-10" : "", className)}
-                {...props}
-            />
-            <Label
-                htmlFor={id}
-                className="absolute left-3 top-1 text-xs text-muted-foreground transition-all 
-                           peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base
-                           peer-focus:top-1 peer-focus:-translate-y-0 peer-focus:text-xs"
-            >
-                {label}
-            </Label>
-            {rightIcon && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    {rightIcon}
-                </div>
-            )}
-        </div>
-    );
-});
+        const hasValue = props.value && String(props.value) !== '';
+        return (
+            <div className="relative">
+                <Input
+                    ref={ref}
+                    id={id}
+                    placeholder=" "
+                    className={cn("peer h-14 pt-4 text-base", rightIcon ? "pr-10" : "", className)}
+                    {...props}
+                />
+                <Label
+                    htmlFor={id}
+                    className={cn(
+                        "absolute left-3 text-xs text-muted-foreground transition-all bg-transparent px-1 pointer-events-none",
+                        "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base",
+                        "peer-focus:top-0 peer-focus:-translate-y-0 peer-focus:text-xs",
+                         (hasValue || props.type === 'date' || props.type === 'time') && "top-0 -translate-y-0 text-xs"
+                    )}
+                >
+                    {label}
+                </Label>
+                {rightIcon && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        {rightIcon}
+                    </div>
+                )}
+            </div>
+        );
+    }
+);
 FloatingLabelInput.displayName = 'FloatingLabelInput';
 
 const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof SelectTrigger> & { label: string; children: React.ReactNode; onValueChange: (value: string) => void; value?: string }>(
@@ -137,7 +142,8 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
                     htmlFor={id}
                     className={cn(
                         "absolute left-3 text-xs text-muted-foreground transition-all bg-background px-1 pointer-events-none",
-                         hasValue ? "top-0 -translate-y-1/2" : "top-1/2 -translate-y-1/2 text-base"
+                         hasValue ? "top-0 -translate-y-1/2" : "top-1/2 -translate-y-1/2 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs",
+                         "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base"
                     )}
                 >
                     {label}
@@ -466,29 +472,29 @@ function ExpenseForm({
                                 </div>
                                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                                     <Command>
-                                        <CommandList>
-                                            <ScrollArea className="h-48">
-                                                <CommandEmpty>No results found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    <div className="grid grid-cols-2 gap-1 p-1">
-                                                        {filteredTags.map(tag => (
-                                                            <CommandItem
-                                                                key={tag.id}
-                                                                value={tag.name}
-                                                                onSelect={() => handleSelect(tag.id)}
-                                                                className="flex items-center justify-between gap-2"
-                                                            >
-                                                                <div className="flex items-center gap-2 truncate">
-                                                                    {renderIcon(tag.icon)}
-                                                                    <span className="truncate">{tag.name}</span>
-                                                                </div>
-                                                                <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
-                                                            </CommandItem>
-                                                        ))}
-                                                    </div>
-                                                </CommandGroup>
-                                            </ScrollArea>
-                                        </CommandList>
+                                    <CommandList>
+                                        <ScrollArea className="h-48">
+                                            <CommandEmpty>No results found.</CommandEmpty>
+                                            <CommandGroup>
+                                                <div className="grid grid-cols-2 gap-1 p-1">
+                                                    {filteredTags.map(tag => (
+                                                        <CommandItem
+                                                            key={tag.id}
+                                                            value={tag.name}
+                                                            onSelect={() => handleSelect(tag.id)}
+                                                            className="flex items-center justify-between gap-2"
+                                                        >
+                                                            <div className="flex items-center gap-2 truncate">
+                                                                {renderIcon(tag.icon)}
+                                                                <span className="truncate">{tag.name}</span>
+                                                            </div>
+                                                            <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
+                                                        </CommandItem>
+                                                    ))}
+                                                </div>
+                                            </CommandGroup>
+                                        </ScrollArea>
+                                    </CommandList>
                                     </Command>
                                 </PopoverContent>
                             </Popover>
@@ -557,36 +563,34 @@ function ExpenseForm({
                          <FormItem className="grid grid-cols-2 gap-2 pt-2">
                              <Popover>
                                 <PopoverTrigger asChild>
-                                     <div className="relative">
+                                     <button type="button" className="w-full">
                                          <FloatingLabelInput
                                             label="Date"
                                             id="date"
                                             readOnly
                                             value={format(field.value, "PPP")}
+                                            rightIcon={<CalendarIcon className="h-5 w-5"/>}
                                         />
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"><CalendarIcon className="h-5 w-5"/></div>
-                                     </div>
+                                     </button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0">
                                     <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/>
                                 </PopoverContent>
                             </Popover>
-                            <div className="relative">
-                                <FloatingLabelInput
-                                    label="Time"
-                                    id="time"
-                                    type="time"
-                                    value={format(field.value, "HH:mm")}
-                                    onChange={(e) => {
-                                        const [hours, minutes] = e.target.value.split(':').map(Number);
-                                        const newDate = new Date(field.value);
-                                        newDate.setHours(hours);
-                                        newDate.setMinutes(minutes);
-                                        field.onChange(newDate);
-                                    }}
-                                />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"><Clock className="h-5 w-5"/></div>
-                            </div>
+                            <FloatingLabelInput
+                                label="Time"
+                                id="time"
+                                type="time"
+                                value={format(field.value, "HH:mm")}
+                                onChange={(e) => {
+                                    const [hours, minutes] = e.target.value.split(':').map(Number);
+                                    const newDate = new Date(field.value);
+                                    newDate.setHours(hours);
+                                    newDate.setMinutes(minutes);
+                                    field.onChange(newDate);
+                                }}
+                                rightIcon={<Clock className="h-5 w-5"/>}
+                            />
                             <FormMessage className="col-span-2" />
                         </FormItem>
                     )}

@@ -34,8 +34,8 @@ import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input, InputProps } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, Check, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as React from 'react';
@@ -44,7 +44,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
-import { getCurrencySymbol } from '@/lib/currencies';
 import * as LucideIcons from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -90,141 +89,62 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
   return schema;
 };
 
-function DateTimePicker({ field }: { field: { value: Date; onChange: (date: Date) => void } }) {
-    const [date, setDate] = useState(field.value || new Date());
-    const [time, setTime] = useState(format(field.value || new Date(), "HH:mm"));
-
-    const handleDateSelect = (selectedDate: Date | undefined) => {
-        if (!selectedDate) return;
-        const [hours, minutes] = time.split(':').map(Number);
-        const newDateTime = new Date(selectedDate);
-        newDateTime.setHours(hours);
-        newDateTime.setMinutes(minutes);
-        setDate(newDateTime);
-        field.onChange(newDateTime);
-    };
-
-    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const timeValue = e.target.value;
-        setTime(timeValue);
-        const [hours, minutes] = timeValue.split(':').map(Number);
-        const newDateTime = new Date(date);
-        newDateTime.setHours(hours);
-        newDateTime.setMinutes(minutes);
-        field.onChange(newDateTime);
-    };
-
+// New FloatingLabelInput component
+const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string, rightIcon?: React.ReactNode }>(
+    ({ className, label, id, rightIcon, ...props }, ref) => {
     return (
-        <div className="grid grid-cols-2 gap-2">
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button
-                        variant={"outline"}
-                        className={cn("justify-start text-left font-normal", !date && "text-muted-foreground")}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={handleDateSelect}
-                        initialFocus
-                    />
-                </PopoverContent>
-            </Popover>
-            <div className="relative">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    type="time"
-                    value={time}
-                    onChange={handleTimeChange}
-                    className="pl-9"
-                />
-            </div>
+        <div className="relative">
+            <Input
+                ref={ref}
+                id={id}
+                placeholder=" "
+                className={cn("peer h-14 pt-4 text-base", rightIcon ? "pr-10" : "", className)}
+                {...props}
+            />
+            <Label
+                htmlFor={id}
+                className="absolute left-3 top-1 text-xs text-muted-foreground transition-all 
+                           peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base
+                           peer-focus:top-1 peer-focus:-translate-y-0 peer-focus:text-xs"
+            >
+                {label}
+            </Label>
+            {rightIcon && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {rightIcon}
+                </div>
+            )}
         </div>
     );
-}
+});
+FloatingLabelInput.displayName = 'FloatingLabelInput';
 
-
-function QuickAddItemDialog({
-    type,
-    onSave,
-    children
-}: {
-    type: 'Category' | 'Tag';
-    onSave: (name: string, icon: string) => Promise<string | undefined>;
-    children: React.ReactNode;
-}) {
-    const [name, setName] = useState('');
-    const [icon, setIcon] = useState(type === 'Category' ? 'Shapes' : 'Tag');
-    const [isSaving, setIsSaving] = useState(false);
-    const [isOpen, setIsOpen] = useState(false);
-
-    const renderIcon = (iconName: string, className?: string) => {
-        const IconComponent = (LucideIcons as any)[iconName];
-        return IconComponent ? <IconComponent className={cn("h-5 w-5", className)} /> : <Pilcrow className={cn("h-5 w-5", className)} />;
-    };
-
-    const handleSave = async () => {
-        if (!name) return;
-        setIsSaving(true);
-        await onSave(name, icon);
-        setIsSaving(false);
-        setIsOpen(false);
-        setName('');
-        setIcon(type === 'Category' ? 'Shapes' : 'Tag');
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add New {type}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <Label>Name</Label>
-                        <Input
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder={`${type} name`}
-                            autoFocus
-                        />
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Icon</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full justify-start">
-                                    {renderIcon(icon)}
-                                    <span className="ml-2">{icon}</span>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto grid grid-cols-5 gap-2 max-h-60 overflow-y-auto">
-                                {availableIcons.map(iconName => (
-                                    <Button key={iconName} variant="ghost" size="icon" onClick={() => setIcon(iconName)}>
-                                        {renderIcon(iconName)}
-                                    </Button>
-                                ))}
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                    <Button onClick={handleSave} disabled={isSaving || !name}>
-                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-}
+const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof SelectTrigger> & { label: string; children: React.ReactNode; onValueChange: (value: string) => void; value?: string }>(
+    ({ className, label, id, children, onValueChange, value, ...props }, ref) => {
+        return (
+            <div className="relative">
+                 <Select onValueChange={onValueChange} value={value}>
+                    <SelectTrigger ref={ref} id={id} className={cn("peer h-14 pt-4 text-base", className)} {...props}>
+                        <SelectValue placeholder=" "/>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {children}
+                    </SelectContent>
+                </Select>
+                 <Label
+                    htmlFor={id}
+                    className={cn(
+                        "absolute left-3 text-xs text-muted-foreground transition-all bg-background px-1 pointer-events-none",
+                         value ? "top-0 -translate-y-1/2" : "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:text-xs"
+                    )}
+                >
+                    {label}
+                </Label>
+            </div>
+        )
+    }
+);
+FloatingLabelSelect.displayName = 'FloatingLabelSelect';
 
 function ExpenseForm({
   form,
@@ -335,13 +255,12 @@ function ExpenseForm({
                 name="description"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel className="flex items-center gap-1">
-                            Description {isDescriptionRequired && <span className="text-destructive">*</span>}
-                            {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                        </FormLabel>
-                        <FormControl>
-                            <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
-                        </FormControl>
+                         <FloatingLabelInput
+                            label={`Description${isDescriptionRequired ? ' *' : ''}`}
+                            id="description"
+                            {...field}
+                            value={field.value ?? ''}
+                        />
                         <FormMessage />
                     </FormItem>
                 )}
@@ -354,14 +273,12 @@ function ExpenseForm({
                 name="accountId"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Account <span className="text-destructive">*</span></FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select..." />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
+                        <FloatingLabelSelect
+                            label="Account *"
+                            id="accountId"
+                            onValueChange={field.onChange}
+                            value={field.value}
+                        >
                             {activeAccounts?.map(acc => (
                                 <SelectItem key={acc.id} value={acc.id}>
                                     <div className="flex items-center">
@@ -370,8 +287,7 @@ function ExpenseForm({
                                     </div>
                                 </SelectItem>
                             ))}
-                            </SelectContent>
-                        </Select>
+                         </FloatingLabelSelect>
                         <FormMessage />
                     </FormItem>
                 )}
@@ -384,37 +300,22 @@ function ExpenseForm({
                 name="categoryId"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>
-                            Category {isCategoryRequired && transactionType === 'expense' && <span className="text-destructive">*</span>}
-                        </FormLabel>
-                        <div className="flex gap-2">
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                <SelectTrigger className="w-full">
-                                    {field.value ? (
-                                        <div className="flex items-center">
-                                            {renderIcon(categories.find(c => c.id === field.value)?.icon)}
-                                            {categories.find(c => c.id === field.value)?.name || "Select a category"}
-                                        </div>
-                                    ) : <SelectValue placeholder="Select a category" />}
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="">No Category</SelectItem>}
-                                    {categories?.map(cat => (
-                                        <SelectItem key={cat.id} value={cat.id}>
-                                            <div className="flex items-center">
-                                                {renderIcon(cat.icon)}
-                                                {cat.name}
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <QuickAddItemDialog type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)}>
-                                <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
-                            </QuickAddItemDialog>
-                        </div>
+                         <FloatingLabelSelect
+                            label={`Category${isCategoryRequired && transactionType === 'expense' ? ' *' : ''}`}
+                            id="categoryId"
+                            onValueChange={field.onChange}
+                            value={field.value}
+                        >
+                             {(!isCategoryRequired || transactionType === 'income') && <SelectItem value="">No Category</SelectItem>}
+                             {categories?.map(cat => (
+                                 <SelectItem key={cat.id} value={cat.id}>
+                                     <div className="flex items-center">
+                                         {renderIcon(cat.icon)}
+                                         {cat.name}
+                                     </div>
+                                 </SelectItem>
+                             ))}
+                         </FloatingLabelSelect>
                         <FormMessage />
                     </FormItem>
                 )}
@@ -449,30 +350,30 @@ function ExpenseForm({
 
                     return (
                         <FormItem>
-                             <FormLabel>
-                                Tags {isTagRequired && <span className="text-destructive">*</span>}
-                            </FormLabel>
-                            {selectedTagIds.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 py-2">
-                                {selectedTagObjects.map(tag => (
-                                    <Badge
-                                        key={tag.id}
-                                        style={generateColorStyle(tag.name)}
-                                        className="badge-colorful flex items-center gap-1"
-                                    >
-                                        {renderIcon(tag.icon, "h-3 w-3")}
-                                        {tag.name}
-                                        <button
-                                            type="button"
-                                            className="focus:outline-none"
-                                            onClick={(e) => { e.stopPropagation(); handleSelect(tag.id); }}
+                            <div className="space-y-2">
+                                <Label>Tags {isTagRequired && <span className="text-destructive">*</span>}</Label>
+                                {selectedTagIds.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 py-2">
+                                    {selectedTagObjects.map(tag => (
+                                        <Badge
+                                            key={tag.id}
+                                            style={generateColorStyle(tag.name)}
+                                            className="badge-colorful flex items-center gap-1"
                                         >
-                                            <X className="h-3 w-3" />
-                                        </button>
-                                    </Badge>
-                                ))}
-                                </div>
-                            )}
+                                            {renderIcon(tag.icon, "h-3 w-3")}
+                                            {tag.name}
+                                            <button
+                                                type="button"
+                                                className="focus:outline-none"
+                                                onClick={(e) => { e.stopPropagation(); handleSelect(tag.id); }}
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </Badge>
+                                    ))}
+                                    </div>
+                                )}
+                            </div>
                            <Popover open={open} onOpenChange={setOpen}>
                                 <div className="flex gap-2">
                                 <PopoverTrigger asChild>
@@ -534,7 +435,6 @@ function ExpenseForm({
                         name="type"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Transaction Type <span className="text-destructive">*</span></FormLabel>
                             <FormControl>
                                 <RadioGroup
                                 onValueChange={field.onChange}
@@ -561,32 +461,64 @@ function ExpenseForm({
                     />
                 )}
                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                         <FormItem>
-                            <FormLabel>Date & Time <span className="text-destructive">*</span></FormLabel>
-                            <DateTimePicker field={field} />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
                     key="amount"
                     control={form.control}
                     name="amount"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Amount <span className="text-destructive">*</span></FormLabel>
-                            <FormControl>
-                               <Input type="number" placeholder="Enter amount" {...field} />
-                            </FormControl>
+                             <FloatingLabelInput
+                                label="Amount *"
+                                id="amount"
+                                type="number"
+                                {...field}
+                            />
                             <FormMessage />
                         </FormItem>
                     )}
                 />
                 
                  {fieldOrder.map(fieldName => formFields[fieldName])}
+                 <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                         <FormItem className="grid grid-cols-2 gap-2 pt-2">
+                             <Popover>
+                                <PopoverTrigger asChild>
+                                     <div className="relative">
+                                         <FloatingLabelInput
+                                            label="Date"
+                                            id="date"
+                                            readOnly
+                                            value={format(field.value, "PPP")}
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"><CalendarIcon className="h-5 w-5"/></div>
+                                     </div>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/>
+                                </PopoverContent>
+                            </Popover>
+                            <div className="relative">
+                                <FloatingLabelInput
+                                    label="Time"
+                                    id="time"
+                                    type="time"
+                                    value={format(field.value, "HH:mm")}
+                                    onChange={(e) => {
+                                        const [hours, minutes] = e.target.value.split(':').map(Number);
+                                        const newDate = new Date(field.value);
+                                        newDate.setHours(hours);
+                                        newDate.setMinutes(minutes);
+                                        field.onChange(newDate);
+                                    }}
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"><Clock className="h-5 w-5"/></div>
+                            </div>
+                            <FormMessage className="col-span-2" />
+                        </FormItem>
+                    )}
+                />
             </form>
         </Form>
     );
@@ -660,7 +592,6 @@ function DesktopAddExpenseDialog({
             <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]">
                 <DialogHeader>
                     <DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle>
-                    <DialogDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto -mx-6 px-6">
                     <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} isShared={!!sharedExpenseId} />
@@ -742,7 +673,6 @@ function MobileAddExpenseDrawer({
             <DrawerContent>
                 <DrawerHeader className="text-left">
                     <DrawerTitle>{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DrawerTitle>
-                    <DrawerDescription>{isEditMode ? 'Update the details of your transaction.' : 'Fill in the details of your income or expense below.'}</DrawerDescription>
                 </DrawerHeader>
                  <div className="overflow-y-auto px-4">
                     <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} isShared={!!sharedExpenseId}/>

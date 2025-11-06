@@ -37,7 +37,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, Check } from 'lucide-react';
+import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, Check, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition, Fragment, useRef } from 'react';
@@ -58,11 +58,13 @@ import { Badge } from '../ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '../ui/scroll-area';
+import { Calendar } from '../ui/calendar';
+import { format } from 'date-fns';
 
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
-  const schema = z.object({
+  let schema = z.object({
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
@@ -76,46 +78,74 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
   });
 
   if (settings?.isDescriptionRequired) {
-    schema.shape.description = z.string().min(1, 'Description is required.');
+    schema = schema.extend({ description: z.string().min(1, 'Description is required.') });
   }
   if (settings?.isTagRequired) {
-      schema.shape.tagIds = z.array(z.string()).min(1, 'At least one tag is required.');
+      schema = schema.extend({ tagIds: z.array(z.string()).min(1, 'At least one tag is required.') });
   }
   if (settings?.isCategoryRequired) {
-      schema.shape.categoryId = z.string().min(1, 'Category is required.');
+      schema = schema.extend({ categoryId: z.string().min(1, 'Category is required.') });
   }
 
 
   return schema;
 };
 
+function DateTimePicker({ field }: { field: { value: Date; onChange: (date: Date) => void } }) {
+    const [date, setDate] = useState(field.value || new Date());
+    const [time, setTime] = useState(format(field.value || new Date(), "HH:mm"));
 
-function DateTimePicker({ field }: { field: any }) {
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const dateValue = e.target.value;
-        // The input gives a string, so we convert it to a Date object
-        field.onChange(new Date(dateValue));
+    const handleDateSelect = (selectedDate: Date | undefined) => {
+        if (!selectedDate) return;
+        const [hours, minutes] = time.split(':').map(Number);
+        const newDateTime = new Date(selectedDate);
+        newDateTime.setHours(hours);
+        newDateTime.setMinutes(minutes);
+        setDate(newDateTime);
+        field.onChange(newDateTime);
     };
 
-    // Format the date from the form state into 'YYYY-MM-DDTHH:mm' for the input
-    const formatForInput = (date: Date): string => {
-        if (!date) return '';
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const timeValue = e.target.value;
+        setTime(timeValue);
+        const [hours, minutes] = timeValue.split(':').map(Number);
+        const newDateTime = new Date(date);
+        newDateTime.setHours(hours);
+        newDateTime.setMinutes(minutes);
+        field.onChange(newDateTime);
     };
 
     return (
-        <FormControl>
-            <Input
-                type="datetime-local"
-                value={formatForInput(field.value)}
-                onChange={handleDateChange}
-            />
-        </FormControl>
+        <div className="grid grid-cols-2 gap-2">
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className={cn("justify-start text-left font-normal", !date && "text-muted-foreground")}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={handleDateSelect}
+                        initialFocus
+                    />
+                </PopoverContent>
+            </Popover>
+            <div className="relative">
+                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="time"
+                    value={time}
+                    onChange={handleTimeChange}
+                    className="pl-9"
+                />
+            </div>
+        </div>
     );
 }
 
@@ -245,7 +275,6 @@ function ExpenseForm({
                     accounts: activeAccounts.map(({ id, name }) => ({ id, name })),
                 });
                 
-                // Only set value if user hasn't touched the field yet or it's empty
                 if (suggestions.categoryId && !form.getFieldState('categoryId').isDirty) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
                 if (suggestions.accountId && !form.getFieldState('accountId').isDirty) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
                 if (suggestions.tagIds && !form.getFieldState('tagIds').isDirty) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
@@ -306,38 +335,32 @@ function ExpenseForm({
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                    <FormItem className="grid grid-cols-4 items-center gap-x-2">
-                        <FormLabel className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                                Description {isDescriptionRequired && <span className="text-destructive">*</span>}
-                                {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                            </div>
+                    <FormItem>
+                        <FormLabel className="flex items-center gap-1">
+                            Description {isDescriptionRequired && <span className="text-destructive">*</span>}
+                            {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                         </FormLabel>
-                        <FormControl className="col-span-3">
+                        <FormControl>
                             <Input placeholder={transactionType === 'expense' ? 'e.g., Groceries from Walmart' : 'e.g., Monthly Salary'} {...field} value={field.value ?? ''}/>
                         </FormControl>
-                        <div className="col-start-2 col-span-3">
-                            <FormMessage />
-                        </div>
+                        <FormMessage />
                     </FormItem>
                 )}
             />
         ),
         accountId: (
             <React.Fragment key="accountIdFragment">
-                <FormField
+                 <FormField
                     key="amount"
                     control={form.control}
                     name="amount"
                     render={({ field }) => (
-                        <FormItem className="grid grid-cols-4 items-center gap-x-2">
-                        <FormLabel className="text-right">Amount <span className="text-destructive">*</span></FormLabel>
-                        <FormControl className="col-span-3">
-                           <Input type="number" placeholder="Enter amount" {...field} />
-                        </FormControl>
-                         <div className="col-start-2 col-span-3">
+                        <FormItem>
+                            <FormLabel>Amount <span className="text-destructive">*</span></FormLabel>
+                            <FormControl>
+                               <Input type="number" placeholder="Enter amount" {...field} />
+                            </FormControl>
                             <FormMessage />
-                        </div>
                         </FormItem>
                     )}
                 />
@@ -346,28 +369,26 @@ function ExpenseForm({
                     control={form.control}
                     name="accountId"
                     render={({ field }) => (
-                        <FormItem className="grid grid-cols-4 items-center gap-x-2">
-                        <FormLabel className="text-right">Account <span className="text-destructive">*</span></FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl className="col-span-3">
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {activeAccounts?.map(acc => (
-                                <SelectItem key={acc.id} value={acc.id}>
-                                    <div className="flex items-center">
-                                        {renderIcon(acc.icon)}
-                                        {acc.name}
-                                    </div>
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <div className="col-start-2 col-span-3">
+                        <FormItem>
+                            <FormLabel>Account <span className="text-destructive">*</span></FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select..." />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {activeAccounts?.map(acc => (
+                                    <SelectItem key={acc.id} value={acc.id}>
+                                        <div className="flex items-center">
+                                            {renderIcon(acc.icon)}
+                                            {acc.name}
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
                             <FormMessage />
-                        </div>
                         </FormItem>
                     )}
                 />
@@ -379,11 +400,11 @@ function ExpenseForm({
                 control={form.control}
                 name="categoryId"
                 render={({ field }) => (
-                    <FormItem className="grid grid-cols-4 items-center gap-x-2">
-                        <FormLabel className="text-right">
+                    <FormItem>
+                        <FormLabel>
                             Category {isCategoryRequired && transactionType === 'expense' && <span className="text-destructive">*</span>}
                         </FormLabel>
-                        <div className="flex gap-2 col-span-3">
+                        <div className="flex gap-2">
                             <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                 <SelectTrigger className="w-full">
@@ -411,15 +432,13 @@ function ExpenseForm({
                                 <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
                             </QuickAddItemDialog>
                         </div>
-                         <div className="col-start-2 col-span-3">
-                            <FormMessage />
-                        </div>
+                        <FormMessage />
                     </FormItem>
                 )}
             />
         ),
         tagIds: (
-            <FormField
+             <FormField
                 key="tagIds"
                 control={form.control}
                 name="tagIds"
@@ -430,17 +449,12 @@ function ExpenseForm({
                     const handleSelect = (tagId: string) => {
                         const currentTags = field.value || [];
                         const isSelected = currentTags.includes(tagId);
-                        if (isSelected) {
-                            field.onChange(currentTags.filter(id => id !== tagId));
-                        } else {
-                            field.onChange([...currentTags, tagId]);
-                        }
+                        field.onChange(
+                            isSelected 
+                                ? currentTags.filter(id => id !== tagId) 
+                                : [...currentTags, tagId]
+                        );
                         setInputValue("");
-                    };
-
-                    const handleRemove = (tagId: string) => {
-                        const currentTags = field.value || [];
-                        field.onChange(currentTags.filter(id => id !== tagId));
                     };
 
                     const filteredTags = tags.filter(tag => 
@@ -451,85 +465,76 @@ function ExpenseForm({
                     const selectedTagObjects = selectedTagIds.map(id => tags.find(t => t.id === id)).filter(Boolean) as Tag[];
 
                     return (
-                        <FormItem className="grid grid-cols-4 items-start gap-x-2">
-                            <FormLabel className="text-right pt-2">
+                        <FormItem>
+                            <FormLabel>
                                 Tags {isTagRequired && <span className="text-destructive">*</span>}
                             </FormLabel>
-                            <div className="col-span-3 space-y-2">
-                                <Popover open={open} onOpenChange={setOpen}>
-                                    <div className="flex gap-2">
-                                        <PopoverTrigger asChild>
-                                            <div className="flex-grow">
-                                                <Command>
-                                                    <CommandInput
-                                                        placeholder="Search tags..."
-                                                        value={inputValue}
-                                                        onValueChange={setInputValue}
-                                                        onFocus={() => setOpen(true)}
-                                                    />
-                                                </Command>
-                                            </div>
-                                        </PopoverTrigger>
-                                        <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
-                                            <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
-                                        </QuickAddItemDialog>
-                                    </div>
-                                    {selectedTagIds.length > 0 && (
-                                         <div className="flex flex-wrap gap-1.5">
-                                            {selectedTagObjects.map(tag => (
-                                                <Badge
-                                                    key={tag.id}
-                                                    style={generateColorStyle(tag.name)}
-                                                    className="badge-colorful flex items-center gap-1"
-                                                >
-                                                    {renderIcon(tag.icon, "h-3 w-3")}
-                                                    {tag.name}
-                                                    <button
-                                                        type="button"
-                                                        className="focus:outline-none"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleRemove(tag.id);
-                                                        }}
-                                                    >
-                                                        <X className="h-3 w-3" />
-                                                    </button>
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                        <Command>
-                                            <CommandList>
-                                                <ScrollArea className="h-48">
-                                                    <CommandEmpty>No results found.</CommandEmpty>
-                                                    <CommandGroup>
-                                                        <div className="grid grid-cols-2 gap-1 p-1">
-                                                            {filteredTags.map(tag => (
-                                                                <CommandItem
-                                                                    key={tag.id}
-                                                                    value={tag.name}
-                                                                    onSelect={() => handleSelect(tag.id)}
-                                                                    className="flex items-center justify-between gap-2"
-                                                                >
-                                                                    <div className="flex items-center gap-2 truncate">
-                                                                        {renderIcon(tag.icon)}
-                                                                        <span className="truncate">{tag.name}</span>
-                                                                    </div>
-                                                                    <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
-                                                                </CommandItem>
-                                                            ))}
-                                                        </div>
-                                                    </CommandGroup>
-                                                </ScrollArea>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                                <div className="col-start-2 col-span-3">
-                                    <FormMessage />
+                            {selectedTagIds.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 py-2">
+                                {selectedTagObjects.map(tag => (
+                                    <Badge
+                                        key={tag.id}
+                                        style={generateColorStyle(tag.name)}
+                                        className="badge-colorful flex items-center gap-1"
+                                    >
+                                        {renderIcon(tag.icon, "h-3 w-3")}
+                                        {tag.name}
+                                        <button
+                                            type="button"
+                                            className="focus:outline-none"
+                                            onClick={(e) => { e.stopPropagation(); handleSelect(tag.id); }}
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                ))}
                                 </div>
-                            </div>
+                            )}
+                            <Popover open={open} onOpenChange={setOpen}>
+                                <div className="flex gap-2">
+                                <PopoverTrigger asChild>
+                                    <Command>
+                                        <CommandInput
+                                            placeholder="Search tags..."
+                                            value={inputValue}
+                                            onValueChange={setInputValue}
+                                            onFocus={() => setOpen(true)}
+                                        />
+                                    </Command>
+                                </PopoverTrigger>
+                                 <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
+                                    <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
+                                </QuickAddItemDialog>
+                                </div>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                                    <Command>
+                                        <CommandList>
+                                            <ScrollArea className="h-48">
+                                                <CommandEmpty>No results found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    <div className="grid grid-cols-2 gap-1 p-1">
+                                                        {filteredTags.map(tag => (
+                                                            <CommandItem
+                                                                key={tag.id}
+                                                                value={tag.name}
+                                                                onSelect={() => handleSelect(tag.id)}
+                                                                className="flex items-center justify-between gap-2"
+                                                            >
+                                                                <div className="flex items-center gap-2 truncate">
+                                                                    {renderIcon(tag.icon)}
+                                                                    <span className="truncate">{tag.name}</span>
+                                                                </div>
+                                                                <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
+                                                            </CommandItem>
+                                                        ))}
+                                                    </div>
+                                                </CommandGroup>
+                                            </ScrollArea>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
                         </FormItem>
                     )
                 }}
@@ -539,13 +544,13 @@ function ExpenseForm({
 
     return (
         <Form {...form}>
-            <form id={id} onSubmit={onSubmit} className="grid items-start gap-3">
+            <form id={id} onSubmit={onSubmit} className="space-y-4">
                 {!isShared && (
                     <FormField
                         control={form.control}
                         name="type"
                         render={({ field }) => (
-                            <FormItem className="space-y-3">
+                            <FormItem>
                             <FormLabel>Transaction Type <span className="text-destructive">*</span></FormLabel>
                             <FormControl>
                                 <RadioGroup
@@ -576,12 +581,10 @@ function ExpenseForm({
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                         <FormItem className="grid grid-cols-4 items-center gap-x-2">
-                            <FormLabel className="text-right">Date <span className="text-destructive">*</span></FormLabel>
-                            <div className="col-span-3">
-                                <DateTimePicker field={field} />
-                                <FormMessage />
-                            </div>
+                         <FormItem>
+                            <FormLabel>Date <span className="text-destructive">*</span></FormLabel>
+                            <DateTimePicker field={field} />
+                            <FormMessage />
                         </FormItem>
                     )}
                 />

@@ -40,7 +40,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as React from 'react';
-import { useState, useMemo, useEffect, useCallback, useTransition, Fragment } from 'react';
+import { useState, useMemo, useEffect, useCallback, useTransition, Fragment, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy } from 'firebase/firestore';
@@ -214,7 +214,6 @@ function ExpenseForm({
     const { toast } = useToast();
     const transactionType = form.watch('type');
     const descriptionValue = form.watch('description');
-    const [tagSearch, setTagSearch] = useState('');
     
     const [debouncedDescription] = useDebounce(descriptionValue, 500);
     const [isSuggesting, startSuggestionTransition] = useTransition();
@@ -293,10 +292,6 @@ function ExpenseForm({
     
     const selectedTagIds = form.watch('tagIds') || [];
 
-    const selectedTags = useMemo(() => {
-        return selectedTagIds.map((id: string) => tags.find(t => t.id === id)).filter(Boolean) as Tag[];
-    }, [selectedTagIds, tags]);
-
     const fieldOrder = userProfile?.transactionFieldOrder || ['description', 'accountId', 'categoryId', 'tagIds'];
 
     const formFields: Record<string, React.ReactNode> = {
@@ -309,8 +304,7 @@ function ExpenseForm({
                     <FormItem className="grid grid-cols-4 items-center gap-x-2">
                         <FormLabel className="text-right">
                             <div className="flex items-center justify-end gap-1">
-                                Description
-                                {isDescriptionRequired && <span className="text-destructive">*</span>}
+                                Description {isDescriptionRequired && <span className="text-destructive">*</span>}
                                 {isSuggesting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                             </div>
                         </FormLabel>
@@ -423,102 +417,115 @@ function ExpenseForm({
             />
         ),
         tagIds: (
-             <FormField
+            <FormField
                 key="tagIds"
                 control={form.control}
                 name="tagIds"
-                render={({ field }) => (
-                     <FormItem className="grid grid-cols-4 items-start gap-x-2">
-                        <FormLabel className="text-right pt-2">
-                            <div className="flex items-center justify-end gap-1">
-                                Tags
-                                {isTagRequired && <span className="text-destructive">*</span>}
-                            </div>
-                        </FormLabel>
-                        <div className="flex gap-2 col-span-3">
-                             <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        className="w-full justify-between font-normal h-auto min-h-10"
-                                    >
-                                        <div className="flex flex-wrap gap-1">
-                                            {selectedTags.length > 0 ? selectedTags.map(tag => (
-                                                <Badge
-                                                    key={tag.id}
-                                                    style={generateColorStyle(tag.name)}
-                                                    className="badge-colorful flex items-center gap-1.5"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        const newValue = (field.value || []).filter((id: string) => id !== tag.id)
-                                                        field.onChange(newValue);
-                                                    }}
-                                                >
-                                                    {renderIcon(tag.icon, "h-3 w-3")}
-                                                    {tag.name}
-                                                    <X className="h-3 w-3" />
-                                                </Badge>
-                                            )) : "Select tags..."}
+                render={({ field }) => {
+                    const inputRef = useRef<HTMLInputElement>(null);
+                    const [open, setOpen] = useState(false);
+                    const [inputValue, setInputValue] = useState("");
+
+                    const handleSelect = (tagId: string) => {
+                        const currentTags = field.value || [];
+                        const isSelected = currentTags.includes(tagId);
+                        if (isSelected) {
+                            field.onChange(currentTags.filter(id => id !== tagId));
+                        } else {
+                            field.onChange([...currentTags, tagId]);
+                        }
+                        setInputValue("");
+                    };
+
+                    const handleRemove = (tagId: string) => {
+                        const currentTags = field.value || [];
+                        field.onChange(currentTags.filter(id => id !== tagId));
+                    };
+
+                    const filteredTags = tags.filter(tag => 
+                        !selectedTagIds.includes(tag.id) &&
+                        tag.name.toLowerCase().includes(inputValue.toLowerCase())
+                    );
+
+                    return (
+                        <FormItem className="grid grid-cols-4 items-start gap-x-2">
+                            <FormLabel className="text-right pt-2">
+                                <div className="flex items-center justify-end gap-1">
+                                    Tags {isTagRequired && <span className="text-destructive">*</span>}
+                                </div>
+                            </FormLabel>
+                            <div className="flex gap-2 col-span-3">
+                                <Popover open={open} onOpenChange={setOpen}>
+                                    <PopoverTrigger asChild>
+                                        <div className="flex flex-wrap gap-1 p-1 border rounded-md w-full min-h-10 items-center cursor-text" onClick={() => inputRef.current?.focus()}>
+                                            {selectedTagIds.map(id => {
+                                                const tag = tags.find(t => t.id === id);
+                                                return tag ? (
+                                                    <Badge
+                                                        key={tag.id}
+                                                        style={generateColorStyle(tag.name)}
+                                                        className="badge-colorful flex items-center gap-1.5"
+                                                    >
+                                                        {renderIcon(tag.icon, "h-3 w-3")}
+                                                        {tag.name}
+                                                        <button
+                                                            type="button"
+                                                            className="focus:outline-none"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleRemove(tag.id);
+                                                            }}
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    </Badge>
+                                                ) : null;
+                                            })}
+                                            <Command>
+                                                <CommandInput
+                                                    ref={inputRef}
+                                                    placeholder="Select tags..."
+                                                    value={inputValue}
+                                                    onValueChange={setInputValue}
+                                                    onFocus={() => setOpen(true)}
+                                                    className="h-auto min-h-0 p-0 border-none focus-visible:ring-0 shadow-none bg-transparent"
+                                                />
+                                            </Command>
                                         </div>
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                     <Command>
-                                        <CommandInput 
-                                            placeholder="Search tags..." 
-                                            value={tagSearch}
-                                            onValueChange={setTagSearch}
-                                        />
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                                         <CommandList>
-                                            <CommandEmpty>No results found.</CommandEmpty>
+                                            {filteredTags.length === 0 && <CommandEmpty>No results found.</CommandEmpty>}
                                             <CommandGroup>
                                                 <div className="p-1">
                                                     <div className="grid grid-cols-2 gap-1">
-                                                    {tags.filter(tag => tag.name.toLowerCase().includes(tagSearch.toLowerCase())).map(tag => {
-                                                        const isSelected = field.value?.includes(tag.id);
-                                                        return (
+                                                        {filteredTags.map(tag => (
                                                             <CommandItem
                                                                 key={tag.id}
                                                                 value={tag.name}
-                                                                onSelect={() => {
-                                                                    const newValue = isSelected
-                                                                        ? (field.value || []).filter((id: string) => id !== tag.id)
-                                                                        : [...(field.value || []), tag.id];
-                                                                    field.onChange(newValue);
-                                                                }}
+                                                                onSelect={() => handleSelect(tag.id)}
                                                                 className="flex items-center gap-2"
                                                             >
-                                                                <div className={cn(
-                                                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                                                                    isSelected
-                                                                        ? "bg-primary text-primary-foreground"
-                                                                        : "opacity-50 [&_svg]:invisible"
-                                                                )}>
-                                                                  <Check className={cn("h-4 w-4")} />
-                                                                </div>
                                                                 {renderIcon(tag.icon)}
                                                                 <span>{tag.name}</span>
                                                             </CommandItem>
-                                                        )
-                                                    })}
+                                                        ))}
                                                     </div>
                                                 </div>
                                             </CommandGroup>
                                         </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-
-                            <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
-                               <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
-                            </QuickAddItemDialog>
-                        </div>
-                         <div className="col-start-2 col-span-3">
-                            <FormMessage />
-                        </div>
-                    </FormItem>
-                )}
+                                    </PopoverContent>
+                                </Popover>
+                                <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)}>
+                                    <Button variant="outline" size="icon" type="button"><PlusCircle className="h-4 w-4" /></Button>
+                                </QuickAddItemDialog>
+                            </div>
+                            <div className="col-start-2 col-span-3">
+                                <FormMessage />
+                            </div>
+                        </FormItem>
+                    )
+                }}
             />
         )
     }

@@ -436,44 +436,25 @@ function ExpenseForm({
                             </div>
                         </FormLabel>
                         <div className="flex gap-2 col-span-3">
-                            <Popover>
+                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10">
-                                        {selectedTags.length > 0 ? (
-                                            <div className="flex flex-wrap gap-1">
-                                                {selectedTags.map(tag => {
-                                                    const style = generateColorStyle(tag.name);
-                                                    return (
-                                                        <Badge
-                                                            key={tag.id}
-                                                            style={style}
-                                                            className="badge-colorful flex items-center gap-1.5"
-                                                        >
-                                                            {renderIcon(tag.icon, "h-3 w-3")}
-                                                            {tag.name}
-                                                            <span
-                                                                role="button"
-                                                                tabIndex={0}
-                                                                className="rounded-full -mr-1 focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") {
-                                                                    e.stopPropagation(); e.preventDefault();
-                                                                    field.onChange(field.value?.filter((id: string) => id !== tag.id))
-                                                                }}}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    e.preventDefault();
-                                                                    field.onChange(field.value?.filter((id: string) => id !== tag.id))
-                                                                }}
-                                                            >
-                                                                <X className="h-3 w-3 text-muted-foreground hover:text-foreground"/>
-                                                            </span>
-                                                        </Badge>
-                                                    )
-                                                })}
-                                            </div>
-                                        ) : (
-                                            "Select tags..."
-                                        )}
+                                    <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        className="w-full justify-between font-normal h-auto min-h-10"
+                                    >
+                                        <div className="flex flex-wrap gap-1">
+                                            {selectedTags.length > 0 ? selectedTags.map(tag => (
+                                                <Badge
+                                                    key={tag.id}
+                                                    style={generateColorStyle(tag.name)}
+                                                    className="badge-colorful flex items-center gap-1.5"
+                                                >
+                                                    {renderIcon(tag.icon, "h-3 w-3")}
+                                                    {tag.name}
+                                                </Badge>
+                                            )) : "Select tags..."}
+                                        </div>
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
@@ -486,34 +467,37 @@ function ExpenseForm({
                                         <CommandList>
                                             <CommandEmpty>No results found.</CommandEmpty>
                                             <CommandGroup>
-                                                {tags.filter(tag => tag.name.toLowerCase().includes(tagSearch.toLowerCase())).map(tag => {
-                                                    const isSelected = field.value?.includes(tag.id);
-                                                    return (
-                                                        <CommandItem
-                                                            key={tag.id}
-                                                            value={tag.name}
-                                                            onSelect={() => {
-                                                                const newValue = isSelected
-                                                                    ? (field.value || []).filter((id: string) => id !== tag.id)
-                                                                    : [...(field.value || []), tag.id];
-                                                                field.onChange(newValue);
-                                                            }}
-                                                        >
-                                                            <div className={cn(
-                                                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                                                                isSelected
-                                                                    ? "bg-primary text-primary-foreground"
-                                                                    : "opacity-50 [&_svg]:invisible"
-                                                            )}>
-                                                              <Check className={cn("h-4 w-4")} />
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
+                                                <div className="p-1">
+                                                    <div className="grid grid-cols-2 gap-1">
+                                                    {tags.filter(tag => tag.name.toLowerCase().includes(tagSearch.toLowerCase())).map(tag => {
+                                                        const isSelected = field.value?.includes(tag.id);
+                                                        return (
+                                                            <CommandItem
+                                                                key={tag.id}
+                                                                value={tag.name}
+                                                                onSelect={() => {
+                                                                    const newValue = isSelected
+                                                                        ? (field.value || []).filter((id: string) => id !== tag.id)
+                                                                        : [...(field.value || []), tag.id];
+                                                                    field.onChange(newValue);
+                                                                }}
+                                                                className="flex items-center gap-2"
+                                                            >
+                                                                <div className={cn(
+                                                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                                                    isSelected
+                                                                        ? "bg-primary text-primary-foreground"
+                                                                        : "opacity-50 [&_svg]:invisible"
+                                                                )}>
+                                                                  <Check className={cn("h-4 w-4")} />
+                                                                </div>
                                                                 {renderIcon(tag.icon)}
                                                                 <span>{tag.name}</span>
-                                                            </div>
-                                                        </CommandItem>
-                                                    )
-                                                })}
+                                                            </CommandItem>
+                                                        )
+                                                    })}
+                                                    </div>
+                                                </div>
                                             </CommandGroup>
                                         </CommandList>
                                     </Command>
@@ -983,9 +967,9 @@ function useExpenseForm({
             commitBatchNonBlocking(batch, collectionPath);
 
             if (isCreditLimitUpgrade) {
-                toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount?.name} has been increased.` });
+                toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount?.name} has been increased.`, duration: 3000 });
             } else {
-                 toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
+                 toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.`, duration: 3000 });
             }
             onSaveSuccess?.();
             return true;

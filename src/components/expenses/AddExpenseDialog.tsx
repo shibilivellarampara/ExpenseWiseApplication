@@ -503,7 +503,7 @@ function ExpenseForm({
                             </DropdownMenu>
                             {selectedTagIds.length > 0 && (
                                 <div className="flex flex-wrap gap-1.5 pt-2">
-                                     {selectedTagIds.map((id: string) => tags.find(t => t.id === id)).filter(Boolean).map(tag => (
+                                     {selectedTagIds.map((id: string) => tags.find(t => t.id === id)).filter(Boolean).map((tag: Tag) => (
                                          <Badge
                                             key={tag!.id}
                                             style={generateColorStyle(tag!.name)}

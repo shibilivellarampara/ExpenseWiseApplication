@@ -449,15 +449,21 @@ function ExpenseForm({
                                                     key={tag.id}
                                                     style={generateColorStyle(tag.name)}
                                                     className="badge-colorful flex items-center gap-1.5"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        const newValue = (field.value || []).filter((id: string) => id !== tag.id)
+                                                        field.onChange(newValue);
+                                                    }}
                                                 >
                                                     {renderIcon(tag.icon, "h-3 w-3")}
                                                     {tag.name}
+                                                    <X className="h-3 w-3" />
                                                 </Badge>
                                             )) : "Select tags..."}
                                         </div>
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                                      <Command>
                                         <CommandInput 
                                             placeholder="Search tags..." 
@@ -967,9 +973,9 @@ function useExpenseForm({
             commitBatchNonBlocking(batch, collectionPath);
 
             if (isCreditLimitUpgrade) {
-                toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount?.name} has been increased.`, duration: 3000 });
+                toast({ title: 'Credit Limit Updated!', description: `The limit for ${selectedAccount?.name} has been increased.`, duration: 1000 });
             } else {
-                 toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.`, duration: 3000 });
+                 toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.`, duration: 1000 });
             }
             onSaveSuccess?.();
             return true;

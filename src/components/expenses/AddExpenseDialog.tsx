@@ -491,7 +491,7 @@ function ExpenseForm({
                                             </ScrollArea>
                                             <div className="p-1 border-t">
                                                 <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} onOpenChange={(open) => !open && setTagDropdownOpen(true)}>
-                                                     <CommandItem onSelect={(value) => { value; }} className="flex items-center gap-2 text-primary">
+                                                     <CommandItem onSelect={() => {}} className="flex items-center gap-2 text-primary">
                                                         <PlusCircle className="h-4 w-4" />
                                                         Create new tag
                                                     </CommandItem>
@@ -503,7 +503,7 @@ function ExpenseForm({
                             </DropdownMenu>
                             {selectedTagIds.length > 0 && (
                                 <div className="flex flex-wrap gap-1.5 pt-2">
-                                     {selectedTagIds.map(id => tags.find(t => t.id === id)).filter(Boolean).map(tag => (
+                                     {selectedTagIds.map((id: string) => tags.find(t => t.id === id)).filter(Boolean).map(tag => (
                                          <Badge
                                             key={tag!.id}
                                             style={generateColorStyle(tag!.name)}

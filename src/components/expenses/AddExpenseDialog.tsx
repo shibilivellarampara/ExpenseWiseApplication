@@ -121,6 +121,7 @@ FloatingLabelInput.displayName = 'FloatingLabelInput';
 
 const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof SelectTrigger> & { label: string; children: React.ReactNode; onValueChange: (value: string) => void; value?: string }>(
     ({ className, label, id, children, onValueChange, value, ...props }, ref) => {
+        const hasValue = value && value !== '';
         return (
             <div className="relative">
                  <Select onValueChange={onValueChange} value={value}>
@@ -135,7 +136,7 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
                     htmlFor={id}
                     className={cn(
                         "absolute left-3 text-xs text-muted-foreground transition-all bg-background px-1 pointer-events-none",
-                         value ? "top-0 -translate-y-1/2" : "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:text-xs"
+                         hasValue ? "top-0 -translate-y-1/2" : "top-1/2 -translate-y-1/2 text-base"
                     )}
                 >
                     {label}
@@ -145,6 +146,78 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
     }
 );
 FloatingLabelSelect.displayName = 'FloatingLabelSelect';
+
+// Component for quick adding of Categories or Tags
+interface QuickAddItemDialogProps {
+    type: 'Category' | 'Tag';
+    onSave: (name: string, icon: string) => Promise<string | undefined>;
+    children: React.ReactNode;
+}
+
+function QuickAddItemDialog({ type, onSave, children }: QuickAddItemDialogProps) {
+    const [open, setOpen] = useState(false);
+    const [name, setName] = useState('');
+    const [icon, setIcon] = useState(type === 'Category' ? 'Shapes' : 'Tag');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const renderIcon = (iconName: string) => {
+        const IconComponent = (LucideIcons as any)[iconName];
+        return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
+    };
+
+    const handleSave = async () => {
+        if (!name) return;
+        setIsSaving(true);
+        const newId = await onSave(name, icon);
+        if (newId) {
+            setOpen(false);
+            setName('');
+            setIcon(type === 'Category' ? 'Shapes' : 'Tag');
+        }
+        setIsSaving(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add New {type}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <Input
+                        placeholder={`${type} Name`}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        autoFocus
+                    />
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                                {renderIcon(icon)}
+                                <span className="ml-2">{icon}</span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                            {availableIcons.map(iconName => (
+                                <Button key={iconName} variant="ghost" size="icon" onClick={() => setIcon(iconName)}>
+                                    {renderIcon(iconName)}
+                                </Button>
+                            ))}
+                        </PopoverContent>
+                    </Popover>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={isSaving || !name}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 function ExpenseForm({
   form,
@@ -391,31 +464,29 @@ function ExpenseForm({
                                 </QuickAddItemDialog>
                                 </div>
                                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                    <Command>
-                                        <CommandList>
-                                            <ScrollArea className="h-48">
-                                                <CommandEmpty>No results found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    <div className="grid grid-cols-2 gap-1 p-1">
-                                                        {filteredTags.map(tag => (
-                                                            <CommandItem
-                                                                key={tag.id}
-                                                                value={tag.name}
-                                                                onSelect={() => handleSelect(tag.id)}
-                                                                className="flex items-center justify-between gap-2"
-                                                            >
-                                                                <div className="flex items-center gap-2 truncate">
-                                                                    {renderIcon(tag.icon)}
-                                                                    <span className="truncate">{tag.name}</span>
-                                                                </div>
-                                                                <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
-                                                            </CommandItem>
-                                                        ))}
-                                                    </div>
-                                                </CommandGroup>
-                                            </ScrollArea>
-                                        </CommandList>
-                                    </Command>
+                                    <CommandList>
+                                        <ScrollArea className="h-48">
+                                            <CommandEmpty>No results found.</CommandEmpty>
+                                            <CommandGroup>
+                                                <div className="grid grid-cols-2 gap-1 p-1">
+                                                    {filteredTags.map(tag => (
+                                                        <CommandItem
+                                                            key={tag.id}
+                                                            value={tag.name}
+                                                            onSelect={() => handleSelect(tag.id)}
+                                                            className="flex items-center justify-between gap-2"
+                                                        >
+                                                            <div className="flex items-center gap-2 truncate">
+                                                                {renderIcon(tag.icon)}
+                                                                <span className="truncate">{tag.name}</span>
+                                                            </div>
+                                                            <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
+                                                        </CommandItem>
+                                                    ))}
+                                                </div>
+                                            </CommandGroup>
+                                        </ScrollArea>
+                                    </CommandList>
                                 </PopoverContent>
                             </Popover>
                             <FormMessage />
@@ -476,8 +547,6 @@ function ExpenseForm({
                         </FormItem>
                     )}
                 />
-                
-                 {fieldOrder.map(fieldName => formFields[fieldName])}
                  <FormField
                     control={form.control}
                     name="date"
@@ -519,6 +588,8 @@ function ExpenseForm({
                         </FormItem>
                     )}
                 />
+                
+                 {fieldOrder.map(fieldName => formFields[fieldName])}
             </form>
         </Form>
     );

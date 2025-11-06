@@ -10,6 +10,18 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.2.5",
+        date: "2024-08-07",
+        changes: [
+            { type: 'Feature', description: "Unified date and time selection into a single input in the transaction form." },
+            { type: 'Feature', description: "Implemented a consistent, searchable dropdown for tag selection, matching account and category fields." },
+            { type: 'Fix', description: "Resolved inconsistent label behavior in the transaction form for a uniform UI." },
+            { type: 'Fix', description: "Corrected a visual bug causing a 'double border' on focused form inputs." },
+            { type: 'Fix', description: "Removed hardcoded currency symbols from input fields for better internationalization." },
+            { type: 'Fix', description: "Ensured consistent font sizes across all elements in the transaction form." },
+        ]
+    },
+    {
         version: "1.2.4",
         date: "2024-08-06",
         changes: [

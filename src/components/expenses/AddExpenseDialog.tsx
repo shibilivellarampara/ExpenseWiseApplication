@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -440,8 +439,6 @@ function ExpenseForm({
                 control={form.control}
                 name="tagIds"
                 render={({ field }) => {
-                    const [inputValue, setInputValue] = useState("");
-
                     const handleSelect = (tagId: string) => {
                         const currentTags = field.value || [];
                         const isSelected = currentTags.includes(tagId);
@@ -452,70 +449,38 @@ function ExpenseForm({
                         );
                     };
 
-                    const selectedTagObjects = selectedTagIds.map(id => tags.find(t => t.id === id)).filter(Boolean) as Tag[];
-
                     return (
                         <FormItem>
                             <DropdownMenu open={tagDropdownOpen} onOpenChange={setTagDropdownOpen}>
-                                <div className="relative">
-                                    <DropdownMenuTrigger asChild>
-                                        <button type="button" className={cn("peer h-14 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-between floating-input text-left")} data-has-value={selectedTagIds.length > 0}>
-                                            <div className="flex-1 pt-3">
-                                                 {selectedTagIds.length > 0 ? (
-                                                    <div className="flex flex-wrap items-center gap-1.5">
-                                                        {selectedTagObjects.map(tag => (
-                                                             <Badge
-                                                                key={tag.id}
-                                                                style={generateColorStyle(tag.name)}
-                                                                className="badge-colorful"
-                                                            >
-                                                                {tag.name}
-                                                            </Badge>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-muted-foreground">&nbsp;</span>
-                                                )}
-                                            </div>
-                                            <ChevronDown className="h-4 w-4 opacity-50" />
-                                        </button>
-                                    </DropdownMenuTrigger>
-                                     <Label className={cn(
-                                        "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
-                                        "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
-                                        selectedTagIds.length > 0 && "top-0 -translate-y-1/2 text-xs font-medium"
-                                    )}>
-                                        Tags {isTagRequired ? '*' : ''}
-                                    </Label>
-                                </div>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-between h-14 text-base font-normal">
+                                        <span className="text-muted-foreground">
+                                            {selectedTagIds.length > 0 ? `${selectedTagIds.length} tags selected` : `Tags ${isTagRequired ? '*' : ''}`}
+                                        </span>
+                                        <ChevronDown className="h-4 w-4 opacity-50" />
+                                    </Button>
+                                </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] p-0" align="start">
                                     <Command>
-                                        <CommandInput 
-                                            placeholder="Search tags..."
-                                            value={inputValue}
-                                            onValueChange={setInputValue}
-                                        />
+                                        <CommandInput placeholder="Search tags..."/>
                                         <CommandList>
                                             <CommandEmpty>No results found.</CommandEmpty>
                                             <ScrollArea className="h-48">
                                                 <CommandGroup>
-                                                    {tags.map(tag => {
-                                                         if (!tag.name.toLowerCase().includes(inputValue.toLowerCase())) return null;
-                                                         return (
-                                                            <CommandItem
-                                                                key={tag.id}
-                                                                value={tag.name}
-                                                                onSelect={() => handleSelect(tag.id)}
-                                                                className="flex items-center justify-between gap-2"
-                                                            >
-                                                                <div className="flex items-center gap-2 truncate">
-                                                                    {renderIcon(tag.icon)}
-                                                                    <span className="truncate">{tag.name}</span>
-                                                                </div>
-                                                                <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
-                                                            </CommandItem>
-                                                        )
-                                                    })}
+                                                    {tags.map(tag => (
+                                                        <CommandItem
+                                                            key={tag.id}
+                                                            value={tag.name}
+                                                            onSelect={() => handleSelect(tag.id)}
+                                                            className="flex items-center justify-between gap-2"
+                                                        >
+                                                            <div className="flex items-center gap-2 truncate">
+                                                                {renderIcon(tag.icon)}
+                                                                <span className="truncate">{tag.name}</span>
+                                                            </div>
+                                                            <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
+                                                        </CommandItem>
+                                                    ))}
                                                 </CommandGroup>
                                             </ScrollArea>
                                             <div className="p-1 border-t">
@@ -530,6 +495,19 @@ function ExpenseForm({
                                     </Command>
                                 </DropdownMenuContent>
                             </DropdownMenu>
+                            {selectedTagIds.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 pt-2">
+                                     {selectedTagIds.map(id => tags.find(t => t.id === id)).filter(Boolean).map(tag => (
+                                         <Badge
+                                            key={tag!.id}
+                                            style={generateColorStyle(tag!.name)}
+                                            className="badge-colorful"
+                                        >
+                                            {tag!.name}
+                                        </Badge>
+                                     ))}
+                                </div>
+                            )}
                             <FormMessage />
                         </FormItem>
                     )
@@ -573,7 +551,7 @@ function ExpenseForm({
                     />
                 )}
                  
-                <FormField
+                 <FormField
                     control={form.control}
                     name="date"
                     render={({ field }) => (

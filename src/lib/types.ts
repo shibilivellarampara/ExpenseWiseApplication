@@ -20,7 +20,6 @@ export type UserProfile = {
   };
   transactionFieldOrder?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
   createdAt?: Timestamp;
-  sharedExpenseIds?: string[];
   isAdmin?: boolean;
 };
 

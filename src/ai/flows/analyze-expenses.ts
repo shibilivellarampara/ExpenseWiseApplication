@@ -34,10 +34,10 @@ Here is the list of transactions to analyze:
 - **Type:** {{type}}
 - **Amount:** {{amount}}
 - **Date:** {{date}}
-- **Description:** {{description}}
-- **Category:** {{category}}
-- **Account:** {{account}}
-- **Tags:** {{#each tags}}{{.}}, {{/each}}
+{{#if description}}- **Description:** {{description}}{{/if}}
+{{#if category}}- **Category:** {{category}}{{/if}}
+{{#if account}}- **Account:** {{account}}{{/if}}
+{{#if tags}}- **Tags:** {{#each tags}}{{.}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}
 ---
 {{/each}}
 `,

@@ -97,25 +97,31 @@ export default function AnalysisPage() {
 
     const enrichedExpenses = useMemo((): EnrichedExpense[] => {
         if (!expenses || !categoryMap.size || !accountMap.size) return [];
-        
+    
         const filteredByAccount = selectedAccounts.length > 0 
             ? expenses.filter(e => selectedAccounts.includes(e.accountId))
             : expenses;
-
-        return filteredByAccount.map(expense => {
-            const date = expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate();
+    
+        // Use reduce to build the array of enriched expenses, filtering out unwanted items.
+        return filteredByAccount.reduce<EnrichedExpense[]>((acc, expense) => {
             const category = expense.categoryId ? categoryMap.get(expense.categoryId) : undefined;
+    
+            // Skip this expense if its category is in the special or excluded lists.
             if (category && (SPECIAL_CATEGORIES.includes(category.name) || excludedCategoryIds.includes(category.id))) {
-                return null;
+                return acc;
             }
-            return {
+    
+            const enriched: EnrichedExpense = {
                 ...expense,
-                date,
+                date: expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate(),
                 category,
                 account: accountMap.get(expense.accountId),
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             };
-        }).filter((e): e is EnrichedExpense => e !== null);
+    
+            acc.push(enriched);
+            return acc;
+        }, []);
     }, [expenses, categoryMap, accountMap, tagMap, selectedAccounts, excludedCategoryIds]);
     
 

@@ -415,7 +415,7 @@ function ExpenseForm({
                 render={({ field }) => (
                     <FormItem>
                          <FloatingLabelSelect
-                            label={`Category${isCategoryRequired && transactionType === 'expense' ? ' *' : ''}`}
+                            label={`Category${isCategoryRequired ? ' *' : ''}`}
                             id="categoryId"
                             onValueChange={field.onChange}
                             value={field.value}

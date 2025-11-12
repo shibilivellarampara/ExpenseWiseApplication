@@ -331,7 +331,7 @@ function ExpenseForm({
                 }
             } catch (error) {
                 console.error("AI suggestion failed:", error);
-                 toast({ variant: "destructive", title: "AI Suggestion Error", description: "Could not fetch AI suggestions. Please try again later." });
+                // Do not show a toast, fail silently
             }
         });
 

@@ -4,12 +4,12 @@
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useMemo } from 'react';
 import { EnrichedExpense } from '@/lib/types';
-import { format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, getYear, subMonths, subYears } from 'date-fns';
+import { format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, getYear, subMonths, subYears, eachYearOfInterval } from 'date-fns';
 import { BarChart as BarChartIcon } from 'lucide-react';
 
 interface SpendingTrendChartProps {
   expenses: EnrichedExpense[];
-  timeRange: 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'custom';
+  timeRange: 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'all' | 'custom';
   currency?: string;
 }
 
@@ -22,35 +22,58 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
         const dataMap = new Map<string, { name: string; income: number; expense: number }>();
         let intervals: { key: string; name: string }[] = [];
 
-        // 1. Initialize intervals and dataMap
-        if (timeRange === 'week') {
-            const start = startOfWeek(now);
-            const end = endOfWeek(now);
-             intervals = eachDayOfInterval({ start, end }).map(day => ({
-                key: format(day, 'yyyy-MM-dd'),
-                name: format(day, 'EEE'),
-            }));
-        } else if (timeRange === 'month' || timeRange === 'last-month') {
-             const targetDate = timeRange === 'month' ? now : subMonths(now, 1);
-            const start = startOfMonth(targetDate);
-            const end = endOfMonth(targetDate);
+        // 1. Determine date range
+        let start: Date, end: Date;
+        if(timeRange === 'all' || timeRange === 'custom') {
+            start = expenses.length > 0 ? expenses[expenses.length - 1].date : now;
+            end = expenses.length > 0 ? expenses[0].date : now;
+        } else {
+             switch (timeRange) {
+                case 'week':
+                    start = startOfWeek(now);
+                    end = endOfWeek(now);
+                    break;
+                case 'month':
+                case 'last-month':
+                    const targetDate = timeRange === 'month' ? now : subMonths(now, 1);
+                    start = startOfMonth(targetDate);
+                    end = endOfMonth(targetDate);
+                    break;
+                case '3-months':
+                    start = startOfMonth(subMonths(now, 2));
+                    end = now;
+                    break;
+                case 'year':
+                default:
+                    start = startOfYear(now);
+                    end = endOfYear(now);
+                    break;
+            }
+        }
+
+
+        // 2. Initialize intervals and dataMap based on range duration
+        const diffDays = (end.getTime() - start.getTime()) / (1000 * 3600 * 24);
+
+        if (diffDays <= 31) { // Daily view
             intervals = eachDayOfInterval({ start, end }).map(day => ({
                 key: format(day, 'yyyy-MM-dd'),
-                name: format(day, 'd'),
+                name: format(day, 'd MMM'),
             }));
-        } else if (timeRange === '3-months') {
-            const start = startOfMonth(subMonths(now, 2));
-             intervals = eachWeekOfInterval({ start, end: now }, { weekStartsOn: 1 }).map(weekStart => ({
-                key: format(weekStart, 'yyyy-MM-dd'),
+        } else if (diffDays <= 90) { // Weekly view
+            intervals = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 }).map(weekStart => ({
+                key: format(weekStart, 'yyyy-ww'),
                 name: `W ${format(weekStart, 'd MMM')}`,
             }));
-        } else { // 'year' or 'custom'
-            const start = timeRange === 'year' ? startOfYear(now) : expenses[expenses.length - 1]?.date || new Date();
-            const end = timeRange === 'year' ? endOfYear(now) : expenses[0]?.date || new Date();
-
+        } else if (diffDays <= 366 * 2) { // Monthly view
             intervals = eachMonthOfInterval({ start, end }).map(month => ({
                 key: format(month, 'yyyy-MM'),
                 name: format(month, 'MMM yyyy'),
+            }));
+        } else { // Yearly view
+             intervals = eachYearOfInterval({ start, end }).map(year => ({
+                key: format(year, 'yyyy'),
+                name: format(year, 'yyyy'),
             }));
         }
 
@@ -58,15 +81,17 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
             dataMap.set(interval.key, { name: interval.name, income: 0, expense: 0 });
         });
         
-        // 2. Populate dataMap with expenses
+        // 3. Populate dataMap with expenses
         expenses.forEach(expense => {
             let key: string;
-            if (timeRange === 'week' || timeRange === 'month' || timeRange === 'last-month') {
+             if (diffDays <= 31) { // Daily
                 key = format(expense.date, 'yyyy-MM-dd');
-            } else if (timeRange === '3-months') {
-                key = format(startOfWeek(expense.date, { weekStartsOn: 1 }), 'yyyy-MM-dd');
-            } else { // 'year' or 'custom'
+            } else if (diffDays <= 90) { // Weekly
+                key = format(startOfWeek(expense.date, { weekStartsOn: 1 }), 'yyyy-ww');
+            } else if (diffDays <= 366 * 2) { // Monthly
                 key = format(expense.date, 'yyyy-MM');
+            } else { // Yearly
+                key = format(expense.date, 'yyyy');
             }
 
             const periodData = dataMap.get(key);
@@ -127,3 +152,5 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
         </ResponsiveContainer>
     );
 }
+
+    

@@ -4,7 +4,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, Category, EnrichedExpense, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, query, where, Timestamp, doc } from 'firebase/firestore';
+import { collection, query, where, Timestamp, doc, orderBy } from 'firebase/firestore';
 import { useMemo, useState, useTransition } from "react";
 import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, parse, format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,7 +23,7 @@ import { Check, ChevronDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'custom';
+type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'all' | 'custom';
 const SPECIAL_CATEGORIES = ['Credit Limit Upgrade', 'Credit Limit Downgrade', 'Credit Card Payment'];
 
 export default function AnalysisPage() {
@@ -50,10 +50,12 @@ export default function AnalysisPage() {
                 return { dateRangeStart: startOfDay(subMonths(now, 3)), dateRangeEnd: endOfDay(now) };
             case 'year':
                 return { dateRangeStart: startOfYear(now), dateRangeEnd: endOfDay(now) };
+            case 'all':
+                return { dateRangeStart: undefined, dateRangeEnd: undefined };
             case 'custom':
                  return { 
-                    dateRangeStart: customDateRange.from ? startOfDay(customDateRange.from) : startOfYear(new Date(0)), 
-                    dateRangeEnd: customDateRange.to ? endOfDay(customDateRange.to) : endOfDay(now) 
+                    dateRangeStart: customDateRange.from ? startOfDay(customDateRange.from) : undefined, 
+                    dateRangeEnd: customDateRange.to ? endOfDay(customDateRange.to) : undefined
                 };
             default:
                 return { dateRangeStart: startOfMonth(now), dateRangeEnd: endOfDay(now) };
@@ -63,11 +65,14 @@ export default function AnalysisPage() {
     const expensesQuery = useMemoFirebase(() => {
         if (!user) return null;
         
-        let q = query(
-            collection(firestore, `users/${user.uid}/expenses`),
-            where('date', '>=', Timestamp.fromDate(dateRangeStart)),
-            where('date', '<=', Timestamp.fromDate(dateRangeEnd))
-        );
+        let q = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
+
+        if (dateRangeStart) {
+            q = query(q, where('date', '>=', Timestamp.fromDate(dateRangeStart)));
+        }
+        if (dateRangeEnd) {
+            q = query(q, where('date', '<=', Timestamp.fromDate(dateRangeEnd)));
+        }
 
         return q;
     }, [user, firestore, dateRangeStart, dateRangeEnd]);
@@ -181,6 +186,7 @@ export default function AnalysisPage() {
                             <SelectItem value="last-month">Last Month</SelectItem>
                             <SelectItem value="3-months">Last 3 Months</SelectItem>
                             <SelectItem value="year">This Year</SelectItem>
+                            <SelectItem value="all">All Time</SelectItem>
                             <SelectItem value="custom">Custom Range</SelectItem>
                         </SelectContent>
                     </Select>
@@ -284,3 +290,5 @@ export default function AnalysisPage() {
         </div>
     );
 }
+
+    

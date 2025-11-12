@@ -14,7 +14,6 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "categoryId", "order": "ASCENDING" },
-        {_next/static/chunks/src_fe6a8ee4._.js
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
     },
@@ -37,3 +36,5 @@
   ],
   "fieldOverrides": []
 }
+
+    

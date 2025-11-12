@@ -69,12 +69,8 @@ export default function AnalysisPage() {
             where('date', '<=', Timestamp.fromDate(dateRangeEnd))
         );
 
-        if (selectedAccounts.length > 0) {
-            q = query(q, where('accountId', 'in', selectedAccounts));
-        }
-
         return q;
-    }, [user, firestore, dateRangeStart, dateRangeEnd, selectedAccounts]);
+    }, [user, firestore, dateRangeStart, dateRangeEnd]);
     
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [firestore, user]);
@@ -95,7 +91,13 @@ export default function AnalysisPage() {
 
     const enrichedExpenses = useMemo((): EnrichedExpense[] => {
         if (!expenses || !categoryMap.size || !accountMap.size) return [];
-        return expenses.map(expense => {
+        
+        // Apply account filtering on the client side
+        const filteredByAccount = selectedAccounts.length > 0 
+            ? expenses.filter(e => selectedAccounts.includes(e.accountId))
+            : expenses;
+
+        return filteredByAccount.map(expense => {
             const date = expense.date instanceof Date ? expense.date : expense.date.toDate();
             const category = expense.categoryId ? categoryMap.get(expense.categoryId) : undefined;
             // Exclude special financial management categories from analysis
@@ -110,7 +112,7 @@ export default function AnalysisPage() {
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             };
         }).filter((e): e is EnrichedExpense => e !== null);
-    }, [expenses, categoryMap, accountMap, tagMap]);
+    }, [expenses, categoryMap, accountMap, tagMap, selectedAccounts]);
     
 
     const handleTimeRangeChange = (value: string) => {

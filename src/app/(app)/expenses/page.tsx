@@ -11,7 +11,7 @@ import { collection, orderBy, query, doc, where, getDocs }from "firebase/firesto
 import { Plus, Minus } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
-import { endOfDay, startOfDay, parse } from 'date-fns';
+import { endOfDay, startOfDay, parse, isWithinInterval } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
@@ -79,24 +79,9 @@ export default function ExpensesPage() {
         setExpensesError(null);
 
         try {
-            // ** SIMPLIFIED QUERY **
-            // Only apply filters that Firestore handles well together: date, type, and a single array-contains.
-            let q = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
-            
-            if (filters.dateRange.from) {
-                q = query(q, where('date', '>=', startOfDay(filters.dateRange.from)));
-            }
-            if (filters.dateRange.to) {
-                q = query(q, where('date', '<=', endOfDay(filters.dateRange.to)));
-            }
-            if (filters.type !== 'all') {
-                q = query(q, where('type', '==', filters.type));
-            }
-            // For tags, we can only do one `array-contains-any`. If needed, we'd have to do client-side.
-            // For now, let's keep it simple. If multiple tag filters are needed, logic would change.
-            if (filters.tags.length > 0) {
-                 q = query(q, where('tagIds', 'array-contains-any', filters.tags));
-            }
+            // ** RADICALLY SIMPLIFIED QUERY **
+            // Fetch all expenses, ordered by date. All filtering will happen client-side.
+            const q = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
 
             const snapshot = await getDocs(q);
             const fetchedExpenses = snapshot.docs.map(doc => {
@@ -114,9 +99,9 @@ export default function ExpensesPage() {
         } finally {
             setExpensesLoading(false);
         }
-    }, [user, firestore, filters.dateRange, filters.type, filters.tags]);
+    }, [user, firestore]);
 
-    // Fetch expenses when filters change
+    // Fetch expenses when component mounts
     useEffect(() => {
         fetchExpenses();
     }, [fetchExpenses]);
@@ -154,13 +139,31 @@ export default function ExpensesPage() {
         if (!allExpenses.length || !accounts?.length) return [];
         
         let clientFiltered = allExpenses.filter(expense => {
-            // ** CLIENT-SIDE FILTERING for accounts and categories **
+            // ** ALL FILTERING IS NOW CLIENT-SIDE **
+            
+            // Date Range Filter
+            if (filters.dateRange.from && (expense.date as Date) < startOfDay(filters.dateRange.from)) return false;
+            if (filters.dateRange.to && (expense.date as Date) > endOfDay(filters.dateRange.to)) return false;
+
+            // Type Filter
+            if (filters.type !== 'all' && expense.type !== filters.type) return false;
+
+            // Accounts Filter
             if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId)) {
                 return false;
             }
+
+            // Categories Filter
             if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) {
                 return false;
             }
+
+            // Tags Filter
+            if (filters.tags.length > 0 && !(expense.tagIds || []).some(tagId => filters.tags.includes(tagId))) {
+                return false;
+            }
+
+            // Search Query Filter
             if (debouncedSearchQuery) {
                 const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
                 const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
@@ -231,7 +234,7 @@ export default function ExpensesPage() {
 
         return enriched.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    }, [allExpenses, categoryMap, accountMap, tagMap, debouncedSearchQuery, accounts, filters.accounts, filters.categories]);
+    }, [allExpenses, categoryMap, accountMap, tagMap, debouncedSearchQuery, accounts, filters]);
     
     const handleFiltersChange = (newFilters: Filters) => {
         setFilters(newFilters);

@@ -6,6 +6,10 @@ export const SuggestExpenseDetailsInputSchema = z.object({
   categories: z.array(z.object({ id: z.string(), name: z.string() })).describe('List of available expense categories.'),
   tags: z.array(z.object({ id: z.string(), name: z.string() })).describe('List of available expense tags.'),
   accounts: z.array(z.object({ id: z.string(), name: z.string() })).describe('List of available financial accounts.'),
+  selectedCategoryId: z.string().optional().describe('The ID of the category the user has already selected.'),
+  selectedCategoryName: z.string().optional().describe('The name of the category the user has already selected.'),
+  selectedTagIds: z.array(z.string()).optional().describe('An array of tag IDs the user has already selected.'),
+  selectedTagNames: z.array(z.string()).optional().describe('An array of tag names the user has already selected.'),
 });
 export type SuggestExpenseDetailsInput = z.infer<typeof SuggestExpenseDetailsInputSchema>;
 

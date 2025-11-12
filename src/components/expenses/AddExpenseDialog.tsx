@@ -279,10 +279,15 @@ function ExpenseForm({
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
-    const transactionType = form.watch('type');
-    const descriptionValue = form.watch('description');
     
+    const descriptionValue = form.watch('description');
+    const categoryIdValue = form.watch('categoryId');
+    const tagIdsValue = form.watch('tagIds');
+
     const [debouncedDescription] = useDebounce(descriptionValue, 500);
+    const [debouncedCategoryId] = useDebounce(categoryIdValue, 500);
+    const [debouncedTagIds] = useDebounce(tagIdsValue, 500);
+    
     const [isSuggesting, startSuggestionTransition] = useTransition();
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -294,32 +299,43 @@ function ExpenseForm({
 
 
     useEffect(() => {
-        if (!debouncedDescription || isShared || !isAiSuggestionEnabled || categories.length === 0 || accounts.length === 0 || tags.length === 0) {
+        const hasInput = debouncedDescription || debouncedCategoryId || (debouncedTagIds && debouncedTagIds.length > 0);
+        if (!hasInput || isShared || !isAiSuggestionEnabled || categories.length === 0 || accounts.length === 0) {
             return;
         }
 
         startSuggestionTransition(async () => {
             try {
+                const selectedCategory = categories.find(c => c.id === debouncedCategoryId);
+                const selectedTags = tags.filter(t => debouncedTagIds?.includes(t.id));
+
                 const suggestions = await suggestExpenseDetails({
-                    description: debouncedDescription,
+                    description: debouncedDescription || '',
                     categories: categories.map(({ id, name }) => ({ id, name })),
                     tags: tags.map(({ id, name }) => ({ id, name })),
                     accounts: activeAccounts.map(({ id, name }) => ({ id, name })),
+                    selectedCategoryId: debouncedCategoryId,
+                    selectedCategoryName: selectedCategory?.name,
+                    selectedTagIds: debouncedTagIds,
+                    selectedTagNames: selectedTags.map(t => t.name),
                 });
                 
+                // Only set value if the field hasn't been touched by the user yet
                 if (suggestions.categoryId && !form.getFieldState('categoryId').isDirty) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
                 if (suggestions.accountId && !form.getFieldState('accountId').isDirty) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
                 if (suggestions.tagIds && !form.getFieldState('tagIds').isDirty) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
+                
+                // Only update description if AI has a suggestion AND it's different AND user hasn't manually edited it after the trigger
                 if (suggestions.description && suggestions.description !== debouncedDescription && !form.getFieldState('description').isDirty) {
                     form.setValue('description', suggestions.description, { shouldValidate: true });
                 }
             } catch (error) {
                 console.error("AI suggestion failed:", error);
-                // We don't show a toast here to avoid bothering the user with transient backend issues.
+                 toast({ variant: "destructive", title: "AI Suggestion Error", description: "Could not fetch AI suggestions. Please try again later." });
             }
         });
 
-    }, [debouncedDescription, form, categories, tags, activeAccounts, isShared, isAiSuggestionEnabled]);
+    }, [debouncedDescription, debouncedCategoryId, debouncedTagIds, form, categories, tags, activeAccounts, isShared, isAiSuggestionEnabled, toast]);
 
 
     const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string): Promise<string | undefined> => {

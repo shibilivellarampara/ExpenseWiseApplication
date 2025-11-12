@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ChevronDown, FilterX, ListFilter, Pilcrow, Search } from 'lucide-react';
 import { Check, X } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, parse } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Account, Category, Tag } from '@/lib/types';
 import {
@@ -80,8 +80,17 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
         onFiltersChange({ ...filters, dateRange: { from, to } });
     }
 
-    const handleDateChange = (date: Date | undefined, field: 'from' | 'to') => {
+    const handleDateChange = (dateStr: string | undefined, field: 'from' | 'to') => {
         setDateRangePreset('custom');
+        let date: Date | undefined = undefined;
+        if(dateStr) {
+            try {
+                date = parse(dateStr, 'yyyy-MM-dd', new Date());
+                if(isNaN(date.getTime())) date = undefined;
+            } catch(e) {
+                date = undefined;
+            }
+        }
         onFiltersChange({ ...filters, dateRange: { ...filters.dateRange, [field]: date } });
     }
     
@@ -167,7 +176,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                 id="from-date"
                                 type="date"
                                 value={formatDateForInput(filters.dateRange?.from)}
-                                onChange={(e) => handleDateChange(e.target.valueAsDate ?? undefined, 'from')}
+                                onChange={(e) => handleDateChange(e.target.value ?? undefined, 'from')}
                                 className="text-sm"
                             />
                         </div>
@@ -177,7 +186,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                 id="to-date"
                                 type="date"
                                 value={formatDateForInput(filters.dateRange?.to)}
-                                onChange={(e) => handleDateChange(e.target.valueAsDate ?? undefined, 'to')}
+                                onChange={(e) => handleDateChange(e.target.value ?? undefined, 'to')}
                                 className="text-sm"
                             />
                         </div>
@@ -210,7 +219,12 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
 
 export function ExpensesFilters({ filters, onFiltersChange, accounts, categories, tags }: ExpensesFiltersProps) {
 
-    const [dateRangePreset, setDateRangePreset] = useState<string>('all');
+    const [dateRangePreset, setDateRangePreset] = useState<string>(() => {
+        if(filters.dateRange?.from || filters.dateRange?.to) {
+            return 'custom';
+        }
+        return 'all';
+    });
     
     const clearFilters = () => {
         onFiltersChange({

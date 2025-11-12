@@ -11,7 +11,7 @@ import { collection, orderBy, query, doc, onSnapshot }from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
-import { endOfDay, startOfDay } from 'date-fns';
+import { endOfDay, startOfDay, parse } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
@@ -28,11 +28,23 @@ export default function ExpensesPage() {
     const getInitialFilters = (): Filters => {
         const accountsParam = searchParams.get('accounts');
         const typeParam = searchParams.get('type');
+        const categoriesParam = searchParams.get('categories');
+        const dateFromParam = searchParams.get('dateFrom');
+        const dateToParam = searchParams.get('dateTo');
+
+        const parseDate = (dateStr: string | null) => {
+            if (!dateStr) return undefined;
+            try {
+                return parse(dateStr, 'yyyy-MM-dd', new Date());
+            } catch {
+                return undefined;
+            }
+        };
 
         return {
-            dateRange: { from: undefined, to: undefined },
+            dateRange: { from: parseDate(dateFromParam), to: parseDate(dateToParam) },
             type: (typeParam === 'income' || typeParam === 'expense') ? typeParam : 'all',
-            categories: [] as string[],
+            categories: categoriesParam ? categoriesParam.split(',') : [] as string[],
             accounts: accountsParam ? accountsParam.split(',') : [] as string[],
             tags: [] as string[],
             searchQuery: '',

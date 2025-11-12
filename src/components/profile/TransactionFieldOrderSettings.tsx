@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { useState, useEffect } from "react";
-import { ChevronDown, GripVertical, Loader2 } from "lucide-react";
+import { ChevronDown, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
@@ -50,16 +51,16 @@ export function TransactionFieldOrderSettings() {
         }
     }, [userProfile]);
 
-    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-        e.dataTransfer.setData("fieldIndex", index.toString());
-    };
-    
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>, dropIndex: number) => {
-        const dragIndex = parseInt(e.dataTransfer.getData("fieldIndex"), 10);
+    const handleMoveField = (index: number, direction: 'up' | 'down') => {
         const newFields = [...fields];
-        const [draggedItem] = newFields.splice(dragIndex, 1);
-        newFields.splice(dropIndex, 0, draggedItem);
-        setFields(newFields);
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+
+        if (newIndex >= 0 && newIndex < newFields.length) {
+            const temp = newFields[index];
+            newFields[index] = newFields[newIndex];
+            newFields[newIndex] = temp;
+            setFields(newFields);
+        }
     };
 
     const handleRequiredChange = (key: keyof typeof requiredFields, value: boolean) => {
@@ -122,13 +123,28 @@ export function TransactionFieldOrderSettings() {
                                 return (
                                     <div
                                         key={field}
-                                        draggable={true}
-                                        onDragStart={(e) => handleDragStart(e, index)}
-                                        onDragOver={(e) => e.preventDefault()}
-                                        onDrop={(e) => handleDrop(e, index)}
                                         className="flex items-center gap-2 p-2 rounded-md border bg-background"
                                     >
-                                        <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing" />
+                                        <div className="flex flex-col">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6"
+                                                onClick={() => handleMoveField(index, 'up')}
+                                                disabled={index === 0}
+                                            >
+                                                <ArrowUp className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6"
+                                                onClick={() => handleMoveField(index, 'down')}
+                                                disabled={index === fields.length - 1}
+                                            >
+                                                <ArrowDown className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                         <span className="flex-1">{fieldLabels[field]}</span>
                                         {isToggleable && requiredKey && (
                                             <div className="flex items-center gap-2">

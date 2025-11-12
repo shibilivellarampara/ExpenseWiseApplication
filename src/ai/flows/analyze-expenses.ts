@@ -29,10 +29,17 @@ Analyze the provided expense data and generate a concise, helpful financial anal
 2.  **Top Spending Categories:** Identify the top 2-3 spending categories. For each, mention the total amount spent and what percentage of total expenses it represents.
 3.  **Savings Suggestions:** Based on the spending patterns, provide 2-3 actionable and realistic suggestions for how the user could save money. The suggestions should be specific and directly related to the data provided. Be encouraging and not judgmental.
 
-**Input Data (JSON format):**
-\`\`\`json
-{{{json expenses}}}
-\`\`\`
+Here is the list of transactions to analyze:
+{{#each expenses}}
+- **Type:** {{type}}
+- **Amount:** {{amount}}
+- **Date:** {{date}}
+- **Description:** {{description}}
+- **Category:** {{category}}
+- **Account:** {{account}}
+- **Tags:** {{#each tags}}{{.}}, {{/each}}
+---
+{{/each}}
 `,
 });
 

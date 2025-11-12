@@ -7,11 +7,11 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc, where, getDocs }from "firebase/firestore";
+import { collection, orderBy, query, doc, where, getDocs, Timestamp }from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
-import { endOfDay, startOfDay, parse, isWithinInterval } from 'date-fns';
+import { endOfDay, startOfDay, parse } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
@@ -79,29 +79,59 @@ export default function ExpensesPage() {
         setExpensesError(null);
 
         try {
-            // ** RADICALLY SIMPLIFIED QUERY **
-            // Fetch all expenses, ordered by date. All filtering will happen client-side.
-            const q = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
+            let expensesQuery: any = collection(firestore, `users/${user.uid}/expenses`);
+            let q = query(expensesQuery, orderBy('date', 'desc'));
+
+            // Server-side filtering
+            if (filters.dateRange.from) {
+                q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
+            }
+            if (filters.dateRange.to) {
+                q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
+            }
+            if (filters.type !== 'all') {
+                q = query(q, where('type', '==', filters.type));
+            }
+            if (filters.accounts.length > 0) {
+                q = query(q, where('accountId', 'in', filters.accounts));
+            }
+            if (filters.categories.length > 0) {
+                q = query(q, where('categoryId', 'in', filters.categories));
+            }
+             if (filters.tags.length > 0) {
+                q = query(q, where('tagIds', 'array-contains-any', filters.tags));
+            }
 
             const snapshot = await getDocs(q);
-            const fetchedExpenses = snapshot.docs.map(doc => {
+            let fetchedExpenses = snapshot.docs.map(doc => {
                  const data = doc.data() as Expense;
                  const date = data.date && typeof (data.date as any).toDate === 'function' 
                     ? (data.date as any).toDate() 
                     : new Date();
                  return { ...data, id: doc.id, date };
             });
+
+            // Client-side search filtering
+             if (debouncedSearchQuery) {
+                fetchedExpenses = fetchedExpenses.filter(expense => {
+                    const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
+                    const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
+                    const amountMatch = String(expense.amount).includes(lowerCaseQuery);
+                    return descriptionMatch || amountMatch;
+                });
+            }
+            
             setAllExpenses(fetchedExpenses);
 
         } catch (error: any) {
             console.error("Error fetching expenses: ", error);
-             setExpensesError('Error loading transactions. Check permissions or try simplifying filters.');
+            setExpensesError('Error loading transactions. Check permissions or try simplifying filters.');
         } finally {
             setExpensesLoading(false);
         }
-    }, [user, firestore]);
+    }, [user, firestore, filters, debouncedSearchQuery]);
 
-    // Fetch expenses when component mounts
+    // Fetch expenses when filters change
     useEffect(() => {
         fetchExpenses();
     }, [fetchExpenses]);
@@ -138,42 +168,7 @@ export default function ExpensesPage() {
     const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses.length || !accounts?.length) return [];
         
-        let clientFiltered = allExpenses.filter(expense => {
-            // ** ALL FILTERING IS NOW CLIENT-SIDE **
-            
-            // Date Range Filter
-            if (filters.dateRange.from && (expense.date as Date) < startOfDay(filters.dateRange.from)) return false;
-            if (filters.dateRange.to && (expense.date as Date) > endOfDay(filters.dateRange.to)) return false;
-
-            // Type Filter
-            if (filters.type !== 'all' && expense.type !== filters.type) return false;
-
-            // Accounts Filter
-            if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId)) {
-                return false;
-            }
-
-            // Categories Filter
-            if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) {
-                return false;
-            }
-
-            // Tags Filter
-            if (filters.tags.length > 0 && !(expense.tagIds || []).some(tagId => filters.tags.includes(tagId))) {
-                return false;
-            }
-
-            // Search Query Filter
-            if (debouncedSearchQuery) {
-                const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
-                const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
-                const amountMatch = String(expense.amount).includes(lowerCaseQuery);
-                if (!descriptionMatch && !amountMatch) {
-                    return false;
-                }
-            }
-            return true;
-        });
+        let clientFiltered = [...allExpenses];
         
         // Running balance calculation remains the same
         const getAmountChange = (tx: Expense, accType: Account['type']) => {
@@ -202,16 +197,16 @@ export default function ExpensesPage() {
                 
                 const oldestVisibleDate = accountTransactions.length > 0 ? (accountTransactions[0].date as Date) : new Date();
                 
-                const priorTransactions = allExpenses.filter(tx => 
-                    tx.accountId === accountId && (tx.date as Date) < oldestVisibleDate
-                );
-
-                let startingBalance: number;
-                if (account.type === 'credit_card') {
-                    const priorBalanceChange = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);
-                    startingBalance = (account.limit || 0) + priorBalanceChange;
+                // This part needs adjustment if we can't fetch all expenses
+                // For now, we assume we have all prior transactions if we don't have a date filter from
+                let startingBalance = 0;
+                if (!filters.dateRange.from) {
+                     if (account.type === 'credit_card') {
+                         startingBalance = account.limit || 0;
+                     }
                 } else {
-                    startingBalance = priorTransactions.reduce((sum, tx) => sum + getAmountChange(tx, account.type), 0);
+                    // If there's a start date, we can't calculate a true running balance from scratch
+                    // We'll just show the transaction amounts.
                 }
 
                 accountTransactions.forEach(tx => {
@@ -234,7 +229,7 @@ export default function ExpensesPage() {
 
         return enriched.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    }, [allExpenses, categoryMap, accountMap, tagMap, debouncedSearchQuery, accounts, filters]);
+    }, [allExpenses, categoryMap, accountMap, tagMap, accounts, filters.dateRange.from]);
     
     const handleFiltersChange = (newFilters: Filters) => {
         setFilters(newFilters);

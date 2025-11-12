@@ -20,108 +20,7 @@
       "collectionGroup": "expenses",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "accountId", "order": "ASCENDING" },
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "categoryId", "order": "ASCENDING" },
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
         { "fieldPath": "tagIds", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "accountId", "order": "ASCENDING" },
-        { "fieldPath": "categoryId", "order": "ASCENDING" },
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-     {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "accountId", "order": "ASCENDING" },
-        { "fieldPath": "tagIds", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "categoryId", "order": "ASCENDING" },
-        { "fieldPath": "tagIds", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "accountId", "order": "ASCENDING" },
-        { "fieldPath": "categoryId", "order": "ASCENDING" },
-        { "fieldPath": "tagIds", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "categoryId", "in": ["__name__"]},
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-    {
-        "collectionGroup": "expenses",
-        "queryScope": "COLLECTION",
-        "fields": [
-          { "fieldPath": "categoryId", "arrayConfig": "CONTAINS" },
-          { "fieldPath": "date", "order": "DESCENDING" }
-        ]
-    },
-    {
-        "collectionGroup": "expenses",
-        "queryScope": "COLLECTION",
-        "fields": [
-            { "fieldPath": "categoryId", "order": "ASCENDING" },
-            { "fieldPath": "date", "order": "ASCENDING" }
-        ]
-    },
-    {
-        "collectionGroup": "expenses",
-        "queryScope": "COLLECTION",
-        "fields": [
-            { "fieldPath": "accountId", "order": "ASCENDING" },
-            { "fieldPath": "date", "order": "ASCENDING" }
-        ]
-    },
-    {
-        "collectionGroup": "expenses",
-        "queryScope": "COLLECTION",
-        "fields": [
-            { "fieldPath": "tagIds", "arrayConfig": "CONTAINS" },
-            { "fieldPath": "date", "order": "ASCENDING" }
-        ]
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "accountId", "in": ["__name__"] },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
     },
@@ -132,34 +31,6 @@
         { "fieldPath": "memberIds", "arrayConfig": "CONTAINS" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "accountId", "in": ["__name__"] },
-        { "fieldPath": "categoryId", "in": ["__name__"] },
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "accountId", "in": ["__name__"] },
-        { "fieldPath": "tagIds", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-    {
-        "collectionGroup": "expenses",
-        "queryScope": "COLLECTION",
-        "fields": [
-            { "fieldPath": "accountId", "in": ["__name__"] },
-            { "fieldPath": "categoryId", "in": ["__name__"] },
-            { "fieldPath": "tagIds", "arrayConfig": "CONTAINS" },
-            { "fieldPath": "date", "order": "DESCENDING" }
-        ]
     }
   ],
   "fieldOverrides": []

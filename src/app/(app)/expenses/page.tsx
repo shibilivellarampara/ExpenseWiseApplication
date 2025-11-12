@@ -5,9 +5,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from "@/firebase";
+import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc, onSnapshot, where, getDocs }from "firebase/firestore";
+import { collection, orderBy, query, doc, where, getDocs }from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
@@ -79,9 +79,10 @@ export default function ExpensesPage() {
         setExpensesError(null);
 
         try {
+            // ** SIMPLIFIED QUERY **
+            // Only apply filters that Firestore handles well together: date, type, and a single array-contains.
             let q = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
             
-            // Apply filters directly to the query
             if (filters.dateRange.from) {
                 q = query(q, where('date', '>=', startOfDay(filters.dateRange.from)));
             }
@@ -91,14 +92,10 @@ export default function ExpensesPage() {
             if (filters.type !== 'all') {
                 q = query(q, where('type', '==', filters.type));
             }
-            if (filters.accounts.length > 0) {
-                q = query(q, where('accountId', 'in', filters.accounts));
-            }
-            if (filters.categories.length > 0) {
-                q = query(q, where('categoryId', 'in', filters.categories));
-            }
+            // For tags, we can only do one `array-contains-any`. If needed, we'd have to do client-side.
+            // For now, let's keep it simple. If multiple tag filters are needed, logic would change.
             if (filters.tags.length > 0) {
-                q = query(q, where('tagIds', 'array-contains-any', filters.tags));
+                 q = query(q, where('tagIds', 'array-contains-any', filters.tags));
             }
 
             const snapshot = await getDocs(q);
@@ -113,11 +110,11 @@ export default function ExpensesPage() {
 
         } catch (error: any) {
             console.error("Error fetching expenses: ", error);
-             setExpensesError('Error loading transactions. Check permissions or simplify filters.');
+             setExpensesError('Error loading transactions. Check permissions or try simplifying filters.');
         } finally {
             setExpensesLoading(false);
         }
-    }, [user, firestore, filters]);
+    }, [user, firestore, filters.dateRange, filters.type, filters.tags]);
 
     // Fetch expenses when filters change
     useEffect(() => {
@@ -157,6 +154,13 @@ export default function ExpensesPage() {
         if (!allExpenses.length || !accounts?.length) return [];
         
         let clientFiltered = allExpenses.filter(expense => {
+            // ** CLIENT-SIDE FILTERING for accounts and categories **
+            if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId)) {
+                return false;
+            }
+            if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) {
+                return false;
+            }
             if (debouncedSearchQuery) {
                 const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
                 const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
@@ -227,7 +231,7 @@ export default function ExpensesPage() {
 
         return enriched.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    }, [allExpenses, categoryMap, accountMap, tagMap, debouncedSearchQuery, accounts]);
+    }, [allExpenses, categoryMap, accountMap, tagMap, debouncedSearchQuery, accounts, filters.accounts, filters.categories]);
     
     const handleFiltersChange = (newFilters: Filters) => {
         setFilters(newFilters);
@@ -305,5 +309,3 @@ export default function ExpensesPage() {
         </div>
     );
 }
-
-    

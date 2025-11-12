@@ -282,6 +282,5 @@ export default function AnalysisPage() {
             </div>
         </div>
     );
-}
 
     

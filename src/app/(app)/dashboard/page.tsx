@@ -129,14 +129,16 @@ export default function DashboardPage() {
         if (!expenseList || !categoryMap.size || !accountMap.size) return [];
         return expenseList.map(expense => {
             const date = expense.date instanceof Date ? expense.date : expense.date.toDate();
+            const account = accountMap.get(expense.accountId);
+            if (!account) return null; // Skip if account not found
             return {
                 ...expense,
                 date,
                 category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
-                account: accountMap.get(expense.accountId),
+                account: account,
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             };
-        });
+        }).filter((e): e is EnrichedExpense => e !== null);
     }
 
     const enrichedChartExpenses = useMemo(() => enrichExpenses(chartExpenses), [chartExpenses, categoryMap, accountMap, tagMap]);

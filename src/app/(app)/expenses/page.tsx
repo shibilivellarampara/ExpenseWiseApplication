@@ -119,6 +119,10 @@ export default function ExpensesPage() {
         if (!allExpenses || !accounts) return [];
 
         let clientFiltered = allExpenses
+            .map(expense => ({
+                ...expense,
+                date: expense.date instanceof Date ? expense.date : expense.date.toDate(),
+            }))
             .filter(expense => {
                 if (filters.type !== 'all' && expense.type !== filters.type) return false;
                 if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId)) return false;
@@ -147,16 +151,16 @@ export default function ExpensesPage() {
             }
             acc[tx.accountId].push(tx);
             return acc;
-        }, {} as Record<string, Expense[]>);
+        }, {} as Record<string, (Expense & {date: Date})[]>);
 
-        let finalWithBalance: Expense[] = [];
+        let finalWithBalance: (Expense & {date: Date})[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
             const account = accountMap.get(accountId);
 
             if (account) {
-                accountTransactions.sort((a, b) => (a.date as Date).getTime() - (b.date as Date).getTime());
+                accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
                 
                 let startingBalance = 0;
                 if (!filters.dateRange.from) {
@@ -177,7 +181,6 @@ export default function ExpensesPage() {
         
         let enriched = finalWithBalance.map((expense): EnrichedExpense => ({
             ...expense,
-            date: expense.date instanceof Date ? expense.date : expense.date.toDate(),
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],

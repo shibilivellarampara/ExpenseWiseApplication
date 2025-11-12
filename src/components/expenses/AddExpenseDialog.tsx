@@ -320,18 +320,15 @@ function ExpenseForm({
                     selectedTagNames: selectedTags.map(t => t.name),
                 });
                 
-                // Only set value if the field hasn't been touched by the user yet
                 if (suggestions.categoryId && !form.getFieldState('categoryId').isDirty) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
                 if (suggestions.accountId && !form.getFieldState('accountId').isDirty) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
                 if (suggestions.tagIds && !form.getFieldState('tagIds').isDirty) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
                 
-                // Only update description if AI has a suggestion AND it's different AND user hasn't manually edited it after the trigger
                 if (suggestions.description && suggestions.description !== debouncedDescription && !form.getFieldState('description').isDirty) {
                     form.setValue('description', suggestions.description, { shouldValidate: true });
                 }
             } catch (error) {
                 console.error("AI suggestion failed:", error);
-                // Do not show a toast, fail silently
             }
         });
 

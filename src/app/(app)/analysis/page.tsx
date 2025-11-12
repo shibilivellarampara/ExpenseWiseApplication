@@ -1,9 +1,10 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, Category, EnrichedExpense, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, query, where, Timestamp } from 'firebase/firestore';
+import { collection, query, where, Timestamp, doc } from 'firebase/firestore';
 import { useMemo, useState, useTransition } from "react";
 import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

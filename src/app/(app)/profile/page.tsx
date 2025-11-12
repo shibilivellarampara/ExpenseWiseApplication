@@ -3,7 +3,6 @@
 
 import { PageHeader } from "@/components/PageHeader";
 import { ProfileForm } from "@/components/profile/ProfileForm";
-import { ExpenseFieldSettings } from "@/components/profile/ExpenseFieldSettings";
 import { CategorySettings } from "@/components/profile/CategorySettings";
 import { TagSettings } from "@/components/profile/TagSettings";
 import { DashboardSettings } from "@/components/profile/DashboardSettings";
@@ -28,7 +27,6 @@ export default function ProfilePage() {
 
                 {/* Right Column */}
                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <ExpenseFieldSettings />
                     <TransactionFieldOrderSettings />
                     <CategorySettings />
                     <TagSettings />

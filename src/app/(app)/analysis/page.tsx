@@ -88,7 +88,9 @@ export default function AnalysisPage() {
         startAiTransition(async () => {
             const result = await analyzeExpenses({ 
                 expenses: enrichedExpenses.map(e => ({
-                    ...e,
+                    type: e.type,
+                    amount: e.amount,
+                    description: e.description,
                     date: e.date.toISOString(),
                     category: e.category?.name,
                     account: e.account?.name,

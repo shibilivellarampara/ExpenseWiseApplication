@@ -13,6 +13,8 @@ import * as LucideIcons from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Badge } from "../ui/badge";
 import { generateColorStyle } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 
 interface CategoryAnalysisTableProps {
     expenses: EnrichedExpense[];
@@ -83,6 +85,7 @@ const TransactionListDialog = ({ category, transactions, currencySymbol }: { cat
 };
 
 const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, allExpenses: EnrichedExpense[], type: 'income' | 'expense' | 'net') => {
+    
     if (stats.length === 0) {
         return (
             <div className="text-center text-muted-foreground py-10">
@@ -110,7 +113,7 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
 
                     let amountColor = 'text-foreground';
                     if (isNetView) {
-                        amountColor = stat.total > 0 ? 'text-green-600' : 'text-red-500';
+                        amountColor = stat.total >= 0 ? 'text-green-600' : 'text-red-500';
                     } else {
                         amountColor = type === 'income' ? 'text-green-600' : 'text-red-500';
                     }
@@ -131,7 +134,7 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
                                     {isNetView && 'income' in stat && <TableCell className="text-right hidden md:table-cell text-green-600">{currencySymbol}{stat.income.toFixed(2)}</TableCell>}
                                     {isNetView && 'expense' in stat && <TableCell className="text-right hidden md:table-cell text-red-500">{currencySymbol}{stat.expense.toFixed(2)}</TableCell>}
                                     <TableCell className={cn("text-right font-bold", amountColor)}>
-                                        {stat.total > 0 && type === 'net' ? '+' : ''}
+                                        {stat.total > 0 && isNetView ? '+' : ''}
                                         {currencySymbol}{stat.total.toFixed(2)}
                                     </TableCell>
                                     <TableCell className="text-right hidden md:table-cell">{stat.count}</TableCell>
@@ -148,6 +151,7 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
 
 export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTableProps) {
     const currencySymbol = getCurrencySymbol(currency);
+    const router = useRouter();
 
     const categoryStats = useMemo(() => {
         const incomeTransactions = expenses.filter(e => e.type === 'income');

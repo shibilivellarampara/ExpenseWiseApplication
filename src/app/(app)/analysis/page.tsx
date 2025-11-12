@@ -250,7 +250,7 @@ export default function AnalysisPage() {
                             <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {isLoading ? <Skeleton className="h-64 w-full" /> : <CategoryAnalysisTable expenses={enrichedExpenses} currency={userProfile?.defaultCurrency} dateRange={{ from: dateRangeStart, to: dateRangeEnd }} />}
+                            {isLoading ? <Skeleton className="h-64 w-full" /> : <CategoryAnalysisTable expenses={enrichedExpenses} currency={userProfile?.defaultCurrency} />}
                         </CardContent>
                     </Card>
                     <Card>
@@ -282,5 +282,4 @@ export default function AnalysisPage() {
             </div>
         </div>
     );
-
-    
+}

@@ -150,6 +150,16 @@
         { "fieldPath": "tagIds", "arrayConfig": "CONTAINS" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
+    },
+    {
+        "collectionGroup": "expenses",
+        "queryScope": "COLLECTION",
+        "fields": [
+            { "fieldPath": "accountId", "in": ["__name__"] },
+            { "fieldPath": "categoryId", "in": ["__name__"] },
+            { "fieldPath": "tagIds", "arrayConfig": "CONTAINS" },
+            { "fieldPath": "date", "order": "DESCENDING" }
+        ]
     }
   ],
   "fieldOverrides": []

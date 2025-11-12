@@ -41,12 +41,14 @@ export default function ExpensesPage() {
             }
         };
 
+        const parsedType = (typeParam === 'income' || typeParam === 'expense') ? typeParam : 'all';
+
         return {
             dateRange: { from: parseDate(dateFromParam), to: parseDate(dateToParam) },
-            type: (typeParam === 'income' || typeParam === 'expense') ? typeParam : 'all',
-            categories: categoriesParam ? categoriesParam.split(',') : [] as string[],
-            accounts: accountsParam ? accountsParam.split(',') : [] as string[],
-            tags: [] as string[],
+            type: parsedType,
+            categories: categoriesParam ? categoriesParam.split(',') : [],
+            accounts: accountsParam ? accountsParam.split(',') : [],
+            tags: [],
             searchQuery: '',
         };
     };
@@ -79,8 +81,7 @@ export default function ExpensesPage() {
         setExpensesError(null);
 
         try {
-            let expensesQuery: any = collection(firestore, `users/${user.uid}/expenses`);
-            let q = query(expensesQuery, orderBy('date', 'desc'));
+            let q: any = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
 
             // Server-side filtering
             if (filters.dateRange.from) {
@@ -92,14 +93,14 @@ export default function ExpensesPage() {
             if (filters.type !== 'all') {
                 q = query(q, where('type', '==', filters.type));
             }
-            if (filters.accounts.length > 0) {
-                q = query(q, where('accountId', 'in', filters.accounts));
+             if (filters.accounts.length > 0) {
+                q = query(q, where('accountId', 'in', filters.accounts.slice(0, 10))); // Firestore 'in' limit is 10
             }
             if (filters.categories.length > 0) {
-                q = query(q, where('categoryId', 'in', filters.categories));
+                q = query(q, where('categoryId', 'in', filters.categories.slice(0, 10))); // Firestore 'in' limit is 10
             }
              if (filters.tags.length > 0) {
-                q = query(q, where('tagIds', 'array-contains-any', filters.tags));
+                q = query(q, where('tagIds', 'array-contains-any', filters.tags.slice(0, 10)));
             }
 
             const snapshot = await getDocs(q);

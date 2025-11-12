@@ -10,6 +10,15 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.2.9",
+        date: "2024-08-11",
+        changes: [
+            { type: 'Feature', description: "Introduced a new 'Analysis' page with detailed expense breakdowns, trend charts, and AI-powered insights." },
+            { type: 'Feature', description: "Added full support for income categorization, allowing for a complete financial overview on the Analysis page." },
+            { type: 'Fix', description: "Resolved server errors on the Analysis page caused by improper data handling for the AI flow." },
+        ]
+    },
+    {
         version: "1.2.8",
         date: "2024-08-10",
         changes: [

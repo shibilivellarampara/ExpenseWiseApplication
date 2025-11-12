@@ -1,4 +1,5 @@
 
+
 // Default categories for new users
 export const defaultCategories = [
   { name: 'Food', icon: 'Utensils' },
@@ -7,13 +8,13 @@ export const defaultCategories = [
   { name: 'Utilities', icon: 'Receipt' },
   { name: 'Entertainment', icon: 'PartyPopper' },
   { name: 'Health', icon: 'HeartPulse' },
-  { name: 'Credit Limit Upgrade', icon: 'TrendingUp' },
-  { name: 'Credit Limit Downgrade', icon: 'TrendingDown' },
-  { name: 'Credit Card Payment', icon: 'Landmark' },
   { name: 'Salary', icon: 'Briefcase' },
   { name: 'Freelance', icon: 'PenTool' },
   { name: 'Investment', icon: 'CandlestickChart' },
   { name: 'Other', icon: 'MoreHorizontal' },
+  { name: 'Credit Limit Upgrade', icon: 'TrendingUp' },
+  { name: 'Credit Limit Downgrade', icon: 'TrendingDown' },
+  { name: 'Credit Card Payment', icon: 'Landmark' },
 ];
 
 // Default accounts for new users

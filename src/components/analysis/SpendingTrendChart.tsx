@@ -1,9 +1,10 @@
+
 'use client';
 
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useMemo } from 'react';
 import { EnrichedExpense } from '@/lib/types';
-import { format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, getYear, subMonths } from 'date-fns';
+import { format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, getYear, subMonths, subYears } from 'date-fns';
 import { BarChart as BarChartIcon } from 'lucide-react';
 
 interface SpendingTrendChartProps {
@@ -30,7 +31,7 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
                 name: format(day, 'd'),
             }));
         } else if (timeRange === '3-months') {
-            const start = startOfDay(subMonths(now, 2));
+            const start = startOfMonth(subMonths(now, 2));
              intervals = eachWeekOfInterval({ start, end: now }, { weekStartsOn: 1 }).map(weekStart => ({
                 key: format(weekStart, 'yyyy-MM-dd'),
                 name: `W ${format(weekStart, 'd MMM')}`,

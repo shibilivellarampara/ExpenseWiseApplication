@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
+import { ThemeToggle } from '../ThemeToggle';
 
 const appVersion = pkg.version;
 
@@ -98,11 +99,16 @@ export function AppHeader() {
             <h1 className="font-semibold text-lg md:text-xl">{title}</h1>
         </div>
         
-        {isUserLoading ? (
-            <Skeleton className="h-10 w-10 rounded-full" />
-        ) : (
-            <UserNav />
-        )}
+        <div className="flex items-center gap-2">
+            {isUserLoading ? (
+                <Skeleton className="h-10 w-10 rounded-full" />
+            ) : (
+                <>
+                    <ThemeToggle />
+                    <UserNav />
+                </>
+            )}
+        </div>
     </header>
   );
 }

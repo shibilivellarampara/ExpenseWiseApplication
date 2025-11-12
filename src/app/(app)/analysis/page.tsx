@@ -6,17 +6,17 @@ import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@
 import { Expense, Category, EnrichedExpense, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, query, where, Timestamp, doc } from 'firebase/firestore';
 import { useMemo, useState, useTransition } from "react";
-import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
+import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { analyzeExpenses } from "@/ai/flows/analyze-expenses";
 import { CategoryAnalysisTable } from "@/components/analysis/CategoryAnalysisTable";
 import { SpendingTrendChart } from "@/components/analysis/SpendingTrendChart";
 import { AiInsights } from "@/components/analysis/AiInsights";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type TimeRange = 'month' | '3-months' | 'year';
+type TimeRange = 'week' | 'month' | 'last-month' | '3-months' | 'year';
 const SPECIAL_CATEGORIES = ['Credit Limit Upgrade', 'Credit Limit Downgrade'];
 
 export default function AnalysisPage() {
@@ -29,8 +29,13 @@ export default function AnalysisPage() {
     const { dateRangeStart, dateRangeEnd } = useMemo(() => {
         const now = new Date();
         switch (timeRange) {
+            case 'week':
+                return { dateRangeStart: startOfWeek(now), dateRangeEnd: endOfWeek(now) };
             case 'month':
                 return { dateRangeStart: startOfMonth(now), dateRangeEnd: endOfDay(now) };
+            case 'last-month':
+                const lastMonth = subMonths(now, 1);
+                return { dateRangeStart: startOfMonth(lastMonth), dateRangeEnd: endOfMonth(lastMonth) };
             case '3-months':
                 return { dateRangeStart: startOfDay(subMonths(now, 3)), dateRangeEnd: endOfDay(now) };
             case 'year':
@@ -115,16 +120,15 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                <Select value={timeRange} onValueChange={handleTimeRangeChange}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select a time range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="month">This Month</SelectItem>
-                        <SelectItem value="3-months">Last 3 Months</SelectItem>
-                        <SelectItem value="year">This Year</SelectItem>
-                    </SelectContent>
-                </Select>
+                <Tabs value={timeRange} onValueChange={handleTimeRangeChange} className="w-full max-w-md">
+                    <TabsList className="grid w-full grid-cols-5">
+                        <TabsTrigger value="week">Week</TabsTrigger>
+                        <TabsTrigger value="month">Month</TabsTrigger>
+                        <TabsTrigger value="last-month">Last Month</TabsTrigger>
+                        <TabsTrigger value="3-months">3 Months</TabsTrigger>
+                        <TabsTrigger value="year">Year</TabsTrigger>
+                    </TabsList>
+                </Tabs>
             </PageHeader>
             
             <ExpensesSummary expenses={enrichedExpenses} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
@@ -170,4 +174,3 @@ export default function AnalysisPage() {
         </div>
     );
 }
-

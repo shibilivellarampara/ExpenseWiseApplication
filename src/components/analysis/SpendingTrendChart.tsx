@@ -9,7 +9,7 @@ import { BarChart as BarChartIcon } from 'lucide-react';
 
 interface SpendingTrendChartProps {
   expenses: EnrichedExpense[];
-  timeRange: 'month' | '3-months' | 'year';
+  timeRange: 'week' | 'month' | 'last-month' | '3-months' | 'year';
   currency?: string;
 }
 
@@ -23,9 +23,17 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
         let intervals: { key: string; name: string }[] = [];
 
         // 1. Initialize intervals and dataMap
-        if (timeRange === 'month') {
-            const start = startOfMonth(now);
-            const end = endOfMonth(now);
+        if (timeRange === 'week') {
+            const start = startOfWeek(now);
+            const end = endOfWeek(now);
+             intervals = eachDayOfInterval({ start, end }).map(day => ({
+                key: format(day, 'yyyy-MM-dd'),
+                name: format(day, 'EEE'),
+            }));
+        } else if (timeRange === 'month' || timeRange === 'last-month') {
+             const targetDate = timeRange === 'month' ? now : subMonths(now, 1);
+            const start = startOfMonth(targetDate);
+            const end = endOfMonth(targetDate);
             intervals = eachDayOfInterval({ start, end }).map(day => ({
                 key: format(day, 'yyyy-MM-dd'),
                 name: format(day, 'd'),
@@ -52,7 +60,7 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
         // 2. Populate dataMap with expenses
         expenses.forEach(expense => {
             let key: string;
-            if (timeRange === 'month') {
+            if (timeRange === 'week' || timeRange === 'month' || timeRange === 'last-month') {
                 key = format(expense.date, 'yyyy-MM-dd');
             } else if (timeRange === '3-months') {
                 key = format(startOfWeek(expense.date, { weekStartsOn: 1 }), 'yyyy-MM-dd');

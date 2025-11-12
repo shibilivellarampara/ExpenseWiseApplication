@@ -39,7 +39,7 @@ export default function ReportsPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
 
-    const handleDownload = async (accountId: string, format: 'excel' | 'pdf') => {
+    const handleReportAction = async (accountId: string, format: 'excel' | 'clipboard') => {
         if (!user || !firestore) return;
         setIsLoading(true);
 
@@ -63,24 +63,33 @@ export default function ReportsPage() {
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             })).sort((a, b) => a.date.getTime() - b.date.getTime());
 
-            if (format === 'excel') {
-                const dataToExport = enriched.map(tx => ({
-                    Date: tx.date.toLocaleDateString(),
-                    Time: tx.date.toLocaleTimeString(),
-                    Description: tx.description,
-                    Category: tx.category?.name || 'N/A',
-                    Account: tx.account?.name || 'N/A',
-                    Amount: tx.amount,
-                    Type: tx.type,
-                    Tags: tx.tags.map(t => t.name).join(', '),
-                }));
+            const dataToExport = enriched.map(tx => ({
+                Date: tx.date.toLocaleDateString(),
+                Time: tx.date.toLocaleTimeString(),
+                Description: tx.description,
+                Category: tx.category?.name || 'N/A',
+                Account: tx.account?.name || 'N/A',
+                Amount: tx.amount,
+                Type: tx.type,
+                Tags: tx.tags.map(t => t.name).join(', '),
+            }));
 
+            if (format === 'excel') {
                 const worksheet = XLSX.utils.json_to_sheet(dataToExport);
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
                 XLSX.writeFile(workbook, `ExpenseWise_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+            } else if (format === 'clipboard') {
+                const headers = Object.keys(dataToExport[0]).join('\t');
+                const rows = dataToExport.map(row => Object.values(row).join('\t')).join('\n');
+                const clipboardText = `${headers}\n${rows}`;
+                
+                await navigator.clipboard.writeText(clipboardText);
+                toast({
+                    title: "Copied to Clipboard",
+                    description: `${dataToExport.length} transactions have been copied.`,
+                });
             }
-            // PDF logic would go here in the future
 
         } catch (error: any) {
             toast({ variant: 'destructive', title: "Error Generating Report", description: error.message });
@@ -97,7 +106,7 @@ export default function ReportsPage() {
             />
             <ReportGenerator 
                 accounts={accounts || []} 
-                onDownload={handleDownload}
+                onAction={handleReportAction}
                 isLoading={isLoading}
             />
         </div>

@@ -7,7 +7,7 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc, where, getDocs, Timestamp }from "firebase/firestore";
+import { collection, orderBy, query, doc, where, Timestamp }from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
@@ -57,86 +57,35 @@ export default function ExpensesPage() {
     
     const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
 
+    const expensesQuery = useMemoFirebase(() => {
+        if (!user) return null;
+
+        let q = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
+        if (filters.dateRange.from) {
+            q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
+        }
+        if (filters.dateRange.to) {
+            q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
+        }
+        
+        return q;
+    }, [user, firestore, filters.dateRange]);
+    
     // Queries for filter dropdowns
     const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [firestore, user]);
     const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [firestore, user]);
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
+    const { data: allExpenses, isLoading: expensesLoading, error: expensesError, } = useCollection<Expense>(expensesQuery);
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
     const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
-    
-    // State for the fetched expenses
-    const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
-    const [expensesLoading, setExpensesLoading] = useState(true);
-    const [expensesError, setExpensesError] = useState<string | null>(null);
 
-
-    const fetchExpenses = useCallback(async () => {
-        if (!user || !firestore) return;
-
-        setExpensesLoading(true);
-        setExpensesError(null);
-
-        try {
-            let q: any = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
-
-            // Server-side filtering
-            if (filters.dateRange.from) {
-                q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
-            }
-            if (filters.dateRange.to) {
-                q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
-            }
-            if (filters.type !== 'all') {
-                q = query(q, where('type', '==', filters.type));
-            }
-             if (filters.accounts.length > 0) {
-                q = query(q, where('accountId', 'in', filters.accounts.slice(0, 10))); // Firestore 'in' limit is 10
-            }
-            if (filters.categories.length > 0) {
-                q = query(q, where('categoryId', 'in', filters.categories.slice(0, 10))); // Firestore 'in' limit is 10
-            }
-             if (filters.tags.length > 0) {
-                q = query(q, where('tagIds', 'array-contains-any', filters.tags.slice(0, 10)));
-            }
-
-            const snapshot = await getDocs(q);
-            let fetchedExpenses = snapshot.docs.map(doc => {
-                 const data = doc.data() as Expense;
-                 const date = data.date && typeof (data.date as any).toDate === 'function' 
-                    ? (data.date as any).toDate() 
-                    : new Date();
-                 return { ...data, id: doc.id, date };
-            });
-
-            // Client-side search filtering
-             if (debouncedSearchQuery) {
-                fetchedExpenses = fetchedExpenses.filter(expense => {
-                    const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
-                    const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
-                    const amountMatch = String(expense.amount).includes(lowerCaseQuery);
-                    return descriptionMatch || amountMatch;
-                });
-            }
-            
-            setAllExpenses(fetchedExpenses);
-
-        } catch (error: any) {
-            console.error("Error fetching expenses: ", error);
-            setExpensesError('Error loading transactions. Check permissions or try simplifying filters.');
-        } finally {
-            setExpensesLoading(false);
-        }
-    }, [user, firestore, filters, debouncedSearchQuery]);
-
-    // Fetch expenses when filters change
-    useEffect(() => {
-        fetchExpenses();
-    }, [fetchExpenses]);
-
+    const handleDataChange = useCallback(() => {
+        // This is a placeholder for the ExpensesTable. Data is re-fetched automatically by useCollection.
+    }, []);
 
     useEffect(() => {
         const mainElement = document.querySelector('main');
@@ -167,11 +116,24 @@ export default function ExpensesPage() {
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
     const filteredAndEnrichedExpenses = useMemo(() => {
-        if (!allExpenses.length || !accounts?.length) return [];
-        
-        let clientFiltered = [...allExpenses];
-        
-        // Running balance calculation remains the same
+        if (!allExpenses || !accounts) return [];
+
+        let clientFiltered = allExpenses
+            .filter(expense => {
+                if (filters.type !== 'all' && expense.type !== filters.type) return false;
+                if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId)) return false;
+                if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) return false;
+                if (filters.tags.length > 0 && !filters.tags.some(tagId => expense.tagIds?.includes(tagId))) return false;
+                if (debouncedSearchQuery) {
+                    const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
+                    const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
+                    const amountMatch = String(expense.amount).includes(lowerCaseQuery);
+                    return descriptionMatch || amountMatch;
+                }
+                return true;
+            });
+            
+        // Running balance calculation
         const getAmountChange = (tx: Expense, accType: Account['type']) => {
             if (accType === 'credit_card') {
                return tx.type === 'income' ? tx.amount : -tx.amount;
@@ -196,18 +158,11 @@ export default function ExpensesPage() {
             if (account) {
                 accountTransactions.sort((a, b) => (a.date as Date).getTime() - (b.date as Date).getTime());
                 
-                const oldestVisibleDate = accountTransactions.length > 0 ? (accountTransactions[0].date as Date) : new Date();
-                
-                // This part needs adjustment if we can't fetch all expenses
-                // For now, we assume we have all prior transactions if we don't have a date filter from
                 let startingBalance = 0;
                 if (!filters.dateRange.from) {
                      if (account.type === 'credit_card') {
                          startingBalance = account.limit || 0;
                      }
-                } else {
-                    // If there's a start date, we can't calculate a true running balance from scratch
-                    // We'll just show the transaction amounts.
                 }
 
                 accountTransactions.forEach(tx => {
@@ -222,7 +177,7 @@ export default function ExpensesPage() {
         
         let enriched = finalWithBalance.map((expense): EnrichedExpense => ({
             ...expense,
-            date: expense.date, // Already a Date object
+            date: expense.date instanceof Date ? expense.date : expense.date.toDate(),
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
             account: accountMap.get(expense.accountId),
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
@@ -230,7 +185,7 @@ export default function ExpensesPage() {
 
         return enriched.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    }, [allExpenses, categoryMap, accountMap, tagMap, accounts, filters.dateRange.from]);
+    }, [allExpenses, filters, debouncedSearchQuery, categoryMap, accountMap, tagMap, accounts]);
     
     const handleFiltersChange = (newFilters: Filters) => {
         setFilters(newFilters);
@@ -270,19 +225,19 @@ export default function ExpensesPage() {
             <ExpensesTable 
                 expenses={filteredAndEnrichedExpenses} 
                 isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
-                onDataChange={fetchExpenses} 
-                error={expensesError}
+                onDataChange={handleDataChange} 
+                error={expensesError ? 'Error loading transactions' : null}
             />
 
             <div className="fixed bottom-0 left-0 right-0 p-4 z-10 md:hidden">
                  <div className="container mx-auto flex justify-around gap-2">
-                    <AddExpenseDialog initialType="income" onSaveSuccess={fetchExpenses}>
+                    <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
                         <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg text-base font-semibold py-6">
                             <Plus className="mr-2 h-5 w-5" />
                             CASH IN
                         </Button>
                     </AddExpenseDialog>
-                    <AddExpenseDialog initialType="expense" onSaveSuccess={fetchExpenses}>
+                    <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
                         <Button className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg text-base font-semibold py-6">
                             <Minus className="mr-2 h-5 w-5" />
                             CASH OUT
@@ -292,13 +247,13 @@ export default function ExpensesPage() {
             </div>
 
              <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">
-                <AddExpenseDialog initialType="income" onSaveSuccess={fetchExpenses}>
+                <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
                         <Plus className="h-6 w-6" />
                         <span className="sr-only">Add Income</span>
                     </Button>
                 </AddExpenseDialog>
-                <AddExpenseDialog initialType="expense" onSaveSuccess={fetchExpenses}>
+                <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg">
                         <Minus className="h-6 w-6" />
                         <span className="sr-only">Add Expense</span>

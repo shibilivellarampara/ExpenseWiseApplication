@@ -24,7 +24,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/compon
 import { cn } from "@/lib/utils";
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'custom';
-const SPECIAL_CATEGORIES = ['Credit Limit Upgrade', 'Credit Limit Downgrade'];
+const SPECIAL_CATEGORIES = ['Credit Limit Upgrade', 'Credit Limit Downgrade', 'Credit Card Payment'];
 
 export default function AnalysisPage() {
     const { user } = useUser();

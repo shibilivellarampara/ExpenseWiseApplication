@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
@@ -37,6 +38,7 @@ type ColumnMapping = {
     cashOut?: string | null;
     // For default style
     amount?: string | null;
+    type?: string | null;
 };
 
 const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, description: string } } = {
@@ -45,18 +47,18 @@ const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, descri
         mapping: { date: 'Date', time: 'Time', amount: 'Amount', description: 'Description', category: 'Category', tags: 'Tags', mode: 'Account' },
         description: "Standard: Date, Time, Amount, Description, etc."
     },
+    'expensewise': {
+        name: 'ExpenseWise Report',
+        mapping: { date: 'Date', time: 'Time', amount: 'Amount', type: 'Type', description: 'Description', category: 'Category', tags: 'Tags', mode: 'Account' },
+        description: "For importing this app's own exported reports."
+    },
     'cashbook': {
         name: 'Cashbook App',
         mapping: { date: 'Date', time: 'Time', description: 'Remark', category: 'Category', cashIn: 'Cash In', cashOut: 'Cash Out', mode: 'Mode' },
         description: "For Cashbook app exports."
     },
-    'spendee': {
-        name: 'Spendee App',
-        mapping: { date: 'Date', time: 'Time', amount: 'Amount', description: 'Notes', category: 'Category', tags: 'Tags', mode: 'Wallet' },
-        description: "For Spendee exports."
-    },
-    'custom_detailed': {
-        name: 'Custom Detailed',
+    'enhanced_report': {
+        name: 'Enhanced Report',
         mapping: { date: 'Date', time: 'Time', description: 'Old Description', category: 'Category', tags: 'Tags', cashIn: 'CASH IN', cashOut: 'CASH OUT', mode: 'ACCOUNT'},
         description: "For detailed sheets with separate cash in/out."
     },
@@ -268,7 +270,16 @@ export function ExcelImporter() {
                     amount = cashOut;
                     type = 'expense';
                 }
-            } else if (mapping.amount) {
+            } else if (mapping.amount && mapping.type) { // For ExpenseWise reports
+                 const parsedAmount = parseFloat(String(row[mapping.amount]).replace(/[^0-9.-]+/g,""));
+                 if (!isNaN(parsedAmount)) {
+                    amount = Math.abs(parsedAmount);
+                    const typeValue = String(row[mapping.type]).toLowerCase();
+                    if (typeValue === 'income' || typeValue === 'expense') {
+                         type = typeValue;
+                    }
+                 }
+            } else if (mapping.amount) { // For default reports with signed amount
                 const parsedAmount = parseFloat(String(row[mapping.amount]).replace(/[^0-9.-]+/g,""));
                 if (!isNaN(parsedAmount)) {
                     amount = Math.abs(parsedAmount);

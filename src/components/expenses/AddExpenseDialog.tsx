@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -511,6 +512,13 @@ function ExpenseForm({
                                             className="badge-colorful"
                                         >
                                             {tag!.name}
+                                            <button
+                                                type="button"
+                                                className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                onClick={() => handleSelect(tag.id)}
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
                                         </Badge>
                                      ))}
                                 </div>

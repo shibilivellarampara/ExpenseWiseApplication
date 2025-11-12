@@ -121,7 +121,7 @@ export default function ExpensesPage() {
         let clientFiltered = allExpenses
             .map(expense => ({
                 ...expense,
-                date: expense.date instanceof Date ? expense.date : expense.date.toDate(),
+                date: expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate(),
             }))
             .filter(expense => {
                 if (filters.type !== 'all' && expense.type !== filters.type) return false;

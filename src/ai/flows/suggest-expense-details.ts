@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to suggest expense details based on user input.
@@ -64,8 +65,14 @@ const suggestExpenseDetailsFlow = ai.defineFlow(
         outputSchema: SuggestExpenseDetailsOutputSchema,
     },
     async (input) => {
-        const { output } = await suggestionPrompt(input);
-        return output!;
+        try {
+            const { output } = await suggestionPrompt(input);
+            return output!;
+        } catch (error) {
+            console.error("Error in suggestExpenseDetailsFlow:", error);
+            // Return an empty object or a specific error structure if the flow fails
+            return {};
+        }
     }
 );
 

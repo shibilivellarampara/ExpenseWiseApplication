@@ -9,7 +9,7 @@ import { BarChart as BarChartIcon } from 'lucide-react';
 
 interface SpendingTrendChartProps {
   expenses: EnrichedExpense[];
-  timeRange: 'week' | 'month' | 'last-month' | '3-months' | 'year';
+  timeRange: 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'custom';
   currency?: string;
 }
 
@@ -44,12 +44,13 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
                 key: format(weekStart, 'yyyy-MM-dd'),
                 name: `W ${format(weekStart, 'd MMM')}`,
             }));
-        } else { // 'year'
-            const start = startOfYear(now);
-            const end = endOfYear(now);
+        } else { // 'year' or 'custom'
+            const start = timeRange === 'year' ? startOfYear(now) : expenses[expenses.length - 1]?.date || new Date();
+            const end = timeRange === 'year' ? endOfYear(now) : expenses[0]?.date || new Date();
+
             intervals = eachMonthOfInterval({ start, end }).map(month => ({
                 key: format(month, 'yyyy-MM'),
-                name: format(month, 'MMM'),
+                name: format(month, 'MMM yyyy'),
             }));
         }
 
@@ -64,7 +65,7 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
                 key = format(expense.date, 'yyyy-MM-dd');
             } else if (timeRange === '3-months') {
                 key = format(startOfWeek(expense.date, { weekStartsOn: 1 }), 'yyyy-MM-dd');
-            } else { // 'year'
+            } else { // 'year' or 'custom'
                 key = format(expense.date, 'yyyy-MM');
             }
 

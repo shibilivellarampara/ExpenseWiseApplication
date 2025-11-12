@@ -6,7 +6,7 @@ import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@
 import { Expense, Category, EnrichedExpense, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, query, where, Timestamp, doc } from 'firebase/firestore';
 import { useMemo, useState, useTransition } from "react";
-import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek } from "date-fns";
+import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, parse, format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { analyzeExpenses } from "@/ai/flows/analyze-expenses";
@@ -14,21 +14,25 @@ import { CategoryAnalysisTable } from "@/components/analysis/CategoryAnalysisTab
 import { SpendingTrendChart } from "@/components/analysis/SpendingTrendChart";
 import { AiInsights } from "@/components/analysis/AiInsights";
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-type TimeRange = 'week' | 'month' | 'last-month' | '3-months' | 'year';
+type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'custom';
 const SPECIAL_CATEGORIES = ['Credit Limit Upgrade', 'Credit Limit Downgrade'];
 
 export default function AnalysisPage() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const [timeRange, setTimeRange] = useState<TimeRange>('month');
+    const [timeRangePreset, setTimeRangePreset] = useState<TimeRangePreset>('month');
     const [isAiLoading, startAiTransition] = useTransition();
     const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+    const [customDateRange, setCustomDateRange] = useState<{ from?: Date, to?: Date }>({ from: undefined, to: undefined });
+
 
     const { dateRangeStart, dateRangeEnd } = useMemo(() => {
         const now = new Date();
-        switch (timeRange) {
+        switch (timeRangePreset) {
             case 'week':
                 return { dateRangeStart: startOfWeek(now), dateRangeEnd: endOfWeek(now) };
             case 'month':
@@ -40,10 +44,15 @@ export default function AnalysisPage() {
                 return { dateRangeStart: startOfDay(subMonths(now, 3)), dateRangeEnd: endOfDay(now) };
             case 'year':
                 return { dateRangeStart: startOfYear(now), dateRangeEnd: endOfDay(now) };
+            case 'custom':
+                 return { 
+                    dateRangeStart: customDateRange.from ? startOfDay(customDateRange.from) : startOfYear(new Date(0)), 
+                    dateRangeEnd: customDateRange.to ? endOfDay(customDateRange.to) : endOfDay(now) 
+                };
             default:
                 return { dateRangeStart: startOfMonth(now), dateRangeEnd: endOfDay(now) };
         }
-    }, [timeRange]);
+    }, [timeRangePreset, customDateRange]);
 
     const expensesQuery = useMemoFirebase(() => {
         if (!user) return null;
@@ -92,9 +101,26 @@ export default function AnalysisPage() {
     
 
     const handleTimeRangeChange = (value: string) => {
-        setTimeRange(value as TimeRange);
+        setTimeRangePreset(value as TimeRangePreset);
         setAiAnalysis(null); // Clear AI analysis when time range changes
     };
+
+    const handleDateChange = (dateStr: string | undefined, field: 'from' | 'to') => {
+        let date: Date | undefined = undefined;
+        if(dateStr) {
+            try {
+                date = parse(dateStr, 'yyyy-MM-dd', new Date());
+                if(isNaN(date.getTime())) date = undefined;
+            } catch(e) {
+                date = undefined;
+            }
+        }
+        setCustomDateRange(prev => ({ ...prev, [field]: date }));
+    }
+
+    const formatDateForInput = (date: Date | undefined): string => {
+        return date ? format(date, 'yyyy-MM-dd') : '';
+    }
 
     const handleGenerateInsights = () => {
         if (enrichedExpenses.length === 0) return;
@@ -120,15 +146,45 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                <Tabs value={timeRange} onValueChange={handleTimeRangeChange} className="w-full max-w-md">
-                    <TabsList className="grid w-full grid-cols-5">
-                        <TabsTrigger value="week">Week</TabsTrigger>
-                        <TabsTrigger value="month">Month</TabsTrigger>
-                        <TabsTrigger value="last-month">Last Month</TabsTrigger>
-                        <TabsTrigger value="3-months">3 Months</TabsTrigger>
-                        <TabsTrigger value="year">Year</TabsTrigger>
-                    </TabsList>
-                </Tabs>
+                 <div className="flex flex-col sm:flex-row gap-2 w-full max-w-md">
+                    <Select value={timeRangePreset} onValueChange={handleTimeRangeChange}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a time range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="week">This Week</SelectItem>
+                            <SelectItem value="month">This Month</SelectItem>
+                            <SelectItem value="last-month">Last Month</SelectItem>
+                            <SelectItem value="3-months">Last 3 Months</SelectItem>
+                            <SelectItem value="year">This Year</SelectItem>
+                            <SelectItem value="custom">Custom Range</SelectItem>
+                        </SelectContent>
+                    </Select>
+                     {timeRangePreset === 'custom' && (
+                        <div className="grid grid-cols-2 gap-2">
+                           <div className="space-y-1">
+                                <Label htmlFor="from-date" className="text-xs">From</Label>
+                                <Input
+                                    id="from-date"
+                                    type="date"
+                                    value={formatDateForInput(customDateRange?.from)}
+                                    onChange={(e) => handleDateChange(e.target.value ?? undefined, 'from')}
+                                    className="text-sm"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="to-date" className="text-xs">To</Label>
+                                <Input
+                                    id="to-date"
+                                    type="date"
+                                    value={formatDateForInput(customDateRange?.to)}
+                                    onChange={(e) => handleDateChange(e.target.value ?? undefined, 'to')}
+                                    className="text-sm"
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
             </PageHeader>
             
             <ExpensesSummary expenses={enrichedExpenses} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
@@ -150,7 +206,7 @@ export default function AnalysisPage() {
                             <CardDescription>Your cash flow over the selected period.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {isLoading ? <Skeleton className="h-80 w-full" /> : <SpendingTrendChart expenses={enrichedExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRange} />}
+                            {isLoading ? <Skeleton className="h-80 w-full" /> : <SpendingTrendChart expenses={enrichedExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />}
                         </CardContent>
                     </Card>
                 </div>

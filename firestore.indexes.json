@@ -118,6 +118,14 @@
         ]
     },
     {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "accountId", "in": ["__name__"] },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "shared_expenses",
       "queryScope": "COLLECTION",
       "fields": [

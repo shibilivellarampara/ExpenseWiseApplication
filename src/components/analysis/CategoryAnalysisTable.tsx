@@ -54,8 +54,8 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
     const currencySymbol = getCurrencySymbol(currency);
 
     const categoryStats = useMemo(() => {
-        const incomeTransactions = expenses.filter(e => e.type === 'income' && e.category);
-        const expenseTransactions = expenses.filter(e => e.type === 'expense' && e.category);
+        const incomeTransactions = expenses.filter(e => e.type === 'income');
+        const expenseTransactions = expenses.filter(e => e.type === 'expense');
 
         const processTransactions = (transactions: EnrichedExpense[]) => {
             const totalAmount = transactions.reduce((sum, e) => sum + e.amount, 0);

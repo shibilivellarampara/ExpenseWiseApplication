@@ -7,15 +7,17 @@ import { Expense, Category, EnrichedExpense, Account, Tag, UserProfile } from "@
 import { collection, query, where, Timestamp, doc } from 'firebase/firestore';
 import { useMemo, useState, useTransition } from "react";
 import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { analyzeExpenses } from "@/ai/flows/analyze-expenses";
 import { CategoryAnalysisTable } from "@/components/analysis/CategoryAnalysisTable";
 import { SpendingTrendChart } from "@/components/analysis/SpendingTrendChart";
 import { AiInsights } from "@/components/analysis/AiInsights";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 
 type TimeRange = 'month' | '3-months' | 'year';
+const SPECIAL_CATEGORIES = ['Credit Limit Upgrade', 'Credit Limit Downgrade'];
 
 export default function AnalysisPage() {
     const { user } = useUser();
@@ -68,15 +70,21 @@ export default function AnalysisPage() {
         if (!expenses || !categoryMap.size || !accountMap.size) return [];
         return expenses.map(expense => {
             const date = expense.date instanceof Date ? expense.date : expense.date.toDate();
+            const category = expense.categoryId ? categoryMap.get(expense.categoryId) : undefined;
+            // Exclude special financial management categories from analysis
+            if (category && SPECIAL_CATEGORIES.includes(category.name)) {
+                return null;
+            }
             return {
                 ...expense,
                 date,
-                category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
+                category,
                 account: accountMap.get(expense.accountId),
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             };
-        });
+        }).filter((e): e is EnrichedExpense => e !== null);
     }, [expenses, categoryMap, accountMap, tagMap]);
+    
 
     const handleTimeRangeChange = (value: string) => {
         setTimeRange(value as TimeRange);
@@ -106,54 +114,60 @@ export default function AnalysisPage() {
             <PageHeader
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
-            />
+            >
+                <Select value={timeRange} onValueChange={handleTimeRangeChange}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select a time range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="month">This Month</SelectItem>
+                        <SelectItem value="3-months">Last 3 Months</SelectItem>
+                        <SelectItem value="year">This Year</SelectItem>
+                    </SelectContent>
+                </Select>
+            </PageHeader>
             
-            <Tabs value={timeRange} onValueChange={handleTimeRangeChange}>
-                <TabsList className="grid w-full grid-cols-3 mb-4">
-                    <TabsTrigger value="month">This Month</TabsTrigger>
-                    <TabsTrigger value="3-months">Last 3 Months</TabsTrigger>
-                    <TabsTrigger value="year">This Year</TabsTrigger>
-                </TabsList>
+            <ExpensesSummary expenses={enrichedExpenses} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
 
-                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">
-                    <div className="lg:col-span-3 space-y-8">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Spending by Category</CardTitle>
-                                <CardDescription>A summary of your expenses broken down by category for the selected period.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {isLoading ? <Skeleton className="h-64 w-full" /> : <CategoryAnalysisTable expenses={enrichedExpenses} currency={userProfile?.defaultCurrency} />}
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Income vs. Expense Trend</CardTitle>
-                                <CardDescription>Your cash flow over the selected period.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {isLoading ? <Skeleton className="h-80 w-full" /> : <SpendingTrendChart expenses={enrichedExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRange} />}
-                            </CardContent>
-                        </Card>
-                    </div>
-                    <div className="lg:col-span-2">
-                        <Card className="sticky top-24">
-                           <CardHeader>
-                               <CardTitle>AI-Powered Insights</CardTitle>
-                               <CardDescription>Let AI analyze your spending and provide personalized advice.</CardDescription>
-                           </CardHeader>
-                           <CardContent>
-                               <AiInsights
-                                   onGenerate={handleGenerateInsights}
-                                   analysis={aiAnalysis}
-                                   isLoading={isAiLoading}
-                                   hasData={enrichedExpenses.length > 0}
-                               />
-                           </CardContent>
-                        </Card>
-                    </div>
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">
+                <div className="lg:col-span-3 space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Spending by Category</CardTitle>
+                            <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoading ? <Skeleton className="h-64 w-full" /> : <CategoryAnalysisTable expenses={enrichedExpenses} currency={userProfile?.defaultCurrency} />}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Income vs. Expense Trend</CardTitle>
+                            <CardDescription>Your cash flow over the selected period.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoading ? <Skeleton className="h-80 w-full" /> : <SpendingTrendChart expenses={enrichedExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRange} />}
+                        </CardContent>
+                    </Card>
                 </div>
-            </Tabs>
+                <div className="lg:col-span-2">
+                    <Card className="sticky top-24">
+                        <CardHeader>
+                            <CardTitle>AI-Powered Insights</CardTitle>
+                            <CardDescription>Let AI analyze your spending and provide personalized advice.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <AiInsights
+                                onGenerate={handleGenerateInsights}
+                                analysis={aiAnalysis}
+                                isLoading={isAiLoading}
+                                hasData={enrichedExpenses.length > 0}
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
         </div>
     );
 }
+

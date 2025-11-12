@@ -10,6 +10,19 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.3.1",
+        date: "2024-08-13",
+        changes: [
+            { type: 'Feature', description: "Added a 'Net' view to the category analysis table to show net cash flow per category." },
+            { type: 'Feature', description: "Made category rows on the Analysis page clickable, opening an in-page dialog with the corresponding transactions." },
+            { type: 'Feature', description: "Added 'All Time' as a date range option on the Analysis and Dashboard pages." },
+            { type: 'Feature', description: "Combined 'Field Order' and 'Required Fields' into a single 'Form Customization' setting with up/down arrows for reordering." },
+            { type: 'Feature', description: "Added a new 'Analysis Settings' card on the Profile page to allow users to exclude specific categories from analysis." },
+            { type: 'Fix', description: "Resolved a critical build error caused by a type mismatch on the Analysis page." },
+            { type: 'Fix', description: "Fixed a layout issue where floating action buttons on the Transactions page would overlap content on scroll." },
+        ]
+    },
+    {
         version: "1.3.0",
         date: "2024-08-12",
         changes: [

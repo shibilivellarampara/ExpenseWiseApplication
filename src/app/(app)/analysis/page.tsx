@@ -98,7 +98,6 @@ export default function AnalysisPage() {
     const enrichedExpenses = useMemo((): EnrichedExpense[] => {
         if (!expenses || !categoryMap.size || !accountMap.size) return [];
         
-        // Apply account filtering on the client side
         const filteredByAccount = selectedAccounts.length > 0 
             ? expenses.filter(e => selectedAccounts.includes(e.accountId))
             : expenses;
@@ -106,7 +105,6 @@ export default function AnalysisPage() {
         return filteredByAccount.map(expense => {
             const date = expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate();
             const category = expense.categoryId ? categoryMap.get(expense.categoryId) : undefined;
-            // Exclude special financial management categories from analysis
             if (category && (SPECIAL_CATEGORIES.includes(category.name) || excludedCategoryIds.includes(category.id))) {
                 return null;
             }
@@ -290,5 +288,3 @@ export default function AnalysisPage() {
         </div>
     );
 }
-
-    

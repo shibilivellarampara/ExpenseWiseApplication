@@ -248,7 +248,7 @@ export default function ExpensesPage() {
             </div>
 
             <div className={cn(
-                "sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out",
+                "sticky -top-4 md:-top-6 lg:-top-8 z-30 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out",
                  isScrolled && "pt-4 pb-3 shadow-sm rounded-b-lg"
             )}>
                 <div className="space-y-4">
@@ -274,7 +274,7 @@ export default function ExpensesPage() {
                 error={expensesError}
             />
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 z-40 md:hidden">
+            <div className="fixed bottom-0 left-0 right-0 p-4 z-20 md:hidden">
                  <div className="container mx-auto flex justify-around gap-2">
                     <AddExpenseDialog initialType="income" onSaveSuccess={fetchExpenses}>
                         <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg text-base font-semibold py-6">
@@ -291,7 +291,7 @@ export default function ExpensesPage() {
                 </div>
             </div>
 
-             <div className="fixed bottom-6 right-6 z-40 hidden md:flex md:flex-col md:gap-3">
+             <div className="fixed bottom-6 right-6 z-20 hidden md:flex md:flex-col md:gap-3">
                 <AddExpenseDialog initialType="income" onSaveSuccess={fetchExpenses}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
                         <Plus className="h-6 w-6" />

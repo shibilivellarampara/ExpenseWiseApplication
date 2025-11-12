@@ -313,9 +313,9 @@ function ExpenseForm({
                 if (suggestions.description && suggestions.description !== debouncedDescription && !form.getFieldState('description').isDirty) {
                     form.setValue('description', suggestions.description, { shouldValidate: true });
                 }
-
             } catch (error) {
                 console.error("AI suggestion failed:", error);
+                // We don't show a toast here to avoid bothering the user with transient backend issues.
             }
         });
 

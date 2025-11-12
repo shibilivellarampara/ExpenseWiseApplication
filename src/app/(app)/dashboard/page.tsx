@@ -127,19 +127,28 @@ export default function DashboardPage() {
 
     const enrichExpenses = (expenseList: Expense[] | null): EnrichedExpense[] => {
         if (!expenseList || !categoryMap.size || !accountMap.size) return [];
-        return expenseList.map(expense => {
-            const date = expense.date instanceof Date ? expense.date : expense.date.toDate();
+    
+        return expenseList.reduce<EnrichedExpense[]>((acc, expense) => {
             const account = accountMap.get(expense.accountId);
-            if (!account) return null; // Skip if account not found
-            return {
+    
+            // Skip if account not found
+            if (!account) {
+                return acc;
+            }
+    
+            const enriched: EnrichedExpense = {
                 ...expense,
-                date,
+                date: expense.date instanceof Date ? expense.date : expense.date.toDate(),
                 category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
                 account: account,
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             };
-        }).filter((e): e is EnrichedExpense => e !== null);
-    }
+    
+            acc.push(enriched);
+            return acc;
+        }, []);
+    };
+    
 
     const enrichedChartExpenses = useMemo(() => enrichExpenses(chartExpenses), [chartExpenses, categoryMap, accountMap, tagMap]);
     const enrichedThisMonthExpenses = useMemo(() => enrichExpenses(thisMonthExpenses), [thisMonthExpenses, categoryMap, accountMap, tagMap]);

@@ -98,7 +98,7 @@ export default function AnalysisPage() {
             : expenses;
 
         return filteredByAccount.map(expense => {
-            const date = expense.date instanceof Date ? expense.date : expense.date.toDate();
+            const date = expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate();
             const category = expense.categoryId ? categoryMap.get(expense.categoryId) : undefined;
             // Exclude special financial management categories from analysis
             if (category && SPECIAL_CATEGORIES.includes(category.name)) {

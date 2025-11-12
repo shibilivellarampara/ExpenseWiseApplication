@@ -17,6 +17,11 @@ import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'custom';
 const SPECIAL_CATEGORIES = ['Credit Limit Upgrade', 'Credit Limit Downgrade'];
@@ -28,6 +33,7 @@ export default function AnalysisPage() {
     const [isAiLoading, startAiTransition] = useTransition();
     const [aiAnalysis, setAiAnalysis] = useState<any>(null);
     const [customDateRange, setCustomDateRange] = useState<{ from?: Date, to?: Date }>({ from: undefined, to: undefined });
+    const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
 
 
     const { dateRangeStart, dateRangeEnd } = useMemo(() => {
@@ -56,12 +62,19 @@ export default function AnalysisPage() {
 
     const expensesQuery = useMemoFirebase(() => {
         if (!user) return null;
-        return query(
+        
+        let q = query(
             collection(firestore, `users/${user.uid}/expenses`),
             where('date', '>=', Timestamp.fromDate(dateRangeStart)),
             where('date', '<=', Timestamp.fromDate(dateRangeEnd))
         );
-    }, [user, firestore, dateRangeStart, dateRangeEnd]);
+
+        if (selectedAccounts.length > 0) {
+            q = query(q, where('accountId', 'in', selectedAccounts));
+        }
+
+        return q;
+    }, [user, firestore, dateRangeStart, dateRangeEnd, selectedAccounts]);
     
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [firestore, user]);
@@ -70,14 +83,14 @@ export default function AnalysisPage() {
 
     const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
-    const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
+    const { data: allAccounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
     const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading;
 
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
-    const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
+    const accountMap = useMemo(() => new Map(allAccounts?.map(a => [a.id, a])), [allAccounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
 
     const enrichedExpenses = useMemo((): EnrichedExpense[] => {
@@ -117,6 +130,14 @@ export default function AnalysisPage() {
         }
         setCustomDateRange(prev => ({ ...prev, [field]: date }));
     }
+    
+    const handleAccountSelectChange = (accountId: string) => {
+        setSelectedAccounts(prev => 
+            prev.includes(accountId)
+                ? prev.filter(id => id !== accountId)
+                : [...prev, accountId]
+        );
+    }
 
     const formatDateForInput = (date: Date | undefined): string => {
         return date ? format(date, 'yyyy-MM-dd') : '';
@@ -146,7 +167,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex flex-col sm:flex-row gap-2 w-full max-w-md">
+                 <div className="flex flex-col sm:flex-row gap-2 w-full max-w-lg">
                     <Select value={timeRangePreset} onValueChange={handleTimeRangeChange}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a time range" />
@@ -160,6 +181,36 @@ export default function AnalysisPage() {
                             <SelectItem value="custom">Custom Range</SelectItem>
                         </SelectContent>
                     </Select>
+                    
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full justify-between">
+                                <span>{selectedAccounts.length > 0 ? `${selectedAccounts.length} accounts selected` : "All Accounts"}</span>
+                                <ChevronDown className="h-4 w-4 opacity-50" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                            <Command>
+                                <CommandInput placeholder="Search accounts..." />
+                                <CommandList>
+                                    <CommandEmpty>No results found.</CommandEmpty>
+                                    <CommandGroup>
+                                        {(allAccounts || []).map(item => (
+                                            <CommandItem
+                                                key={item.id}
+                                                onSelect={() => handleAccountSelectChange(item.id)}
+                                                className="flex justify-between cursor-pointer"
+                                            >
+                                                {item.name}
+                                                 <Check className={cn("h-4 w-4", selectedAccounts.includes(item.id) ? "opacity-100" : "opacity-0")} />
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
                      {timeRangePreset === 'custom' && (
                         <div className="grid grid-cols-2 gap-2">
                            <div className="space-y-1">
@@ -230,3 +281,5 @@ export default function AnalysisPage() {
         </div>
     );
 }
+
+    

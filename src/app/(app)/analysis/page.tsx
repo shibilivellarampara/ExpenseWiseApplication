@@ -88,6 +88,7 @@ export default function AnalysisPage() {
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(allAccounts?.map(a => [a.id, a])), [allAccounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
+    const excludedCategoryIds = useMemo(() => userProfile?.analysisSettings?.excludedCategoryIds || [], [userProfile]);
 
     const enrichedExpenses = useMemo((): EnrichedExpense[] => {
         if (!expenses || !categoryMap.size || !accountMap.size) return [];
@@ -101,7 +102,7 @@ export default function AnalysisPage() {
             const date = expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate();
             const category = expense.categoryId ? categoryMap.get(expense.categoryId) : undefined;
             // Exclude special financial management categories from analysis
-            if (category && SPECIAL_CATEGORIES.includes(category.name)) {
+            if (category && (SPECIAL_CATEGORIES.includes(category.name) || excludedCategoryIds.includes(category.id))) {
                 return null;
             }
             return {
@@ -112,7 +113,7 @@ export default function AnalysisPage() {
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             };
         }).filter((e): e is EnrichedExpense => e !== null);
-    }, [expenses, categoryMap, accountMap, tagMap, selectedAccounts]);
+    }, [expenses, categoryMap, accountMap, tagMap, selectedAccounts, excludedCategoryIds]);
     
 
     const handleTimeRangeChange = (value: string) => {

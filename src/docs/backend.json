@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -29,6 +30,17 @@
             "show5YearView": { "type": "boolean", "default": false },
             "isAiSuggestionEnabled": { "type": "boolean", "default": true }
           }
+        },
+        "analysisSettings": {
+            "type": "object",
+            "description": "User preferences for the analysis page.",
+            "properties": {
+                "excludedCategoryIds": { 
+                    "type": "array", 
+                    "items": { "type": "string" },
+                    "description": "An array of category IDs to exclude from analysis."
+                }
+            }
         },
         "sharedExpenseIds": {
           "type": "array",

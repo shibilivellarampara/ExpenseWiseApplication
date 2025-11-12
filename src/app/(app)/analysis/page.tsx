@@ -152,18 +152,27 @@ export default function AnalysisPage() {
     const handleGenerateInsights = () => {
         if (enrichedExpenses.length === 0) return;
         startAiTransition(async () => {
-            const result = await analyzeExpenses({ 
-                expenses: enrichedExpenses.map(e => ({
-                    type: e.type,
-                    amount: e.amount,
-                    description: e.description,
-                    date: e.date.toISOString(),
-                    category: e.category?.name,
-                    account: e.account?.name,
-                    tags: e.tags.map(t => t.name),
-                })) 
-            });
-            setAiAnalysis(result);
+            try {
+                const result = await analyzeExpenses({ 
+                    expenses: enrichedExpenses.map(e => ({
+                        type: e.type,
+                        amount: e.amount,
+                        description: e.description,
+                        date: e.date.toISOString(),
+                        category: e.category?.name,
+                        account: e.account?.name,
+                        tags: e.tags.map(t => t.name),
+                    })) 
+                });
+                setAiAnalysis(result);
+            } catch (error) {
+                console.error("AI analysis failed:", error);
+                setAiAnalysis({
+                    summary: "Sorry, I couldn't generate insights right now. The AI service may be temporarily unavailable.",
+                    topCategories: [],
+                    savingsSuggestions: []
+                });
+            }
         });
     };
 

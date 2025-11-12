@@ -125,27 +125,8 @@ export function TransactionFieldOrderSettings() {
                                         key={field}
                                         className="flex items-center gap-2 p-2 rounded-md border bg-background"
                                     >
-                                        <div className="flex flex-col">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-6 w-6"
-                                                onClick={() => handleMoveField(index, 'up')}
-                                                disabled={index === 0}
-                                            >
-                                                <ArrowUp className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-6 w-6"
-                                                onClick={() => handleMoveField(index, 'down')}
-                                                disabled={index === fields.length - 1}
-                                            >
-                                                <ArrowDown className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <span className="flex-1">{fieldLabels[field]}</span>
+                                        <span className="flex-1 font-medium">{fieldLabels[field]}</span>
+                                        
                                         {isToggleable && requiredKey && (
                                             <div className="flex items-center gap-2">
                                                 <Label htmlFor={`required-${field}`} className="text-xs text-muted-foreground">Required</Label>
@@ -156,6 +137,27 @@ export function TransactionFieldOrderSettings() {
                                                 />
                                             </div>
                                         )}
+
+                                        <div className="flex items-center gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                onClick={() => handleMoveField(index, 'up')}
+                                                disabled={index === 0}
+                                            >
+                                                <ArrowUp className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                onClick={() => handleMoveField(index, 'down')}
+                                                disabled={index === fields.length - 1}
+                                            >
+                                                <ArrowDown className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 )
                             })}

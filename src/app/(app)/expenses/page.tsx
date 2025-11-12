@@ -7,7 +7,7 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc, onSnapshot }from "firebase/firestore";
+import { collection, orderBy, query, doc, onSnapshot, where }from "firebase/firestore";
 import { Plus, Minus } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
@@ -70,9 +70,32 @@ export default function ExpensesPage() {
     
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     
-    const expensesBaseQuery = useMemoFirebase(() => 
-        user ? query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc')) : null
-    , [firestore, user]);
+    const expensesBaseQuery = useMemoFirebase(() => {
+        if (!user) return null;
+        
+        let q = query(collection(firestore, `users/${user.uid}/expenses`));
+
+        if (filters.type !== 'all') {
+            q = query(q, where('type', '==', filters.type));
+        }
+
+        if (filters.accounts.length > 0) {
+            q = query(q, where('accountId', 'in', filters.accounts));
+        }
+
+        if (filters.categories.length > 0) {
+            q = query(q, where('categoryId', 'in', filters.categories));
+        }
+
+        if (filters.tags.length > 0) {
+            q = query(q, where('tagIds', 'array-contains-any', filters.tags));
+        }
+
+        // Always order by date
+        q = query(q, orderBy('date', 'desc'));
+        
+        return q;
+    }, [firestore, user, filters.type, filters.accounts, filters.categories, filters.tags]);
 
     const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
     const [expensesLoading, setExpensesLoading] = useState(true);
@@ -151,13 +174,9 @@ export default function ExpensesPage() {
         
         let filtered = allExpenses.filter(expense => {
             const expenseDate = expense.date instanceof Date ? expense.date : (expense.date as any).toDate();
-            const { dateRange, type, categories, accounts: accountIds, tags } = filters;
+            const { dateRange } = filters;
             if (dateRange.from && expenseDate < startOfDay(dateRange.from)) return false;
             if (dateRange.to && expenseDate > endOfDay(dateRange.to)) return false;
-            if (type !== 'all' && expense.type !== type) return false;
-            if (categories.length > 0 && !(expense.categoryId && categories.includes(expense.categoryId))) return false;
-            if (accountIds.length > 0 && !accountIds.includes(expense.accountId)) return false;
-            if (tags.length > 0 && !expense.tagIds?.some(tagId => tags.includes(tagId))) return false;
             if (debouncedSearchQuery) {
                 const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
                 const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);

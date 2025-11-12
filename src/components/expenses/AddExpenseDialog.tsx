@@ -374,6 +374,7 @@ function ExpenseForm({
                             id="description"
                             {...field}
                             value={field.value ?? ''}
+                            className={cn(isSuggesting && 'animate-pulse border-primary/50')}
                         />
                         <FormMessage />
                     </FormItem>

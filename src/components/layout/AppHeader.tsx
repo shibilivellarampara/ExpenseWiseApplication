@@ -125,7 +125,7 @@ function Notifications() {
                     )}
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuContent align="center" className="w-80">
                 <DropdownMenuLabel className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <span>Notifications</span>

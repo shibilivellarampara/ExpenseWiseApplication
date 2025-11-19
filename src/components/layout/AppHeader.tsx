@@ -26,6 +26,8 @@ import {
 import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '../ThemeToggle';
+import { Badge } from '@/components/ui/badge';
+
 
 const appVersion = pkg.version;
 

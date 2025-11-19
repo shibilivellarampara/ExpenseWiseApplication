@@ -13,14 +13,17 @@ const changelog = [
         version: "1.3.4",
         date: "2024-08-16",
         changes: [
+            { type: 'Feature', description: "Added the ability to merge multiple categories or tags into a single new or existing item, streamlining data organization." },
             { type: 'Feature', description: "Made category and tag badges in the transaction list clickable, automatically applying a filter for that item." },
+            { type: 'Feature', description: "Added a collapsible tag breakdown in the category analysis table to show spending distribution within each category." },
         ]
     },
     {
         version: "1.3.3",
         date: "2024-08-15",
         changes: [
-            { type: 'Feature', description: "Added the ability to merge multiple categories or tags into a single new or existing item, streamlining data organization." },
+            { type: 'Fix', description: "Resolved a layout issue in the category analysis table that caused a runtime error when expanding rows." },
+            { type: 'Fix', description: "Corrected the alignment of the notification panel to ensure it appears centered below the bell icon." },
         ]
     },
     {
@@ -70,7 +73,7 @@ const changelog = [
         date: "2024-08-10",
         changes: [
             { type: 'Feature', description: "Added a dedicated theme toggle button to the main header for easier access." },
-            { type: 'Feature', description: "Streamlined report generation and added a 'Copy to Clipboard' option." },
+            { type Putin: 'Feature', description: "Streamlined report generation and added a 'Copy to Clipboard' option." },
             { type: 'Feature', description: "Added 'ExpenseWise Report' as a new template for easier data re-importing." },
             { type: 'Fix', description: "Improved consistency in the transaction form by placing 'Add new tag' at the top of its dropdown." },
             { type: 'Fix', description: "Added remove buttons to selected tags in the transaction form for quicker editing." },

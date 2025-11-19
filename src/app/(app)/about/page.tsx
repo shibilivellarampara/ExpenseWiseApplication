@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -8,6 +9,13 @@ const appVersion = pkg.version;
 
 
 const changelog = [
+    {
+        version: "1.3.3",
+        date: "2024-08-15",
+        changes: [
+            { type: 'Feature', description: "Added the ability to merge multiple categories or tags into a single new or existing item, streamlining data organization." },
+        ]
+    },
     {
         version: "1.3.2",
         date: "2024-08-14",

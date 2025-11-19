@@ -2,19 +2,21 @@
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { Category } from '@/lib/types';
-import { collection, doc, writeBatch, addDoc, setDoc } from 'firebase/firestore';
+import { Category, Expense } from '@/lib/types';
+import { collection, doc, writeBatch, getDocs, query, where } from 'firebase/firestore';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown, Merge } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '../ui/checkbox';
+import { MergeItemsDialog } from './MergeItemsDialog';
 
 export function CategorySettings() {
     const { user } = useUser();
@@ -31,6 +33,8 @@ export function CategorySettings() {
     const [newItem, setNewItem] = useState<{name: string, icon: string}>({ name: '', icon: 'Shapes' });
     const [editingItem, setEditingItem] = useState<{ id: string; name: string; icon: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [showMergeDialog, setShowMergeDialog] = useState(false);
 
     const SYSTEM_CATEGORIES = ['Credit Limit Upgrade', 'Credit Card Payment', 'Credit Limit Downgrade'];
 
@@ -143,8 +147,65 @@ export function CategorySettings() {
                  setIsSaving(false);
             });
     };
+
+    const handleMerge = async (target: { id: string } | { name: string; icon: string }) => {
+        if (!user || !firestore || selectedIds.length < 2) return;
+        setIsSaving(true);
+    
+        try {
+            const batch = writeBatch(firestore);
+            let targetId: string;
+    
+            // Step 1: Determine target ID (create new category if necessary)
+            if ('name' in target) {
+                const newCatRef = doc(collection(firestore, `users/${user.uid}/categories`));
+                targetId = newCatRef.id;
+                batch.set(newCatRef, { ...target, id: targetId, userId: user.uid });
+            } else {
+                targetId = target.id;
+            }
+    
+            const sourceIds = selectedIds.filter(id => id !== targetId);
+    
+            // Step 2: Find all transactions using source categories
+            const expensesRef = collection(firestore, `users/${user.uid}/expenses`);
+            const q = query(expensesRef, where('categoryId', 'in', sourceIds));
+            const expensesToUpdateSnapshot = await getDocs(q);
+    
+            // Step 3: Update transactions
+            expensesToUpdateSnapshot.forEach(doc => {
+                const expenseRef = doc.ref;
+                batch.update(expenseRef, { categoryId: targetId });
+            });
+    
+            // Step 4: Delete source categories
+            sourceIds.forEach(id => {
+                const catRef = doc(firestore, `users/${user.uid}/categories`, id);
+                batch.delete(catRef);
+            });
+    
+            await batch.commit();
+            toast({ title: "Merge Complete", description: `${selectedIds.length} categories merged successfully.` });
+            setSelectedIds([]);
+            setShowMergeDialog(false);
+        } catch (e: any) {
+            toast({ variant: 'destructive', title: "Merge Failed", description: e.message });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     
     const sortedCategories = categories ? [...categories].sort((a, b) => a.name.localeCompare(b.name)) : [];
+
+    const handleSelectionChange = (id: string, checked: boolean | string) => {
+        if (checked) {
+            setSelectedIds(prev => [...prev, id]);
+        } else {
+            setSelectedIds(prev => prev.filter(i => i !== id));
+        }
+    };
+    
 
     return (
         <Card>
@@ -160,12 +221,33 @@ export function CategorySettings() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <CardContent className="space-y-4 pt-0 p-4">
+                        {selectedIds.length > 1 && (
+                             <MergeItemsDialog
+                                open={showMergeDialog}
+                                onOpenChange={setShowMergeDialog}
+                                items={categories?.filter(c => selectedIds.includes(c.id)) || []}
+                                itemType="Category"
+                                onMerge={handleMerge}
+                                isSaving={isSaving}
+                            >
+                                <Button variant="outline" size="sm">
+                                    <Merge className="mr-2 h-4 w-4" />
+                                    Merge {selectedIds.length} Categories
+                                </Button>
+                            </MergeItemsDialog>
+                        )}
                         {isLoading ? (
                             <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
                         ) : (
                             <div className="space-y-2">
                                 {sortedCategories.map((item) => (
                                     <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
+                                         <Checkbox
+                                            id={`select-cat-${item.id}`}
+                                            checked={selectedIds.includes(item.id)}
+                                            onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
+                                            disabled={isSaving}
+                                        />
                                         {editingItem?.id === item.id ? (
                                             <div className="flex items-center gap-2 w-full">
                                                 <Popover>

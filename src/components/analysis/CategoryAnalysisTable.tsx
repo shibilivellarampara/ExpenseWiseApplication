@@ -58,33 +58,17 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
 function TransactionDialog({ trigger, title, children }: { trigger: React.ReactNode; title: string; children: React.ReactNode }) {
     const isDesktop = useMediaQuery("(min-width: 768px)");
     
-    if (isDesktop) {
-        return (
-            <Dialog>
-                <DialogTrigger asChild>{trigger}</DialogTrigger>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>{title}</DialogTitle>
-                    </DialogHeader>
-                    {children}
-                </DialogContent>
-            </Dialog>
-        );
-    }
-    
     return (
-        <Drawer>
-            <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-            <DrawerContent>
-                 <DrawerHeader className="text-left">
-                    <DrawerTitle>{title}</DrawerTitle>
-                </DrawerHeader>
-                <div className="px-4 pb-4">
-                    {children}
-                </div>
-            </DrawerContent>
-        </Drawer>
-    )
+        <Dialog>
+            <DialogTrigger asChild>{trigger}</DialogTrigger>
+            <DialogContent className="max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                </DialogHeader>
+                {children}
+            </DialogContent>
+        </Dialog>
+    );
 }
 
 const TransactionList = ({ transactions, currencySymbol }: { transactions: EnrichedExpense[], currencySymbol: string }) => {
@@ -135,7 +119,7 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
     }
     
     const calculateTagStats = (categoryId: string, categoryTotal: number): TagStat[] => {
-        const categoryExpenses = allExpenses.filter(e => e.categoryId === categoryId && e.type === 'expense');
+        const categoryExpenses = allExpenses.filter(e => e.category?.id === categoryId && e.type === 'expense');
         const tagMap = new Map<string, { total: number; name: string; icon: string }>();
 
         categoryExpenses.forEach(expense => {

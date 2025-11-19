@@ -8,6 +8,7 @@ import { getCurrencySymbol } from "@/lib/currencies";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { ScrollArea } from "../ui/scroll-area";
 import * as LucideIcons from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ import { Badge } from "../ui/badge";
 import { generateColorStyle } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface CategoryAnalysisTableProps {
     expenses: EnrichedExpense[];
@@ -43,46 +45,75 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
 };
 
 
-const TransactionListDialog = ({ category, transactions, currencySymbol }: { category: Stat | NetStat, transactions: EnrichedExpense[], currencySymbol: string }) => {
+const TransactionList = ({ transactions, currencySymbol }: { transactions: EnrichedExpense[], currencySymbol: string }) => {
     return (
-        <DialogContent className="max-w-lg">
-            <DialogHeader>
-                <DialogTitle>Transactions for "{category.categoryName}"</DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="h-96">
-                <div className="space-y-4 pr-6">
-                    {transactions.map(tx => (
-                        <div key={tx.id} className="flex items-start gap-4">
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center mt-1">
-                                {renderIcon(tx.category?.icon)}
+        <ScrollArea className="h-96">
+            <div className="space-y-4 pr-6">
+                {transactions.map(tx => (
+                    <div key={tx.id} className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center mt-1">
+                            {renderIcon(tx.category?.icon)}
+                        </div>
+                        <div className="flex-grow">
+                            <div className="flex justify-between items-start">
+                                <span className="font-medium break-all">{tx.description}</span>
+                                <span className={cn("font-semibold whitespace-nowrap", tx.type === 'income' ? 'text-green-600' : 'text-red-500')}>
+                                    {tx.type === 'income' ? '+' : '-'}{currencySymbol}{tx.amount.toFixed(2)}
+                                </span>
                             </div>
-                            <div className="flex-grow">
-                                <div className="flex justify-between items-start">
-                                    <span className="font-medium break-all">{tx.description}</span>
-                                    <span className={cn("font-semibold whitespace-nowrap", tx.type === 'income' ? 'text-green-600' : 'text-red-500')}>
-                                        {tx.type === 'income' ? '+' : '-'}{currencySymbol}{tx.amount.toFixed(2)}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">{tx.date.toLocaleDateString()}</p>
-                                <div className="flex flex-wrap items-center gap-1 pt-1">
-                                     {tx.tags?.map(tag => (
-                                        <Badge
-                                            key={tag.id}
-                                            style={generateColorStyle(tag.name)}
-                                            className="badge-colorful text-xs"
-                                        >
-                                            {tag.name}
-                                        </Badge>
-                                    ))}
-                                </div>
+                            <p className="text-xs text-muted-foreground">{tx.date.toLocaleDateString()}</p>
+                            <div className="flex flex-wrap items-center gap-1 pt-1">
+                                 {tx.tags?.map(tag => (
+                                    <Badge
+                                        key={tag.id}
+                                        style={generateColorStyle(tag.name)}
+                                        className="badge-colorful text-xs"
+                                    >
+                                        {tag.name}
+                                    </Badge>
+                                ))}
                             </div>
                         </div>
-                    ))}
-                </div>
-            </ScrollArea>
-        </DialogContent>
-    );
+                    </div>
+                ))}
+            </div>
+        </ScrollArea>
+    )
 };
+
+
+const ResponsiveTransactionList = ({ category, transactions, currencySymbol, children }: { category: Stat | NetStat, transactions: EnrichedExpense[], currencySymbol: string, children: React.ReactNode }) => {
+    const isDesktop = useMediaQuery("(min-width: 768px)");
+
+    if (isDesktop) {
+        return (
+            <Dialog>
+                <DialogTrigger asChild>{children}</DialogTrigger>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Transactions for "{category.categoryName}"</DialogTitle>
+                    </DialogHeader>
+                    <TransactionList transactions={transactions} currencySymbol={currencySymbol} />
+                </DialogContent>
+            </Dialog>
+        );
+    }
+
+    return (
+         <Drawer>
+            <DrawerTrigger asChild>{children}</DrawerTrigger>
+            <DrawerContent>
+                <DrawerHeader className="text-left">
+                    <DrawerTitle>Transactions for "{category.categoryName}"</DrawerTitle>
+                </DrawerHeader>
+                 <div className="px-4">
+                    <TransactionList transactions={transactions} currencySymbol={currencySymbol} />
+                </div>
+            </DrawerContent>
+        </Drawer>
+    )
+};
+
 
 const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, allExpenses: EnrichedExpense[], type: 'income' | 'expense' | 'net') => {
     
@@ -119,29 +150,26 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
                     }
                     
                     return (
-                        <Dialog key={stat.categoryId}>
-                            <DialogTrigger asChild>
-                                <TableRow className="cursor-pointer hover:bg-muted/50">
-                                    <TableCell>
-                                        <div className="font-medium">{stat.categoryName}</div>
-                                        {!isNetView && (
-                                            <>
-                                                <div className="text-muted-foreground text-xs">{stat.percentage.toFixed(1)}% of total</div>
-                                                <Progress value={stat.percentage} className="h-1 mt-1" />
-                                            </>
-                                        )}
-                                    </TableCell>
-                                    {isNetView && 'income' in stat && <TableCell className="text-right hidden md:table-cell text-green-600">{currencySymbol}{stat.income.toFixed(2)}</TableCell>}
-                                    {isNetView && 'expense' in stat && <TableCell className="text-right hidden md:table-cell text-red-500">{currencySymbol}{stat.expense.toFixed(2)}</TableCell>}
-                                    <TableCell className={cn("text-right font-bold", amountColor)}>
-                                        {stat.total > 0 && isNetView ? '+' : ''}
-                                        {currencySymbol}{stat.total.toFixed(2)}
-                                    </TableCell>
-                                    <TableCell className="text-right hidden md:table-cell">{stat.count}</TableCell>
-                                </TableRow>
-                            </DialogTrigger>
-                             <TransactionListDialog category={stat} transactions={filteredTransactions} currencySymbol={currencySymbol} />
-                        </Dialog>
+                        <ResponsiveTransactionList key={stat.categoryId} category={stat} transactions={filteredTransactions} currencySymbol={currencySymbol}>
+                             <TableRow className="cursor-pointer hover:bg-muted/50">
+                                <TableCell>
+                                    <div className="font-medium">{stat.categoryName}</div>
+                                    {!isNetView && (
+                                        <>
+                                            <div className="text-muted-foreground text-xs">{stat.percentage.toFixed(1)}% of total</div>
+                                            <Progress value={stat.percentage} className="h-1 mt-1" />
+                                        </>
+                                    )}
+                                </TableCell>
+                                {isNetView && 'income' in stat && <TableCell className="text-right hidden md:table-cell text-green-600">{currencySymbol}{stat.income.toFixed(2)}</TableCell>}
+                                {isNetView && 'expense' in stat && <TableCell className="text-right hidden md:table-cell text-red-500">{currencySymbol}{stat.expense.toFixed(2)}</TableCell>}
+                                <TableCell className={cn("text-right font-bold", amountColor)}>
+                                    {stat.total > 0 && isNetView ? '+' : ''}
+                                    {currencySymbol}{stat.total.toFixed(2)}
+                                </TableCell>
+                                <TableCell className="text-right hidden md:table-cell">{stat.count}</TableCell>
+                            </TableRow>
+                        </ResponsiveTransactionList>
                     );
                 })}
             </TableBody>

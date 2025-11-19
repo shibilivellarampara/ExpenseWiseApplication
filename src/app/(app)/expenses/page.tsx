@@ -193,6 +193,23 @@ export default function ExpensesPage() {
         setFilters(newFilters);
     };
 
+    const handleBadgeClick = (type: 'category' | 'tag', id: string) => {
+        if (type === 'category') {
+            setFilters(prev => ({
+                ...prev,
+                categories: [id],
+                tags: [], // Clear other filters for simplicity
+            }));
+        } else {
+            setFilters(prev => ({
+                ...prev,
+                tags: [id],
+                categories: [], // Clear other filters for simplicity
+            }));
+        }
+    };
+
+
     return (
         <div className="w-full space-y-4 pb-24">
             <div className={cn(
@@ -220,6 +237,7 @@ export default function ExpensesPage() {
                 isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
                 onDataChange={handleDataChange} 
                 error={expensesError ? 'Error loading transactions' : null}
+                onBadgeClick={handleBadgeClick}
             />
 
             <div className="fixed bottom-0 left-0 right-0 p-4 z-10 md:hidden">

@@ -25,6 +25,7 @@ interface ExpensesTableProps {
   isShared?: boolean;
   onDataChange: () => void;
   error?: string | null;
+  onBadgeClick?: (type: 'category' | 'tag', id: string) => void;
 }
 
 const renderIcon = (iconName: string | undefined, className?: string) => {
@@ -47,7 +48,7 @@ const formatAmount = (amount: number) => {
 
 type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense: EnrichedExpense };
 
-function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, viewMode }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact' }) {
+function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, viewMode, onBadgeClick }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag', id: string) => void; }) {
     
     const allRows = useMemo(() => {
         const rows: VirtualRow[] = [];
@@ -197,7 +198,8 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                             {row.expense.category && (
                                                 <Badge
                                                     style={generateColorStyle(row.expense.category.name)}
-                                                    className="badge-colorful text-xs px-1.5 py-0"
+                                                    className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                    onClick={() => onBadgeClick?.('category', row.expense.category!.id)}
                                                 >
                                                     {renderIcon(row.expense.category.icon, "h-3 w-3")}
                                                     {row.expense.category.name}
@@ -208,7 +210,8 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                 <Badge
                                                     key={tag.id}
                                                     style={generateColorStyle(tag.name)}
-                                                    className="badge-colorful text-xs px-1.5 py-0"
+                                                    className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                    onClick={() => onBadgeClick?.('tag', tag.id)}
                                                 >
                                                     {renderIcon(tag.icon, "h-3 w-3")}
                                                     {tag.name}
@@ -226,7 +229,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
     );
 }
 
-export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, error }: ExpensesTableProps) {
+export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, error, onBadgeClick }: ExpensesTableProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -276,5 +279,5 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} />;
+  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick}/>;
 }

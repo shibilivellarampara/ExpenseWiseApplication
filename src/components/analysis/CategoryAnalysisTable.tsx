@@ -8,7 +8,6 @@ import { getCurrencySymbol } from "@/lib/currencies";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { ScrollArea } from "../ui/scroll-area";
 import * as LucideIcons from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -16,7 +15,6 @@ import { Badge } from "../ui/badge";
 import { generateColorStyle } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface CategoryAnalysisTableProps {
     expenses: EnrichedExpense[];
@@ -82,39 +80,6 @@ const TransactionList = ({ transactions, currencySymbol }: { transactions: Enric
 };
 
 
-const ResponsiveTransactionList = ({ category, transactions, currencySymbol, children }: { category: Stat | NetStat, transactions: EnrichedExpense[], currencySymbol: string, children: React.ReactNode }) => {
-    const isDesktop = useMediaQuery("(min-width: 768px)");
-
-    if (isDesktop) {
-        return (
-            <Dialog>
-                <DialogTrigger asChild>{children}</DialogTrigger>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Transactions for "{category.categoryName}"</DialogTitle>
-                    </DialogHeader>
-                    <TransactionList transactions={transactions} currencySymbol={currencySymbol} />
-                </DialogContent>
-            </Dialog>
-        );
-    }
-
-    return (
-         <Drawer>
-            <DrawerTrigger asChild>{children}</DrawerTrigger>
-            <DrawerContent>
-                <DrawerHeader className="text-left">
-                    <DrawerTitle>Transactions for "{category.categoryName}"</DrawerTitle>
-                </DrawerHeader>
-                 <div className="px-4">
-                    <TransactionList transactions={transactions} currencySymbol={currencySymbol} />
-                </div>
-            </DrawerContent>
-        </Drawer>
-    )
-};
-
-
 const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, allExpenses: EnrichedExpense[], type: 'income' | 'expense' | 'net') => {
     
     if (stats.length === 0) {
@@ -150,26 +115,34 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
                     }
                     
                     return (
-                        <ResponsiveTransactionList key={stat.categoryId} category={stat} transactions={filteredTransactions} currencySymbol={currencySymbol}>
-                             <TableRow className="cursor-pointer hover:bg-muted/50">
-                                <TableCell>
-                                    <div className="font-medium">{stat.categoryName}</div>
-                                    {!isNetView && (
-                                        <>
-                                            <div className="text-muted-foreground text-xs">{stat.percentage.toFixed(1)}% of total</div>
-                                            <Progress value={stat.percentage} className="h-1 mt-1" />
-                                        </>
-                                    )}
-                                </TableCell>
-                                {isNetView && 'income' in stat && <TableCell className="text-right hidden md:table-cell text-green-600">{currencySymbol}{stat.income.toFixed(2)}</TableCell>}
-                                {isNetView && 'expense' in stat && <TableCell className="text-right hidden md:table-cell text-red-500">{currencySymbol}{stat.expense.toFixed(2)}</TableCell>}
-                                <TableCell className={cn("text-right font-bold", amountColor)}>
-                                    {stat.total > 0 && isNetView ? '+' : ''}
-                                    {currencySymbol}{stat.total.toFixed(2)}
-                                </TableCell>
-                                <TableCell className="text-right hidden md:table-cell">{stat.count}</TableCell>
-                            </TableRow>
-                        </ResponsiveTransactionList>
+                        <Dialog key={stat.categoryId}>
+                            <DialogTrigger asChild>
+                                 <TableRow className="cursor-pointer hover:bg-muted/50">
+                                    <TableCell>
+                                        <div className="font-medium">{stat.categoryName}</div>
+                                        {!isNetView && (
+                                            <>
+                                                <div className="text-muted-foreground text-xs">{stat.percentage.toFixed(1)}% of total</div>
+                                                <Progress value={stat.percentage} className="h-1 mt-1" />
+                                            </>
+                                        )}
+                                    </TableCell>
+                                    {isNetView && 'income' in stat && <TableCell className="text-right hidden md:table-cell text-green-600">{currencySymbol}{stat.income.toFixed(2)}</TableCell>}
+                                    {isNetView && 'expense' in stat && <TableCell className="text-right hidden md:table-cell text-red-500">{currencySymbol}{stat.expense.toFixed(2)}</TableCell>}
+                                    <TableCell className={cn("text-right font-bold", amountColor)}>
+                                        {stat.total > 0 && isNetView ? '+' : ''}
+                                        {currencySymbol}{stat.total.toFixed(2)}
+                                    </TableCell>
+                                    <TableCell className="text-right hidden md:table-cell">{stat.count}</TableCell>
+                                </TableRow>
+                            </DialogTrigger>
+                             <DialogContent className="max-w-lg">
+                                <DialogHeader>
+                                    <DialogTitle>Transactions for "{stat.categoryName}"</DialogTitle>
+                                </DialogHeader>
+                                <TransactionList transactions={filteredTransactions} currencySymbol={currencySymbol} />
+                            </DialogContent>
+                        </Dialog>
                     );
                 })}
             </TableBody>

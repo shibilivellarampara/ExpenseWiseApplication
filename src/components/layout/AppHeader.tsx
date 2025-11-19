@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
-import { PanelLeft, Bell, Circle } from 'lucide-react';
+import { PanelLeft, Bell, Circle, CheckCheck } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { NavLink } from './AppSidebar';
 import {
@@ -30,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 
 const appVersion = pkg.version;
@@ -77,6 +78,7 @@ function Notifications() {
     };
 
     const handleMarkAllAsRead = (e: React.MouseEvent) => {
+        e.stopPropagation();
         e.preventDefault();
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     };
@@ -98,8 +100,29 @@ function Notifications() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="w-80">
                 <DropdownMenuLabel className="flex justify-between items-center">
-                    <span>Notifications</span>
-                    {unreadCount > 0 && <Badge variant="secondary">{unreadCount} New</Badge>}
+                    <div className="flex items-center gap-2">
+                        <span>Notifications</span>
+                        {unreadCount > 0 && <Badge variant="secondary">{unreadCount} New</Badge>}
+                    </div>
+                    {unreadCount > 0 && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={handleMarkAllAsRead}
+                                    >
+                                        <CheckCheck className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Mark all as read</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {notifications.map(notification => (
@@ -110,12 +133,6 @@ function Notifications() {
                         </span>
                     </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuFooter>
-                    <Button variant="outline" size="sm" className="w-full" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
-                        Mark all as read
-                    </Button>
-                </DropdownMenuFooter>
             </DropdownMenuContent>
         </DropdownMenu>
     )

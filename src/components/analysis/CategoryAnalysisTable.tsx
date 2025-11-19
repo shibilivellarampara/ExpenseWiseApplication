@@ -58,30 +58,16 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
 function TransactionDialog({ trigger, title, children }: { trigger: React.ReactNode; title: string; children: React.ReactNode }) {
     const isDesktop = useMediaQuery("(min-width: 768px)");
     
-    if (isDesktop) {
-        return (
-            <Dialog>
-                <DialogTrigger asChild>{trigger}</DialogTrigger>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>{title}</DialogTitle>
-                    </DialogHeader>
-                    {children}
-                </DialogContent>
-            </Dialog>
-        );
-    }
-    
     return (
-        <Drawer>
-            <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-            <DrawerContent>
-                <DrawerHeader className="text-left">
-                    <DrawerTitle>{title}</DrawerTitle>
-                </DrawerHeader>
-                <div className="px-4 pb-4">{children}</div>
-            </DrawerContent>
-        </Drawer>
+        <Dialog>
+            <DialogTrigger asChild>{trigger}</DialogTrigger>
+            <DialogContent className="max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                </DialogHeader>
+                {children}
+            </DialogContent>
+        </Dialog>
     );
 }
 

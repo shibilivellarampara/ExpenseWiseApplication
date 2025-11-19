@@ -8,6 +8,7 @@ import { getCurrencySymbol } from "@/lib/currencies";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { ScrollArea } from "../ui/scroll-area";
 import * as LucideIcons from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ import { format } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Button } from "../ui/button";
 import { ChevronDown } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface CategoryAnalysisTableProps {
     expenses: EnrichedExpense[];
@@ -53,6 +55,35 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
   return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <LucideIcons.Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
 };
 
+function TransactionDialog({ trigger, title, children }: { trigger: React.ReactNode; title: string; children: React.ReactNode }) {
+    const isDesktop = useMediaQuery("(min-width: 768px)");
+    
+    if (isDesktop) {
+        return (
+            <Dialog>
+                <DialogTrigger asChild>{trigger}</DialogTrigger>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>{title}</DialogTitle>
+                    </DialogHeader>
+                    {children}
+                </DialogContent>
+            </Dialog>
+        );
+    }
+    
+    return (
+        <Drawer>
+            <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+            <DrawerContent>
+                <DrawerHeader className="text-left">
+                    <DrawerTitle>{title}</DrawerTitle>
+                </DrawerHeader>
+                <div className="px-4 pb-4">{children}</div>
+            </DrawerContent>
+        </Drawer>
+    );
+}
 
 const TransactionList = ({ transactions, currencySymbol }: { transactions: EnrichedExpense[], currencySymbol: string }) => {
     return (
@@ -158,34 +189,33 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
 
                     
                     return (
-                        <Collapsible asChild key={stat.categoryId}>
+                        <Collapsible key={stat.categoryId} asChild>
                             <>
                                 <TableRow>
-                                     <TableCell className="p-0 pl-2">
+                                    <TableCell className="p-0 pl-2">
                                         <CollapsibleTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-8 w-8" disabled={tagStats.length === 0}>
                                                 <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=open]]:-rotate-180" />
                                             </Button>
                                         </CollapsibleTrigger>
-                                     </TableCell>
-                                     <TableCell>
-                                        <Dialog>
-                                            <DialogTrigger className="text-left w-full">
-                                                <div className="font-medium">{stat.categoryName}</div>
-                                                {!isNetView && (
-                                                    <>
-                                                        <div className="text-muted-foreground text-xs">{stat.percentage.toFixed(1)}% of total</div>
-                                                        <Progress value={stat.percentage} className="h-1 mt-1" />
-                                                    </>
-                                                )}
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-lg">
-                                                <DialogHeader>
-                                                    <DialogTitle>Transactions for "{stat.categoryName}"</DialogTitle>
-                                                </DialogHeader>
-                                                <TransactionList transactions={filteredTransactions} currencySymbol={currencySymbol} />
-                                            </DialogContent>
-                                        </Dialog>
+                                    </TableCell>
+                                    <TableCell>
+                                        <TransactionDialog 
+                                            title={`Transactions for "${stat.categoryName}"`}
+                                            trigger={
+                                                <button className="text-left w-full">
+                                                    <div className="font-medium">{stat.categoryName}</div>
+                                                    {!isNetView && (
+                                                        <>
+                                                            <div className="text-muted-foreground text-xs">{stat.percentage.toFixed(1)}% of total</div>
+                                                            <Progress value={stat.percentage} className="h-1 mt-1" />
+                                                        </>
+                                                    )}
+                                                </button>
+                                            }
+                                        >
+                                            <TransactionList transactions={filteredTransactions} currencySymbol={currencySymbol} />
+                                        </TransactionDialog>
                                     </TableCell>
                                     {isNetView && 'income' in stat && <TableCell className="text-right hidden md:table-cell text-green-600">{currencySymbol}{stat.income.toFixed(2)}</TableCell>}
                                     {isNetView && 'expense' in stat && <TableCell className="text-right hidden md:table-cell text-red-500">{currencySymbol}{stat.expense.toFixed(2)}</TableCell>}

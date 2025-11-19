@@ -1,3 +1,4 @@
+
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
@@ -7,7 +8,8 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { PanelLeft } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { PanelLeft, Bell } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { NavLink } from './AppSidebar';
 import {
@@ -50,6 +52,26 @@ function getPageTitle(path: string): string {
         return "Shared Space";
     }
     return title ? title.charAt(0).toUpperCase() + title.slice(1) : 'Dashboard';
+}
+
+function Notifications() {
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                    <Bell className="h-[1.2rem] w-[1.2rem]" />
+                    <span className="sr-only">Toggle notifications</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Your monthly report is ready.</DropdownMenuItem>
+                <DropdownMenuItem>A new shared expense was added to "Goa Trip".</DropdownMenuItem>
+                <DropdownMenuItem>Your credit card payment is due soon.</DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
 }
 
 export function AppHeader() {
@@ -97,7 +119,7 @@ export function AppHeader() {
         </div>
 
         <div className="flex-1">
-            <h1 className="font-semibold text-lg md:text-xl">{title}</h1>
+            {/* The main title is removed to have a cleaner header for transactions page */}
         </div>
         
         <div className="flex items-center gap-2">
@@ -105,6 +127,7 @@ export function AppHeader() {
                 <Skeleton className="h-10 w-10 rounded-full" />
             ) : (
                 <>
+                    <Notifications />
                     <ThemeToggle />
                     <UserNav />
                 </>

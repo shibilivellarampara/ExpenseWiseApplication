@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -306,5 +305,3 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
         </div>
     );
 }
-
-    

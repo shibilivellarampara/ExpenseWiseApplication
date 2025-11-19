@@ -77,11 +77,11 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
         getScrollElement: () => parentRef.current,
         estimateSize: (index) => {
              const row = allRows[index];
-             if (row.type === 'header') return 48; // Header height
+             if (row.type === 'header') return 38; // Header height
              // Estimate expense height
-             let height = 80; 
-             if (row.expense.tags && row.expense.tags.length > 0) height += 28;
-             if (row.expense.category) height += 28;
+             let height = 60; // Base height
+             if (row.expense.tags && row.expense.tags.length > 0) height += 20;
+             if (row.expense.category) height += 20;
              return height;
         },
         overscan: 5,
@@ -91,7 +91,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
     });
 
     return (
-        <div ref={parentRef} className="h-[70vh] overflow-y-auto bg-card rounded-lg border">
+        <div ref={parentRef} className="h-[75vh] overflow-y-auto bg-card rounded-lg border">
             <div
                 style={{
                     height: `${rowVirtualizer.getTotalSize()}px`,
@@ -115,31 +115,31 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                             }}
                         >
                             {row.type === 'header' ? (
-                                <div className="py-3 px-4 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b">
-                                    <h3 className="text-base font-semibold">
+                                <div className="py-2 px-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b">
+                                    <h3 className="text-sm font-semibold">
                                         {new Date(row.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                     </h3>
                                 </div>
                             ) : (
-                                <div className="p-4 flex items-start gap-4 group border-b">
-                                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center mt-1">
+                                <div className="p-3 flex items-center gap-3 group border-b">
+                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                                         {row.expense.type === 'income' ?
-                                            <Wallet className="h-5 w-5 text-green-500" /> :
-                                            renderIcon(row.expense.category?.icon, 'h-5 w-5 text-gray-700')
+                                            <Wallet className="h-4 w-4 text-green-500" /> :
+                                            renderIcon(row.expense.category?.icon, 'h-4 w-4 text-gray-700')
                                         }
                                     </div>
-                                    <div className="flex-grow space-y-1 w-full min-w-0">
+                                    <div className="flex-grow space-y-0.5 w-full min-w-0">
                                         <div className="flex justify-between items-start">
-                                            <div className="font-semibold break-words flex-1 pr-4">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
+                                            <div className="font-medium text-sm break-words flex-1 pr-4">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
                                             <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
                                                 <div className="flex items-center">
                                                     <AddExpenseDialog expenseToEdit={row.expense} sharedExpenseId={row.expense.sharedExpenseId} onSaveSuccess={onDataChange}>
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <Edit className="h-4 w-4" />
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Edit className="h-3.5 w-3.5" />
                                                         </Button>
                                                     </AddExpenseDialog>
                                                     <div className={cn(
-                                                        'font-bold text-lg',
+                                                        'font-bold text-base',
                                                         row.expense.type === 'income' ? 'text-green-600' : 'text-red-500'
                                                     )}>
                                                         {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
@@ -158,7 +158,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                             </div>
                                         </div>
 
-                                        <div className="text-xs text-muted-foreground flex items-center gap-4">
+                                        <div className="text-xs text-muted-foreground flex items-center gap-3">
                                             <div className="flex items-center gap-1">
                                                 {isShared && row.expense.user ? (
                                                     <TooltipProvider>
@@ -187,11 +187,11 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                             </div>
                                         </div>
                                         
-                                        <div className="flex flex-wrap items-center gap-2 pt-1 w-full">
+                                        <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
                                             {row.expense.category && (
                                                 <Badge
                                                     style={generateColorStyle(row.expense.category.name)}
-                                                    className="badge-colorful"
+                                                    className="badge-colorful text-xs px-1.5 py-0"
                                                 >
                                                     {renderIcon(row.expense.category.icon, "h-3 w-3")}
                                                     {row.expense.category.name}
@@ -202,7 +202,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                                 <Badge
                                                     key={tag.id}
                                                     style={generateColorStyle(tag.name)}
-                                                    className="badge-colorful"
+                                                    className="badge-colorful text-xs px-1.5 py-0"
                                                 >
                                                     {renderIcon(tag.icon, "h-3 w-3")}
                                                     {tag.name}

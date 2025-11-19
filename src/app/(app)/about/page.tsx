@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -9,6 +8,16 @@ const appVersion = pkg.version;
 
 
 const changelog = [
+    {
+        version: "1.3.2",
+        date: "2024-08-14",
+        changes: [
+            { type: 'Feature', description: "Added a notification center to the header to provide timely alerts for events like upcoming credit card payments." },
+            { type: 'Feature', description: "Added a 'Compact View' option in the Profile settings to allow for a denser transaction list." },
+            { type: 'Fix', description: "Streamlined the transaction page layout by removing the redundant main page header." },
+            { type: 'Fix', description: "Resolved a crash on the notifications panel caused by a missing component import." },
+        ]
+    },
     {
         version: "1.3.1",
         date: "2024-08-13",

@@ -93,11 +93,6 @@ function Notifications() {
             }
         });
         
-        // Add other static notifications
-        generatedNotifications.push({ id: 1, text: 'Your monthly report for October is ready for download.', read: true, href: '/reports' });
-        generatedNotifications.push({ id: 2, text: 'A new shared expense was added to "Goa Trip".', read: true, href: '/shared-expenses' });
-
-
         setNotifications(generatedNotifications);
     }, [creditCards]);
 
@@ -158,8 +153,8 @@ function Notifications() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {notifications.length > 0 ? notifications.map(notification => (
-                     <DropdownMenuItem key={notification.id} onSelect={() => handleNotificationClick(notification.id, notification.href)} className="flex items-start gap-3 cursor-pointer">
-                        {!notification.read && <Circle className="text-primary h-2.5 w-2.5 fill-current mt-1.5" />}
+                     <DropdownMenuItem key={notification.id} onSelect={() => handleNotificationClick(notification.id, notification.href)} className="flex items-center gap-3 cursor-pointer">
+                        {!notification.read && <Circle className="text-primary h-2.5 w-2.5 fill-current" />}
                         <span className={cn("flex-1 whitespace-normal", notification.read && "pl-5 text-muted-foreground")}>
                             {notification.text}
                         </span>

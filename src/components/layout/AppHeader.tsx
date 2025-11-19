@@ -8,8 +8,8 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { PanelLeft, Bell } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
+import { PanelLeft, Bell, Circle } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { NavLink } from './AppSidebar';
 import {
@@ -58,17 +58,38 @@ function Notifications() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="relative">
                     <Bell className="h-[1.2rem] w-[1.2rem]" />
                     <span className="sr-only">Toggle notifications</span>
+                    {/* Pulsing dot for unread notifications */}
+                    <span className="absolute top-0 right-0 flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                    </span>
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+            <DropdownMenuContent align="center" className="w-80">
+                <DropdownMenuLabel className="flex justify-between items-center">
+                    <span>Notifications</span>
+                    <Badge variant="secondary">3 New</Badge>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Your monthly report is ready.</DropdownMenuItem>
-                <DropdownMenuItem>A new shared expense was added to "Goa Trip".</DropdownMenuItem>
-                <DropdownMenuItem>Your HDFC Credit Card payment is due tomorrow.</DropdownMenuItem>
+                <DropdownMenuItem className="flex items-start gap-3">
+                    <Circle className="text-primary h-2.5 w-2.5 fill-current mt-1.5" />
+                    <span className="flex-1 whitespace-normal">Your monthly report for October is ready for download.</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-start gap-3">
+                    <Circle className="text-primary h-2.5 w-2.5 fill-current mt-1.5" />
+                    <span className="flex-1 whitespace-normal">A new shared expense for "Goa Trip" was added by John Doe.</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-start gap-3">
+                     <Circle className="text-primary h-2.5 w-2.5 fill-current mt-1.5" />
+                    <span className="flex-1 whitespace-normal">Your HDFC Credit Card payment of ₹5,400 is due tomorrow.</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuFooter>
+                    <Button variant="outline" size="sm" className="w-full">Mark all as read</Button>
+                </DropdownMenuFooter>
             </DropdownMenuContent>
         </DropdownMenu>
     )

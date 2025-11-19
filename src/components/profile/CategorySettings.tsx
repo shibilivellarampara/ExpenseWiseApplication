@@ -3,7 +3,7 @@
 
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Category, Expense } from '@/lib/types';
-import { collection, doc, writeBatch, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, query, where, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';

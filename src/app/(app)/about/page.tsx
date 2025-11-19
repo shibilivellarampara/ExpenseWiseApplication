@@ -73,7 +73,7 @@ const changelog = [
         date: "2024-08-10",
         changes: [
             { type: 'Feature', description: "Added a dedicated theme toggle button to the main header for easier access." },
-            { type Putin: 'Feature', description: "Streamlined report generation and added a 'Copy to Clipboard' option." },
+            { type: 'Feature', description: "Streamlined report generation and added a 'Copy to Clipboard' option." },
             { type: 'Feature', description: "Added 'ExpenseWise Report' as a new template for easier data re-importing." },
             { type: 'Fix', description: "Improved consistency in the transaction form by placing 'Add new tag' at the top of its dropdown." },
             { type: 'Fix', description: "Added remove buttons to selected tags in the transaction form for quicker editing." },

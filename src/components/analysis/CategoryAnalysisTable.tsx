@@ -58,17 +58,33 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
 function TransactionDialog({ trigger, title, children }: { trigger: React.ReactNode; title: string; children: React.ReactNode }) {
     const isDesktop = useMediaQuery("(min-width: 768px)");
     
+    if (isDesktop) {
+        return (
+            <Dialog>
+                <DialogTrigger asChild>{trigger}</DialogTrigger>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>{title}</DialogTitle>
+                    </DialogHeader>
+                    {children}
+                </DialogContent>
+            </Dialog>
+        );
+    }
+    
     return (
-        <Dialog>
-            <DialogTrigger asChild>{trigger}</DialogTrigger>
-            <DialogContent className="max-w-lg">
-                <DialogHeader>
-                    <DialogTitle>{title}</DialogTitle>
-                </DialogHeader>
-                {children}
-            </DialogContent>
-        </Dialog>
-    );
+        <Drawer>
+            <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+            <DrawerContent>
+                 <DrawerHeader className="text-left">
+                    <DrawerTitle>{title}</DrawerTitle>
+                </DrawerHeader>
+                <div className="px-4 pb-4">
+                    {children}
+                </div>
+            </DrawerContent>
+        </Drawer>
+    )
 }
 
 const TransactionList = ({ transactions, currencySymbol }: { transactions: EnrichedExpense[], currencySymbol: string }) => {
@@ -149,19 +165,20 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
     const isNetView = type === 'net';
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead className="w-auto"></TableHead>
-                    <TableHead className="w-[40%]">Category</TableHead>
-                    {isNetView && <TableHead className="text-right hidden md:table-cell">Income</TableHead>}
-                    {isNetView && <TableHead className="text-right hidden md:table-cell">Expenses</TableHead>}
-                    <TableHead className="text-right">Total Amount</TableHead>
-                    <TableHead className="text-right hidden md:table-cell">Transactions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {stats.map(stat => {
+        <div className="text-sm">
+            {/* Header */}
+            <div className="flex items-center px-4 py-2 font-medium text-muted-foreground border-b">
+                <div className="w-10"></div>
+                <div className="flex-1">Category</div>
+                {isNetView && <div className="hidden md:block text-right w-28">Income</div>}
+                {isNetView && <div className="hidden md:block text-right w-28">Expenses</div>}
+                <div className="text-right w-28">Total</div>
+                <div className="hidden md:block text-right w-28">Transactions</div>
+            </div>
+
+             {/* Body */}
+            <div>
+                 {stats.map(stat => {
                     const filteredTransactions = allExpenses.filter(e => (e.category?.id || 'uncategorized') === stat.categoryId && (type === 'net' || e.type === type));
                     
                     let amountColor = 'text-foreground';
@@ -175,70 +192,66 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
 
                     
                     return (
-                        <Collapsible key={stat.categoryId} asChild>
-                            <>
-                                <TableRow>
-                                    <TableCell className="p-0 pl-2">
-                                        <CollapsibleTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={tagStats.length === 0}>
-                                                <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=open]]:-rotate-180" />
-                                            </Button>
-                                        </CollapsibleTrigger>
-                                    </TableCell>
-                                    <TableCell>
-                                        <TransactionDialog 
-                                            title={`Transactions for "${stat.categoryName}"`}
-                                            trigger={
-                                                <button className="text-left w-full">
-                                                    <div className="font-medium">{stat.categoryName}</div>
-                                                    {!isNetView && (
-                                                        <>
-                                                            <div className="text-muted-foreground text-xs">{stat.percentage.toFixed(1)}% of total</div>
-                                                            <Progress value={stat.percentage} className="h-1 mt-1" />
-                                                        </>
-                                                    )}
-                                                </button>
-                                            }
-                                        >
-                                            <TransactionList transactions={filteredTransactions} currencySymbol={currencySymbol} />
-                                        </TransactionDialog>
-                                    </TableCell>
-                                    {isNetView && 'income' in stat && <TableCell className="text-right hidden md:table-cell text-green-600">{currencySymbol}{stat.income.toFixed(2)}</TableCell>}
-                                    {isNetView && 'expense' in stat && <TableCell className="text-right hidden md:table-cell text-red-500">{currencySymbol}{stat.expense.toFixed(2)}</TableCell>}
-                                    <TableCell className={cn("text-right font-bold", amountColor)}>
-                                        {stat.total > 0 && isNetView ? '+' : ''}
-                                        {currencySymbol}{stat.total.toFixed(2)}
-                                    </TableCell>
-                                    <TableCell className="text-right hidden md:table-cell">{stat.count}</TableCell>
-                                </TableRow>
-
-                                <CollapsibleContent asChild>
-                                    <tr className="bg-muted/50 hover:bg-muted">
-                                        <TableCell colSpan={isNetView ? 6 : 4} className="p-0">
-                                            <div className="p-4 space-y-3">
-                                                 <h4 className="text-sm font-semibold">Tag Breakdown</h4>
-                                                 {tagStats.map(tag => (
-                                                    <div key={tag.tagId}>
-                                                        <div className="flex justify-between items-center text-xs mb-1">
-                                                            <div className="flex items-center gap-1.5">
-                                                                {renderIcon(tag.icon, "h-3.5 w-3.5")}
-                                                                <span className="font-medium">{tag.tagName}</span>
-                                                            </div>
-                                                            <span className="font-mono text-muted-foreground">{currencySymbol}{tag.total.toFixed(2)}</span>
-                                                        </div>
-                                                        <Progress value={tag.percentage} className="h-1" />
+                        <Collapsible key={stat.categoryId} className="border-b">
+                            <div className="flex items-center px-4 py-3">
+                                <div className="w-10">
+                                    <CollapsibleTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled={tagStats.length === 0}>
+                                            <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=open]]:-rotate-180" />
+                                        </Button>
+                                    </CollapsibleTrigger>
+                                </div>
+                                <div className="flex-1">
+                                     <TransactionDialog 
+                                        title={`Transactions for "${stat.categoryName}"`}
+                                        trigger={
+                                            <button className="text-left w-full">
+                                                <div className="font-medium">{stat.categoryName}</div>
+                                                {!isNetView && (
+                                                    <>
+                                                        <div className="text-muted-foreground text-xs">{stat.percentage.toFixed(1)}% of total</div>
+                                                        <Progress value={stat.percentage} className="h-1 mt-1" />
+                                                    </>
+                                                )}
+                                            </button>
+                                        }
+                                    >
+                                        <TransactionList transactions={filteredTransactions} currencySymbol={currencySymbol} />
+                                    </TransactionDialog>
+                                </div>
+                                {isNetView && 'income' in stat && <div className="hidden md:block text-right w-28 text-green-600">{currencySymbol}{stat.income.toFixed(2)}</div>}
+                                {isNetView && 'expense' in stat && <div className="hidden md:block text-right w-28 text-red-500">{currencySymbol}{stat.expense.toFixed(2)}</div>}
+                                <div className={cn("text-right font-bold w-28", amountColor)}>
+                                    {stat.total > 0 && isNetView ? '+' : ''}
+                                    {currencySymbol}{stat.total.toFixed(2)}
+                                </div>
+                                <div className="hidden md:block text-right w-28">{stat.count}</div>
+                            </div>
+                            
+                            <CollapsibleContent>
+                                <div className="bg-muted/50 p-4 pl-14">
+                                     <h4 className="text-sm font-semibold mb-3">Tag Breakdown</h4>
+                                    <div className="space-y-3">
+                                        {tagStats.map(tag => (
+                                            <div key={tag.tagId}>
+                                                <div className="flex justify-between items-center text-xs mb-1">
+                                                    <div className="flex items-center gap-1.5">
+                                                        {renderIcon(tag.icon, "h-3.5 w-3.5")}
+                                                        <span className="font-medium">{tag.tagName}</span>
                                                     </div>
-                                                 ))}
+                                                    <span className="font-mono text-muted-foreground">{currencySymbol}{tag.total.toFixed(2)}</span>
+                                                </div>
+                                                <Progress value={tag.percentage} className="h-1" />
                                             </div>
-                                        </TableCell>
-                                    </tr>
-                                </CollapsibleContent>
-                            </>
+                                        ))}
+                                    </div>
+                                </div>
+                            </CollapsibleContent>
                         </Collapsible>
                     );
                 })}
-            </TableBody>
-        </Table>
+            </div>
+        </div>
     );
 }
 

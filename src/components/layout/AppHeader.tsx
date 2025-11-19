@@ -68,7 +68,7 @@ function Notifications() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Your monthly report is ready.</DropdownMenuItem>
                 <DropdownMenuItem>A new shared expense was added to "Goa Trip".</DropdownMenuItem>
-                <DropdownMenuItem>Your credit card payment is due soon.</DropdownMenuItem>
+                <DropdownMenuItem>Your HDFC Credit Card payment is due tomorrow.</DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
     )
@@ -76,7 +76,6 @@ function Notifications() {
 
 export function AppHeader() {
   const pathname = usePathname();
-  const title = getPageTitle(pathname);
   const { isUserLoading } = useUser();
   const { openMobile, setOpenMobile } = useSidebar();
     

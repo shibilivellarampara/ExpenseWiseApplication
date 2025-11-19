@@ -119,7 +119,7 @@ function Notifications() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="relative">
+                <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-[1.2rem] w-[1.2rem]" />
                     <span className="sr-only">Toggle notifications</span>
                     {unreadCount > 0 && (

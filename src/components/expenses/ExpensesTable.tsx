@@ -47,7 +47,7 @@ const formatAmount = (amount: number) => {
 
 type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense: EnrichedExpense };
 
-function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; }) {
+function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, viewMode }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact' }) {
     
     const allRows = useMemo(() => {
         const rows: VirtualRow[] = [];
@@ -77,9 +77,10 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
         getScrollElement: () => parentRef.current,
         estimateSize: (index) => {
              const row = allRows[index];
-             if (row.type === 'header') return 38; // Header height
-             // Estimate expense height
-             let height = 60; // Base height
+             if (row.type === 'header') return viewMode === 'compact' ? 30 : 38;
+             if (viewMode === 'compact') return 48; // Compact view row height
+             // Estimate normal view height
+             let height = 60;
              if (row.expense.tags && row.expense.tags.length > 0) height += 20;
              if (row.expense.category) height += 20;
              return height;
@@ -91,7 +92,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
     });
 
     return (
-        <div ref={parentRef} className="h-[75vh] overflow-y-auto bg-card rounded-lg border">
+        <div ref={parentRef} className="h-[80vh] overflow-y-auto bg-card rounded-lg border">
             <div
                 style={{
                     height: `${rowVirtualizer.getTotalSize()}px`,
@@ -115,17 +116,26 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                             }}
                         >
                             {row.type === 'header' ? (
-                                <div className="py-2 px-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b">
+                                <div className={cn(
+                                    "px-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b",
+                                    viewMode === 'compact' ? 'py-1' : 'py-2'
+                                )}>
                                     <h3 className="text-sm font-semibold">
                                         {new Date(row.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                     </h3>
                                 </div>
                             ) : (
-                                <div className="p-3 flex items-center gap-3 group border-b">
-                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                <div className={cn(
+                                    "flex items-center gap-3 group border-b",
+                                    viewMode === 'compact' ? 'p-2' : 'p-3'
+                                )}>
+                                    <div className={cn(
+                                        "flex-shrink-0 rounded-full bg-muted flex items-center justify-center",
+                                        viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8'
+                                    )}>
                                         {row.expense.type === 'income' ?
-                                            <Wallet className="h-4 w-4 text-green-500" /> :
-                                            renderIcon(row.expense.category?.icon, 'h-4 w-4 text-gray-700')
+                                            <Wallet className={cn("text-green-500", viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4')} /> :
+                                            renderIcon(row.expense.category?.icon, cn('text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))
                                         }
                                     </div>
                                     <div className="flex-grow space-y-0.5 w-full min-w-0">
@@ -139,20 +149,16 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                                         </Button>
                                                     </AddExpenseDialog>
                                                     <div className={cn(
-                                                        'font-bold text-base',
+                                                        'font-bold',
+                                                        viewMode === 'compact' ? 'text-sm' : 'text-base',
                                                         row.expense.type === 'income' ? 'text-green-600' : 'text-red-500'
                                                     )}>
                                                         {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
                                                     </div>
                                                 </div>
                                                  {typeof row.expense.runningBalance === 'number' && (
-                                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                                    <div className={cn("text-muted-foreground", viewMode === 'compact' ? 'text-xs' : 'text-xs mt-0.5')}>
                                                         Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
-                                                    </div>
-                                                )}
-                                                {typeof row.expense.accountBalance === 'number' && typeof row.expense.runningBalance !== 'number' && (
-                                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                                        Bal: {currencySymbol}{formatAmount(row.expense.accountBalance)}
                                                     </div>
                                                 )}
                                             </div>
@@ -187,7 +193,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                             </div>
                                         </div>
                                         
-                                        <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
+                                        {viewMode === 'normal' && <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
                                             {row.expense.category && (
                                                 <Badge
                                                     style={generateColorStyle(row.expense.category.name)}
@@ -208,7 +214,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }
                                                     {tag.name}
                                                 </Badge>
                                             )})}
-                                        </div>
+                                        </div>}
                                     </div>
                                 </div>
                             )}
@@ -226,19 +232,19 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
   const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
+  const viewMode = userProfile?.dashboardSettings?.transactionViewMode || 'normal';
 
   if (isLoading) {
     return (
         <div className="bg-card rounded-lg border">
             <div className="space-y-2 p-4">
-                {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="p-4 flex items-center gap-4">
-                        <Skeleton className="w-10 h-10 rounded-full" />
+                {Array.from({ length: 10 }).map((_, i) => (
+                    <div key={i} className="p-2 flex items-center gap-4">
+                        <Skeleton className="w-8 h-8 rounded-full" />
                         <div className="flex-grow grid grid-cols-2 gap-2">
                             <Skeleton className="h-5 w-3/4" />
                             <Skeleton className="h-5 w-1/2 ml-auto" />
                             <Skeleton className="h-4 w-1/2" />
-                            <Skeleton className="h-4 w-1/3 ml-auto" />
                         </div>
                     </div>
                 ))}
@@ -270,5 +276,5 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} />;
+  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} />;
 }

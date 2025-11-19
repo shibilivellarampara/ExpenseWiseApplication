@@ -18,6 +18,7 @@ export type UserProfile = {
     useCategoryColorsInChart?: boolean;
     show5YearView?: boolean;
     isAiSuggestionEnabled?: boolean;
+    transactionViewMode?: 'normal' | 'compact';
   };
   analysisSettings?: {
     excludedCategoryIds?: string[];

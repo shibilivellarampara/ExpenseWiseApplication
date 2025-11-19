@@ -26,7 +26,7 @@ export function DashboardSettings() {
 
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-    const handleSettingChange = (key: keyof NonNullable<UserProfile['dashboardSettings']>, value: boolean) => {
+    const handleSettingChange = (key: keyof NonNullable<UserProfile['dashboardSettings']>, value: boolean | string) => {
         if (!userProfileRef) return;
         
         const settingsData = {
@@ -44,6 +44,7 @@ export function DashboardSettings() {
     const useCategoryColors = userProfile?.dashboardSettings?.useCategoryColorsInChart ?? true;
     const show5YearView = userProfile?.dashboardSettings?.show5YearView ?? false;
     const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? true;
+    const transactionViewMode = userProfile?.dashboardSettings?.transactionViewMode || 'normal';
 
 
     return (
@@ -60,6 +61,18 @@ export function DashboardSettings() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <CardContent className="p-4 pt-0 space-y-4">
+                         <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                                <Label>Compact Transaction View</Label>
+                                <p className="text-[0.8rem] text-muted-foreground">
+                                    Display more transactions on the screen.
+                                </p>
+                            </div>
+                            <Switch
+                                checked={transactionViewMode === 'compact'}
+                                onCheckedChange={(value) => handleSettingChange('transactionViewMode', value ? 'compact' : 'normal')}
+                            />
+                        </div>
                         <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
                             <div className="space-y-0.5">
                                 <Label>Enable AI Suggestions</Label>

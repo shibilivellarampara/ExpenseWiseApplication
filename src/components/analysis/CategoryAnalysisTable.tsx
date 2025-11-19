@@ -15,6 +15,9 @@ import { Badge } from "../ui/badge";
 import { generateColorStyle } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import { Button } from "../ui/button";
+import { ChevronDown } from "lucide-react";
 
 interface CategoryAnalysisTableProps {
     expenses: EnrichedExpense[];
@@ -33,6 +36,14 @@ interface Stat {
 interface NetStat extends Stat {
     income: number;
     expense: number;
+}
+
+interface TagStat {
+    tagId: string;
+    tagName: string;
+    icon: string;
+    total: number;
+    percentage: number;
 }
 
 
@@ -89,6 +100,34 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
             </div>
         );
     }
+    
+    const calculateTagStats = (categoryId: string, categoryTotal: number): TagStat[] => {
+        const categoryExpenses = allExpenses.filter(e => e.categoryId === categoryId && e.type === 'expense');
+        const tagMap = new Map<string, { total: number; name: string; icon: string }>();
+
+        categoryExpenses.forEach(expense => {
+            if (expense.tags.length > 0) {
+                expense.tags.forEach(tag => {
+                    const current = tagMap.get(tag.id) || { total: 0, name: tag.name, icon: tag.icon };
+                    current.total += expense.amount;
+                    tagMap.set(tag.id, current);
+                });
+            } else {
+                 const current = tagMap.get('untagged') || { total: 0, name: 'Untagged', icon: 'Tag' };
+                 current.total += expense.amount;
+                 tagMap.set('untagged', current);
+            }
+        });
+        
+        return Array.from(tagMap.entries()).map(([tagId, data]) => ({
+            tagId,
+            tagName: data.name,
+            icon: data.icon,
+            total: data.total,
+            percentage: categoryTotal > 0 ? (data.total / categoryTotal) * 100 : 0
+        })).sort((a,b) => b.total - a.total);
+    }
+
 
     const isNetView = type === 'net';
 
@@ -96,6 +135,7 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
         <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead className="w-auto"></TableHead>
                     <TableHead className="w-[40%]">Category</TableHead>
                     {isNetView && <TableHead className="text-right hidden md:table-cell">Income</TableHead>}
                     {isNetView && <TableHead className="text-right hidden md:table-cell">Expenses</TableHead>}
@@ -106,26 +146,46 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
             <TableBody>
                 {stats.map(stat => {
                     const filteredTransactions = allExpenses.filter(e => (e.category?.id || 'uncategorized') === stat.categoryId && (type === 'net' || e.type === type));
-
+                    
                     let amountColor = 'text-foreground';
                     if (isNetView) {
                         amountColor = stat.total >= 0 ? 'text-green-600' : 'text-red-500';
                     } else {
                         amountColor = type === 'income' ? 'text-green-600' : 'text-red-500';
                     }
+
+                    const tagStats = (type === 'expense' && stat.total > 0) ? calculateTagStats(stat.categoryId, stat.total) : [];
+
                     
                     return (
-                        <Dialog key={stat.categoryId}>
-                            <DialogTrigger asChild>
-                                 <TableRow className="cursor-pointer hover:bg-muted/50">
-                                    <TableCell>
-                                        <div className="font-medium">{stat.categoryName}</div>
-                                        {!isNetView && (
-                                            <>
-                                                <div className="text-muted-foreground text-xs">{stat.percentage.toFixed(1)}% of total</div>
-                                                <Progress value={stat.percentage} className="h-1 mt-1" />
-                                            </>
-                                        )}
+                        <Collapsible asChild key={stat.categoryId}>
+                            <>
+                                <TableRow>
+                                     <TableCell className="p-0 pl-2">
+                                        <CollapsibleTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={tagStats.length === 0}>
+                                                <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=open]]:-rotate-180" />
+                                            </Button>
+                                        </CollapsibleTrigger>
+                                     </TableCell>
+                                     <TableCell>
+                                        <Dialog>
+                                            <DialogTrigger className="text-left w-full">
+                                                <div className="font-medium">{stat.categoryName}</div>
+                                                {!isNetView && (
+                                                    <>
+                                                        <div className="text-muted-foreground text-xs">{stat.percentage.toFixed(1)}% of total</div>
+                                                        <Progress value={stat.percentage} className="h-1 mt-1" />
+                                                    </>
+                                                )}
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-lg">
+                                                <DialogHeader>
+                                                    <DialogTitle>Transactions for "{stat.categoryName}"</DialogTitle>
+                                                </DialogHeader>
+                                                <TransactionList transactions={filteredTransactions} currencySymbol={currencySymbol} />
+                                            </DialogContent>
+                                        </Dialog>
                                     </TableCell>
                                     {isNetView && 'income' in stat && <TableCell className="text-right hidden md:table-cell text-green-600">{currencySymbol}{stat.income.toFixed(2)}</TableCell>}
                                     {isNetView && 'expense' in stat && <TableCell className="text-right hidden md:table-cell text-red-500">{currencySymbol}{stat.expense.toFixed(2)}</TableCell>}
@@ -135,14 +195,30 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
                                     </TableCell>
                                     <TableCell className="text-right hidden md:table-cell">{stat.count}</TableCell>
                                 </TableRow>
-                            </DialogTrigger>
-                             <DialogContent className="max-w-lg">
-                                <DialogHeader>
-                                    <DialogTitle>Transactions for "{stat.categoryName}"</DialogTitle>
-                                </DialogHeader>
-                                <TransactionList transactions={filteredTransactions} currencySymbol={currencySymbol} />
-                            </DialogContent>
-                        </Dialog>
+
+                                <CollapsibleContent asChild>
+                                    <tr className="bg-muted/50 hover:bg-muted">
+                                        <TableCell colSpan={isNetView ? 6 : 4} className="p-0">
+                                            <div className="p-4 space-y-3">
+                                                 <h4 className="text-sm font-semibold">Tag Breakdown</h4>
+                                                 {tagStats.map(tag => (
+                                                    <div key={tag.tagId}>
+                                                        <div className="flex justify-between items-center text-xs mb-1">
+                                                            <div className="flex items-center gap-1.5">
+                                                                {renderIcon(tag.icon, "h-3.5 w-3.5")}
+                                                                <span className="font-medium">{tag.tagName}</span>
+                                                            </div>
+                                                            <span className="font-mono text-muted-foreground">{currencySymbol}{tag.total.toFixed(2)}</span>
+                                                        </div>
+                                                        <Progress value={tag.percentage} className="h-1" />
+                                                    </div>
+                                                 ))}
+                                            </div>
+                                        </TableCell>
+                                    </tr>
+                                </CollapsibleContent>
+                            </>
+                        </Collapsible>
                     );
                 })}
             </TableBody>

@@ -3,7 +3,7 @@
 
 import { UserNav } from '@/components/auth/UserNav';
 import { usePathname, useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -27,10 +27,12 @@ import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '../ThemeToggle';
 import { Badge } from '@/components/ui/badge';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Account, SharedExpense } from '@/lib/types';
+import { collection, query, where } from 'firebase/firestore';
 
 
 const appVersion = pkg.version;
@@ -48,31 +50,61 @@ const navItems = [
   { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
 ];
 
-const initialNotifications = [
-    { id: 1, text: 'Your monthly report for October is ready for download.', read: false, href: '/reports' },
-    { id: 2, text: 'A new shared expense for "Goa Trip" was added by John Doe.', read: false, href: '/shared-expenses' },
-    { id: 3, text: 'Your HDFC Credit Card payment of ₹5,400 is due tomorrow.', read: false, href: '/accounts' },
-];
-
-
-function getPageTitle(path: string): string {
+const getPageTitle = (path: string): string => {
     if (path.startsWith('/admin/users')) return 'User Management';
     if (path.startsWith('/admin')) return 'Admin Dashboard';
     if (path.startsWith('/profile')) return 'Settings';
-    const title = path.split('/').pop()?.replace(/-/g, ' ');
-    if (path.includes('/shared-expenses/') && path.split('/').length > 2) {
+    if (path.startsWith('/shared-expenses/') && path.split('/').length > 2) {
         return "Shared Space";
     }
-    return title ? title.charAt(0).toUpperCase() + title.slice(1) : 'Dashboard';
+    const navItem = navItems.find(item => path.startsWith(item.href));
+    return navItem ? navItem.label : 'Dashboard';
 }
 
 function Notifications() {
-    const [notifications, setNotifications] = useState(initialNotifications);
+    const [notifications, setNotifications] = useState<any[]>([]);
     const router = useRouter();
+    const { user } = useUser();
+    const firestore = useFirestore();
+
+    const accountsQuery = useMemoFirebase(() =>
+        user ? query(collection(firestore, `users/${user.uid}/accounts`), where('type', '==', 'credit_card')) : null
+    , [user, firestore]);
+
+    const { data: creditCards } = useCollection<Account>(accountsQuery);
+
+    useEffect(() => {
+        const generatedNotifications: any[] = [];
+        const today = new Date();
+        const currentDay = today.getDate();
+        const currentMonth = today.getMonth();
+
+        creditCards?.forEach(card => {
+            if (card.billingDate) {
+                const daysUntilBilling = (card.billingDate - currentDay + 30) % 30; // simple days diff
+                if (daysUntilBilling <= 5 && daysUntilBilling >= 0) {
+                     generatedNotifications.push({
+                        id: `cc-due-${card.id}`,
+                        text: `Your payment for ${card.name} is due soon (Billing Date: ${card.billingDate}th).`,
+                        read: false,
+                        href: '/accounts'
+                    });
+                }
+            }
+        });
+        
+        // Add other static notifications
+        generatedNotifications.push({ id: 1, text: 'Your monthly report for October is ready for download.', read: true, href: '/reports' });
+        generatedNotifications.push({ id: 2, text: 'A new shared expense was added to "Goa Trip".', read: true, href: '/shared-expenses' });
+
+
+        setNotifications(generatedNotifications);
+    }, [creditCards]);
+
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
-    const handleNotificationClick = (id: number, href: string) => {
+    const handleNotificationClick = (id: number | string, href: string) => {
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
         router.push(href);
     };
@@ -98,7 +130,7 @@ function Notifications() {
                     )}
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-80">
+            <DropdownMenuContent align="end" className="w-80">
                 <DropdownMenuLabel className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <span>Notifications</span>
@@ -125,14 +157,16 @@ function Notifications() {
                     )}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {notifications.map(notification => (
+                {notifications.length > 0 ? notifications.map(notification => (
                      <DropdownMenuItem key={notification.id} onSelect={() => handleNotificationClick(notification.id, notification.href)} className="flex items-start gap-3 cursor-pointer">
                         {!notification.read && <Circle className="text-primary h-2.5 w-2.5 fill-current mt-1.5" />}
                         <span className={cn("flex-1 whitespace-normal", notification.read && "pl-5 text-muted-foreground")}>
                             {notification.text}
                         </span>
                     </DropdownMenuItem>
-                ))}
+                )) : (
+                    <div className="text-center text-sm text-muted-foreground p-4">No new notifications.</div>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     )
@@ -142,6 +176,7 @@ export function AppHeader() {
   const pathname = usePathname();
   const { isUserLoading } = useUser();
   const { openMobile, setOpenMobile } = useSidebar();
+  const pageTitle = getPageTitle(pathname);
     
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
@@ -182,7 +217,7 @@ export function AppHeader() {
         </div>
 
         <div className="flex-1">
-            {/* The main title is removed to have a cleaner header for transactions page */}
+            <h1 className="text-lg font-semibold">{pageTitle}</h1>
         </div>
         
         <div className="flex items-center gap-2">

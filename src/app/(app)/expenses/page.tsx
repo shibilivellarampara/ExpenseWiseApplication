@@ -196,7 +196,7 @@ export default function ExpensesPage() {
     return (
         <div className="w-full space-y-4 pb-24">
             <div className={cn(
-                "sticky -top-4 md:-top-6 lg:-top-8 z-30 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out pt-4",
+                "sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out pt-4",
                  isScrolled && "pb-3 shadow-sm rounded-b-lg"
             )}>
                 <div className="space-y-4">

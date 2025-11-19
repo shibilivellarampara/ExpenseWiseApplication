@@ -103,7 +103,7 @@ export function SignUpForm() {
       createdAt: serverTimestamp() as any, 
       defaultCurrency: 'INR',
       expenseFieldSettings: { isCategoryRequired: true, isDescriptionRequired: false, isTagRequired: false },
-      dashboardSettings: { useCategoryColorsInChart: true },
+      dashboardSettings: { useCategoryColorsInChart: true, transactionViewMode: 'normal' },
     };
     batch.set(userDocRef, newUserProfile);
     
@@ -327,5 +327,3 @@ export function SignUpForm() {
     
 
     
-
-

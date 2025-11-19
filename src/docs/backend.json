@@ -28,7 +28,8 @@
           "properties": {
             "useCategoryColorsInChart": { "type": "boolean", "default": true },
             "show5YearView": { "type": "boolean", "default": false },
-            "isAiSuggestionEnabled": { "type": "boolean", "default": true }
+            "isAiSuggestionEnabled": { "type": "boolean", "default": true },
+            "transactionViewMode": { "type": "string", "enum": ["normal", "compact"], "default": "normal" }
           }
         },
         "analysisSettings": {

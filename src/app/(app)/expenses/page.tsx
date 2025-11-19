@@ -1,7 +1,6 @@
 
 'use client';
 
-import { PageHeader } from "@/components/PageHeader";
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
@@ -196,18 +195,9 @@ export default function ExpensesPage() {
 
     return (
         <div className="w-full space-y-4 pb-24">
-            <div
-                className={cn(
-                    "transition-all duration-300 ease-in-out",
-                    isScrolled ? "max-h-0 opacity-0 overflow-hidden" : "max-h-96 opacity-100"
-                )}
-            >
-                <PageHeader title="Transactions" description="A detailed list of your recent income and expenses." />
-            </div>
-
             <div className={cn(
-                "sticky -top-4 md:-top-6 lg:-top-8 z-30 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out",
-                 isScrolled && "pt-4 pb-3 shadow-sm rounded-b-lg"
+                "sticky -top-4 md:-top-6 lg:-top-8 z-30 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out pt-4",
+                 isScrolled && "pb-3 shadow-sm rounded-b-lg"
             )}>
                 <div className="space-y-4">
                      <ExpensesSummary 

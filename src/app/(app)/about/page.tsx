@@ -10,6 +10,13 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.3.4",
+        date: "2024-08-16",
+        changes: [
+            { type: 'Feature', description: "Made category and tag badges in the transaction list clickable, automatically applying a filter for that item." },
+        ]
+    },
+    {
         version: "1.3.3",
         date: "2024-08-15",
         changes: [

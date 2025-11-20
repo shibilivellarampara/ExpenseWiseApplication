@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,36 +62,35 @@ export function DataManagementSettings() {
         setProgress(0);
         try {
             const batch = writeBatch(firestore);
-
-            // Delete expenses
-            const expensesQuery = collection(firestore, `users/${user.uid}/expenses`);
-            const expensesSnapshot = await getDocs(expensesQuery);
+            
+            const collectionsToClear = ['expenses', 'accounts', 'categories', 'tags', 'contributions'];
+            const snapshots = await Promise.all(collectionsToClear.map(c => getDocs(collection(firestore, `users/${user.uid}/${c}`))));
+            const totalDocs = snapshots.reduce((sum, s) => sum + s.size, 0);
             let processedDocs = 0;
-            const totalDocs = expensesSnapshot.size + (accounts?.length || 0);
 
-            expensesSnapshot.forEach(doc => {
-                batch.delete(doc.ref);
-                processedDocs++;
-                setProgress((processedDocs / totalDocs) * 100);
-            });
-            
-            // Delete accounts
-            if (accounts) {
-                accounts.forEach(account => {
-                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
-                    batch.delete(accountRef);
+            snapshots.forEach(snapshot => {
+                snapshot.forEach(doc => {
+                    batch.delete(doc.ref);
                     processedDocs++;
-                    setProgress((processedDocs / totalDocs) * 100);
                 });
-            }
-            
+            });
+
+            // This is a rough approximation of progress. We can't easily track batch commit progress.
+            const progressInterval = setInterval(() => {
+                setProgress(p => Math.min(p + 10, 90));
+            }, 200);
+
             await commitBatchNonBlocking(batch, `users/${user.uid}`);
+            
+            clearInterval(progressInterval);
             setProgress(100);
-            toast({ title: 'All Data Cleared', description: 'All your transactions and accounts have been deleted.' });
+
+            toast({ title: 'All Data Cleared', description: 'All your transactions, accounts, categories and tags have been deleted.' });
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
             setIsClearing(false);
+            setProgress(0);
         }
     };
     
@@ -231,7 +231,7 @@ export function DataManagementSettings() {
                     <CardContent className="p-4 pt-0 space-y-4">
                         <div className="rounded-lg border border-destructive/50 p-4">
                             <h4 className="font-semibold">Clear All Transaction Data</h4>
-                            <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete all your transactions and all of your accounts.</p>
+                            <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete all your transactions, accounts, categories, and tags.</p>
                             {isClearing && !selectedAccount && (
                                 <div className="space-y-2 mt-2">
                                     <Progress value={progress} className="[&>div]:bg-destructive" />
@@ -246,7 +246,7 @@ export function DataManagementSettings() {
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This action cannot be undone. All transactions and accounts will be deleted.
+                                            This action cannot be undone. All transactions, accounts, categories, and tags will be deleted.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>

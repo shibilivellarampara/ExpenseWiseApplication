@@ -74,15 +74,23 @@ type AccountMapping = { [key:string]: AccountAction };
 // Helper function to normalize names
 const normalizeName = (name: string): string => {
     if (!name) return '';
+    let processedName = String(name);
+    // Check if it's a spaced-out acronym like "G Y M"
+    if (/^[A-Z](?:\s[A-Z])+$/.test(processedName)) {
+        processedName = processedName.replace(/\s/g, '');
+    }
+
     // Converts "cash back" or "cashBack" to "Cash Back"
-    return name
+    return processedName
         .replace(/([A-Z])/g, ' $1') // Add space before capital letters
         .trim()
         .toLowerCase()
         .split(' ')
+        .filter(word => word.length > 0) // Remove empty strings from multiple spaces
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 };
+
 
 export function ExcelImporter() {
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);

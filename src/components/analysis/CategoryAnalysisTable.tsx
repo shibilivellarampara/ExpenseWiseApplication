@@ -118,30 +118,42 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
         );
     }
     
-    const calculateTagStats = (categoryId: string, categoryTotal: number): TagStat[] => {
-        const categoryExpenses = allExpenses.filter(e => e.category?.id === categoryId && e.type === 'expense');
+    const calculateTagStats = (categoryId: string, categoryTotal: number, txType: 'income' | 'expense' | 'net'): TagStat[] => {
+        const categoryTransactions = allExpenses.filter(e => {
+            const sameCategory = e.category?.id === categoryId;
+            if (txType === 'net') return sameCategory;
+            return sameCategory && e.type === txType;
+        });
+
+        if (categoryTransactions.length === 0) return [];
+        
         const tagMap = new Map<string, { total: number; name: string; icon: string }>();
 
-        categoryExpenses.forEach(expense => {
+        categoryTransactions.forEach(expense => {
+            const amount = expense.type === 'income' ? expense.amount : -expense.amount;
             if (expense.tags.length > 0) {
                 expense.tags.forEach(tag => {
                     const current = tagMap.get(tag.id) || { total: 0, name: tag.name, icon: tag.icon };
-                    current.total += expense.amount;
+                    current.total += txType === 'net' ? amount : expense.amount;
                     tagMap.set(tag.id, current);
                 });
             } else {
                  const current = tagMap.get('untagged') || { total: 0, name: 'Untagged', icon: 'Tag' };
-                 current.total += expense.amount;
+                 current.total += txType === 'net' ? amount : expense.amount;
                  tagMap.set('untagged', current);
             }
         });
         
+        const effectiveTotal = txType === 'net' ? 
+            categoryTransactions.reduce((sum, tx) => sum + (tx.type === 'income' ? tx.amount : tx.amount), 0)
+            : categoryTotal;
+
         return Array.from(tagMap.entries()).map(([tagId, data]) => ({
             tagId,
             tagName: data.name,
             icon: data.icon,
             total: data.total,
-            percentage: categoryTotal > 0 ? (data.total / categoryTotal) * 100 : 0
+            percentage: effectiveTotal > 0 ? (data.total / effectiveTotal) * 100 : 0
         })).sort((a,b) => b.total - a.total);
     }
 
@@ -172,7 +184,7 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
                         amountColor = type === 'income' ? 'text-green-600' : 'text-red-500';
                     }
 
-                    const tagStats = (type === 'expense' && stat.total > 0) ? calculateTagStats(stat.categoryId, stat.total) : [];
+                    const tagStats = (stat.total !== 0) ? calculateTagStats(stat.categoryId, stat.total, type) : [];
 
                     
                     return (
@@ -216,18 +228,24 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
                                 <div className="bg-muted/50 p-4 pl-14">
                                      <h4 className="text-sm font-semibold mb-3">Tag Breakdown</h4>
                                     <div className="space-y-3">
-                                        {tagStats.map(tag => (
-                                            <div key={tag.tagId}>
-                                                <div className="flex justify-between items-center text-xs mb-1">
-                                                    <div className="flex items-center gap-1.5">
-                                                        {renderIcon(tag.icon, "h-3.5 w-3.5")}
-                                                        <span className="font-medium">{tag.tagName}</span>
+                                        {tagStats.map(tag => {
+                                            const tagAmountColor = tag.total >= 0 ? 'text-green-700 dark:text-green-500' : 'text-red-700 dark:text-red-500';
+                                            return (
+                                                <div key={tag.tagId}>
+                                                    <div className="flex justify-between items-center text-xs mb-1">
+                                                        <div className="flex items-center gap-1.5">
+                                                            {renderIcon(tag.icon, "h-3.5 w-3.5")}
+                                                            <span className="font-medium">{tag.tagName}</span>
+                                                        </div>
+                                                        <span className={cn("font-mono", isNetView ? tagAmountColor : 'text-muted-foreground')}>
+                                                            {isNetView && tag.total > 0 ? '+' : ''}
+                                                            {currencySymbol}{tag.total.toFixed(2)}
+                                                        </span>
                                                     </div>
-                                                    <span className="font-mono text-muted-foreground">{currencySymbol}{tag.total.toFixed(2)}</span>
+                                                     {!isNetView && <Progress value={tag.percentage} className="h-1" />}
                                                 </div>
-                                                <Progress value={tag.percentage} className="h-1" />
-                                            </div>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
                                 </div>
                             </CollapsibleContent>
@@ -330,3 +348,5 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
         </Tabs>
     );
 }
+
+    

@@ -23,7 +23,7 @@ import { Check, ChevronDown, Settings } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AnalysisSettingsContent } from "@/components/profile/AnalysisSettings";
+import { AnalysisSettingsContent } from "@/components/profile/AnalysisSettingsContent";
 
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'all' | 'custom';

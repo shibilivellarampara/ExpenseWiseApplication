@@ -71,6 +71,18 @@ type AccountAction = {
 }
 type AccountMapping = { [key:string]: AccountAction };
 
+// Helper function to normalize names
+const normalizeName = (name: string): string => {
+    if (!name) return '';
+    // Converts "cash back" or "cashBack" to "Cash Back"
+    return name
+        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+        .trim()
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
 
 export function ExcelImporter() {
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -157,25 +169,32 @@ export function ExcelImporter() {
                 const jsonData = XLSX.utils.sheet_to_json<RowData>(worksheet, { raw: false });
                 setRawData(jsonData);
 
-                const existingCategoryNames = new Set(existingCategories?.map(c => c.name.toLowerCase()));
-                const existingTagNames = new Set(existingTags?.map(t => t.name.toLowerCase()));
+                const existingCategoryNames = new Set(existingCategories?.map(c => normalizeName(c.name)));
+                const existingTagNames = new Set(existingTags?.map(t => normalizeName(t.name)));
                 
                 const foundNewCategories = new Set<string>();
                 const foundNewTags = new Set<string>();
                 const foundAllAccounts = new Set<string>();
 
                 jsonData.forEach(row => {
-                    const categoryName = row[expectedMapping.category];
-                    if (categoryName && !existingCategoryNames.has(String(categoryName).toLowerCase())) {
-                        foundNewCategories.add(String(categoryName));
+                    const categoryNameRaw = row[expectedMapping.category];
+                    if (categoryNameRaw) {
+                        const normalizedCategoryName = normalizeName(String(categoryNameRaw));
+                        if (normalizedCategoryName && !existingCategoryNames.has(normalizedCategoryName)) {
+                            foundNewCategories.add(normalizedCategoryName);
+                        }
                     }
+
                     if (expectedMapping.tags) {
                         const tagsString = row[expectedMapping.tags];
                         if (tagsString) {
                             const tags = String(tagsString).split(',').map((t: string) => t.trim());
-                            tags.forEach((tagName: string) => {
-                                if (tagName && !existingTagNames.has(tagName.toLowerCase())) {
-                                    foundNewTags.add(tagName);
+                            tags.forEach((tagNameRaw: string) => {
+                                if (tagNameRaw) {
+                                    const normalizedTagName = normalizeName(tagNameRaw);
+                                    if (normalizedTagName && !existingTagNames.has(normalizedTagName)) {
+                                        foundNewTags.add(normalizedTagName);
+                                    }
                                 }
                             });
                         }
@@ -253,8 +272,8 @@ export function ExcelImporter() {
             }
 
             const description = row[mapping.description] || 'Imported Transaction';
-            const categoryName = row[mapping.category] || 'Other';
-            const tags = mapping.tags && row[mapping.tags] ? String(row[mapping.tags]).split(',').map((t: string) => t.trim()) : [];
+            const categoryName = normalizeName(row[mapping.category] || 'Other');
+            const tags = mapping.tags && row[mapping.tags] ? String(row[mapping.tags]).split(',').map((t: string) => normalizeName(t.trim())) : [];
             const accountName = mapping.mode ? row[mapping.mode] : null;
             
             let amount = 0;
@@ -316,7 +335,7 @@ export function ExcelImporter() {
             // --- 1. Create new categories, tags, and accounts in a preliminary batch ---
             const preliminaryBatch = writeBatch(firestore);
             const newCategoryRefs = new Map<string, string>();
-            const newTagRefs = new Map<string, string>();
+            const newTagRefs = new Map<string, { id: string; name: string }>();
             const newAccountRefs = new Map<string, { id: string; type: Account['type'] }>();
             
             const categoriesCol = collection(firestore, `users/${user.uid}/categories`);
@@ -326,13 +345,13 @@ export function ExcelImporter() {
             newCategories.forEach(catName => {
                 const catRef = firestoreDoc(categoriesCol);
                 preliminaryBatch.set(catRef, { id: catRef.id, name: catName, icon: 'Shapes', userId: user.uid });
-                newCategoryRefs.set(catName.toLowerCase(), catRef.id);
+                newCategoryRefs.set(catName, catRef.id);
             });
     
             newTags.forEach(tagName => {
                 const tagRef = firestoreDoc(tagsCol);
                 preliminaryBatch.set(tagRef, { id: tagRef.id, name: tagName, icon: 'Tag', userId: user.uid });
-                newTagRefs.set(tagName.toLowerCase(), tagRef.id);
+                newTagRefs.set(tagName, { id: tagRef.id, name: tagName });
             });
     
             Object.keys(accountMappings).forEach(accName => {
@@ -342,7 +361,7 @@ export function ExcelImporter() {
                         const accRef = firestoreDoc(accountsCol);
                         const accountType = mappingInfo.type || 'bank';
                         preliminaryBatch.set(accRef, { id: accRef.id, name: accName, icon: 'Landmark', type: accountType, balance: 0, status: 'active', userId: user.uid });
-                        newAccountRefs.set(accName.toLowerCase(), { id: accRef.id, type: accountType });
+                        newAccountRefs.set(accName, { id: accRef.id, type: accountType });
                     }
                 }
             });
@@ -353,13 +372,13 @@ export function ExcelImporter() {
                 ...(accounts || []),
                 ...Array.from(newAccountRefs.entries()).map(([name, { id, type }]) => ({ id, name, type, balance: 0, userId: user.uid, status: 'active' as const, icon: 'Landmark' }))
             ];
-            const accountMap = new Map(allAccounts.map(a => [a.name.toLowerCase(), a]));
+            const accountMap = new Map(allAccounts.map(a => [a.name, a]));
             
             const allCategories: Category[] = [...(existingCategories || []), ...Array.from(newCategoryRefs.entries()).map(([name, id]) => ({ id, name, icon: 'Shapes', userId: user.uid }))];
-            const categoryMap = new Map(allCategories.map(c => [c.name.toLowerCase(), c.id]));
+            const categoryMap = new Map(allCategories.map(c => [normalizeName(c.name), c.id]));
     
-            const allTags: Tag[] = [...(existingTags || []), ...Array.from(newTagRefs.entries()).map(([name, id]) => ({ id, name, icon: 'Tag', userId: user.uid }))];
-            const tagMap = new Map(allTags.map(t => [t.name.toLowerCase(), t.id]));
+            const allTags: Tag[] = [...(existingTags || []), ...Array.from(newTagRefs.entries()).map(([name, {id, name: tagName}]) => ({ id, name: tagName, icon: 'Tag', userId: user.uid }))];
+            const tagMap = new Map(allTags.map(t => [normalizeName(t.name), t.id]));
             
             const chosenAccountId = importAccountId || allAccounts.find(a => a.type === 'cash')?.id || allAccounts[0]?.id;
     
@@ -373,20 +392,20 @@ export function ExcelImporter() {
                     const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
                     const expenseRef = firestoreDoc(expensesCol);
     
-                    const categoryId = categoryMap.get(String(item.categoryName)?.toLowerCase());
-                    const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName.toLowerCase())).filter(Boolean) as string[];
+                    const categoryId = categoryMap.get(item.categoryName);
+                    const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName)).filter(Boolean) as string[];
     
                     let finalAccountId: string | undefined = chosenAccountId;
                     let accountForTx: Account | undefined;
     
                     if (mapping.mode && item.accountName) {
-                        const accNameLower = String(item.accountName).toLowerCase();
-                        const mappingAction = accountMappings[item.accountName];
+                        const accName = String(item.accountName);
+                        const mappingAction = accountMappings[accName];
     
                         if (mappingAction?.action === 'map' && mappingAction.targetId) {
                             finalAccountId = mappingAction.targetId;
                         } else {
-                            finalAccountId = accountMap.get(accNameLower)?.id;
+                            finalAccountId = accountMap.get(accName)?.id;
                         }
                     }
                     accountForTx = allAccounts.find(a => a.id === finalAccountId);

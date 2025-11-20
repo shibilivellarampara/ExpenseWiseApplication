@@ -196,9 +196,9 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex flex-col sm:flex-row gap-2 w-full max-w-lg">
+                 <div className="flex items-center gap-2">
                     <Select value={timeRangePreset} onValueChange={handleTimeRangeChange}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full sm:w-[180px]">
                             <SelectValue placeholder="Select a time range" />
                         </SelectTrigger>
                         <SelectContent>
@@ -214,7 +214,7 @@ export default function AnalysisPage() {
                     
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full justify-between">
+                            <Button variant="outline" className="w-full sm:w-[180px] justify-between">
                                 <span>{selectedAccounts.length > 0 ? `${selectedAccounts.length} accounts selected` : "All Accounts"}</span>
                                 <ChevronDown className="h-4 w-4 opacity-50" />
                             </Button>
@@ -257,34 +257,33 @@ export default function AnalysisPage() {
                             <AnalysisSettingsContent />
                         </DialogContent>
                     </Dialog>
-
-
-                     {timeRangePreset === 'custom' && (
-                        <div className="grid grid-cols-2 gap-2">
-                           <div className="space-y-1">
-                                <Label htmlFor="from-date" className="text-xs">From</Label>
-                                <Input
-                                    id="from-date"
-                                    type="date"
-                                    value={formatDateForInput(customDateRange?.from)}
-                                    onChange={(e) => handleDateChange(e.target.value ?? undefined, 'from')}
-                                    className="text-sm"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="to-date" className="text-xs">To</Label>
-                                <Input
-                                    id="to-date"
-                                    type="date"
-                                    value={formatDateForInput(customDateRange?.to)}
-                                    onChange={(e) => handleDateChange(e.target.value ?? undefined, 'to')}
-                                    className="text-sm"
-                                />
-                            </div>
-                        </div>
-                    )}
                 </div>
             </PageHeader>
+            
+            {timeRangePreset === 'custom' && (
+                <div className="grid grid-cols-2 gap-2 max-w-sm">
+                   <div className="space-y-1">
+                        <Label htmlFor="from-date" className="text-xs">From</Label>
+                        <Input
+                            id="from-date"
+                            type="date"
+                            value={formatDateForInput(customDateRange?.from)}
+                            onChange={(e) => handleDateChange(e.target.value ?? undefined, 'from')}
+                            className="text-sm"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <Label htmlFor="to-date" className="text-xs">To</Label>
+                        <Input
+                            id="to-date"
+                            type="date"
+                            value={formatDateForInput(customDateRange?.to)}
+                            onChange={(e) => handleDateChange(e.target.value ?? undefined, 'to')}
+                            className="text-sm"
+                        />
+                    </div>
+                </div>
+            )}
             
             <ExpensesSummary expenses={allEnrichedExpenses} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
             

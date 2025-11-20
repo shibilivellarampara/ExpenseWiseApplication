@@ -10,12 +10,22 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
-        version: "1.3.4",
+        version: "1.3.5",
         date: "2024-08-16",
         changes: [
             { type: 'Feature', description: "Added the ability to merge multiple categories or tags into a single new or existing item, streamlining data organization." },
             { type: 'Feature', description: "Made category and tag badges in the transaction list clickable, automatically applying a filter for that item." },
             { type: 'Feature', description: "Added a collapsible tag breakdown in the category analysis table to show spending distribution within each category." },
+            { type: 'Fix', description: "Improved data import logic to correctly normalize and merge similar category/tag names (e.g., 'cashback' and 'Cash Back')." },
+        ]
+    },
+    {
+        version: "1.3.4",
+        date: "2024-08-16",
+        changes: [
+            { type: 'Fix', description: "Corrected an issue where special financial categories like 'Credit Card Payment' were always excluded from analysis, regardless of user settings." },
+            { type: 'Fix', description: "Resolved a build error caused by an incorrect import path for `AnalysisSettingsContent`." },
+            { type: 'Feature', description: "Added a toggle in Analysis Settings to show or hide the 'Normal Total' summary card." },
         ]
     },
     {

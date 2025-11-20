@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
@@ -11,6 +12,7 @@ import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
 import { ScrollArea } from "../ui/scroll-area";
 import { Card, CardContent } from "../ui/card";
+import { Switch } from "../ui/switch";
 
 const renderIcon = (iconName: string) => {
     const IconComponent = (LucideIcons as any)[iconName];
@@ -33,53 +35,78 @@ export function AnalysisSettingsContent() {
 
     const isLoading = categoriesLoading || profileLoading;
 
+    const handleSettingChange = (key: 'excludedCategoryIds' | 'showAdjustedTotal', value: string[] | boolean) => {
+        if (!userProfileRef) return;
+    
+        const newSettings = {
+            ...userProfile?.analysisSettings,
+            [key]: value,
+        };
+    
+        setDocumentNonBlocking(userProfileRef, {
+            analysisSettings: newSettings
+        }, { merge: true });
+        
+        toast({ title: 'Analysis settings updated.' });
+    };
+
     const handleCategoryToggle = (categoryId: string) => {
-        if (!userProfileRef || !userProfile) return;
+        if (!userProfile) return;
 
         const currentExcluded = userProfile.analysisSettings?.excludedCategoryIds || [];
         const newExcluded = currentExcluded.includes(categoryId)
             ? currentExcluded.filter(id => id !== categoryId)
             : [...currentExcluded, categoryId];
-
-        setDocumentNonBlocking(userProfileRef, {
-            analysisSettings: {
-                excludedCategoryIds: newExcluded
-            }
-        }, { merge: true });
         
-        toast({ title: 'Analysis settings updated.' });
+        handleSettingChange('excludedCategoryIds', newExcluded);
     };
     
     const sortedCategories = categories ? [...categories].sort((a, b) => a.name.localeCompare(b.name)) : [];
     const excludedIds = userProfile?.analysisSettings?.excludedCategoryIds || [];
+    const showAdjustedTotal = userProfile?.analysisSettings?.showAdjustedTotal ?? true;
+
 
     return (
         <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Select categories to exclude from the Analysis page charts and AI insights.</p>
-            {isLoading ? (
+             {isLoading ? (
                 <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
             ) : (
-                <Card>
-                    <CardContent className="p-0">
-                        <ScrollArea className="h-64 w-full">
-                            <div className="p-4 space-y-2">
-                                {sortedCategories.map((category) => (
-                                    <div key={category.id} className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id={`exclude-${category.id}`}
-                                            checked={excludedIds.includes(category.id)}
-                                            onCheckedChange={() => handleCategoryToggle(category.id)}
-                                        />
-                                        <Label htmlFor={`exclude-${category.id}`} className="flex items-center font-normal">
-                                            {renderIcon(category.icon)}
-                                            {category.name}
-                                        </Label>
-                                    </div>
-                                ))}
-                            </div>
-                        </ScrollArea>
-                    </CardContent>
-                </Card>
+                <>
+                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                            <Label>Show Adjusted Total</Label>
+                            <p className="text-[0.8rem] text-muted-foreground">
+                                Display the summary card for adjusted analysis totals.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={showAdjustedTotal}
+                            onCheckedChange={(value) => handleSettingChange('showAdjustedTotal', value)}
+                        />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Select categories to exclude from charts and AI insights.</p>
+                    <Card>
+                        <CardContent className="p-0">
+                            <ScrollArea className="h-64 w-full">
+                                <div className="p-4 space-y-2">
+                                    {sortedCategories.map((category) => (
+                                        <div key={category.id} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`exclude-${category.id}`}
+                                                checked={excludedIds.includes(category.id)}
+                                                onCheckedChange={() => handleCategoryToggle(category.id)}
+                                            />
+                                            <Label htmlFor={`exclude-${category.id}`} className="flex items-center font-normal">
+                                                {renderIcon(category.icon)}
+                                                {category.name}
+                                            </Label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                        </CardContent>
+                    </Card>
+                </>
             )}
         </div>
     );

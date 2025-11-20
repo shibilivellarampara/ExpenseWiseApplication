@@ -1,4 +1,5 @@
 
+
 {
   "entities": {
     "UserProfile": {
@@ -40,6 +41,11 @@
                     "type": "array", 
                     "items": { "type": "string" },
                     "description": "An array of category IDs to exclude from analysis."
+                },
+                "showAdjustedTotal": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to show the 'Adjusted for Analysis' summary."
                 }
             }
         },

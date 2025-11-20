@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -100,7 +101,10 @@ export default function AnalysisPage() {
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(allAccounts?.map(a => [a.id, a])), [allAccounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
+    
     const excludedCategoryIds = useMemo(() => userProfile?.analysisSettings?.excludedCategoryIds || [], [userProfile]);
+    const showAdjustedTotal = useMemo(() => userProfile?.analysisSettings?.showAdjustedTotal ?? true, [userProfile]);
+
 
     const allEnrichedExpenses = useMemo((): EnrichedExpense[] => {
         if (!expenses || !categoryMap.size || !accountMap.size) return [];
@@ -247,7 +251,7 @@ export default function AnalysisPage() {
                             <DialogHeader>
                                 <DialogTitle>Analysis Settings</DialogTitle>
                                 <DialogDescription>
-                                    Manage which categories are excluded from charts and AI analysis.
+                                    Customize your analysis page settings.
                                 </DialogDescription>
                             </DialogHeader>
                             <AnalysisSettingsContent />
@@ -284,11 +288,13 @@ export default function AnalysisPage() {
             
             <ExpensesSummary expenses={allEnrichedExpenses} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
             
-            <div className="border-l-4 border-primary/50 pl-4">
-                <p className="text-sm font-semibold">Adjusted for Analysis</p>
-                <ExpensesSummary expenses={expensesForAnalysis} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
-                <p className="text-xs text-muted-foreground mt-1">This summary excludes special transactions (e.g., credit card payments) and categories you've hidden from analysis.</p>
-            </div>
+            {showAdjustedTotal && (
+                <div className="border-l-4 border-primary/50 pl-4">
+                    <p className="text-sm font-semibold">Adjusted for Analysis</p>
+                    <ExpensesSummary expenses={expensesForAnalysis} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
+                    <p className="text-xs text-muted-foreground mt-1">This summary excludes special transactions (e.g., credit card payments) and categories you've hidden from analysis.</p>
+                </div>
+            )}
 
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">

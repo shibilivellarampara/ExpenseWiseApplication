@@ -77,19 +77,15 @@ export default function AnalysisPage() {
             q = query(q, where('date', '<=', Timestamp.fromDate(dateRangeEnd)));
         }
 
-        if (selectedAccounts.length > 0) {
-            q = query(q, where('accountId', 'in', selectedAccounts));
-        }
-
         return q;
-    }, [user, firestore, dateRangeStart, dateRangeEnd, selectedAccounts]);
+    }, [user, firestore, dateRangeStart, dateRangeEnd]);
     
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [firestore, user]);
     const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [firestore, user]);
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
-    const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
+    const { data: allExpenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
     const { data: allAccounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
@@ -107,15 +103,22 @@ export default function AnalysisPage() {
 
 
     const allEnrichedExpenses = useMemo((): EnrichedExpense[] => {
-        if (!expenses || !categoryMap.size || !accountMap.size) return [];
-        return expenses.map(expense => ({
-            ...expense,
-            date: expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate(),
-            category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
-            account: accountMap.get(expense.accountId),
-            tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
-        }));
-    }, [expenses, categoryMap, accountMap, tagMap]);
+        if (!allExpenses || !categoryMap.size || !accountMap.size) return [];
+        return allExpenses
+            .filter(expense => {
+                if (selectedAccounts.length > 0 && !selectedAccounts.includes(expense.accountId)) {
+                    return false;
+                }
+                return true;
+            })
+            .map(expense => ({
+                ...expense,
+                date: expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate(),
+                category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
+                account: accountMap.get(expense.accountId),
+                tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
+            }));
+    }, [allExpenses, categoryMap, accountMap, tagMap, selectedAccounts]);
 
     const expensesForAnalysis = useMemo((): EnrichedExpense[] => {
         if (excludedCategoryIds.length === 0) {

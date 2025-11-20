@@ -74,8 +74,12 @@ export default function AnalysisPage() {
             q = query(q, where('date', '<=', Timestamp.fromDate(dateRangeEnd)));
         }
 
+        if (selectedAccounts.length > 0) {
+            q = query(q, where('accountId', 'in', selectedAccounts));
+        }
+
         return q;
-    }, [user, firestore, dateRangeStart, dateRangeEnd]);
+    }, [user, firestore, dateRangeStart, dateRangeEnd, selectedAccounts]);
     
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [firestore, user]);
@@ -95,34 +99,31 @@ export default function AnalysisPage() {
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     const excludedCategoryIds = useMemo(() => userProfile?.analysisSettings?.excludedCategoryIds || [], [userProfile]);
 
-    const enrichedExpenses = useMemo((): EnrichedExpense[] => {
+    const allEnrichedExpenses = useMemo((): EnrichedExpense[] => {
         if (!expenses || !categoryMap.size || !accountMap.size) return [];
-    
-        const filteredByAccount = selectedAccounts.length > 0 
-            ? expenses.filter(e => selectedAccounts.includes(e.accountId))
-            : expenses;
-    
+        return expenses.map(expense => ({
+            ...expense,
+            date: expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate(),
+            category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
+            account: accountMap.get(expense.accountId),
+            tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
+        }));
+    }, [expenses, categoryMap, accountMap, tagMap]);
+
+    const expensesForAnalysis = useMemo((): EnrichedExpense[] => {
         // Use reduce to build the array of enriched expenses, filtering out unwanted items.
-        return filteredByAccount.reduce<EnrichedExpense[]>((acc, expense) => {
-            const category = expense.categoryId ? categoryMap.get(expense.categoryId) : undefined;
+        return allEnrichedExpenses.reduce<EnrichedExpense[]>((acc, expense) => {
+            const category = expense.category;
     
             // Skip this expense if its category is in the special or excluded lists.
             if (category && (SPECIAL_CATEGORIES.includes(category.name) || excludedCategoryIds.includes(category.id))) {
                 return acc;
             }
     
-            const enriched: EnrichedExpense = {
-                ...expense,
-                date: expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate(),
-                category,
-                account: accountMap.get(expense.accountId),
-                tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
-            };
-    
-            acc.push(enriched);
+            acc.push(expense);
             return acc;
         }, []);
-    }, [expenses, categoryMap, accountMap, tagMap, selectedAccounts, excludedCategoryIds]);
+    }, [allEnrichedExpenses, excludedCategoryIds]);
     
 
     const handleTimeRangeChange = (value: string) => {
@@ -156,11 +157,11 @@ export default function AnalysisPage() {
     }
 
     const handleGenerateInsights = () => {
-        if (enrichedExpenses.length === 0) return;
+        if (expensesForAnalysis.length === 0) return;
         startAiTransition(async () => {
             try {
                 const result = await analyzeExpenses({ 
-                    expenses: enrichedExpenses.map(e => ({
+                    expenses: expensesForAnalysis.map(e => ({
                         type: e.type,
                         amount: e.amount,
                         description: e.description,
@@ -260,7 +261,14 @@ export default function AnalysisPage() {
                 </div>
             </PageHeader>
             
-            <ExpensesSummary expenses={enrichedExpenses} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
+            <ExpensesSummary expenses={allEnrichedExpenses} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
+            
+            <div className="border-l-4 border-primary/50 pl-4">
+                <p className="text-sm font-semibold">Adjusted for Analysis</p>
+                <ExpensesSummary expenses={expensesForAnalysis} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
+                <p className="text-xs text-muted-foreground mt-1">This summary excludes special transactions (e.g., credit card payments) and categories you've hidden from analysis.</p>
+            </div>
+
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">
                 <div className="lg:col-span-3 space-y-8">
@@ -270,7 +278,7 @@ export default function AnalysisPage() {
                             <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {isLoading ? <Skeleton className="h-64 w-full" /> : <CategoryAnalysisTable expenses={enrichedExpenses} currency={userProfile?.defaultCurrency} />}
+                            {isLoading ? <Skeleton className="h-64 w-full" /> : <CategoryAnalysisTable expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
                         </CardContent>
                     </Card>
                     <Card>
@@ -279,7 +287,7 @@ export default function AnalysisPage() {
                             <CardDescription>Your cash flow over the selected period.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {isLoading ? <Skeleton className="h-80 w-full" /> : <SpendingTrendChart expenses={enrichedExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />}
+                            {isLoading ? <Skeleton className="h-80 w-full" /> : <SpendingTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />}
                         </CardContent>
                     </Card>
                 </div>
@@ -294,7 +302,7 @@ export default function AnalysisPage() {
                                 onGenerate={handleGenerateInsights}
                                 analysis={aiAnalysis}
                                 isLoading={isAiLoading}
-                                hasData={enrichedExpenses.length > 0}
+                                hasData={expensesForAnalysis.length > 0}
                             />
                         </CardContent>
                     </Card>

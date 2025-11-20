@@ -39,7 +39,6 @@ service cloud.firestore {
     // ----------- Private User Data -----------
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false;
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
@@ -94,4 +93,3 @@ service cloud.firestore {
     return isOwner(userId) && resource != null;
   }
 }
-

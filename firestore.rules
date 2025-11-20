@@ -4,49 +4,63 @@
  * and defines controlled access for shared expenses.
  *
  * Structure:
- * - /users/{userId} → private user tree (accounts, categories, tags, etc.)
+ * - /users/{userId} → private user document
+ * - /users/{userId}/{collection}/{docId} -> private user subcollections
  * - /shared_expenses/{expenseId} → shared group-level expense
  * - /shared_expenses/{expenseId}/expenses/{subExpenseId} → individual expense items within a shared expense
  *
  * Key Decisions:
- * - Users can only access their own /users/{userId} data.
- * - Shared expenses are publicly readable, authenticated users can modify.
- * - Nested shared expense items are also publicly readable, authenticated users can modify.
+ * - Users can only access their own /users/{userId} data and subcollections.
+ * - Shared expenses are publicly readable, but only authenticated users can modify them.
  */
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ----------- Shared Expenses (Top Level) -----------
-    match /shared_expenses/{expenseId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
-
-      // ----------- Nested Subcollection: expenses -----------
-      match /expenses/{subExpenseId} {
-        allow get, list: if true;
-        allow create, update, delete: if isSignedIn();
-      }
-    }
-
-    // ----------- Collection Group Fallback -----------
-    match /shared_expenses/{expenseId}/expenses/{subExpenseId=**} {
-      allow read: if true;
-      allow write: if isSignedIn();
-    }
-
-    // ----------- Private User Data -----------
+    // --- Private User Data ---
+    // Rule for the main user profile document
     match /users/{userId} {
       allow read, write: if isOwner(userId);
     }
     
-    match /users/{userId}/{document=**} {
-        allow read, write: if isOwner(userId);
+    // Rules for all subcollections under a user
+    match /users/{userId}/accounts/{accountId} {
+      allow read, write: if isOwner(userId);
+    }
+     match /users/{userId}/categories/{categoryId} {
+      allow read, write: if isOwner(userId);
+    }
+     match /users/{userId}/tags/{tagId} {
+      allow read, write: if isOwner(userId);
+    }
+    match /users/{userId}/expenses/{expenseId} {
+      allow read, write: if isOwner(userId);
+    }
+    match /users/{userId}/contributions/{contributionId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // --- Shared Data ---
+    // Rules for the top-level shared_expenses collection
+    match /shared_expenses/{sharedExpenseId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn(); // Further rules could restrict this to members
+
+      // Rules for the nested expenses subcollection within a shared expense
+      match /expenses/{expenseId} {
+         allow read: if isSignedIn();
+         allow create, update, delete: if isSignedIn();
+      }
+    }
+    
+    // --- Admin Data ---
+    // Rule for admin access, assuming isAdmin custom claim or field in user doc
+    match /admin/{docId} {
+        allow read, write: if request.auth.token.isAdmin == true;
     }
   }
 
-  // ----------- Helper Functions -----------
+  // --- Helper Functions ---
   function isSignedIn() {
     return request.auth != null;
   }

@@ -19,9 +19,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Settings } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AnalysisSettingsContent } from "@/components/profile/AnalysisSettings";
+
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'all' | 'custom';
 const SPECIAL_CATEGORIES = ['Credit Limit Upgrade', 'Credit Limit Downgrade', 'Credit Card Payment'];
@@ -233,6 +236,24 @@ export default function AnalysisPage() {
                             </Command>
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon">
+                                <Settings className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Analysis Settings</DialogTitle>
+                                <DialogDescription>
+                                    Manage which categories are excluded from charts and AI analysis.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <AnalysisSettingsContent />
+                        </DialogContent>
+                    </Dialog>
+
 
                      {timeRangePreset === 'custom' && (
                         <div className="grid grid-cols-2 gap-2">

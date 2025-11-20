@@ -28,7 +28,6 @@ import { AnalysisSettingsContent } from "@/components/profile/AnalysisSettingsCo
 
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'all' | 'custom';
-const SPECIAL_CATEGORIES = ['Credit Limit Upgrade', 'Credit Limit Downgrade', 'Credit Card Payment'];
 
 export default function AnalysisPage() {
     const { user } = useUser();
@@ -118,18 +117,12 @@ export default function AnalysisPage() {
     }, [expenses, categoryMap, accountMap, tagMap]);
 
     const expensesForAnalysis = useMemo((): EnrichedExpense[] => {
-        // Use reduce to build the array of enriched expenses, filtering out unwanted items.
-        return allEnrichedExpenses.reduce<EnrichedExpense[]>((acc, expense) => {
-            const category = expense.category;
-    
-            // Skip this expense if its category is in the special or excluded lists.
-            if (category && (SPECIAL_CATEGORIES.includes(category.name) || excludedCategoryIds.includes(category.id))) {
-                return acc;
-            }
-    
-            acc.push(expense);
-            return acc;
-        }, []);
+        if (excludedCategoryIds.length === 0) {
+            return allEnrichedExpenses;
+        }
+        return allEnrichedExpenses.filter(expense => {
+            return !expense.category || !excludedCategoryIds.includes(expense.category.id);
+        });
     }, [allEnrichedExpenses, excludedCategoryIds]);
     
 
@@ -291,7 +284,7 @@ export default function AnalysisPage() {
                 <div className="border-l-4 border-primary/50 pl-4">
                     <p className="text-sm font-semibold">Adjusted for Analysis</p>
                     <ExpensesSummary expenses={expensesForAnalysis} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
-                    <p className="text-xs text-muted-foreground mt-1">This summary excludes special transactions (e.g., credit card payments) and categories you've hidden from analysis.</p>
+                    <p className="text-xs text-muted-foreground mt-1">This summary excludes categories you've hidden from analysis.</p>
                 </div>
             )}
 

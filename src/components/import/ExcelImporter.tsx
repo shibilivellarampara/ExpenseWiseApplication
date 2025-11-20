@@ -418,6 +418,7 @@ export function ExcelImporter() {
             const chosenAccountId = importAccountId || allAccountsFromDB.find(a => a.type === 'cash')?.id || allAccountsFromDB[0]?.id;
     
             // --- 4. Process transactions in chunks (without balance updates, as it's already set) ---
+            let docsImportedInLoop = 0;
             for (let i = 0; i < totalBatches; i++) {
                 const batch = writeBatch(firestore);
                 const chunk = processedData.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
@@ -452,13 +453,16 @@ export function ExcelImporter() {
                     
                     if (categoryId) {
                         expenseDocData.categoryId = categoryId;
+                    } else {
+                         delete expenseDocData.categoryId;
                     }
                     
                     batch.set(expenseRef, expenseDocData);
+                    docsImportedInLoop++;
+                    setImportedCount(importedCount + docsImportedInLoop);
                 });
     
                 await batch.commit();
-                setImportedCount(prev => prev + chunk.length);
             }
     
             toast({

@@ -21,6 +21,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { Separator } from "../ui/separator";
 import { getCurrencySymbol } from "@/lib/currencies";
 import Link from "next/link";
+import { Badge } from "../ui/badge";
 
 interface AccountsListProps {
     accounts: Account[];
@@ -218,6 +219,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                              const availableCredit = item.balance; // 'balance' for CC is available credit
                              const outstandingAmount = limit - availableCredit;
                              const usedPercentage = limit > 0 ? (outstandingAmount / limit) * 100 : 0;
+                             const isPaid = outstandingAmount <= 0;
                             
                             return (
                                 <div key={item.id} className="p-4 flex items-center gap-4 group">
@@ -227,11 +229,14 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                     <div className="flex-grow">
                                         <div className="flex items-center justify-between">
                                             <div className="font-semibold">{item.name}</div>
-                                            <div className={cn(
-                                                "font-bold text-lg",
-                                                outstandingAmount > 0 ? "text-red-500" : "text-green-600"
-                                            )}>
-                                                 {outstandingAmount > 0 ? '-' : ''}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
+                                            <div className="flex items-center gap-2">
+                                                 {isPaid && <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">Paid</Badge>}
+                                                <div className={cn(
+                                                    "font-bold text-lg",
+                                                    outstandingAmount > 0 ? "text-red-500" : "text-green-600"
+                                                )}>
+                                                     {outstandingAmount > 0 ? '-' : ''}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between text-sm text-muted-foreground">

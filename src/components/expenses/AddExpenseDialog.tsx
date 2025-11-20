@@ -171,9 +171,11 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
 function DateTimePicker({ field }: { field: any }) {
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const dateValue = e.target.value;
+        // The input gives a string, so we convert it to a Date object
         field.onChange(new Date(dateValue));
     };
 
+    // Format the date from the form state into 'YYYY-MM-DDTHH:mm' for the input
     const formatForInput = (date: Date): string => {
         if (!date) return '';
         const year = date.getFullYear();
@@ -929,22 +931,27 @@ function useExpenseForm({
             const finalDescription = (values.description || selectedCategory?.name || 'Transaction').trim();
 
             const expenseData: any = {
-                ...values,
                 id: expenseRef.id,
                 userId: user.uid,
+                type: values.type,
+                amount: values.amount,
                 description: finalDescription,
+                date: values.date,
+                accountId: values.accountId,
                 createdAt: isAddOperation ? serverTimestamp() : expenseToEdit!.createdAt,
                 updatedAt: serverTimestamp(),
                 tagIds: values.tagIds || [],
                 categoryId: finalCategoryId,
             };
             
-            // This was the bug fix!
             if (!expenseData.categoryId) {
                 delete expenseData.categoryId;
             }
             
-            delete expenseData.sharedExpenseId;
+            // This was the bug fix for shared expenses
+            if (sharedExpenseId) {
+                expenseData.sharedExpenseId = sharedExpenseId;
+            }
            
             // Handle special category logic for limit changes
             const handleLimitChange = (
@@ -959,8 +966,13 @@ function useExpenseForm({
 
                 if (selectedAccount?.type === 'credit_card' && type === expectedType) {
                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, currentValues.accountId);
+                    const updatePayload = { 
+                        limit: increment(increment_or_decrement),
+                        balance: increment(increment_or_decrement) // Also update available balance
+                    };
+
                     if (!previousExpense) { // New transaction
-                        batch.update(accountRef, { limit: increment(increment_or_decrement) });
+                        batch.update(accountRef, updatePayload);
                     } else { // Editing transaction
                          const oldCategoryName = categories.find(c => c.id === previousExpense.category?.id)?.name;
                          const oldType = previousExpense.type;
@@ -969,14 +981,14 @@ function useExpenseForm({
                          if (oldCategoryName === selectedCategory?.name && oldType === type) {
                             // same category, same type -> adjust by difference
                             const difference = increment_or_decrement - (operation === 'upgrade' ? oldAmount : -oldAmount);
-                            batch.update(accountRef, { limit: increment(difference) });
+                            batch.update(accountRef, { limit: increment(difference), balance: increment(difference) });
                          } else {
                             // different category or type -> revert old (if applicable), apply new
                             if (oldCategoryName === 'Credit Limit Upgrade' || oldCategoryName === 'Credit Limit Downgrade') {
                                 const oldIncrement = oldCategoryName === 'Credit Limit Upgrade' ? oldAmount : -oldAmount;
-                                batch.update(accountRef, { limit: increment(-oldIncrement) });
+                                batch.update(accountRef, { limit: increment(-oldIncrement), balance: increment(-oldIncrement) });
                             }
-                             batch.update(accountRef, { limit: increment(increment_or_decrement) });
+                             batch.update(accountRef, updatePayload);
                          }
                     }
                     return true;
@@ -1096,7 +1108,7 @@ function useExpenseForm({
     
                     if ((isCreditLimitUpgrade || isCreditLimitDowngrade) && selectedAccount?.type === 'credit_card') {
                          const amountToRevert = isCreditLimitUpgrade ? -expenseToEdit.amount : expenseToEdit.amount;
-                         batch.update(accountRef, { limit: increment(amountToRevert) });
+                         batch.update(accountRef, { limit: increment(amountToRevert), balance: increment(amountToRevert) });
                     } else {
                         if (selectedAccount) {
                             let amountToRevert: number;

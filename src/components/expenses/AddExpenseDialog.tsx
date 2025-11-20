@@ -939,6 +939,11 @@ function useExpenseForm({
                 categoryId: finalCategoryId,
             };
             
+            // This was the bug fix!
+            if (!expenseData.categoryId) {
+                delete expenseData.categoryId;
+            }
+            
             delete expenseData.sharedExpenseId;
            
             // Handle special category logic for limit changes

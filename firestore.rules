@@ -12,41 +12,46 @@
  * Key Decisions:
  * - Users can only access their own /users/{userId} data and subcollections.
  * - Shared expenses are publicly readable, but only authenticated users can modify them.
+ * - A collection group rule is used for 'expenses' to allow for app-wide queries (e.g., on dashboards).
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // --- Private User Data ---
-    // Rule for the main user profile document
     match /users/{userId} {
       allow read, write: if isOwner(userId);
+      
+      match /accounts/{accountId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /categories/{categoryId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /tags/{tagId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /contributions/{contributionId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /expenses/{expenseId} {
+        allow read, write: if isOwner(userId);
+      }
     }
     
-    // Rules for all subcollections under a user
-    match /users/{userId}/accounts/{accountId} {
-      allow read, write: if isOwner(userId);
+    // --- Collection Group Rules ---
+    // This rule is crucial for allowing cross-user queries like "get all my expenses"
+    // that are used on the dashboard and analysis pages.
+    match /expenses/{expenseId} {
+       allow read, write: if request.auth.uid == resource.data.userId;
     }
-     match /users/{userId}/categories/{categoryId} {
-      allow read, write: if isOwner(userId);
-    }
-     match /users/{userId}/tags/{tagId} {
-      allow read, write: if isOwner(userId);
-    }
-    match /users/{userId}/expenses/{expenseId} {
-      allow read, write: if isOwner(userId);
-    }
-    match /users/{userId}/contributions/{contributionId} {
-      allow read, write: if isOwner(userId);
-    }
+    
 
     // --- Shared Data ---
-    // Rules for the top-level shared_expenses collection
     match /shared_expenses/{sharedExpenseId} {
       allow read: if isSignedIn();
       allow create, update, delete: if isSignedIn(); // Further rules could restrict this to members
 
-      // Rules for the nested expenses subcollection within a shared expense
       match /expenses/{expenseId} {
          allow read: if isSignedIn();
          allow create, update, delete: if isSignedIn();
@@ -54,7 +59,6 @@ service cloud.firestore {
     }
     
     // --- Admin Data ---
-    // Rule for admin access, assuming isAdmin custom claim or field in user doc
     match /admin/{docId} {
         allow read, write: if request.auth.token.isAdmin == true;
     }

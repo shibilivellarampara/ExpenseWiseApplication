@@ -163,11 +163,6 @@ export default function ExpensesPage() {
                 accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
                 
                 let startingBalance = 0;
-                if (!filters.dateRange.from) {
-                     if (account.type === 'credit_card') {
-                         startingBalance = account.limit || 0;
-                     }
-                }
 
                 accountTransactions.forEach(tx => {
                     const amountChange = getAmountChange(tx, account.type);

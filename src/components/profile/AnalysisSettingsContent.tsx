@@ -35,7 +35,7 @@ export function AnalysisSettingsContent() {
 
     const isLoading = categoriesLoading || profileLoading;
 
-    const handleSettingChange = (key: 'excludedCategoryIds' | 'showAdjustedTotal', value: string[] | boolean) => {
+    const handleSettingChange = (key: 'excludedCategoryIds' | 'showAdjustedTotal' | 'showNormalTotal', value: string[] | boolean) => {
         if (!userProfileRef) return;
     
         const newSettings = {
@@ -64,6 +64,7 @@ export function AnalysisSettingsContent() {
     const sortedCategories = categories ? [...categories].sort((a, b) => a.name.localeCompare(b.name)) : [];
     const excludedIds = userProfile?.analysisSettings?.excludedCategoryIds || [];
     const showAdjustedTotal = userProfile?.analysisSettings?.showAdjustedTotal ?? true;
+    const showNormalTotal = userProfile?.analysisSettings?.showNormalTotal ?? true;
 
 
     return (
@@ -72,6 +73,18 @@ export function AnalysisSettingsContent() {
                 <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
             ) : (
                 <>
+                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                            <Label>Show Normal Total</Label>
+                            <p className="text-[0.8rem] text-muted-foreground">
+                                Display the main summary for all transactions.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={showNormalTotal}
+                            onCheckedChange={(value) => handleSettingChange('showNormalTotal', value)}
+                        />
+                    </div>
                      <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
                             <Label>Show Adjusted Total</Label>

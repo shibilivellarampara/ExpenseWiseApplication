@@ -46,6 +46,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Whether to show the 'Adjusted for Analysis' summary."
+                },
+                "showNormalTotal": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to show the 'Normal Total' summary."
                 }
             }
         },

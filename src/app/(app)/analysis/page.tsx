@@ -103,6 +103,7 @@ export default function AnalysisPage() {
     
     const excludedCategoryIds = useMemo(() => userProfile?.analysisSettings?.excludedCategoryIds || [], [userProfile]);
     const showAdjustedTotal = useMemo(() => userProfile?.analysisSettings?.showAdjustedTotal ?? true, [userProfile]);
+    const showNormalTotal = useMemo(() => userProfile?.analysisSettings?.showNormalTotal ?? true, [userProfile]);
 
 
     const allEnrichedExpenses = useMemo((): EnrichedExpense[] => {
@@ -278,7 +279,7 @@ export default function AnalysisPage() {
                 </div>
             )}
             
-            <ExpensesSummary expenses={allEnrichedExpenses} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
+            {showNormalTotal && <ExpensesSummary expenses={allEnrichedExpenses} isLoading={isLoading} currency={userProfile?.defaultCurrency} />}
             
             {showAdjustedTotal && (
                 <div className="border-l-4 border-primary/50 pl-4">

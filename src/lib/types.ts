@@ -24,6 +24,7 @@ export type UserProfile = {
   analysisSettings?: {
     excludedCategoryIds?: string[];
     showAdjustedTotal?: boolean;
+    showNormalTotal?: boolean;
   };
   transactionFieldOrder?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
   createdAt?: Timestamp;

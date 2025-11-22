@@ -289,8 +289,8 @@ export function ExcelImporter() {
             let type: 'income' | 'expense' = 'expense';
 
             if (mapping.cashIn && mapping.cashOut) {
-                const cashIn = parseFloat(row[mapping.cashIn]);
-                const cashOut = parseFloat(row[mapping.cashOut]);
+                const cashIn = parseFloat(String(row[mapping.cashIn] || '0').replace(/[^0-9.-]+/g,""));
+                const cashOut = parseFloat(String(row[mapping.cashOut] || '0').replace(/[^0-9.-]+/g,""));
                 if (!isNaN(cashIn) && cashIn > 0) {
                     amount = cashIn;
                     type = 'income';
@@ -323,7 +323,7 @@ export function ExcelImporter() {
         if (!template) return [];
         // If there's an account column in the template, filter by selected accounts
         if (TEMPLATES[template].mapping.mode) {
-             return allProcessedData.filter(item => selectedAccountsToImport.includes(item.accountName));
+             return allProcessedData.filter(item => item.accountName && selectedAccountsToImport.includes(item.accountName));
         }
         // Otherwise, just return all data (for imports into a single chosen account)
         return allProcessedData;

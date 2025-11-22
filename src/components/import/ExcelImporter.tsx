@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
@@ -287,7 +288,16 @@ export function ExcelImporter() {
             let amount = 0;
             let type: 'income' | 'expense' = 'expense';
 
-            if (mapping.cashIn && row[mapping.cashIn]) {
+            if (mapping.amount && mapping.type) { // For ExpenseWise reports
+                const parsedAmount = parseFloat(String(row[mapping.amount]).replace(/[^0-9.-]+/g,""));
+                if (!isNaN(parsedAmount)) {
+                   amount = Math.abs(parsedAmount);
+                   const typeValue = String(row[mapping.type]).toLowerCase();
+                   if (typeValue === 'income' || typeValue === 'expense') {
+                        type = typeValue;
+                   }
+                }
+            } else if (mapping.cashIn && row[mapping.cashIn]) {
                 const cashIn = parseFloat(String(row[mapping.cashIn]).replace(/[^0-9.-]+/g, ""));
                 if (!isNaN(cashIn) && cashIn > 0) {
                     amount = cashIn;
@@ -299,15 +309,6 @@ export function ExcelImporter() {
                     amount = cashOut;
                     type = 'expense';
                 }
-            } else if (mapping.amount && mapping.type) { // For ExpenseWise reports
-                 const parsedAmount = parseFloat(String(row[mapping.amount]).replace(/[^0-9.-]+/g,""));
-                 if (!isNaN(parsedAmount)) {
-                    amount = Math.abs(parsedAmount);
-                    const typeValue = String(row[mapping.type]).toLowerCase();
-                    if (typeValue === 'income' || typeValue === 'expense') {
-                         type = typeValue;
-                    }
-                 }
             } else if (mapping.amount) { // For default reports with signed amount
                 const parsedAmount = parseFloat(String(row[mapping.amount]).replace(/[^0-9.-]+/g,""));
                 if (!isNaN(parsedAmount)) {

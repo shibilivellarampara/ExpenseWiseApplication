@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
@@ -280,7 +279,7 @@ export function ExcelImporter() {
                 finalDate.setHours(hours, minutes, seconds, 0);
             }
 
-            const description = row[mapping.description] || 'Imported Transaction';
+            const description = row[mapping.description] || row['Description'] || 'Imported Transaction';
             const categoryName = normalizeName(row[mapping.category] || 'Other');
             const tags = mapping.tags && row[mapping.tags] ? String(row[mapping.tags]).split(',').map((t: string) => normalizeName(t.trim())) : [];
             const accountName = mapping.mode ? row[mapping.mode] : null;
@@ -288,13 +287,15 @@ export function ExcelImporter() {
             let amount = 0;
             let type: 'income' | 'expense' = 'expense';
 
-            if (mapping.cashIn && mapping.cashOut) {
-                const cashIn = parseFloat(String(row[mapping.cashIn] || '0').replace(/[^0-9.-]+/g,""));
-                const cashOut = parseFloat(String(row[mapping.cashOut] || '0').replace(/[^0-9.-]+/g,""));
+            if (mapping.cashIn && row[mapping.cashIn]) {
+                const cashIn = parseFloat(String(row[mapping.cashIn]).replace(/[^0-9.-]+/g, ""));
                 if (!isNaN(cashIn) && cashIn > 0) {
                     amount = cashIn;
                     type = 'income';
-                } else if (!isNaN(cashOut) && cashOut > 0) {
+                }
+            } else if (mapping.cashOut && row[mapping.cashOut]) {
+                const cashOut = parseFloat(String(row[mapping.cashOut]).replace(/[^0-9.-]+/g, ""));
+                if (!isNaN(cashOut) && cashOut > 0) {
                     amount = cashOut;
                     type = 'expense';
                 }

@@ -325,8 +325,12 @@ export function ExcelImporter() {
         if (TEMPLATES[template].mapping.mode) {
              return allProcessedData.filter(item => item.accountName && selectedAccountsToImport.includes(item.accountName));
         }
-        // Otherwise, just return all data (for imports into a single chosen account)
-        return allProcessedData;
+        // Otherwise, if an account is selected from the dropdown, return all data
+        if (importAccountId) {
+            return allProcessedData;
+        }
+        // If no account is selected from the dropdown for a template without an account column, return no data.
+        return [];
     }, [allProcessedData, selectedAccountsToImport, template, importAccountId]);
 
 
@@ -484,7 +488,11 @@ export function ExcelImporter() {
                 });
     
                 await batch.commit();
-                setImportedCount(prev => prev + chunk.length);
+                 // Simulating smooth progress
+                for (let j = 0; j < chunk.length; j++) {
+                    await new Promise(res => setTimeout(res, 1)); // small delay
+                    setImportedCount(prev => prev + 1);
+                }
             }
     
             toast({

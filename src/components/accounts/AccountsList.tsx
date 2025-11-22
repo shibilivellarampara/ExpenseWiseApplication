@@ -6,10 +6,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Account, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import * as LucideIcons from 'lucide-react';
-import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
-import { doc, setDoc } from 'firebase/firestore';
+import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from "@/firebase";
+import { doc, setDoc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 import { Progress } from "../ui/progress";
-import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History } from "lucide-react";
+import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
@@ -34,6 +34,70 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
   return IconComponent ? <IconComponent className={cn("h-6 w-6 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-6 w-6 text-muted-foreground", className)} />;
 };
 
+function CloseAccountButton({ account }: { account: Account }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { toast } = useToast();
+
+    const handleAccountDelete = async () => {
+        if (!user || !firestore) return;
+        setIsDeleting(true);
+        try {
+            const batch = writeBatch(firestore);
+            
+            // Query for all transactions associated with the account
+            const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), where('accountId', '==', account.id));
+            const expensesSnapshot = await getDocs(expensesQuery);
+            expensesSnapshot.forEach(doc => batch.delete(doc.ref));
+
+            // Delete the account itself
+            const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
+            batch.delete(accountRef);
+
+            await commitBatchNonBlocking(batch, `users/${user.uid}/accounts`);
+            
+            toast({
+                title: "Account Closed",
+                description: `"${account.name}" and all its transactions have been permanently deleted.`
+            });
+        } catch (error: any) {
+             toast({
+                variant: 'destructive',
+                title: "Error Closing Account",
+                description: error.message
+            });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    return (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Close Account
+                </DropdownMenuItem>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete the account "{account.name}" and all of its associated transactions. This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleAccountDelete} className="bg-destructive hover:bg-destructive/90">
+                        {isDeleting ? <Loader2 className="animate-spin" /> : "Yes, close this account"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}
+
 function DeactivateAccountButton({ account }: { account: Account }) {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -52,7 +116,7 @@ function DeactivateAccountButton({ account }: { account: Account }) {
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <Archive className="mr-2 h-4 w-4" />
                     Deactivate
                 </DropdownMenuItem>
@@ -250,7 +314,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                         </div>
                                         {limit > 0 && (
                                             <div className="mt-1">
-                                                <Progress value={100 - usedPercentage} className="h-2 [&>div]:bg-green-500" />
+                                                <Progress value={usedPercentage} className="h-2" />
                                                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                                     <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
                                                     <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
@@ -280,6 +344,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DeactivateAccountButton account={item} />
+                                                <CloseAccountButton account={item} />
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
@@ -332,6 +397,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                                 </DropdownMenuItem>
                                             </AddAccountSheet>
                                             <DeactivateAccountButton account={item} />
+                                            <CloseAccountButton account={item} />
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
@@ -346,3 +412,4 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
        </div>
     )
 }
+

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
-import { FileUp, Loader2, CheckCircle, ArrowRight, ListChecks, FileCheck2, AlertTriangle, Sparkles, Pilcrow, ArrowLeft, Send } from "lucide-react";
+import { FileUp, Loader2, CheckCircle, ArrowRight, ListChecks, FileCheck2, AlertTriangle, Sparkles, Pilcrow, ArrowLeft, Send, Wallet } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { useDoc, useFirestore, useUser, useMemoFirebase, useCollection } from "@/firebase";
 import { doc } from 'firebase/firestore';
@@ -381,24 +381,25 @@ export function ExcelImporter() {
                         let initialLimit = 0;
                         
                         if (isCreditCard) {
-                            const limitUpgrades = transactionsForThisAccount
-                                .filter(t => t.categoryName === 'Credit Limit Upgrade' && t.type === 'income')
+                             const limitUpgrades = transactionsForThisAccount
+                                .filter(t => normalizeName(t.categoryName) === 'Credit Limit Upgrade' && t.type === 'income')
                                 .reduce((sum, t) => sum + t.amount, 0);
                             const limitDowngrades = transactionsForThisAccount
-                                .filter(t => t.categoryName === 'Credit Limit Downgrade' && t.type === 'expense')
+                                .filter(t => normalizeName(t.categoryName) === 'Credit Limit Downgrade' && t.type === 'expense')
                                 .reduce((sum, t) => sum + t.amount, 0);
                             
                             initialLimit = limitUpgrades - limitDowngrades;
 
                             const totalPayments = transactionsForThisAccount
-                                .filter(t => t.type === 'income' && t.categoryName !== 'Credit Limit Upgrade')
+                                .filter(t => t.type === 'income' && normalizeName(t.categoryName) !== 'Credit Limit Upgrade')
                                 .reduce((sum, t) => sum + t.amount, 0);
 
                             const totalSpending = transactionsForThisAccount
-                                .filter(t => t.type === 'expense' && t.categoryName !== 'Credit Limit Downgrade')
+                                .filter(t => t.type === 'expense' && normalizeName(t.categoryName) !== 'Credit Limit Downgrade')
                                 .reduce((sum, t) => sum + t.amount, 0);
-
-                            initialBalance = initialLimit + totalPayments - totalSpending; // Available credit
+                            
+                            // Available Credit = Limit + Payments - Spending
+                            initialBalance = initialLimit + totalPayments - totalSpending;
                         } else {
                             const totalIncome = transactionsForThisAccount.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
                             const totalExpense = transactionsForThisAccount.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
@@ -582,6 +583,12 @@ export function ExcelImporter() {
                                 <Link href="/expenses">
                                     <Send className="mr-2 h-4 w-4" />
                                     Go to Transactions
+                                </Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href="/accounts">
+                                    <Wallet className="mr-2 h-4 w-4" />
+                                    Go to Accounts
                                 </Link>
                             </Button>
                         </div>

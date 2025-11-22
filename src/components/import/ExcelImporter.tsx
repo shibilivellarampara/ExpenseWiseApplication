@@ -327,7 +327,7 @@ export function ExcelImporter() {
         }
         // Otherwise, just return all data (for imports into a single chosen account)
         return allProcessedData;
-    }, [allProcessedData, selectedAccountsToImport, template]);
+    }, [allProcessedData, selectedAccountsToImport, template, importAccountId]);
 
 
     const handleImport = async () => {
@@ -418,8 +418,6 @@ export function ExcelImporter() {
 
                         if (isCreditCard) {
                             accountData.limit = initialLimit;
-                        } else {
-                            delete accountData.limit;
                         }
 
                         accountCreationBatch.set(accRef, accountData);

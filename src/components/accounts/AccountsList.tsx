@@ -279,11 +279,11 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                 <CardContent className="p-0">
                     <div className="divide-y">
                         {creditCards.length > 0 ? creditCards.map(item => {
-                             const limit = item.limit || 0;
-                             const availableCredit = item.balance;
-                             const outstandingAmount = Math.max(0, limit - availableCredit);
-                             const availablePercentage = limit > 0 ? (availableCredit / limit) * 100 : 0;
-                             const isPaid = outstandingAmount <= 0;
+                            const limit = item.limit || 0;
+                            const availableCredit = item.balance;
+                            const outstandingAmount = limit - availableCredit;
+                            const usedPercentage = limit > 0 ? (outstandingAmount / limit) * 100 : 0;
+                            const isPaid = outstandingAmount <= 0;
                             
                             return (
                                 <div key={item.id} className="p-4 flex items-center gap-4 group">
@@ -314,7 +314,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                         </div>
                                         {limit > 0 && (
                                             <div className="mt-1">
-                                                <Progress value={availablePercentage} className="h-2" />
+                                                <Progress value={usedPercentage} className="h-2" />
                                                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                                     <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
                                                     <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>

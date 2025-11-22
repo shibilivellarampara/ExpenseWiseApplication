@@ -318,18 +318,21 @@ export function ExcelImporter() {
             }
             
             return { date: finalDate, amount, description, categoryName, tags, type, accountName: accountName ? String(accountName) : null };
-        }).filter(item => !isNaN(item.amount) && item.amount > 0 && !isNaN(item.date.getTime()));
+        }).filter(item => !isNaN(item.date.getTime()));
     }, [rawData, template]);
 
     const processedData = useMemo(() => {
         if (!template) return [];
+
+        const validData = allProcessedData.filter(item => !isNaN(item.amount) && item.amount > 0);
+
         // If there's an account column in the template, filter by selected accounts
         if (TEMPLATES[template].mapping.mode) {
-             return allProcessedData.filter(item => item.accountName && selectedAccountsToImport.includes(item.accountName));
+             return validData.filter(item => item.accountName && selectedAccountsToImport.includes(item.accountName));
         }
         // Otherwise, if an account is selected from the dropdown, return all data
         if (importAccountId) {
-            return allProcessedData;
+            return validData;
         }
         // If no account is selected from the dropdown for a template without an account column, return no data.
         return [];
@@ -850,3 +853,4 @@ export function ExcelImporter() {
         </Card>
     );
 }
+

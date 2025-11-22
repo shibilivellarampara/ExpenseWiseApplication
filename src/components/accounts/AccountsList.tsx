@@ -9,7 +9,7 @@ import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from "@/firebase";
 import { doc, setDoc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 import { Progress } from "../ui/progress";
-import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle } from "lucide-react";
+import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle, Merge } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
@@ -280,9 +280,9 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                     <div className="divide-y">
                         {creditCards.length > 0 ? creditCards.map(item => {
                              const limit = item.limit || 0;
-                             const availableCredit = item.balance; // 'balance' for CC is available credit
-                             const outstandingAmount = limit - availableCredit;
-                             const usedPercentage = limit > 0 ? (outstandingAmount / limit) * 100 : 0;
+                             const availableCredit = item.balance;
+                             const outstandingAmount = Math.max(0, limit - availableCredit);
+                             const availablePercentage = limit > 0 ? (availableCredit / limit) * 100 : 0;
                              const isPaid = outstandingAmount <= 0;
                             
                             return (
@@ -314,7 +314,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                         </div>
                                         {limit > 0 && (
                                             <div className="mt-1">
-                                                <Progress value={usedPercentage} className="h-2" />
+                                                <Progress value={availablePercentage} className="h-2" />
                                                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                                     <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
                                                     <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
@@ -412,4 +412,3 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
        </div>
     )
 }
-

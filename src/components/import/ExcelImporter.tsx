@@ -315,7 +315,7 @@ export function ExcelImporter() {
                 }
             }
             
-            return { date: finalDate, amount, description, categoryName, tags, type, accountName };
+            return { date: finalDate, amount, description, categoryName, tags, type, accountName: accountName ? String(accountName) : null };
         }).filter(item => !isNaN(item.amount) && item.amount > 0 && !isNaN(item.date.getTime()));
     }, [rawData, template]);
 
@@ -418,6 +418,8 @@ export function ExcelImporter() {
 
                         if (isCreditCard) {
                             accountData.limit = initialLimit;
+                        } else {
+                            delete accountData.limit;
                         }
 
                         accountCreationBatch.set(accRef, accountData);

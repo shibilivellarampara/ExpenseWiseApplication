@@ -406,16 +406,21 @@ export function ExcelImporter() {
                             initialBalance = totalIncome - totalExpense;
                         }
 
-                        accountCreationBatch.set(accRef, { 
+                        const accountData: any = { 
                             id: accRef.id, 
                             name: accName, 
                             icon: isCreditCard ? 'CreditCard' : 'Landmark', 
                             type: accountType, 
                             balance: initialBalance,
-                            limit: isCreditCard ? initialLimit : undefined,
                             status: 'active', 
                             userId: user.uid 
-                        });
+                        };
+
+                        if (isCreditCard) {
+                            accountData.limit = initialLimit;
+                        }
+
+                        accountCreationBatch.set(accRef, accountData);
                         newAccountRefs.set(accName, { id: accRef.id, type: accountType });
                     }
                 }
@@ -835,4 +840,3 @@ export function ExcelImporter() {
         </Card>
     );
 }
-

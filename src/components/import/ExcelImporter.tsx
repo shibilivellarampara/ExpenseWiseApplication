@@ -375,17 +375,33 @@ export function ExcelImporter() {
                         const accountType = mappingInfo.type || 'bank';
                         const isCreditCard = accountType === 'credit_card';
 
-                        // Calculate initial balance/outstanding for the new account
                         const transactionsForThisAccount = allProcessedData.filter(t => t.accountName === accName);
-                        const totalIncome = transactionsForThisAccount.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-                        const totalExpense = transactionsForThisAccount.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
                         
                         let initialBalance = 0;
                         let initialLimit = 0;
+                        
                         if (isCreditCard) {
-                             initialLimit = totalExpense; // A simple assumption: limit is the total spent
-                             initialBalance = initialLimit - totalExpense + totalIncome; // Available credit
+                            const limitUpgrades = transactionsForThisAccount
+                                .filter(t => t.categoryName === 'Credit Limit Upgrade' && t.type === 'income')
+                                .reduce((sum, t) => sum + t.amount, 0);
+                            const limitDowngrades = transactionsForThisAccount
+                                .filter(t => t.categoryName === 'Credit Limit Downgrade' && t.type === 'expense')
+                                .reduce((sum, t) => sum + t.amount, 0);
+                            
+                            initialLimit = limitUpgrades - limitDowngrades;
+
+                            const totalPayments = transactionsForThisAccount
+                                .filter(t => t.type === 'income' && t.categoryName !== 'Credit Limit Upgrade')
+                                .reduce((sum, t) => sum + t.amount, 0);
+
+                            const totalSpending = transactionsForThisAccount
+                                .filter(t => t.type === 'expense' && t.categoryName !== 'Credit Limit Downgrade')
+                                .reduce((sum, t) => sum + t.amount, 0);
+
+                            initialBalance = initialLimit + totalPayments - totalSpending; // Available credit
                         } else {
+                            const totalIncome = transactionsForThisAccount.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+                            const totalExpense = transactionsForThisAccount.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
                             initialBalance = totalIncome - totalExpense;
                         }
 
@@ -459,10 +475,10 @@ export function ExcelImporter() {
                     
                     batch.set(expenseRef, expenseDocData);
                     docsImportedInLoop++;
-                    setImportedCount(importedCount + docsImportedInLoop);
                 });
     
                 await batch.commit();
+                setImportedCount(prev => prev + chunk.length);
             }
     
             toast({
@@ -812,3 +828,4 @@ export function ExcelImporter() {
         </Card>
     );
 }
+

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -250,7 +251,8 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
         (filters.type !== 'all' ? 1 : 0) +
         filters.categories.length +
         filters.accounts.length +
-        filters.tags.length;
+        filters.tags.length +
+        (filters.searchQuery ? 1 : 0);
 
     return (
         <div className="flex flex-wrap gap-2 items-center">

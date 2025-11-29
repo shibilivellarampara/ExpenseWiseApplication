@@ -9,7 +9,7 @@ import { collection, orderBy, query, doc, where, Timestamp }from "firebase/fires
 import { Plus, Minus, ArrowLeft } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
-import { endOfMonth, startOfMonth, parse } from 'date-fns';
+import { endOfMonth, startOfMonth, parse, format } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";

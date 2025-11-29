@@ -9,66 +9,48 @@ import { collection, orderBy, query, doc, where, Timestamp }from "firebase/fires
 import { Plus, Minus, ArrowLeft } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
-import { endOfDay, startOfDay, parse } from 'date-fns';
+import { endOfMonth, startOfMonth, parse } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useSearchParams, useParams } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
+import Link from "next/link";
 
-export default function AllExpensesPage() {
+export default function MonthlyExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const mainContentRef = useRef<HTMLElement | null>(null);
-    const [isScrolled, setIsScrolled] = useState(false);
-    const searchParams = useSearchParams();
+    const params = useParams();
+    const { year, month } = params;
+    
+    const pageDate = useMemo(() => {
+        if (typeof year === 'string' && typeof month === 'string') {
+            return parse(`${year}-${month}-01`, 'yyyy-MM-dd', new Date());
+        }
+        return new Date();
+    }, [year, month]);
 
-    // Initialize filters from URL search params
-    const getInitialFilters = (): Filters => {
-        const accountsParam = searchParams.get('accounts');
-        const typeParam = searchParams.get('type');
-        const categoriesParam = searchParams.get('categories');
-        const dateFromParam = searchParams.get('dateFrom');
-        const dateToParam = searchParams.get('dateTo');
+    const pageTitle = format(pageDate, 'MMMM yyyy');
 
-        const parseDate = (dateStr: string | null) => {
-            if (!dateStr) return undefined;
-            try {
-                return parse(dateStr, 'yyyy-MM-dd', new Date());
-            } catch {
-                return undefined;
-            }
-        };
-
-        const parsedType = (typeParam === 'income' || typeParam === 'expense') ? typeParam : 'all';
-
-        return {
-            dateRange: { from: parseDate(dateFromParam), to: parseDate(dateToParam) },
-            type: parsedType,
-            categories: categoriesParam ? categoriesParam.split(',') : [],
-            accounts: accountsParam ? accountsParam.split(',') : [],
-            tags: [],
-            searchQuery: '',
-        };
-    };
-
-    const [filters, setFilters] = useState(getInitialFilters);
+    const [filters, setFilters] = useState<Filters>({
+        dateRange: { from: startOfMonth(pageDate), to: endOfMonth(pageDate) },
+        type: 'all',
+        categories: [],
+        accounts: [],
+        tags: [],
+        searchQuery: '',
+    });
     
     const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
 
     const expensesQuery = useMemoFirebase(() => {
         if (!user) return null;
-
-        let q = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
-        if (filters.dateRange.from) {
-            q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
-        }
-        if (filters.dateRange.to) {
-            q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
-        }
-        
-        return q;
+        return query(
+            collection(firestore, `users/${user.uid}/expenses`),
+            where('date', '>=', Timestamp.fromDate(filters.dateRange.from!)),
+            where('date', '<=', Timestamp.fromDate(filters.dateRange.to!)),
+            orderBy('date', 'desc')
+        );
     }, [user, firestore, filters.dateRange]);
     
     // Queries for filter dropdowns
@@ -83,31 +65,7 @@ export default function AllExpensesPage() {
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
-    const handleDataChange = useCallback(() => {
-        // This is a placeholder for the ExpensesTable. Data is re-fetched automatically by useCollection.
-    }, []);
-
-    useEffect(() => {
-        const mainElement = document.querySelector('main');
-        mainContentRef.current = mainElement;
-
-        const handleScroll = () => {
-            if (mainContentRef.current) {
-                setIsScrolled(mainContentRef.current.scrollTop > 5);
-            }
-        };
-
-        if (mainContentRef.current) {
-            mainContentRef.current.addEventListener('scroll', handleScroll);
-        }
-
-        return () => {
-            if (mainContentRef.current) {
-                mainContentRef.current.removeEventListener('scroll', handleScroll);
-            }
-        };
-    }, []);
-
+    const handleDataChange = useCallback(() => {}, []);
 
     const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
 
@@ -137,7 +95,6 @@ export default function AllExpensesPage() {
                 return true;
             });
             
-        // Running balance calculation
         const getAmountChange = (tx: Expense, accType: Account['type']) => {
             if (accType === 'credit_card') {
                return tx.type === 'income' ? tx.amount : -tx.amount;
@@ -146,9 +103,7 @@ export default function AllExpensesPage() {
         };
         
         const transactionsByAccount = clientFiltered.reduce((acc, tx) => {
-            if (!acc[tx.accountId]) {
-                acc[tx.accountId] = [];
-            }
+            if (!acc[tx.accountId]) { acc[tx.accountId] = []; }
             acc[tx.accountId].push(tx);
             return acc;
         }, {} as Record<string, (Expense & {date: Date})[]>);
@@ -161,15 +116,12 @@ export default function AllExpensesPage() {
 
             if (account) {
                 accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
-                
                 let startingBalance = 0;
-
                 accountTransactions.forEach(tx => {
                     const amountChange = getAmountChange(tx, account.type);
                     startingBalance += amountChange;
                     tx.runningBalance = startingBalance;
                 });
-                
                 finalWithBalance.push(...accountTransactions);
             }
         }
@@ -186,10 +138,11 @@ export default function AllExpensesPage() {
     }, [allExpenses, filters, debouncedSearchQuery, categoryMap, accountMap, tagMap, accounts]);
     
     const handleFiltersChange = (newFilters: Filters) => {
-        setFilters(newFilters);
+        // Keep date range fixed to the month
+        setFilters({ ...newFilters, dateRange: filters.dateRange });
     };
 
-    const handleBadgeClick = (type: 'category' | 'tag', id: string) => {
+     const handleBadgeClick = (type: 'category' | 'tag', id: string) => {
         if (type === 'category') {
             setFilters(prev => ({
                 ...prev,
@@ -208,34 +161,28 @@ export default function AllExpensesPage() {
 
     return (
         <div className="w-full space-y-4 pb-24">
-            <PageHeader
-                title="All Transactions"
-                description="A complete list of all your recorded transactions.">
+             <PageHeader title={pageTitle} description={`A summary of your transactions for ${pageTitle}.`}>
                 <Button variant="outline" asChild>
                     <Link href="/transactions">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Monthly View
+                        Back to All Months
                     </Link>
                 </Button>
             </PageHeader>
-            <div className={cn(
-                "sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out pt-4",
-                 isScrolled && "pb-3 shadow-sm rounded-b-lg"
-            )}>
-                <div className="space-y-4">
-                     <ExpensesSummary 
-                        expenses={filteredAndEnrichedExpenses}
-                        currency={userProfile?.defaultCurrency} 
-                        isLoading={isLoading} 
-                    />
-                    <ExpensesFilters 
-                        filters={filters}
-                        onFiltersChange={handleFiltersChange}
-                        accounts={accounts || []}
-                        categories={categories || []}
-                        tags={tags || []}
-                    />
-                </div>
+            <div className="space-y-4 sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm pt-4">
+                 <ExpensesSummary 
+                    expenses={filteredAndEnrichedExpenses}
+                    currency={userProfile?.defaultCurrency} 
+                    isLoading={isLoading} 
+                />
+                <ExpensesFilters 
+                    filters={filters}
+                    onFiltersChange={handleFiltersChange}
+                    accounts={accounts || []}
+                    categories={categories || []}
+                    tags={tags || []}
+                    disableDateFilter={true}
+                />
             </div>
             
             <ExpensesTable 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -39,6 +38,7 @@ interface ExpensesFiltersProps {
     accounts: Account[];
     categories: Category[];
     tags: Tag[];
+    disableDateFilter?: boolean;
 }
 
 const renderIcon = (iconName: string | undefined, className?: string) => {
@@ -48,7 +48,7 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
 };
 
 
-function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset }: ExpensesFiltersProps & { setDateRangePreset: (preset: string) => void, dateRangePreset: string }) {
+function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter }: ExpensesFiltersProps & { setDateRangePreset: (preset: string) => void, dateRangePreset: string }) {
     
     const handleDateRangePresetChange = (preset: string) => {
         setDateRangePreset(preset);
@@ -153,46 +153,50 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
 
     return (
         <div className="grid gap-4">
-            <div>
-                <h4 className="text-sm font-medium mb-2">Date Range</h4>
-                 <Select value={dateRangePreset} onValueChange={handleDateRangePresetChange}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select date range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Time</SelectItem>
-                        <SelectItem value="this-month">This Month</SelectItem>
-                        <SelectItem value="last-month">Last Month</SelectItem>
-                        <SelectItem value="this-year">This Year</SelectItem>
-                        <SelectItem value="custom">Custom Range</SelectItem>
-                    </SelectContent>
-                </Select>
-                 {dateRangePreset === 'custom' && (
-                     <div className="grid grid-cols-2 gap-2 mt-2">
-                        <div className="space-y-1">
-                            <Label htmlFor="from-date" className="text-xs">From</Label>
-                            <Input
-                                id="from-date"
-                                type="date"
-                                value={formatDateForInput(filters.dateRange?.from)}
-                                onChange={(e) => handleDateChange(e.target.value ?? undefined, 'from')}
-                                className="text-sm"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                             <Label htmlFor="to-date" className="text-xs">To</Label>
-                            <Input
-                                id="to-date"
-                                type="date"
-                                value={formatDateForInput(filters.dateRange?.to)}
-                                onChange={(e) => handleDateChange(e.target.value ?? undefined, 'to')}
-                                className="text-sm"
-                            />
-                        </div>
-                     </div>
-                )}
-            </div>
-            <Separator />
+            {!disableDateFilter && (
+                <>
+                    <div>
+                        <h4 className="text-sm font-medium mb-2">Date Range</h4>
+                        <Select value={dateRangePreset} onValueChange={handleDateRangePresetChange}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select date range" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Time</SelectItem>
+                                <SelectItem value="this-month">This Month</SelectItem>
+                                <SelectItem value="last-month">Last Month</SelectItem>
+                                <SelectItem value="this-year">This Year</SelectItem>
+                                <SelectItem value="custom">Custom Range</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {dateRangePreset === 'custom' && (
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                <div className="space-y-1">
+                                    <Label htmlFor="from-date" className="text-xs">From</Label>
+                                    <Input
+                                        id="from-date"
+                                        type="date"
+                                        value={formatDateForInput(filters.dateRange?.from)}
+                                        onChange={(e) => handleDateChange(e.target.value ?? undefined, 'from')}
+                                        className="text-sm"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="to-date" className="text-xs">To</Label>
+                                    <Input
+                                        id="to-date"
+                                        type="date"
+                                        value={formatDateForInput(filters.dateRange?.to)}
+                                        onChange={(e) => handleDateChange(e.target.value ?? undefined, 'to')}
+                                        className="text-sm"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <Separator />
+                </>
+            )}
             {createMultiSelect('Categories', 'categories', categories, 'Select categories')}
             <Separator />
             {createMultiSelect('Accounts', 'accounts', accounts, 'Select accounts')}
@@ -216,9 +220,10 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
     )
 }
 
-export function ExpensesFilters({ filters, onFiltersChange, accounts, categories, tags }: ExpensesFiltersProps) {
+export function ExpensesFilters({ filters, onFiltersChange, accounts, categories, tags, disableDateFilter }: ExpensesFiltersProps) {
 
     const [dateRangePreset, setDateRangePreset] = useState<string>(() => {
+        if(disableDateFilter) return '';
         if(filters.dateRange?.from || filters.dateRange?.to) {
             return 'custom';
         }
@@ -226,19 +231,22 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
     });
     
     const clearFilters = () => {
-        onFiltersChange({
-            dateRange: { from: undefined, to: undefined },
+        const newFilters: Filters = {
+            dateRange: disableDateFilter ? filters.dateRange : { from: undefined, to: undefined },
             type: 'all',
             categories: [],
             accounts: [],
             tags: [],
             searchQuery: '',
-        });
-        setDateRangePreset('all');
+        };
+        onFiltersChange(newFilters);
+        if (!disableDateFilter) {
+            setDateRangePreset('all');
+        }
     };
     
     const activeFilterCount =
-        (filters.dateRange.from || filters.dateRange.to ? 1 : 0) +
+        (!disableDateFilter && (filters.dateRange.from || filters.dateRange.to) ? 1 : 0) +
         (filters.type !== 'all' ? 1 : 0) +
         filters.categories.length +
         filters.accounts.length +
@@ -270,12 +278,12 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                     <div className="flex justify-between items-center mb-4">
                          <h3 className="font-medium">Filter Transactions</h3>
                          {activeFilterCount > 0 && (
-                            <Button variant="ghost" size="sm" onClick={() => onFiltersChange({ ...filters, dateRange: {from: undefined, to: undefined}, type: 'all', categories: [], accounts: [], tags: []})}>
+                            <Button variant="ghost" size="sm" onClick={clearFilters}>
                                 Clear filters
                             </Button>
                          )}
                     </div>
-                     <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset }} />
+                     <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter }} />
                 </PopoverContent>
             </Popover>
             

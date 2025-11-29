@@ -39,7 +39,7 @@ export default function ReportsPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
 
-    const handleReportAction = async (accountId: string, format: 'excel' | 'clipboard') => {
+    const handleReportAction = async (accountId: string, format: 'excel' | 'clipboard', template: string) => {
         if (!user || !firestore) return;
         setIsLoading(true);
 
@@ -63,16 +63,32 @@ export default function ReportsPage() {
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             })).sort((a, b) => a.date.getTime() - b.date.getTime());
 
-            const dataToExport = enriched.map(tx => ({
-                Date: tx.date.toLocaleDateString(),
-                Time: tx.date.toLocaleTimeString(),
-                Description: tx.description,
-                Category: tx.category?.name || 'N/A',
-                Account: tx.account?.name || 'N/A',
-                Amount: tx.amount,
-                Type: tx.type,
-                Tags: tx.tags.map(t => t.name).join(', '),
-            }));
+            let dataToExport;
+            
+            if (template === 'enhanced') {
+                dataToExport = enriched.map(tx => ({
+                    'Date': tx.date.toLocaleDateString(),
+                    'Time': tx.date.toLocaleTimeString(),
+                    'Old Description': tx.description,
+                    'Category': tx.category?.name || 'N/A',
+                    'ACCOUNT': tx.account?.name || 'N/A',
+                    'CASH IN': tx.type === 'income' ? tx.amount : '',
+                    'CASH OUT': tx.type === 'expense' ? tx.amount : '',
+                    'Tags': tx.tags.map(t => t.name).join(', '),
+                }));
+            } else { // Default template
+                dataToExport = enriched.map(tx => ({
+                    'Date': tx.date.toLocaleDateString(),
+                    'Time': tx.date.toLocaleTimeString(),
+                    'Description': tx.description,
+                    'Category': tx.category?.name || 'N/A',
+                    'Account': tx.account?.name || 'N/A',
+                    'Amount': tx.amount,
+                    'Type': tx.type,
+                    'Tags': tx.tags.map(t => t.name).join(', '),
+                }));
+            }
+
 
             if (format === 'excel') {
                 const worksheet = XLSX.utils.json_to_sheet(dataToExport);

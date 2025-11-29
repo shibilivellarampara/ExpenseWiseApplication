@@ -10,10 +10,23 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.3.9",
+        date: "2024-08-20",
+        changes: [
+            { type: 'Feature', description: "Grouped debts by person on the Debts & Dues page for a clearer overview." },
+            { type: 'Feature', description: "Added a quick-add button to create new transactions for existing people on the Debts page." },
+            { type: 'Fix', description: "Corrected the net amount calculation to only include 'pending' debts." },
+            { type: 'Fix', description: "Removed the 'Settle Debt' success notification for a quieter experience." },
+            { type: 'Fix', description: "Removed default '0.00' values from amount fields in forms." },
+        ]
+    },
+    {
         version: "1.3.8",
         date: "2024-08-19",
         changes: [
-            { type: 'Feature', description: "Application version updated." },
+            { type: 'Feature', description: "Added a new 'Debts & Dues' page to track lent and borrowed money." },
+            { type: 'Feature', description: "Added the ability to mark debts as 'settled'." },
+            { type: 'Fix', description: "Resolved a build error caused by an incorrect component import for the DateTimePicker." },
         ]
     },
     {

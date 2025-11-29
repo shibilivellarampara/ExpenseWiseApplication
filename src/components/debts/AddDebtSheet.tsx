@@ -144,19 +144,21 @@ export function AddDebtSheet({ children, personName }: AddDebtSheetProps) {
                             )}
                         />
 
-                        <FormField
-                            control={form.control}
-                            name="personName"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Person's Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g., John Doe" {...field} disabled={!!personName} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        {!personName && (
+                            <FormField
+                                control={form.control}
+                                name="personName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Person's Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g., John Doe" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
                          <FormField
                             control={form.control}
                             name="amount"

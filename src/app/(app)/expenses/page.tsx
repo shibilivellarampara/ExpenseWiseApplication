@@ -14,20 +14,27 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 
 export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const mainContentRef = useRef<HTMLElement | null>(null);
     const [isScrolled, setIsScrolled] = useState(false);
+    const searchParams = useSearchParams();
 
-    const [filters, setFilters] = useState<Filters>({
-        dateRange: { from: undefined, to: undefined },
-        type: 'all',
-        categories: [],
-        accounts: [],
-        tags: [],
-        searchQuery: '',
+    const [filters, setFilters] = useState<Filters>(() => {
+        const accountId = searchParams.get('accounts');
+        const type = searchParams.get('type') as 'all' | 'income' | 'expense' | null;
+
+        return {
+            dateRange: { from: undefined, to: undefined },
+            type: type || 'all',
+            categories: [],
+            accounts: accountId ? [accountId] : [],
+            tags: [],
+            searchQuery: '',
+        };
     });
     
     const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);

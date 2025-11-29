@@ -10,6 +10,19 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.3.6",
+        date: "2024-08-17",
+        changes: [
+            { type: 'Feature', description: "Added a progress bar to the report generation feature for better user feedback." },
+            { type: 'Feature', description: "Added 'Last 6 Months' and 'Last Year' options to the date range filter on the Analysis page." },
+            { type: 'Feature', description: "Added a setting to specify a default account for new transactions in Form Customization." },
+            { type 'Feature', description: "Added visibility toggles to show or hide fields in the transaction form via Form Customization." },
+            { type: 'Fix', description: "Corrected the credit card progress bar to accurately show available credit relative to the total limit." },
+            { type: 'Fix', description: "Resolved UI layout bugs that caused inconsistent scrolling and button behavior." },
+            { type: 'Fix', description: "Fixed a runtime error that prevented the 'Create new tag' dialog from opening in the transaction form." },
+        ]
+    },
+    {
         version: "1.3.5",
         date: "2024-08-16",
         changes: [
@@ -198,3 +211,5 @@ export default function AboutPage() {
         </div>
     );
 }
+
+    

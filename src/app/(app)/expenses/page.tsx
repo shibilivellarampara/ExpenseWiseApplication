@@ -63,12 +63,14 @@ export default function ExpensesPage() {
     }, []);
 
     useEffect(() => {
-        const mainElement = document.querySelector('main');
+        // Use the new ID to find the main scrollable element
+        const mainElement = document.getElementById('main-content');
         mainContentRef.current = mainElement;
 
         const handleScroll = () => {
             if (mainContentRef.current) {
-                setIsScrolled(mainContentRef.current.scrollTop > 5);
+                // Adjust this threshold as needed
+                setIsScrolled(mainContentRef.current.scrollTop > 1);
             }
         };
 
@@ -76,6 +78,7 @@ export default function ExpensesPage() {
             mainContentRef.current.addEventListener('scroll', handleScroll);
         }
 
+        // Cleanup function
         return () => {
             if (mainContentRef.current) {
                 mainContentRef.current.removeEventListener('scroll', handleScroll);
@@ -184,10 +187,10 @@ export default function ExpensesPage() {
     return (
         <div className="w-full space-y-4 pb-24">
             <div className={cn(
-                "sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out",
+                "sticky top-0 z-20 bg-background/95 backdrop-blur-sm -mx-4 -mt-4 px-4 pt-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8",
                  isScrolled && "pb-3 shadow-sm rounded-b-lg"
             )}>
-                <div className="space-y-4 pt-4">
+                <div className="space-y-4">
                      <ExpensesSummary 
                         expenses={filteredAndEnrichedExpenses}
                         currency={userProfile?.defaultCurrency} 

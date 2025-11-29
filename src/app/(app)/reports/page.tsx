@@ -26,6 +26,7 @@ export default function ReportsPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const [isLoading, setIsLoading] = useState(false);
+    const [progress, setProgress] = useState(0);
     const { toast } = useToast();
 
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
@@ -43,9 +44,12 @@ export default function ReportsPage() {
     const handleReportAction = async (accountId: string, format: 'excel' | 'clipboard', template: string) => {
         if (!user || !firestore) return;
         setIsLoading(true);
+        setProgress(0);
 
         try {
+            setProgress(10);
             const rawExpenses = await fetchAllTransactions(firestore, user.uid, accountId);
+            setProgress(30);
             
             if (rawExpenses.length === 0) {
                 toast({
@@ -53,6 +57,7 @@ export default function ReportsPage() {
                     description: "There are no transactions for the selected account in this period.",
                 });
                 setIsLoading(false);
+                setProgress(0);
                 return;
             }
             
@@ -63,6 +68,8 @@ export default function ReportsPage() {
                 account: accountMap.get(expense.accountId),
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             })).sort((a, b) => a.date.getTime() - b.date.getTime());
+
+            setProgress(60);
 
             let dataToExport;
             
@@ -90,6 +97,7 @@ export default function ReportsPage() {
                 }));
             }
 
+            setProgress(80);
 
             if (format === 'excel') {
                 const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -107,11 +115,16 @@ export default function ReportsPage() {
                     description: `${dataToExport.length} transactions have been copied.`,
                 });
             }
+            
+            setProgress(100);
 
         } catch (error: any) {
             toast({ variant: 'destructive', title: "Error Generating Report", description: error.message });
         } finally {
-            setIsLoading(false);
+            setTimeout(() => {
+                setIsLoading(false);
+                setProgress(0);
+            }, 500); // Keep progress bar visible for a moment
         }
     };
 
@@ -125,6 +138,7 @@ export default function ReportsPage() {
                 accounts={accounts || []} 
                 onAction={handleReportAction}
                 isLoading={isLoading}
+                progress={progress}
             />
         </div>
     );

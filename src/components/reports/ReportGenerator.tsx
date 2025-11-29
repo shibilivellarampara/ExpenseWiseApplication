@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from 'react';
@@ -9,14 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Account } from '@/lib/types';
 import { FileDown, Loader2, Copy } from 'lucide-react';
 import { Label } from '../ui/label';
+import { Progress } from '../ui/progress';
 
 interface ReportGeneratorProps {
     accounts: Account[];
     onAction: (accountId: string, format: 'excel' | 'clipboard', template: string) => void;
     isLoading: boolean;
+    progress: number;
 }
 
-export function ReportGenerator({ accounts, onAction, isLoading }: ReportGeneratorProps) {
+export function ReportGenerator({ accounts, onAction, isLoading, progress }: ReportGeneratorProps) {
     const [selectedAccount, setSelectedAccount] = useState<string>('all');
     const [selectedTemplate, setSelectedTemplate] = useState<string>('default');
     
@@ -55,6 +56,12 @@ export function ReportGenerator({ accounts, onAction, isLoading }: ReportGenerat
                 </div>
             </CardContent>
             <CardFooter className="flex-col items-start gap-4">
+                 {isLoading && (
+                    <div className="w-full space-y-2">
+                        <Progress value={progress} />
+                        <p className="text-sm text-muted-foreground text-center">Generating your report...</p>
+                    </div>
+                )}
                 <div className="flex flex-wrap gap-2">
                     <Button onClick={() => onAction(selectedAccount, 'excel', selectedTemplate)} disabled={isLoading}>
                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
@@ -69,5 +76,3 @@ export function ReportGenerator({ accounts, onAction, isLoading }: ReportGenerat
         </Card>
     );
 }
-
-    

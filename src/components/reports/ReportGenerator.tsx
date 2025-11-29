@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -34,7 +35,7 @@ export function ReportGenerator({ accounts, onAction, isLoading }: ReportGenerat
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="default">Default Report</SelectItem>
-                            <SelectItem value="enhanced">Enhanced Report (for re-import)</SelectItem>
+                            <SelectItem value="enhanced">Enhanced report</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -68,3 +69,5 @@ export function ReportGenerator({ accounts, onAction, isLoading }: ReportGenerat
         </Card>
     );
 }
+
+    

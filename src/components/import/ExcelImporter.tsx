@@ -58,7 +58,7 @@ const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, descri
         description: "For Cashbook app exports."
     },
     'enhanced_report': {
-        name: 'Enhanced Report',
+        name: 'Enhanced template',
         mapping: { date: 'Date', time: 'Time', description: 'Old Description', category: 'Category', tags: 'Tags', cashIn: 'CASH IN', cashOut: 'CASH OUT', mode: 'ACCOUNT'},
         description: "For detailed sheets with separate cash in/out."
     },
@@ -288,8 +288,8 @@ export function ExcelImporter() {
             let amount = 0;
             let type: 'income' | 'expense' = 'expense';
 
-            if (mapping.amount && mapping.type) { // For ExpenseWise reports
-                const parsedAmount = parseFloat(String(row[mapping.amount]).replace(/[^0-9.-]+/g,""));
+            if (mapping.amount && mapping.type) {
+                const parsedAmount = parseFloat(String(row[mapping.amount] || '0').replace(/[^0-9.-]+/g,""));
                 if (!isNaN(parsedAmount)) {
                    amount = Math.abs(parsedAmount);
                    const typeValue = String(row[mapping.type]).toLowerCase();
@@ -298,19 +298,19 @@ export function ExcelImporter() {
                    }
                 }
             } else if (mapping.cashIn && row[mapping.cashIn]) {
-                const cashIn = parseFloat(String(row[mapping.cashIn]).replace(/[^0-9.-]+/g, ""));
+                const cashIn = parseFloat(String(row[mapping.cashIn] || '0').replace(/[^0-9.-]+/g, ""));
                 if (!isNaN(cashIn) && cashIn > 0) {
                     amount = cashIn;
                     type = 'income';
                 }
             } else if (mapping.cashOut && row[mapping.cashOut]) {
-                const cashOut = parseFloat(String(row[mapping.cashOut]).replace(/[^0-9.-]+/g, ""));
+                const cashOut = parseFloat(String(row[mapping.cashOut] || '0').replace(/[^0-9.-]+/g, ""));
                 if (!isNaN(cashOut) && cashOut > 0) {
                     amount = cashOut;
                     type = 'expense';
                 }
-            } else if (mapping.amount) { // For default reports with signed amount
-                const parsedAmount = parseFloat(String(row[mapping.amount]).replace(/[^0-9.-]+/g,""));
+            } else if (mapping.amount) {
+                const parsedAmount = parseFloat(String(row[mapping.amount] || '0').replace(/[^0-9.-]+/g,""));
                 if (!isNaN(parsedAmount)) {
                     amount = Math.abs(parsedAmount);
                     type = parsedAmount < 0 ? 'expense' : 'income';
@@ -318,21 +318,19 @@ export function ExcelImporter() {
             }
             
             return { date: finalDate, amount, description, categoryName, tags, type, accountName: accountName ? String(accountName) : null };
-        }).filter(item => !isNaN(item.date.getTime()));
+        }).filter(item => !isNaN(item.date.getTime()) && item.amount > 0);
     }, [rawData, template]);
 
     const processedData = useMemo(() => {
         if (!template) return [];
 
-        const validData = allProcessedData.filter(item => !isNaN(item.amount) && item.amount > 0);
-
         // If there's an account column in the template, filter by selected accounts
         if (TEMPLATES[template].mapping.mode) {
-             return validData.filter(item => item.accountName && selectedAccountsToImport.includes(item.accountName));
+             return allProcessedData.filter(item => item.accountName && selectedAccountsToImport.includes(item.accountName));
         }
         // Otherwise, if an account is selected from the dropdown, return all data
         if (importAccountId) {
-            return validData;
+            return allProcessedData;
         }
         // If no account is selected from the dropdown for a template without an account column, return no data.
         return [];
@@ -854,3 +852,4 @@ export function ExcelImporter() {
     );
 }
 
+    

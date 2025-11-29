@@ -49,7 +49,7 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
 };
 
 
-function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter }: ExpensesFiltersProps & { setDateRangePreset: (preset: string) => void, dateRangePreset: string }) {
+function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter, setPopoverOpen }: ExpensesFiltersProps & { setDateRangePreset: (preset: string) => void, dateRangePreset: string, setPopoverOpen: (open: boolean) => void }) {
     
     const handleDateRangePresetChange = (preset: string) => {
         setDateRangePreset(preset);
@@ -134,14 +134,17 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                 {items.map(item => (
                                     <CommandItem
                                         key={item.id}
-                                        onSelect={() => handleMultiSelectChange(field, item.id)}
+                                        onSelect={() => {
+                                            handleMultiSelectChange(field, item.id);
+                                            setPopoverOpen(false);
+                                        }}
                                         className="flex justify-between cursor-pointer"
                                     >
                                         <div className="flex items-center gap-2">
                                             {'icon' in item && renderIcon(item.icon)}
                                             {item.name}
                                         </div>
-                                         {filters[field].includes(item.id) && <Check className="h-4 w-4" />}
+                                         <Check className={cn("h-4 w-4", filters[field].includes(item.id) ? "opacity-100" : "opacity-0")} />
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
@@ -223,6 +226,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
 
 export function ExpensesFilters({ filters, onFiltersChange, accounts, categories, tags, disableDateFilter }: ExpensesFiltersProps) {
 
+    const [popoverOpen, setPopoverOpen] = useState(false);
     const [dateRangePreset, setDateRangePreset] = useState<string>(() => {
         if(disableDateFilter) return '';
         if(filters.dateRange?.from || filters.dateRange?.to) {
@@ -276,7 +280,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                     </Button>
                 )}
             </div>
-            <Popover>
+            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                      <Button variant="outline" className="relative">
                         <ListFilter className="mr-2 h-4 w-4" />
@@ -295,7 +299,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                             </Button>
                          )}
                     </div>
-                     <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter }} />
+                     <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter, setPopoverOpen }} />
                 </PopoverContent>
             </Popover>
             

@@ -56,7 +56,6 @@ function SettleDebtButton({ debt }: { debt: EnrichedDebt }) {
         
         try {
             await setDocumentNonBlocking(debtRef, { status: 'settled', settledAt: serverTimestamp() }, { merge: true });
-            toast({ title: 'Debt Settled!', description: `The record with ${debt.personName} has been marked as settled.` });
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {

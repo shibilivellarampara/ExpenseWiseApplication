@@ -46,7 +46,6 @@ export function DashboardSettings() {
     const show5YearView = userProfile?.dashboardSettings?.show5YearView ?? false;
     const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? true;
     const transactionViewMode = userProfile?.dashboardSettings?.transactionViewMode || 'normal';
-    const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
 
 
     return (
@@ -63,26 +62,6 @@ export function DashboardSettings() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <CardContent className="p-4 pt-0 space-y-4">
-                         <div className="rounded-lg border p-3 shadow-sm">
-                            <Label>Transaction Grouping</Label>
-                            <p className="text-[0.8rem] text-muted-foreground pb-2">
-                                Group transactions on the main page by day or month.
-                            </p>
-                             <RadioGroup
-                                value={transactionGrouping}
-                                onValueChange={(value) => handleSettingChange('transactionGrouping', value)}
-                                className="flex gap-4"
-                            >
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="daily" id="group-daily" />
-                                    <Label htmlFor="group-daily" className="font-normal">Daily</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="monthly" id="group-monthly" />
-                                    <Label htmlFor="group-monthly" className="font-normal">Monthly</Label>
-                                </div>
-                            </RadioGroup>
-                        </div>
                          <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
                             <div className="space-y-0.5">
                                 <Label>Compact Transaction View</Label>

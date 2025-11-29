@@ -19,7 +19,6 @@ export type UserProfile = {
     show5YearView?: boolean;
     isAiSuggestionEnabled?: boolean;
     transactionViewMode?: 'normal' | 'compact';
-    transactionGrouping?: 'daily' | 'monthly';
   };
   analysisSettings?: {
     excludedCategoryIds?: string[];

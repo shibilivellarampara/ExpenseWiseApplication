@@ -9,7 +9,7 @@ import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "../ui/button";
@@ -17,8 +17,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { generateColorStyle } from '@/lib/utils';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
-import { format, parseISO } from "date-fns";
 
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];
@@ -230,96 +228,6 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
     );
 }
 
-function MonthlyAccordionView({ expenses, isShared, currencySymbol, onDataChange, viewMode, onBadgeClick }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag', id: string) => void; }) {
-    const [openMonth, setOpenMonth] = useState<string | null>(null);
-
-    const groupedByMonth = useMemo(() => {
-        return expenses.reduce((acc, expense) => {
-            const monthKey = format(expense.date, 'yyyy-MM');
-            if (!acc[monthKey]) {
-                acc[monthKey] = [];
-            }
-            acc[monthKey].push(expense);
-            return acc;
-        }, {} as Record<string, EnrichedExpense[]>);
-    }, [expenses]);
-    
-    const sortedMonths = useMemo(() => Object.keys(groupedByMonth).sort((a, b) => b.localeCompare(a)), [groupedByMonth]);
-    
-    return (
-        <Accordion 
-            type="single" 
-            collapsible 
-            className="w-full space-y-2"
-            value={openMonth ?? undefined}
-            onValueChange={setOpenMonth}
-        >
-            {sortedMonths.map(monthKey => {
-                 const monthTransactions = groupedByMonth[monthKey];
-                return (
-                    <AccordionItem value={monthKey} key={monthKey} className="border bg-card rounded-lg">
-                        <AccordionTrigger className="p-4 text-lg font-semibold hover:no-underline">
-                           {format(parseISO(monthKey + '-01'), 'MMMM yyyy')}
-                        </AccordionTrigger>
-                        <AccordionContent>
-                           <div className="border-t">
-                                {monthTransactions.map(expense => (
-                                    <div key={expense.id} className={cn("flex items-center gap-3 group border-b", viewMode === 'compact' ? 'p-2' : 'p-3')}>
-                                        <div className={cn("flex-shrink-0 rounded-full bg-muted flex items-center justify-center", viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8')}>
-                                             {expense.type === 'income' ? <Wallet className={cn("text-green-500", viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4')} /> : RenderIcon(expense.category?.icon, cn('text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
-                                        </div>
-                                         <div className="flex-grow space-y-0.5 w-full min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <div className="font-medium text-sm break-words flex-1 pr-4">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
-                                                <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
-                                                    <div className="flex items-center">
-                                                        <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId} onSaveSuccess={onDataChange}>
-                                                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"> <Edit className="h-3.5 w-3.5" /> </Button>
-                                                        </AddExpenseDialog>
-                                                        <div className={cn('font-bold', viewMode === 'compact' ? 'text-sm' : 'text-base', expense.type === 'income' ? 'text-green-600' : 'text-red-500')}>
-                                                            {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                             <div className="text-xs text-muted-foreground flex items-center gap-3">
-                                                 <div className="font-semibold">{format(expense.date, 'do')}</div>
-                                                <div className="flex items-center gap-1">
-                                                     {isShared && expense.user ? (
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger className="flex items-center gap-1">
-                                                                    <Avatar className="h-4 w-4">
-                                                                        <AvatarImage src={expense.user.photoURL || ''} alt={expense.user.name || 'user'}/>
-                                                                        <AvatarFallback>{getInitials(expense.user.name)}</AvatarFallback>
-                                                                    </Avatar>
-                                                                    <span>{expense.user.name}</span>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent><p>Transaction added by {expense.user.name}</p></TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
-                                                    ) : (<>{RenderIcon(expense.account?.icon, "h-3 w-3")}<span>{expense.account?.name}</span></>
-                                                    )}
-                                                </div>
-                                                <div>{expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                                            </div>
-                                            {viewMode === 'normal' && <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
-                                                {expense.category && (<Badge style={generateColorStyle(expense.category.name)} className="badge-colorful text-xs px-1.5 py-0 cursor-pointer" onClick={() => onBadgeClick?.('category', expense.category!.id)}> {RenderIcon(expense.category.icon, "h-3 w-3")} {expense.category.name} </Badge>)}
-                                                {expense.tags?.map(tag => (<Badge key={tag.id} style={generateColorStyle(tag.name)} className="badge-colorful text-xs px-1.5 py-0 cursor-pointer" onClick={() => onBadgeClick?.('tag', tag.id)}> {RenderIcon(tag.icon, "h-3 w-3")} {tag.name} </Badge>))}
-                                            </div>}
-                                        </div>
-                                    </div>
-                                ))}
-                           </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                );
-            })}
-        </Accordion>
-    );
-}
-
-
 export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, error, onBadgeClick }: ExpensesTableProps) {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -327,8 +235,7 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
   const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
   const viewMode = userProfile?.dashboardSettings?.transactionViewMode || 'normal';
-  const groupingMode = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
-
+  
   if (isLoading) {
     return (
         <div className="bg-card rounded-lg border">
@@ -369,10 +276,6 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
           </div>
        </div>
     );
-  }
-  
-  if (groupingMode === 'monthly') {
-      return <MonthlyAccordionView expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick}/>;
   }
 
   return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick}/>;

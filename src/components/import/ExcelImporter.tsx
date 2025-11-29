@@ -92,6 +92,20 @@ const normalizeName = (name: string): string => {
         .join(' ');
 };
 
+const detectAccountType = (name: string): Account['type'] => {
+    const lowerCaseName = name.toLowerCase();
+    if (lowerCaseName.includes('cc') || lowerCaseName.includes('credit card')) {
+        return 'credit_card';
+    }
+    if (lowerCaseName.includes('wallet')) {
+        return 'wallet';
+    }
+    if (lowerCaseName.includes('bank')) {
+        return 'bank';
+    }
+    return 'bank'; // Default to bank if no keywords match
+};
+
 
 export function ExcelImporter() {
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -138,7 +152,7 @@ export function ExcelImporter() {
         if (allAccountsFromFile.length > 0) {
             const initialMappings: AccountMapping = {};
             allAccountsFromFile.forEach(accName => {
-                initialMappings[accName] = { action: 'create', type: 'bank' };
+                initialMappings[accName] = { action: 'create', type: detectAccountType(accName) };
             });
             setAccountMappings(initialMappings);
             setSelectedAccountsToImport(allAccountsFromFile);
@@ -288,7 +302,7 @@ export function ExcelImporter() {
             let amount = 0;
             let type: 'income' | 'expense' = 'expense';
 
-            if (mapping.amount && mapping.type) {
+            if (mapping.amount && mapping.type && row[mapping.type]) {
                 const parsedAmount = parseFloat(String(row[mapping.amount] || '0').replace(/[^0-9.-]+/g,""));
                 if (!isNaN(parsedAmount)) {
                    amount = Math.abs(parsedAmount);
@@ -734,7 +748,7 @@ export function ExcelImporter() {
                                                     {accountMappings[accName]?.action === 'create' && (
                                                         <Select
                                                             onValueChange={(value) => handleAccountTypeChange(accName, value as Account['type'])}
-                                                            defaultValue="bank"
+                                                            defaultValue={accountMappings[accName]?.type}
                                                         >
                                                             <SelectTrigger>
                                                                 <SelectValue />

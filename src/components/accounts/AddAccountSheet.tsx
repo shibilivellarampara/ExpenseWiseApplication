@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -91,7 +89,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
         defaultValues: {
             name: '',
             type: 'bank',
-            balance: 0,
+            balance: undefined,
             icon: 'Landmark',
             limit: undefined,
             billingDate: undefined,
@@ -120,7 +118,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                 form.reset({
                     name: '',
                     type: 'bank',
-                    balance: 0,
+                    balance: undefined,
                     icon: 'Landmark',
                     limit: undefined,
                     billingDate: undefined,
@@ -146,7 +144,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
         if (values.type === 'credit_card') {
             // For credit cards, the stored balance is the *available credit*.
             // We calculate it from the limit and the user-provided outstanding amount.
-            accountData.balance = (values.limit || 0) - values.balance;
+            accountData.balance = (values.limit || 0) - (values.balance || 0);
         }
 
         if (values.type !== 'credit_card') {
@@ -172,7 +170,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                 await setDocumentNonBlocking(newAccountRef, { ...accountData, id: newAccountRef.id });
                 
                 // Only create initial balance transaction for non-credit card accounts
-                if (values.type !== 'credit_card' && values.balance !== 0) {
+                if (values.type !== 'credit_card' && values.balance) {
                     const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
                     await addDocumentNonBlocking(expensesCol, {
                         userId: user.uid,

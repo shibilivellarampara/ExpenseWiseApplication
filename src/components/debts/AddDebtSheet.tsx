@@ -51,7 +51,7 @@ export function AddDebtSheet({ children, personName }: AddDebtSheetProps) {
         resolver: zodResolver(debtSchema),
         defaultValues: {
             personName: personName || '',
-            amount: 0,
+            amount: undefined,
             type: 'lent',
             description: '',
             date: new Date(),
@@ -62,7 +62,7 @@ export function AddDebtSheet({ children, personName }: AddDebtSheetProps) {
         if(open) {
             form.reset({
                 personName: personName || '',
-                amount: 0,
+                amount: undefined,
                 type: 'lent',
                 description: '',
                 date: new Date(),

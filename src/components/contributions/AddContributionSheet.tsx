@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -68,7 +67,7 @@ export function AddContributionSheet({ children, users }: AddContributionSheetPr
         resolver: zodResolver(contributionSchema),
         defaultValues: {
             description: '',
-            totalAmount: 0,
+            totalAmount: undefined,
             date: new Date(),
             paidById: user?.uid || '',
             contributorIds: user ? [user.uid] : [],
@@ -80,7 +79,7 @@ export function AddContributionSheet({ children, users }: AddContributionSheetPr
         if(open) {
             form.reset({
                 description: '',
-                totalAmount: 0,
+                totalAmount: undefined,
                 date: new Date(),
                 paidById: user?.uid || '',
                 contributorIds: user ? [user.uid] : [],

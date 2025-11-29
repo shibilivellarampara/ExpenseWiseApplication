@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,15 +116,20 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
 
             const group = groups[personName];
             group.records.push(debt);
+            
+            if (debt.status === 'pending') {
+                if (debt.type === 'lent') {
+                    group.netAmount += debt.amount;
+                } else {
+                    group.netAmount -= debt.amount;
+                }
+                group.pendingCount++;
+            }
+
             if (debt.type === 'lent') {
-                group.netAmount += debt.amount;
                 group.lentTotal += debt.amount;
             } else {
-                group.netAmount -= debt.amount;
                 group.borrowedTotal += debt.amount;
-            }
-            if (debt.status === 'pending') {
-                group.pendingCount++;
             }
         });
         

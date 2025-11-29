@@ -257,14 +257,24 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
     return (
         <div className="flex flex-wrap gap-2 items-center">
             <div className="relative flex-grow md:flex-grow-0">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                     type="search"
                     placeholder="Search..."
                     value={filters.searchQuery}
                     onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
-                    className="pl-8 sm:w-[200px] md:w-[250px] lg:w-[300px]"
+                    className="pl-8 pr-8 sm:w-[200px] md:w-[250px] lg:w-[300px]"
                 />
+                 {filters.searchQuery && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground"
+                        onClick={() => onFiltersChange({ ...filters, searchQuery: '' })}
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                )}
             </div>
             <Popover>
                 <PopoverTrigger asChild>
@@ -292,8 +302,8 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
             
             {activeFilterCount > 0 && (
                 <>
-                <Separator orientation="vertical" className="h-6" />
-                <div className="flex flex-wrap gap-1 items-center">
+                <Separator orientation="vertical" className="h-6 hidden md:block" />
+                <div className="flex-wrap gap-1 items-center hidden md:flex">
                     {filters.categories.map(id => {
                         const item = categories.find(c => c.id === id);
                         return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, categories: filters.categories.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
@@ -309,6 +319,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                 </div>
                  <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground h-auto p-1">
                     <FilterX className="h-4 w-4" />
+                    <span className="sr-only">Clear all filters</span>
                 </Button>
                 </>
             )}

@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from 'firebase/firestore';
+import Link from "next/link";
 
 interface ContributionsListProps {
     contributions: EnrichedContribution[];
@@ -88,7 +89,9 @@ export function ContributionsList({ contributions, isLoading }: ContributionsLis
                         </div>
                     </CardContent>
                     <CardFooter>
-                        <Button variant="outline" className="w-full">View Details</Button>
+                         <Button asChild variant="outline" className="w-full">
+                            <Link href={`/shared-expenses/${item.id}`}>View Details</Link>
+                        </Button>
                     </CardFooter>
                 </Card>
             ))}

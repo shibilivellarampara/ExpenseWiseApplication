@@ -1,7 +1,8 @@
 /**
- * @description
- * This ruleset enforces a strict user-ownership model for all data stored under the /users/{userId} path,
- * and defines controlled access for shared expenses.
+ * @fileoverview Firestore Security Rules for Expense Tracker App
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Only the authenticated user who owns a specific data record has read and write access to it.
  *
  * Structure:
  * - /users/{userId} → private user document

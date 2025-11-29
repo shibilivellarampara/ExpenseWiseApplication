@@ -13,6 +13,7 @@ import {
   FileText,
   Info,
   BarChartHorizontal,
+  HandCoins,
 } from 'lucide-react';
 import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
@@ -31,6 +32,7 @@ const baseNavItems = [
   { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
+  { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
   { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
   { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
@@ -88,7 +90,10 @@ export function AppSidebar() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, `users/${user.uid}`);
+  }, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
   
   const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';

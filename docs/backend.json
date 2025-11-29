@@ -20,7 +20,16 @@
           "properties": {
             "isDescriptionRequired": { "type": "boolean", "default": false },
             "isTagRequired": { "type": "boolean", "default": false },
-            "isCategoryRequired": { "type": "boolean", "default": true }
+            "isCategoryRequired": { "type": "boolean", "default": true },
+            "visibleFields": { 
+              "type": "array", 
+              "items": { "type": "string", "enum": ["description", "accountId", "categoryId", "tagIds"] },
+              "description": "An array of fields that should be visible in the transaction form."
+            },
+            "defaultAccountId": {
+              "type": "string",
+              "description": "The ID of the account to be selected by default in new transactions."
+            }
           }
         },
         "dashboardSettings": {
@@ -179,6 +188,24 @@
         }
       },
       "required": ["id", "totalAmount", "description", "userId", "date", "paidById"]
+    },
+    "Debt": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Debt",
+      "type": "object",
+      "description": "Represents a debt or a loan between the user and another person.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "personName": { "type": "string", "description": "The name of the person involved in the transaction." },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["lent", "borrowed"], "description": "'lent' if you gave money, 'borrowed' if you received money." },
+        "description": { "type": "string", "description": "A brief description of the debt." },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "settled"], "default": "pending" },
+        "settledAt": { "type": "string", "format": "date-time", "description": "The date when the debt was settled." }
+      },
+      "required": ["id", "userId", "personName", "amount", "type", "date", "status"]
     }
   },
   "auth": {
@@ -220,6 +247,10 @@
     "/admin/{adminId}": {
         "schema": { "$ref": "#/entities/UserProfile" },
         "description": "Admin access control."
+    },
+    "/users/{userId}/debts/{debtId}": {
+        "schema": { "$ref": "#/entities/Debt" },
+        "description": "Stores debt and loan records for a user."
     }
   }
 }

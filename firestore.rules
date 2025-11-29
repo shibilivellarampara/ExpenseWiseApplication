@@ -38,6 +38,9 @@ service cloud.firestore {
       match /expenses/{expenseId} {
         allow read, write: if isOwner(userId);
       }
+      match /debts/{debtId} {
+        allow read, write: if isOwner(userId);
+      }
     }
     
     // --- Collection Group Rules ---

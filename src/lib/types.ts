@@ -114,3 +114,21 @@ export type EnrichedContribution = Omit<Contribution, 'date' | 'paidById' | 'con
     paidBy?: UserProfile;
     contributors?: (Partial<UserProfile> & { share: number })[];
 }
+
+
+export type Debt = {
+  id: string;
+  userId: string;
+  personName: string;
+  amount: number;
+  type: 'lent' | 'borrowed';
+  description?: string;
+  date: Timestamp;
+  status: 'pending' | 'settled';
+  settledAt?: Timestamp;
+};
+
+export type EnrichedDebt = Omit<Debt, 'date' | 'settledAt'> & {
+  date: Date;
+  settledAt?: Date;
+};

@@ -22,6 +22,7 @@ import {
   FileText,
   Info,
   BarChartHorizontal,
+  HandCoins,
 } from 'lucide-react';
 import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
@@ -43,6 +44,7 @@ const baseNavItems = [
   { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
+  { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
   { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
   { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
@@ -67,11 +69,12 @@ function Notifications() {
     const { user } = useUser();
     const firestore = useFirestore();
 
-    const accountsQuery = useMemoFirebase(() =>
-        user ? query(collection(firestore, `users/${user.uid}/accounts`), where('type', '==', 'credit_card')) : null
-    , [user, firestore]);
+    const accountsQuery = useMemoFirebase(() => {
+        if (!user) return null;
+        return query(collection(firestore, `users/${user.uid}/accounts`), where('type', '==', 'credit_card'));
+    }, [user, firestore]);
 
-    const { data: creditCards } = useCollection<Account>(accountsQuery);
+    const { data: creditCards } = useCollection<Account>(accountsQuery, { skip: !user });
 
     useEffect(() => {
         const generatedNotifications: any[] = [];
@@ -173,7 +176,10 @@ export function AppHeader() {
   const firestore = useFirestore();
   const { openMobile, setOpenMobile } = useSidebar();
 
-  const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';

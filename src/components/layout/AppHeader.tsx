@@ -44,8 +44,8 @@ const baseNavItems = [
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
   { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
-  { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
+  { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
   { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
 ];

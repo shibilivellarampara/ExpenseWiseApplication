@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -9,7 +10,7 @@ import { BarChart as BarChartIcon } from 'lucide-react';
 
 interface SpendingTrendChartProps {
   expenses: EnrichedExpense[];
-  timeRange: 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'all' | 'custom';
+  timeRange: 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'custom';
   currency?: string;
 }
 
@@ -43,7 +44,19 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
                     start = startOfMonth(subMonths(now, 2));
                     end = now;
                     break;
+                case '6-months':
+                     start = startOfMonth(subMonths(now, 5));
+                     end = now;
+                     break;
                 case 'year':
+                     start = startOfYear(now);
+                     end = endOfYear(now);
+                     break;
+                case 'last-year':
+                    const lastYear = subYears(now, 1);
+                    start = startOfYear(lastYear);
+                    end = endOfYear(lastYear);
+                    break;
                 default:
                     start = startOfYear(now);
                     end = endOfYear(now);
@@ -60,7 +73,7 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
                 key: format(day, 'yyyy-MM-dd'),
                 name: format(day, 'd MMM'),
             }));
-        } else if (diffDays <= 90) { // Weekly view
+        } else if (diffDays <= 180) { // Weekly view for up to ~6 months
             intervals = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 }).map(weekStart => ({
                 key: format(weekStart, 'yyyy-ww'),
                 name: `W ${format(weekStart, 'd MMM')}`,
@@ -86,7 +99,7 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
             let key: string;
              if (diffDays <= 31) { // Daily
                 key = format(expense.date, 'yyyy-MM-dd');
-            } else if (diffDays <= 90) { // Weekly
+            } else if (diffDays <= 180) { // Weekly
                 key = format(startOfWeek(expense.date, { weekStartsOn: 1 }), 'yyyy-ww');
             } else if (diffDays <= 366 * 2) { // Monthly
                 key = format(expense.date, 'yyyy-MM');

@@ -7,7 +7,7 @@ import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@
 import { Expense, Category, EnrichedExpense, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, query, where, Timestamp, doc, orderBy } from 'firebase/firestore';
 import { useMemo, useState, useTransition } from "react";
-import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, parse, format } from "date-fns";
+import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, parse, format, subYears } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { analyzeExpenses } from "@/ai/flows/analyze-expenses";
@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AnalysisSettingsContent } from "@/components/profile/AnalysisSettingsContent";
 
 
-type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | 'year' | 'all' | 'custom';
+type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'custom';
 
 export default function AnalysisPage() {
     const { user } = useUser();
@@ -51,8 +51,13 @@ export default function AnalysisPage() {
                 return { dateRangeStart: startOfMonth(lastMonth), dateRangeEnd: endOfMonth(lastMonth) };
             case '3-months':
                 return { dateRangeStart: startOfDay(subMonths(now, 3)), dateRangeEnd: endOfDay(now) };
+            case '6-months':
+                return { dateRangeStart: startOfDay(subMonths(now, 6)), dateRangeEnd: endOfDay(now) };
             case 'year':
                 return { dateRangeStart: startOfYear(now), dateRangeEnd: endOfDay(now) };
+            case 'last-year':
+                const lastYear = subYears(now, 1);
+                return { dateRangeStart: startOfYear(lastYear), dateRangeEnd: endOfYear(lastYear) };
             case 'all':
                 return { dateRangeStart: undefined, dateRangeEnd: undefined };
             case 'custom':
@@ -203,7 +208,9 @@ export default function AnalysisPage() {
                             <SelectItem value="month">This Month</SelectItem>
                             <SelectItem value="last-month">Last Month</SelectItem>
                             <SelectItem value="3-months">Last 3 Months</SelectItem>
+                            <SelectItem value="6-months">Last 6 Months</SelectItem>
                             <SelectItem value="year">This Year</SelectItem>
+                            <SelectItem value="last-year">Last Year</SelectItem>
                             <SelectItem value="all">All Time</SelectItem>
                             <SelectItem value="custom">Custom Range</SelectItem>
                         </SelectContent>

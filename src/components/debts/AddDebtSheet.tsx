@@ -24,7 +24,7 @@ import { Loader2 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
-import {DateTimePicker} from '../expenses/AddExpenseDialog';
+import { DateTimePicker } from '../DateTimePicker';
 
 const debtSchema = z.object({
   personName: z.string().min(1, 'Person\'s name is required.'),

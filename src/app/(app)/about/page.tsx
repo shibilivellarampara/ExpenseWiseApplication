@@ -10,6 +10,14 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.3.7",
+        date: "2024-08-18",
+        changes: [
+            { type: 'Fix', description: "Addressed various build errors and permission issues to improve application stability." },
+            { type: 'Feature', description: "Added a dedicated popup for credit card payment history on the Accounts page." },
+        ]
+    },
+    {
         version: "1.3.6",
         date: "2024-08-17",
         changes: [

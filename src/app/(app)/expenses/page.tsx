@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -6,54 +7,28 @@ import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, orderBy, query, doc, where, Timestamp }from "firebase/firestore";
-import { Plus, Minus, ArrowLeft } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
-import { endOfDay, startOfDay, parse } from 'date-fns';
+import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { PageHeader } from "@/components/PageHeader";
 
-export default function AllExpensesPage() {
+export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const mainContentRef = useRef<HTMLElement | null>(null);
     const [isScrolled, setIsScrolled] = useState(false);
-    const searchParams = useSearchParams();
 
-    // Initialize filters from URL search params
-    const getInitialFilters = (): Filters => {
-        const accountsParam = searchParams.get('accounts');
-        const typeParam = searchParams.get('type');
-        const categoriesParam = searchParams.get('categories');
-        const dateFromParam = searchParams.get('dateFrom');
-        const dateToParam = searchParams.get('dateTo');
-
-        const parseDate = (dateStr: string | null) => {
-            if (!dateStr) return undefined;
-            try {
-                return parse(dateStr, 'yyyy-MM-dd', new Date());
-            } catch {
-                return undefined;
-            }
-        };
-
-        const parsedType = (typeParam === 'income' || typeParam === 'expense') ? typeParam : 'all';
-
-        return {
-            dateRange: { from: parseDate(dateFromParam), to: parseDate(dateToParam) },
-            type: parsedType,
-            categories: categoriesParam ? categoriesParam.split(',') : [],
-            accounts: accountsParam ? accountsParam.split(',') : [],
-            tags: [],
-            searchQuery: '',
-        };
-    };
-
-    const [filters, setFilters] = useState(getInitialFilters);
+    const [filters, setFilters] = useState<Filters>({
+        dateRange: { from: undefined, to: undefined },
+        type: 'all',
+        categories: [],
+        accounts: [],
+        tags: [],
+        searchQuery: '',
+    });
     
     const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
 
@@ -208,21 +183,11 @@ export default function AllExpensesPage() {
 
     return (
         <div className="w-full space-y-4 pb-24">
-            <PageHeader
-                title="All Transactions"
-                description="A complete list of all your recorded transactions.">
-                <Button variant="outline" asChild>
-                    <Link href="/transactions">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Monthly View
-                    </Link>
-                </Button>
-            </PageHeader>
             <div className={cn(
-                "sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out pt-4",
+                "sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out",
                  isScrolled && "pb-3 shadow-sm rounded-b-lg"
             )}>
-                <div className="space-y-4">
+                <div className="space-y-4 pt-4">
                      <ExpensesSummary 
                         expenses={filteredAndEnrichedExpenses}
                         currency={userProfile?.defaultCurrency} 

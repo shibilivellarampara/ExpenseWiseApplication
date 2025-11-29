@@ -1,8 +1,9 @@
+
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
 import { usePathname, useRouter } from 'next/navigation';
-import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -30,16 +31,16 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { Account, SharedExpense } from '@/lib/types';
-import { collection, query, where } from 'firebase/firestore';
+import { Account, SharedExpense, UserProfile } from '@/lib/types';
+import { collection, query, where, doc } from 'firebase/firestore';
 
 
 const appVersion = pkg.version;
 
 
-const navItems = [
+const baseNavItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
-  { href: '/transactions', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
+  { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
   { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
@@ -56,7 +57,7 @@ const getPageTitle = (path: string): string => {
     if (path.startsWith('/shared-expenses/') && path.split('/').length > 2) {
         return "Shared Space";
     }
-    const navItem = navItems.find(item => path.startsWith(item.href));
+    const navItem = baseNavItems.find(item => path.startsWith(item.href) || (item.special_href && path.startsWith(item.special_href)));
     return navItem ? navItem.label : 'Dashboard';
 }
 
@@ -168,8 +169,24 @@ function Notifications() {
 
 export function AppHeader() {
   const pathname = usePathname();
-  const { isUserLoading } = useUser();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const { openMobile, setOpenMobile } = useSidebar();
+
+  const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+  const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
+  
+  const navItems = baseNavItems.map(item => {
+    if (item.label === 'Transactions') {
+      const href = transactionGrouping === 'monthly' ? item.href : item.special_href;
+      const isActive = transactionGrouping === 'monthly' ? pathname.startsWith(item.href) : pathname.startsWith(item.special_href!);
+      return { ...item, href: href!, isActive: isActive };
+    }
+    return { ...item, isActive: pathname.startsWith(item.href) };
+  });
+
   const pageTitle = getPageTitle(pathname);
     
   return (
@@ -197,7 +214,7 @@ export function AppHeader() {
                                     href={item.href}
                                     icon={item.icon}
                                     label={item.label}
-                                    isActive={pathname.startsWith(item.href)}
+                                    isActive={item.isActive}
                                 />
                             ))}
                         </nav>

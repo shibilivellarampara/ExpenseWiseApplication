@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -19,12 +20,15 @@ import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { useSidebar } from '../ui/sidebar';
 import pkg from '../../../package.json';
+import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { UserProfile } from '@/lib/types';
+import { doc } from 'firebase/firestore';
 const appVersion = pkg.version;
 
 
-const navItems = [
+const baseNavItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
-  { href: '/transactions', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
+  { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
   { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
@@ -81,6 +85,22 @@ export const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { hr
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+  
+  const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
+
+  const navItems = baseNavItems.map(item => {
+    if (item.label === 'Transactions') {
+      const href = transactionGrouping === 'monthly' ? item.href : item.special_href;
+      const isActive = transactionGrouping === 'monthly' ? pathname.startsWith(item.href) : pathname.startsWith(item.special_href!);
+      return { ...item, href: href!, isActive: isActive };
+    }
+    return { ...item, isActive: pathname.startsWith(item.href) };
+  });
 
   return (
     <aside className="w-56 flex-shrink-0 hidden md:block">
@@ -95,7 +115,7 @@ export function AppSidebar() {
                     href={item.href}
                     icon={item.icon}
                     label={item.label}
-                    isActive={pathname.startsWith(item.href)}
+                    isActive={item.isActive}
                     disabled={(item as any).disabled}
                 />
                 ))}

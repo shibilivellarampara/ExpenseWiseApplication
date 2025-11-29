@@ -1,4 +1,5 @@
 
+
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -19,6 +20,7 @@ export type UserProfile = {
     show5YearView?: boolean;
     isAiSuggestionEnabled?: boolean;
     transactionViewMode?: 'normal' | 'compact';
+    transactionGrouping?: 'daily' | 'monthly';
   };
   analysisSettings?: {
     excludedCategoryIds?: string[];

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -10,7 +11,6 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export default function TransactionsByMonthPage() {
     const { user } = useUser();
@@ -50,11 +50,7 @@ export default function TransactionsByMonthPage() {
             <PageHeader
                 title="Transactions by Month"
                 description="Select a month to view all its transactions."
-            >
-                <Button variant="outline" asChild>
-                    <Link href="/expenses">View All Transactions</Link>
-                </Button>
-            </PageHeader>
+            />
 
             {isLoading ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

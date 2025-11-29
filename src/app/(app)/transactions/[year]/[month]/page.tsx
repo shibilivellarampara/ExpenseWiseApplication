@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -165,7 +166,7 @@ export default function MonthlyExpensesPage() {
                 <Button variant="outline" asChild>
                     <Link href="/transactions">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to All Months
+                        Back to Months
                     </Link>
                 </Button>
             </PageHeader>

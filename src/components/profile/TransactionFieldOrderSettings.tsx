@@ -148,25 +148,6 @@ export function TransactionFieldOrderSettings() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <CardContent className="p-4 pt-0 space-y-4">
-                        <div className="space-y-2">
-                             <Label>Default Account for New Transactions</Label>
-                             <Select value={defaultAccountId || 'none'} onValueChange={(value) => setDefaultAccountId(value === 'none' ? undefined : value)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a default account" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">None</SelectItem>
-                                    {accounts?.map(account => (
-                                        <SelectItem key={account.id} value={account.id}>
-                                            <div className="flex items-center gap-2">
-                                                {renderIcon(account.icon)}
-                                                {account.name}
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
                          <div className="space-y-2">
                              <Label>Field Visibility & Order</Label>
                             {orderedFields.map((field, index) => {
@@ -179,33 +160,56 @@ export function TransactionFieldOrderSettings() {
                                 return (
                                     <div
                                         key={field}
-                                        className="flex items-center gap-2 p-2 rounded-md border bg-background"
+                                        className="flex items-center gap-2 p-2 rounded-md border bg-background flex-wrap"
                                     >
-                                        <span className="flex-1 font-medium">{fieldLabels[field]}</span>
+                                        <span className="flex-1 font-medium min-w-[80px]">{fieldLabels[field]}</span>
                                         
-                                        {isToggleable && (
-                                            <div className="flex items-center gap-2">
-                                                <Label htmlFor={`visible-${field}`} className="text-xs text-muted-foreground">Show</Label>
-                                                <Switch
-                                                    id={`visible-${field}`}
-                                                    checked={visibleFields.includes(field)}
-                                                    onCheckedChange={(checked) => handleVisibilityChange(field, checked)}
-                                                />
+                                        {field === 'accountId' ? (
+                                             <div className="flex-1 min-w-[150px]">
+                                                <Select value={defaultAccountId || 'none'} onValueChange={(value) => setDefaultAccountId(value === 'none' ? undefined : value)}>
+                                                    <SelectTrigger className="h-8 text-xs">
+                                                        <SelectValue placeholder="Set default..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="none">No Default</SelectItem>
+                                                        {accounts?.map(account => (
+                                                            <SelectItem key={account.id} value={account.id}>
+                                                                <div className="flex items-center gap-2">
+                                                                    {renderIcon(account.icon)}
+                                                                    {account.name}
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
-                                        )}
-                                        
-                                        {requiredKey && (
-                                            <div className="flex items-center gap-2">
-                                                <Label htmlFor={`required-${field}`} className="text-xs text-muted-foreground">Required</Label>
-                                                <Switch
-                                                    id={`required-${field}`}
-                                                    checked={requiredFields[requiredKey]}
-                                                    onCheckedChange={(value) => handleRequiredChange(requiredKey!, value)}
-                                                />
-                                            </div>
+                                        ) : (
+                                            <>
+                                                {isToggleable && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Switch
+                                                            id={`visible-${field}`}
+                                                            checked={visibleFields.includes(field)}
+                                                            onCheckedChange={(checked) => handleVisibilityChange(field, checked)}
+                                                        />
+                                                        <Label htmlFor={`visible-${field}`} className="text-xs text-muted-foreground">Show</Label>
+                                                    </div>
+                                                )}
+                                                
+                                                {requiredKey && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Switch
+                                                            id={`required-${field}`}
+                                                            checked={requiredFields[requiredKey]}
+                                                            onCheckedChange={(value) => handleRequiredChange(requiredKey!, value)}
+                                                        />
+                                                        <Label htmlFor={`required-${field}`} className="text-xs text-muted-foreground">Required</Label>
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
 
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-1 ml-auto">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"

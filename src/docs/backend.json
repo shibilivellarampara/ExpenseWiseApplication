@@ -25,6 +25,10 @@
               "type": "array", 
               "items": { "type": "string", "enum": ["description", "accountId", "categoryId", "tagIds"] },
               "description": "An array of fields that should be visible in the transaction form."
+            },
+            "defaultAccountId": {
+              "type": "string",
+              "description": "The ID of the account to be selected by default in new transactions."
             }
           }
         },

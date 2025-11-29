@@ -493,9 +493,11 @@ function ExpenseForm({
                                             <ScrollArea className="h-48">
                                                 <CommandGroup>
                                                     <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} onOpenChange={(open) => !open && setTagDropdownOpen(true)}>
-                                                        <CommandItem onSelect={() => {}} className="flex items-center gap-2 text-primary cursor-pointer">
-                                                            <PlusCircle className="h-4 w-4" />
-                                                            Create new tag
+                                                        <CommandItem onSelect={(e) => { e.preventDefault(); }}>
+                                                            <div className="flex items-center gap-2 text-primary cursor-pointer w-full">
+                                                                <PlusCircle className="h-4 w-4" />
+                                                                Create new tag
+                                                            </div>
                                                         </CommandItem>
                                                     </QuickAddItemDialog>
                                                     {tags.map(tag => (
@@ -863,12 +865,12 @@ function useExpenseForm({
             type,
             amount: '' as any,
             date: new Date(),
-            accountId: '',
+            accountId: userProfile?.expenseFieldSettings?.defaultAccountId || '',
             categoryId: '',
             description: '',
             tagIds: [],
         }
-    }, [initialType, sharedExpenseId]);
+    }, [initialType, sharedExpenseId, userProfile]);
     
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),

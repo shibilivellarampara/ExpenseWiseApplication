@@ -3,9 +3,9 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
-import { doc } from "firebase/firestore";
-import { UserProfile } from "@/lib/types";
+import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, useCollection } from "@/firebase";
+import { doc, collection, query, where } from "firebase/firestore";
+import { UserProfile, Account } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { useState, useEffect } from "react";
@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
+import * as LucideIcons from 'lucide-react';
 
 const allPossibleFields: FieldKey[] = ['description', 'accountId', 'categoryId', 'tagIds'];
 
@@ -35,8 +37,14 @@ export function TransactionFieldOrderSettings() {
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, `users/${user.uid}`) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
 
+    const accountsQuery = useMemoFirebase(() => 
+        user ? query(collection(firestore, `users/${user.uid}/accounts`), where('status', '==', 'active')) : null, 
+    [user, firestore]);
+    const { data: accounts } = useCollection<Account>(accountsQuery);
+
     const [orderedFields, setOrderedFields] = useState<FieldKey[]>(allPossibleFields);
     const [visibleFields, setVisibleFields] = useState<FieldKey[]>(allPossibleFields);
+    const [defaultAccountId, setDefaultAccountId] = useState<string | undefined>(undefined);
 
     const [requiredFields, setRequiredFields] = useState({
         isDescriptionRequired: false,
@@ -49,6 +57,7 @@ export function TransactionFieldOrderSettings() {
         if (userProfile) {
             setOrderedFields(userProfile.transactionFieldOrder || allPossibleFields);
             setVisibleFields(userProfile.expenseFieldSettings?.visibleFields || allPossibleFields);
+            setDefaultAccountId(userProfile.expenseFieldSettings?.defaultAccountId);
             setRequiredFields({
                 isDescriptionRequired: userProfile.expenseFieldSettings?.isDescriptionRequired ?? false,
                 isTagRequired: userProfile.expenseFieldSettings?.isTagRequired ?? false,
@@ -91,6 +100,7 @@ export function TransactionFieldOrderSettings() {
                 ...userProfile?.expenseFieldSettings,
                 ...requiredFields,
                 visibleFields: visibleFields,
+                defaultAccountId: defaultAccountId,
             },
         };
         
@@ -105,6 +115,12 @@ export function TransactionFieldOrderSettings() {
                 setIsSaving(false);
             });
     };
+    
+    const renderIcon = (iconName: string | undefined, className?: string) => {
+        if (!iconName) return <LucideIcons.Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
+        const IconComponent = (LucideIcons as any)[iconName];
+        return IconComponent ? <IconComponent className={cn("mr-2 h-4 w-4", className)} /> : <LucideIcons.Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
+    };
 
     if (isProfileLoading) {
         return <Card><CardHeader><CardTitle>Loading settings...</CardTitle></CardHeader></Card>;
@@ -114,7 +130,8 @@ export function TransactionFieldOrderSettings() {
                         JSON.stringify(visibleFields.sort()) !== JSON.stringify((userProfile?.expenseFieldSettings?.visibleFields || allPossibleFields).sort()) ||
                         requiredFields.isCategoryRequired !== (userProfile?.expenseFieldSettings?.isCategoryRequired ?? true) ||
                         requiredFields.isDescriptionRequired !== (userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false) ||
-                        requiredFields.isTagRequired !== (userProfile?.expenseFieldSettings?.isTagRequired ?? false);
+                        requiredFields.isTagRequired !== (userProfile?.expenseFieldSettings?.isTagRequired ?? false) ||
+                        defaultAccountId !== (userProfile?.expenseFieldSettings?.defaultAccountId);
 
 
     return (
@@ -131,7 +148,27 @@ export function TransactionFieldOrderSettings() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <CardContent className="p-4 pt-0 space-y-4">
+                        <div className="space-y-2">
+                             <Label>Default Account for New Transactions</Label>
+                             <Select value={defaultAccountId || 'none'} onValueChange={(value) => setDefaultAccountId(value === 'none' ? undefined : value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a default account" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {accounts?.map(account => (
+                                        <SelectItem key={account.id} value={account.id}>
+                                            <div className="flex items-center gap-2">
+                                                {renderIcon(account.icon)}
+                                                {account.name}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                          <div className="space-y-2">
+                             <Label>Field Visibility & Order</Label>
                             {orderedFields.map((field, index) => {
                                 const isToggleable = field !== 'accountId';
                                 let requiredKey: keyof typeof requiredFields | null = null;

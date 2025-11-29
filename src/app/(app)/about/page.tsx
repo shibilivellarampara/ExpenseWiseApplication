@@ -10,6 +10,13 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.3.8",
+        date: "2024-08-19",
+        changes: [
+            { type: 'Feature', description: "Application version updated." },
+        ]
+    },
+    {
         version: "1.3.7",
         date: "2024-08-18",
         changes: [

@@ -29,7 +29,7 @@ interface ExpensesTableProps {
   onBadgeClick?: (type: 'category' | 'tag', id: string) => void;
 }
 
-const renderIcon = (iconName: string | undefined, className?: string) => {
+const RenderIcon = (iconName: string | undefined, className?: string) => {
   if (!iconName) return <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
   const IconComponent = (LucideIcons as any)[iconName];
   return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
@@ -137,7 +137,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                     )}>
                                         {row.expense.type === 'income' ?
                                             <Wallet className={cn("text-green-500", viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4')} /> :
-                                            renderIcon(row.expense.category?.icon, cn('text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))
+                                            RenderIcon(row.expense.category?.icon, cn('text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))
                                         }
                                     </div>
                                     <div className="flex-grow space-y-0.5 w-full min-w-0">
@@ -185,7 +185,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                     </TooltipProvider>
                                                 ) : (
                                                     <>
-                                                        {renderIcon(row.expense.account?.icon, "h-3 w-3")}
+                                                        {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
                                                         <span>{row.expense.account?.name}</span>
                                                     </>
                                                 )}
@@ -202,7 +202,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                     className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
                                                     onClick={() => onBadgeClick?.('category', row.expense.category!.id)}
                                                 >
-                                                    {renderIcon(row.expense.category.icon, "h-3 w-3")}
+                                                    {RenderIcon(row.expense.category.icon, "h-3 w-3")}
                                                     {row.expense.category.name}
                                                 </Badge>
                                             )}
@@ -214,7 +214,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                     className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
                                                     onClick={() => onBadgeClick?.('tag', tag.id)}
                                                 >
-                                                    {renderIcon(tag.icon, "h-3 w-3")}
+                                                    {RenderIcon(tag.icon, "h-3 w-3")}
                                                     {tag.name}
                                                 </Badge>
                                             )})}
@@ -266,7 +266,7 @@ function MonthlyAccordionView({ expenses, isShared, currencySymbol, onDataChange
                                 {monthTransactions.map(expense => (
                                     <div key={expense.id} className={cn("flex items-center gap-3 group border-b", viewMode === 'compact' ? 'p-2' : 'p-3')}>
                                         <div className={cn("flex-shrink-0 rounded-full bg-muted flex items-center justify-center", viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8')}>
-                                             {expense.type === 'income' ? <Wallet className={cn("text-green-500", viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4')} /> : renderIcon(expense.category?.icon, cn('text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
+                                             {expense.type === 'income' ? <Wallet className={cn("text-green-500", viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4')} /> : RenderIcon(expense.category?.icon, cn('text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
                                         </div>
                                          <div className="flex-grow space-y-0.5 w-full min-w-0">
                                             <div className="flex justify-between items-start">
@@ -298,15 +298,14 @@ function MonthlyAccordionView({ expenses, isShared, currencySymbol, onDataChange
                                                                 <TooltipContent><p>Transaction added by {expense.user.name}</p></TooltipContent>
                                                             </Tooltip>
                                                         </TooltipProvider>
-                                                    ) : (
-                                                        <><renderIcon icon={expense.account?.icon} className="h-3 w-3" /><span>{expense.account?.name}</span></>
+                                                    ) : (<>{RenderIcon(expense.account?.icon, "h-3 w-3")}<span>{expense.account?.name}</span></>
                                                     )}
                                                 </div>
                                                 <div>{expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                             </div>
                                             {viewMode === 'normal' && <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
-                                                {expense.category && (<Badge style={generateColorStyle(expense.category.name)} className="badge-colorful text-xs px-1.5 py-0 cursor-pointer" onClick={() => onBadgeClick?.('category', expense.category!.id)}> {renderIcon(expense.category.icon, "h-3 w-3")} {expense.category.name} </Badge>)}
-                                                {expense.tags?.map(tag => (<Badge key={tag.id} style={generateColorStyle(tag.name)} className="badge-colorful text-xs px-1.5 py-0 cursor-pointer" onClick={() => onBadgeClick?.('tag', tag.id)}> {renderIcon(tag.icon, "h-3 w-3")} {tag.name} </Badge>))}
+                                                {expense.category && (<Badge style={generateColorStyle(expense.category.name)} className="badge-colorful text-xs px-1.5 py-0 cursor-pointer" onClick={() => onBadgeClick?.('category', expense.category!.id)}> {RenderIcon(expense.category.icon, "h-3 w-3")} {expense.category.name} </Badge>)}
+                                                {expense.tags?.map(tag => (<Badge key={tag.id} style={generateColorStyle(tag.name)} className="badge-colorful text-xs px-1.5 py-0 cursor-pointer" onClick={() => onBadgeClick?.('tag', tag.id)}> {RenderIcon(tag.icon, "h-3 w-3")} {tag.name} </Badge>))}
                                             </div>}
                                         </div>
                                     </div>

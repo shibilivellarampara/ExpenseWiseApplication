@@ -1,4 +1,5 @@
 
+
 {
   "entities": {
     "UserProfile": {
@@ -19,7 +20,12 @@
           "properties": {
             "isDescriptionRequired": { "type": "boolean", "default": false },
             "isTagRequired": { "type": "boolean", "default": false },
-            "isCategoryRequired": { "type": "boolean", "default": true }
+            "isCategoryRequired": { "type": "boolean", "default": true },
+            "visibleFields": { 
+              "type": "array", 
+              "items": { "type": "string", "enum": ["description", "accountId", "categoryId", "tagIds"] },
+              "description": "An array of fields that should be visible in the transaction form."
+            }
           }
         },
         "dashboardSettings": {
@@ -29,7 +35,8 @@
             "useCategoryColorsInChart": { "type": "boolean", "default": true },
             "show5YearView": { "type": "boolean", "default": false },
             "isAiSuggestionEnabled": { "type": "boolean", "default": true },
-            "transactionViewMode": { "type": "string", "enum": ["normal", "compact"], "default": "normal" }
+            "transactionViewMode": { "type": "string", "enum": ["normal", "compact"], "default": "normal" },
+            "transactionGrouping": { "type": "string", "enum": ["daily", "monthly"], "default": "daily" }
           }
         },
         "analysisSettings": {
@@ -45,6 +52,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Whether to show the 'Adjusted for Analysis' summary."
+                },
+                "showNormalTotal": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to show the 'Normal Total' summary."
                 }
             }
         },

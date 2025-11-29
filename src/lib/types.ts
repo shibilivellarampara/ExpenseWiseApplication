@@ -14,6 +14,7 @@ export type UserProfile = {
     isDescriptionRequired?: boolean;
     isTagRequired?: boolean;
     isCategoryRequired?: boolean;
+    visibleFields?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
   };
   dashboardSettings?: {
     useCategoryColorsInChart?: boolean;

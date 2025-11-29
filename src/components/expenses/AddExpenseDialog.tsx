@@ -375,6 +375,7 @@ function ExpenseForm({
     const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
 
     const fieldOrder = userProfile?.transactionFieldOrder || ['description', 'accountId', 'categoryId', 'tagIds'];
+    const visibleFields = userProfile?.expenseFieldSettings?.visibleFields || ['description', 'accountId', 'categoryId', 'tagIds'];
 
     const formFields: Record<string, React.ReactNode> = {
         description: (
@@ -608,7 +609,7 @@ function ExpenseForm({
                     )}
                 />
                 
-                 {fieldOrder.map(fieldName => formFields[fieldName])}
+                 {fieldOrder.filter(f => visibleFields.includes(f)).map(fieldName => formFields[fieldName])}
             </form>
         </Form>
     );

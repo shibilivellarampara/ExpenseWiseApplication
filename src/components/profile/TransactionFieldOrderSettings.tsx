@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
+
+const allPossibleFields: FieldKey[] = ['description', 'accountId', 'categoryId', 'tagIds'];
 
 const fieldLabels: Record<string, string> = {
     description: 'Description',
@@ -32,7 +35,9 @@ export function TransactionFieldOrderSettings() {
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, `users/${user.uid}`) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
 
-    const [fields, setFields] = useState<FieldKey[]>(['description', 'accountId', 'categoryId', 'tagIds']);
+    const [orderedFields, setOrderedFields] = useState<FieldKey[]>(allPossibleFields);
+    const [visibleFields, setVisibleFields] = useState<FieldKey[]>(allPossibleFields);
+
     const [requiredFields, setRequiredFields] = useState({
         isDescriptionRequired: false,
         isTagRequired: false,
@@ -42,7 +47,8 @@ export function TransactionFieldOrderSettings() {
 
     useEffect(() => {
         if (userProfile) {
-            setFields(userProfile.transactionFieldOrder || ['description', 'accountId', 'categoryId', 'tagIds']);
+            setOrderedFields(userProfile.transactionFieldOrder || allPossibleFields);
+            setVisibleFields(userProfile.expenseFieldSettings?.visibleFields || allPossibleFields);
             setRequiredFields({
                 isDescriptionRequired: userProfile.expenseFieldSettings?.isDescriptionRequired ?? false,
                 isTagRequired: userProfile.expenseFieldSettings?.isTagRequired ?? false,
@@ -52,14 +58,14 @@ export function TransactionFieldOrderSettings() {
     }, [userProfile]);
 
     const handleMoveField = (index: number, direction: 'up' | 'down') => {
-        const newFields = [...fields];
+        const newFields = [...orderedFields];
         const newIndex = direction === 'up' ? index - 1 : index + 1;
 
         if (newIndex >= 0 && newIndex < newFields.length) {
             const temp = newFields[index];
             newFields[index] = newFields[newIndex];
             newFields[newIndex] = temp;
-            setFields(newFields);
+            setOrderedFields(newFields);
         }
     };
 
@@ -67,13 +73,25 @@ export function TransactionFieldOrderSettings() {
         setRequiredFields(prev => ({ ...prev, [key]: value }));
     };
 
+    const handleVisibilityChange = (field: FieldKey, isVisible: boolean) => {
+        if (isVisible) {
+            setVisibleFields(prev => [...prev, field]);
+        } else {
+            setVisibleFields(prev => prev.filter(f => f !== field));
+        }
+    };
+
     const handleSaveChanges = () => {
         if (!userProfileRef) return;
         setIsSaving(true);
         
         const settingsData = {
-            transactionFieldOrder: fields,
-            expenseFieldSettings: requiredFields,
+            transactionFieldOrder: orderedFields,
+            expenseFieldSettings: {
+                ...userProfile?.expenseFieldSettings,
+                ...requiredFields,
+                visibleFields: visibleFields,
+            },
         };
         
         setDocumentNonBlocking(userProfileRef, settingsData, { merge: true })
@@ -92,7 +110,8 @@ export function TransactionFieldOrderSettings() {
         return <Card><CardHeader><CardTitle>Loading settings...</CardTitle></CardHeader></Card>;
     }
 
-    const isChanged = JSON.stringify(fields) !== JSON.stringify(userProfile?.transactionFieldOrder || ['description', 'accountId', 'categoryId', 'tagIds']) ||
+    const isChanged = JSON.stringify(orderedFields) !== JSON.stringify(userProfile?.transactionFieldOrder || allPossibleFields) ||
+                        JSON.stringify(visibleFields.sort()) !== JSON.stringify((userProfile?.expenseFieldSettings?.visibleFields || allPossibleFields).sort()) ||
                         requiredFields.isCategoryRequired !== (userProfile?.expenseFieldSettings?.isCategoryRequired ?? true) ||
                         requiredFields.isDescriptionRequired !== (userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false) ||
                         requiredFields.isTagRequired !== (userProfile?.expenseFieldSettings?.isTagRequired ?? false);
@@ -105,7 +124,7 @@ export function TransactionFieldOrderSettings() {
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>
                             <h3 className="text-base font-semibold font-headline">Form Customization</h3>
-                            <CardDescription className="text-sm">Reorder fields and set which are required.</CardDescription>
+                            <CardDescription className="text-sm">Customize transaction form fields.</CardDescription>
                         </div>
                         <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
                     </CardHeader>
@@ -113,8 +132,8 @@ export function TransactionFieldOrderSettings() {
                 <CollapsibleContent>
                     <CardContent className="p-4 pt-0 space-y-4">
                          <div className="space-y-2">
-                            {fields.map((field, index) => {
-                                const isToggleable = field !== 'accountId'; // Account is always required
+                            {orderedFields.map((field, index) => {
+                                const isToggleable = field !== 'accountId';
                                 let requiredKey: keyof typeof requiredFields | null = null;
                                 if (field === 'description') requiredKey = 'isDescriptionRequired';
                                 if (field === 'categoryId') requiredKey = 'isCategoryRequired';
@@ -127,7 +146,18 @@ export function TransactionFieldOrderSettings() {
                                     >
                                         <span className="flex-1 font-medium">{fieldLabels[field]}</span>
                                         
-                                        {isToggleable && requiredKey && (
+                                        {isToggleable && (
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor={`visible-${field}`} className="text-xs text-muted-foreground">Show</Label>
+                                                <Switch
+                                                    id={`visible-${field}`}
+                                                    checked={visibleFields.includes(field)}
+                                                    onCheckedChange={(checked) => handleVisibilityChange(field, checked)}
+                                                />
+                                            </div>
+                                        )}
+                                        
+                                        {requiredKey && (
                                             <div className="flex items-center gap-2">
                                                 <Label htmlFor={`required-${field}`} className="text-xs text-muted-foreground">Required</Label>
                                                 <Switch
@@ -153,7 +183,7 @@ export function TransactionFieldOrderSettings() {
                                                 size="icon"
                                                 className="h-7 w-7"
                                                 onClick={() => handleMoveField(index, 'down')}
-                                                disabled={index === fields.length - 1}
+                                                disabled={index === orderedFields.length - 1}
                                             >
                                                 <ArrowDown className="h-4 w-4" />
                                             </Button>

@@ -9,7 +9,7 @@ import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking 
 import { doc, serverTimestamp } from 'firebase/firestore';
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, ChevronDown, User, ArrowRight, ArrowLeft } from "lucide-react";
+import { Check, Loader2, ChevronDown, User, ArrowRight, ArrowLeft, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
 import {
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Separator } from "../ui/separator";
+import { AddDebtSheet } from "./AddDebtSheet";
 
 interface DebtsListProps {
     debts: EnrichedDebt[];
@@ -162,10 +163,10 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
             {groupedDebts.map(group => (
                 <Card key={group.personName}>
                     <Collapsible>
-                        <CollapsibleTrigger asChild>
-                             <div className="flex items-center p-4 cursor-pointer hover:bg-muted/50 rounded-t-lg">
-                                <div className="flex-1">
-                                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                         <div className="flex items-center p-4">
+                            <CollapsibleTrigger asChild>
+                                 <div className="flex-1 flex items-center gap-4 cursor-pointer hover:bg-muted/50 rounded-md -m-2 p-2">
+                                     <h3 className="text-lg font-semibold flex items-center gap-2">
                                         <User className="h-5 w-5" />
                                         {group.personName}
                                     </h3>
@@ -178,14 +179,15 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                                             <span className="text-muted-foreground">All settled up</span>
                                         )}
                                     </div>
+                                    <ChevronDown className="h-5 w-5 ml-auto transition-transform [&[data-state=open]]:-rotate-180" />
                                 </div>
-                                 <div className="text-right text-xs text-muted-foreground">
-                                    <div>Total Lent: <span className="font-medium text-green-600">{currencySymbol}{group.lentTotal.toFixed(2)}</span></div>
-                                     <div>Total Borrowed: <span className="font-medium text-red-500">{currencySymbol}{group.borrowedTotal.toFixed(2)}</span></div>
-                                </div>
-                                <ChevronDown className="h-5 w-5 ml-4 transition-transform [&[data-state=open]]:-rotate-180" />
-                            </div>
-                        </CollapsibleTrigger>
+                            </CollapsibleTrigger>
+                             <AddDebtSheet personName={group.personName}>
+                                <Button variant="ghost" size="icon" className="ml-2 h-8 w-8">
+                                    <PlusCircle className="h-5 w-5" />
+                                </Button>
+                            </AddDebtSheet>
+                        </div>
                         <CollapsibleContent>
                             <div className="border-t">
                                 {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (

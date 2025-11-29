@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -38,9 +37,10 @@ type DebtFormData = z.infer<typeof debtSchema>;
 
 interface AddDebtSheetProps {
     children: React.ReactNode;
+    personName?: string;
 }
 
-export function AddDebtSheet({ children }: AddDebtSheetProps) {
+export function AddDebtSheet({ children, personName }: AddDebtSheetProps) {
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +50,7 @@ export function AddDebtSheet({ children }: AddDebtSheetProps) {
     const form = useForm<DebtFormData>({
         resolver: zodResolver(debtSchema),
         defaultValues: {
-            personName: '',
+            personName: personName || '',
             amount: 0,
             type: 'lent',
             description: '',
@@ -61,14 +61,14 @@ export function AddDebtSheet({ children }: AddDebtSheetProps) {
     useEffect(() => {
         if(open) {
             form.reset({
-                personName: '',
+                personName: personName || '',
                 amount: 0,
                 type: 'lent',
                 description: '',
                 date: new Date(),
             });
         }
-    }, [open, form]);
+    }, [open, form, personName]);
 
     async function onSubmit(values: DebtFormData) {
         setIsLoading(true);
@@ -151,7 +151,7 @@ export function AddDebtSheet({ children }: AddDebtSheetProps) {
                                 <FormItem>
                                     <FormLabel>Person's Name</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g., John Doe" {...field} />
+                                        <Input placeholder="e.g., John Doe" {...field} disabled={!!personName} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

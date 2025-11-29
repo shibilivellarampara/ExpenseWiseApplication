@@ -136,7 +136,6 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                         key={item.id}
                                         onSelect={() => {
                                             handleMultiSelectChange(field, item.id);
-                                            setPopoverOpen(false);
                                         }}
                                         className="flex justify-between cursor-pointer"
                                     >

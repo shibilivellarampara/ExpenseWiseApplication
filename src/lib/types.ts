@@ -1,5 +1,3 @@
-
-
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 

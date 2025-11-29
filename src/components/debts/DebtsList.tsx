@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,9 +9,9 @@ import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking 
 import { doc, serverTimestamp } from 'firebase/firestore';
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, ChevronDown, User, ArrowRight, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,12 +22,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import { Separator } from "../ui/separator";
 
 interface DebtsListProps {
     debts: EnrichedDebt[];
     isLoading?: boolean;
 }
+
+interface GroupedDebt {
+    personName: string;
+    netAmount: number;
+    lentTotal: number;
+    borrowedTotal: number;
+    pendingCount: number;
+    records: EnrichedDebt[];
+}
+
 
 function SettleDebtButton({ debt }: { debt: EnrichedDebt }) {
     const { user } = useUser();
@@ -54,9 +65,8 @@ function SettleDebtButton({ debt }: { debt: EnrichedDebt }) {
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button size="sm" disabled={isSettling}>
-                    {isSettling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                    Settle Up
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" disabled={isSettling}>
+                    {isSettling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -84,8 +94,40 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
-    const pendingDebts = debts.filter(d => d.status === 'pending');
-    const settledDebts = debts.filter(d => d.status === 'settled');
+    const groupedDebts = useMemo((): GroupedDebt[] => {
+        if (!debts) return [];
+
+        const groups: { [key: string]: GroupedDebt } = {};
+
+        debts.forEach(debt => {
+            const personName = debt.personName;
+            if (!groups[personName]) {
+                groups[personName] = {
+                    personName,
+                    netAmount: 0,
+                    lentTotal: 0,
+                    borrowedTotal: 0,
+                    pendingCount: 0,
+                    records: [],
+                };
+            }
+
+            const group = groups[personName];
+            group.records.push(debt);
+            if (debt.type === 'lent') {
+                group.netAmount += debt.amount;
+                group.lentTotal += debt.amount;
+            } else {
+                group.netAmount -= debt.amount;
+                group.borrowedTotal += debt.amount;
+            }
+            if (debt.status === 'pending') {
+                group.pendingCount++;
+            }
+        });
+        
+        return Object.values(groups).sort((a, b) => b.netAmount - a.netAmount);
+    }, [debts]);
 
     if (isLoading) {
         return (
@@ -100,9 +142,6 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                            <Skeleton className="h-8 w-1/4 mb-2" />
                            <Skeleton className="h-4 w-full" />
                         </CardContent>
-                        <CardFooter>
-                            <Skeleton className="h-10 w-full" />
-                        </CardFooter>
                     </Card>
                 ))}
             </div>
@@ -119,70 +158,63 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     }
 
     return (
-        <div className="space-y-8">
-            <div>
-                <h2 className="text-xl font-headline mb-4">Pending</h2>
-                 {pendingDebts.length === 0 ? (
-                    <p className="text-muted-foreground">No pending debts or dues. All settled up!</p>
-                ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {pendingDebts.map(item => (
-                             <Card key={item.id} className={cn(
-                                item.type === 'lent' ? 'border-green-500/50' : 'border-red-500/50'
-                             )}>
-                                <CardHeader>
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <CardTitle>{item.personName}</CardTitle>
-                                            <CardDescription>
-                                                {item.type === 'lent' ? `Owes you` : `You owe`}
-                                            </CardDescription>
-                                        </div>
-                                         <Badge variant={item.type === 'lent' ? 'default': 'destructive'}>{item.type}</Badge>
+        <div className="space-y-4">
+            {groupedDebts.map(group => (
+                <Card key={group.personName}>
+                    <Collapsible>
+                        <CollapsibleTrigger asChild>
+                             <div className="flex items-center p-4 cursor-pointer hover:bg-muted/50 rounded-t-lg">
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                                        <User className="h-5 w-5" />
+                                        {group.personName}
+                                    </h3>
+                                    <div className="text-sm">
+                                        {group.netAmount > 0 ? (
+                                            <span className="text-green-600">Owes you {currencySymbol}{group.netAmount.toFixed(2)}</span>
+                                        ) : group.netAmount < 0 ? (
+                                            <span className="text-red-500">You owe {currencySymbol}{Math.abs(group.netAmount).toFixed(2)}</span>
+                                        ) : (
+                                            <span className="text-muted-foreground">All settled up</span>
+                                        )}
                                     </div>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                    <p className={cn("text-3xl font-bold", item.type === 'lent' ? 'text-green-600' : 'text-red-600')}>{currencySymbol}{item.amount.toFixed(2)}</p>
-                                    <p className="text-sm text-muted-foreground">{item.description}</p>
-                                    <p className="text-xs text-muted-foreground">On: {item.date.toLocaleDateString()}</p>
-                                </CardContent>
-                                <CardFooter>
-                                    <SettleDebtButton debt={item} />
-                                </CardFooter>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </div>
-            <div>
-                 <h2 className="text-xl font-headline mb-4">Settled</h2>
-                  {settledDebts.length === 0 ? (
-                     <p className="text-muted-foreground">No settled records yet.</p>
-                 ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {settledDebts.map(item => (
-                             <Card key={item.id} className="bg-muted/50">
-                                 <CardHeader>
-                                    <div className="flex justify-between items-start">
+                                </div>
+                                 <div className="text-right text-xs text-muted-foreground">
+                                    <div>Total Lent: <span className="font-medium text-green-600">{currencySymbol}{group.lentTotal.toFixed(2)}</span></div>
+                                     <div>Total Borrowed: <span className="font-medium text-red-500">{currencySymbol}{group.borrowedTotal.toFixed(2)}</span></div>
+                                </div>
+                                <ChevronDown className="h-5 w-5 ml-4 transition-transform [&[data-state=open]]:-rotate-180" />
+                            </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                            <div className="border-t">
+                                {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
+                                    <div key={record.id} className="flex items-center gap-4 px-4 py-3 border-b text-sm">
                                         <div>
-                                            <CardTitle className="text-muted-foreground">{item.personName}</CardTitle>
-                                            <CardDescription>
-                                                {item.type === 'lent' ? `Owed you` : `You owed`}
-                                            </CardDescription>
+                                            {record.type === 'lent' ? 
+                                                <ArrowRight className="h-5 w-5 text-green-500" /> : 
+                                                <ArrowLeft className="h-5 w-5 text-red-500" />}
                                         </div>
-                                         <Badge variant="secondary">Settled</Badge>
+                                        <div className="flex-grow">
+                                            <p className="font-medium">{record.description || (record.type === 'lent' ? 'Lent' : 'Borrowed')}</p>
+                                            <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="text-right">
+                                             <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
+                                                 {currencySymbol}{record.amount.toFixed(2)}
+                                             </p>
+                                             <Badge variant={record.status === 'pending' ? 'destructive' : 'secondary'}>{record.status}</Badge>
+                                        </div>
+                                        <div className="w-8">
+                                            {record.status === 'pending' && <SettleDebtButton debt={record} />}
+                                        </div>
                                     </div>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                     <p className="text-3xl font-bold text-muted-foreground line-through">{currencySymbol}{item.amount.toFixed(2)}</p>
-                                      <p className="text-sm text-muted-foreground">{item.description}</p>
-                                     {item.settledAt && <p className="text-xs text-muted-foreground">Settled on: {item.settledAt.toLocaleDateString()}</p>}
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                 )}
-            </div>
+                                ))}
+                            </div>
+                        </CollapsibleContent>
+                    </Collapsible>
+                </Card>
+            ))}
         </div>
-    )
+    );
 }

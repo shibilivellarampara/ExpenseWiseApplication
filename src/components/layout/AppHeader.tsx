@@ -74,7 +74,7 @@ function Notifications() {
         return query(collection(firestore, `users/${user.uid}/accounts`), where('type', '==', 'credit_card'));
     }, [user, firestore]);
 
-    const { data: creditCards } = useCollection<Account>(accountsQuery, { skip: !user });
+    const { data: creditCards } = useCollection<Account>(accountsQuery);
 
     useEffect(() => {
         const generatedNotifications: any[] = [];

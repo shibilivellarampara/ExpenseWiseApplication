@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -69,7 +70,7 @@ export default function ReportsPage() {
                 dataToExport = enriched.map(tx => ({
                     'Date': tx.date.toLocaleDateString(),
                     'Time': tx.date.toLocaleTimeString(),
-                    'Old Description': tx.description,
+                    'Description': tx.description,
                     'Category': tx.category?.name || 'N/A',
                     'ACCOUNT': tx.account?.name || 'N/A',
                     'CASH IN': tx.type === 'income' ? tx.amount : '',

@@ -59,7 +59,7 @@ const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, descri
     },
     'enhanced_report': {
         name: 'Enhanced template',
-        mapping: { date: 'Date', time: 'Time', description: 'Old Description', category: 'Category', tags: 'Tags', cashIn: 'CASH IN', cashOut: 'CASH OUT', mode: 'ACCOUNT'},
+        mapping: { date: 'Date', time: 'Time', description: 'Description', category: 'Category', tags: 'Tags', cashIn: 'CASH IN', cashOut: 'CASH OUT', mode: 'ACCOUNT'},
         description: "For detailed sheets with separate cash in/out."
     },
 };

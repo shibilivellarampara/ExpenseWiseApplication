@@ -493,7 +493,7 @@ function ExpenseForm({
                                             <ScrollArea className="h-48">
                                                 <CommandGroup>
                                                     <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} onOpenChange={(open) => !open && setTagDropdownOpen(true)}>
-                                                        <CommandItem onSelect={(e) => { e.preventDefault(); }}>
+                                                        <CommandItem onSelect={(value) => { value; }}>
                                                             <div className="flex items-center gap-2 text-primary cursor-pointer w-full">
                                                                 <PlusCircle className="h-4 w-4" />
                                                                 Create new tag

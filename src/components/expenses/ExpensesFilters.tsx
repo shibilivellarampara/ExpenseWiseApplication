@@ -317,7 +317,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                         return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, tags: filters.tags.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
                     })}
                 </div>
-                 <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground h-auto p-1">
+                 <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground h-auto p-1 hidden md:inline-flex">
                     <FilterX className="h-4 w-4" />
                     <span className="sr-only">Clear all filters</span>
                 </Button>

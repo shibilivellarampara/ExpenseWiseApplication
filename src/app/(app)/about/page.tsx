@@ -10,6 +10,14 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.3.10",
+        date: "2024-08-21",
+        changes: [
+            { type: 'Feature', description: "Added the ability to delete a person and all their associated records from the Debts & Dues page." },
+            { type: 'Fix', description: "The 'Save and New' button in the transaction form now retains the date from the previous entry to make back-dating easier." },
+        ]
+    },
+    {
         version: "1.3.9",
         date: "2024-08-20",
         changes: [

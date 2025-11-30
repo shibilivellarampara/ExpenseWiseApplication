@@ -825,7 +825,7 @@ function useExpenseForm({
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
     
     // Function to get clean default values
-    const getNewFormValues = useCallback(() => {
+    const getNewFormValues = useCallback((keepDate?: Date) => {
         let type: 'income' | 'expense' = 'expense';
         if (sharedExpenseId) {
             type = 'expense'; // Shared expenses are always expenses
@@ -836,7 +836,7 @@ function useExpenseForm({
         return {
             type,
             amount: undefined,
-            date: new Date(),
+            date: keepDate || new Date(),
             accountId: userProfile?.expenseFieldSettings?.defaultAccountId || '',
             categoryId: '',
             description: '',
@@ -1040,8 +1040,8 @@ function useExpenseForm({
         }
     }
     
-    const resetForm = useCallback(() => {
-        const newValues = getNewFormValues();
+    const resetForm = useCallback((keepDate?: Date) => {
+        const newValues = getNewFormValues(keepDate);
         form.reset(newValues);
     }, [form, getNewFormValues]);
 
@@ -1056,7 +1056,8 @@ function useExpenseForm({
     const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
         const success = await handleTransactionSave(values);
         if (success) {
-            resetForm();
+            // Pass the date from the just-submitted form to the reset function
+            resetForm(values.date);
         }
     });
 
@@ -1129,3 +1130,5 @@ function useExpenseForm({
       tags: tags || []
     };
 }
+
+    

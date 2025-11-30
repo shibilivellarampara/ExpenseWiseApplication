@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { EnrichedDebt, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
-import { doc, serverTimestamp } from 'firebase/firestore';
+import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from "@/firebase";
+import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, ChevronDown, User, ArrowRight, ArrowLeft, PlusCircle } from "lucide-react";
+import { Check, Loader2, ChevronDown, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
 import {
@@ -81,6 +82,69 @@ function SettleDebtButton({ debt }: { debt: EnrichedDebt }) {
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={handleSettle}>
                          {isSettling ? <Loader2 className="animate-spin" /> : "Yes, settle it"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}
+
+function DeletePersonButton({ personName }: { personName: string }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { toast } = useToast();
+
+    const handleDelete = async () => {
+        if (!user || !firestore) return;
+        setIsDeleting(true);
+
+        try {
+            const batch = writeBatch(firestore);
+            const debtsQuery = query(collection(firestore, `users/${user.uid}/debts`), where('personName', '==', personName));
+            const snapshot = await getDocs(debtsQuery);
+            
+            if (snapshot.empty) {
+                toast({ variant: "destructive", title: "No records found for this person." });
+                setIsDeleting(false);
+                return;
+            }
+
+            snapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
+            
+            toast({
+                title: "Person Removed",
+                description: `All debt records for "${personName}" have been deleted.`,
+            });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: "Error", description: error.message });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    return (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="ml-1 h-8 w-8 text-destructive/70 hover:text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete "{personName}" and all associated debt records. This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                        {isDeleting ? <Loader2 className="animate-spin" /> : `Yes, delete ${personName}`}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -192,6 +256,7 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                                     <PlusCircle className="h-5 w-5" />
                                 </Button>
                             </AddDebtSheet>
+                            <DeletePersonButton personName={group.personName} />
                         </div>
                         <CollapsibleContent>
                             <div className="border-t">

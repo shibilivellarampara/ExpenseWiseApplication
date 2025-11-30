@@ -576,6 +576,7 @@ function ExpenseForm({
                                 id="amount"
                                 type="number"
                                 {...field}
+                                value={field.value ?? ''}
                             />
                             <FormMessage />
                         </FormItem>
@@ -834,7 +835,7 @@ function useExpenseForm({
 
         return {
             type,
-            amount: '' as any,
+            amount: undefined,
             date: new Date(),
             accountId: userProfile?.expenseFieldSettings?.defaultAccountId || '',
             categoryId: '',
@@ -1040,7 +1041,8 @@ function useExpenseForm({
     }
     
     const resetForm = useCallback(() => {
-        form.reset(getNewFormValues());
+        const newValues = getNewFormValues();
+        form.reset(newValues);
     }, [form, getNewFormValues]);
 
 

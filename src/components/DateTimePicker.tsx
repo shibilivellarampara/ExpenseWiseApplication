@@ -11,13 +11,17 @@ export function DateTimePicker({ field }: { field: any }) {
     };
 
     // Format the date from the form state into 'YYYY-MM-DDTHH:mm' for the input
-    const formatForInput = (date: Date): string => {
+    const formatForInput = (date: Date | null | undefined): string => {
         if (!date) return '';
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
+        // Ensure it's a valid date before formatting
+        if (isNaN(new Date(date).getTime())) return '';
+
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const day = d.getDate().toString().padStart(2, '0');
+        const hours = d.getHours().toString().padStart(2, '0');
+        const minutes = d.getMinutes().toString().padStart(2, '0');
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 

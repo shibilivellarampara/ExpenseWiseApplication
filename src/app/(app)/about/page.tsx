@@ -10,6 +10,17 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.4.0",
+        date: "2024-08-22",
+        changes: [
+            { type: 'Feature', description: "Made account names in the transaction list clickable to automatically filter by that account." },
+            { type: 'Feature', description: "Enhanced the 'Save and New' button to retain both the Date and Account from the previous transaction." },
+            { type: 'Feature', description: "Moved the 'Merge' button in Category and Tag settings to be more intuitive and accessible next to the selection checkboxes." },
+            { type: 'UI', description: "Replaced the 'Settle Debt' checkmark icon with a more descriptive 'Handshake' icon." },
+            { type: 'Fix', description: "Resolved a timezone bug that could cause date/time entries to be saved on the previous day." },
+        ]
+    },
+    {
         version: "1.3.10",
         date: "2024-08-21",
         changes: [
@@ -233,7 +244,7 @@ export default function AboutPage() {
                             <ul className="space-y-2">
                                 {entry.changes.map((change, index) => (
                                     <li key={index} className="flex items-start gap-3">
-                                        <Badge variant={change.type === 'Feature' ? 'default' : 'secondary'}>
+                                        <Badge variant={change.type === 'Feature' || change.type === 'UI' ? 'default' : 'secondary'}>
                                             {change.type}
                                         </Badge>
                                         <p className="text-sm text-foreground">{change.description}</p>

@@ -24,7 +24,7 @@ interface ExpensesTableProps {
   isShared?: boolean;
   onDataChange: () => void;
   error?: string | null;
-  onBadgeClick?: (type: 'category' | 'tag', id: string) => void;
+  onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void;
 }
 
 const RenderIcon = (iconName: string | undefined, className?: string) => {
@@ -47,7 +47,7 @@ const formatAmount = (amount: number) => {
 
 type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense: EnrichedExpense };
 
-function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, viewMode, onBadgeClick }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag', id: string) => void; }) {
+function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, viewMode, onBadgeClick }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; }) {
     
     const allRows = useMemo(() => {
         const rows: VirtualRow[] = [];
@@ -182,10 +182,10 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                         </Tooltip>
                                                     </TooltipProvider>
                                                 ) : (
-                                                    <>
+                                                    <button className="flex items-center gap-1 cursor-pointer hover:underline" onClick={() => onBadgeClick?.('account', row.expense.account!.id)}>
                                                         {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
                                                         <span>{row.expense.account?.name}</span>
-                                                    </>
+                                                    </button>
                                                 )}
                                             </div>
                                             <div>

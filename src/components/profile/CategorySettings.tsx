@@ -221,25 +221,33 @@ export function CategorySettings() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <CardContent className="space-y-4 pt-0 p-4">
-                        {selectedIds.length > 1 && (
-                             <MergeItemsDialog
-                                open={showMergeDialog}
-                                onOpenChange={setShowMergeDialog}
-                                items={categories?.filter(c => selectedIds.includes(c.id)) || []}
-                                itemType="Category"
-                                onMerge={handleMerge}
-                                isSaving={isSaving}
-                            >
-                                <Button variant="outline" size="sm">
-                                    <Merge className="mr-2 h-4 w-4" />
-                                    Merge {selectedIds.length} Categories
-                                </Button>
-                            </MergeItemsDialog>
-                        )}
                         {isLoading ? (
                             <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
                         ) : (
                             <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="select-all-categories"
+                                        checked={selectedIds.length === sortedCategories.length && sortedCategories.length > 0}
+                                        onCheckedChange={(checked) => setSelectedIds(checked ? sortedCategories.map(c => c.id) : [])}
+                                    />
+                                    <label htmlFor="select-all-categories" className="text-sm font-medium">Select All</label>
+                                    {selectedIds.length > 1 && (
+                                        <MergeItemsDialog
+                                            open={showMergeDialog}
+                                            onOpenChange={setShowMergeDialog}
+                                            items={categories?.filter(c => selectedIds.includes(c.id)) || []}
+                                            itemType="Category"
+                                            onMerge={handleMerge}
+                                            isSaving={isSaving}
+                                        >
+                                            <Button variant="ghost" size="sm" className="h-auto px-2 py-1">
+                                                <Merge className="mr-2 h-4 w-4" />
+                                                Merge
+                                            </Button>
+                                        </MergeItemsDialog>
+                                    )}
+                                </div>
                                 {sortedCategories.map((item) => (
                                     <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
                                          <Checkbox

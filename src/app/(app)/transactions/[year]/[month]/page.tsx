@@ -143,18 +143,27 @@ export default function MonthlyExpensesPage() {
         setFilters({ ...newFilters, dateRange: filters.dateRange });
     };
 
-     const handleBadgeClick = (type: 'category' | 'tag', id: string) => {
+     const handleBadgeClick = (type: 'category' | 'tag' | 'account', id: string) => {
         if (type === 'category') {
             setFilters(prev => ({
                 ...prev,
                 categories: [id],
-                tags: [], // Clear other filters for simplicity
+                tags: [],
+                accounts: [],
             }));
-        } else {
+        } else if (type === 'tag'){
             setFilters(prev => ({
                 ...prev,
                 tags: [id],
-                categories: [], // Clear other filters for simplicity
+                categories: [],
+                accounts: [],
+            }));
+        } else { // account
+             setFilters(prev => ({
+                ...prev,
+                accounts: [id],
+                categories: [],
+                tags: [],
             }));
         }
     };

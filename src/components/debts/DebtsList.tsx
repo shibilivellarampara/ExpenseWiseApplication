@@ -11,7 +11,7 @@ import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking,
 import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, ChevronDown, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from "lucide-react";
+import { Handshake, Loader2, ChevronDown, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
 import {
@@ -68,7 +68,7 @@ function SettleDebtButton({ debt }: { debt: EnrichedDebt }) {
         <AlertDialog>
             <AlertDialogTrigger asChild>
                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0" disabled={isSettling}>
-                    {isSettling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    {isSettling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Handshake className="h-4 w-4" />}
                 </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

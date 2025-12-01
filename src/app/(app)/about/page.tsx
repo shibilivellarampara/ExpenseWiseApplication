@@ -10,6 +10,15 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.4.1",
+        date: "2024-08-23",
+        changes: [
+            { type: 'Feature', description: "Added a secure way to store and view non-sensitive credit card details (nickname, last 4 digits, etc.) to easily identify cards." },
+            { type: 'UI', description: "Made credit card icons on the Accounts page clickable to directly open the new card details view." },
+            { type: 'Feature', description: "Enhanced the Excel importer to automatically match and map accounts from your file to existing accounts in the app, with the option to override." },
+        ]
+    },
+    {
         version: "1.4.0",
         date: "2024-08-22",
         changes: [
@@ -258,3 +267,5 @@ export default function AboutPage() {
         </div>
     );
 }
+
+    

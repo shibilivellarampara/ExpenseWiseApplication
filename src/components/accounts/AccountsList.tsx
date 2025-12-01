@@ -34,6 +34,17 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
   return IconComponent ? <IconComponent className={cn("h-6 w-6 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-6 w-6 text-muted-foreground", className)} />;
 };
 
+// Helper function to get the ordinal suffix for a day
+const getOrdinalSuffix = (day: number) => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1:  return "st";
+      case 2:  return "nd";
+      case 3:  return "rd";
+      default: return "th";
+    }
+};
+
 function CloseAccountButton({ account }: { account: Account }) {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -308,7 +319,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                             {item.billingDate && (
                                                 <div className="flex items-center gap-1">
                                                     <CalendarDays className="h-4 w-4" />
-                                                    <span>Bills on {item.billingDate}</span>
+                                                    <span>Bills on {item.billingDate}{getOrdinalSuffix(item.billingDate)}</span>
                                                 </div>
                                             )}
                                         </div>

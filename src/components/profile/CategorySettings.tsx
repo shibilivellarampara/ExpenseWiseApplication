@@ -232,21 +232,6 @@ export function CategorySettings() {
                                         onCheckedChange={(checked) => setSelectedIds(checked ? sortedCategories.map(c => c.id) : [])}
                                     />
                                     <label htmlFor="select-all-categories" className="text-sm font-medium">Select All</label>
-                                    {selectedIds.length > 1 && (
-                                        <MergeItemsDialog
-                                            open={showMergeDialog}
-                                            onOpenChange={setShowMergeDialog}
-                                            items={categories?.filter(c => selectedIds.includes(c.id)) || []}
-                                            itemType="Category"
-                                            onMerge={handleMerge}
-                                            isSaving={isSaving}
-                                        >
-                                            <Button variant="ghost" size="sm" className="h-auto px-2 py-1">
-                                                <Merge className="mr-2 h-4 w-4" />
-                                                Merge
-                                            </Button>
-                                        </MergeItemsDialog>
-                                    )}
                                 </div>
                                 {sortedCategories.map((item) => (
                                     <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
@@ -274,7 +259,6 @@ export function CategorySettings() {
                                                     value={editingItem.name}
                                                     onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
                                                     className="flex-1"
-                                                    autoFocus
                                                     disabled={SYSTEM_CATEGORIES.includes(item.name)}
                                                 />
                                                 <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
@@ -300,6 +284,23 @@ export function CategorySettings() {
                                         )}
                                     </div>
                                 ))}
+                            </div>
+                        )}
+                         {selectedIds.length > 1 && (
+                            <div className="pt-2">
+                                <MergeItemsDialog
+                                    open={showMergeDialog}
+                                    onOpenChange={setShowMergeDialog}
+                                    items={categories?.filter(c => selectedIds.includes(c.id)) || []}
+                                    itemType="Category"
+                                    onMerge={handleMerge}
+                                    isSaving={isSaving}
+                                >
+                                    <Button variant="outline" size="sm">
+                                        <Merge className="mr-2 h-4 w-4" />
+                                        Merge {selectedIds.length} selected categories
+                                    </Button>
+                                </MergeItemsDialog>
                             </div>
                         )}
                         <div className="flex items-center gap-2 pt-4">

@@ -217,21 +217,6 @@ export function TagSettings() {
                                         onCheckedChange={(checked) => setSelectedIds(checked ? sortedItems.map(c => c.id) : [])}
                                     />
                                     <label htmlFor="select-all-tags" className="text-sm font-medium">Select All</label>
-                                    {selectedIds.length > 1 && (
-                                        <MergeItemsDialog
-                                            open={showMergeDialog}
-                                            onOpenChange={setShowMergeDialog}
-                                            items={items?.filter(c => selectedIds.includes(c.id)) || []}
-                                            itemType="Tag"
-                                            onMerge={handleMerge}
-                                            isSaving={isSaving}
-                                        >
-                                            <Button variant="ghost" size="sm" className="h-auto px-2 py-1">
-                                                <Merge className="mr-2 h-4 w-4" />
-                                                Merge
-                                            </Button>
-                                        </MergeItemsDialog>
-                                    )}
                                 </div>
                                 {sortedItems.map((item) => (
                                     <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
@@ -259,7 +244,6 @@ export function TagSettings() {
                                                     value={editingItem.name}
                                                     onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
                                                     className="flex-1"
-                                                    autoFocus
                                                 />
                                                 <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
                                                     <Check className="h-4 w-4" />
@@ -284,6 +268,23 @@ export function TagSettings() {
                                         )}
                                     </div>
                                 ))}
+                            </div>
+                        )}
+                         {selectedIds.length > 1 && (
+                            <div className="pt-2">
+                                <MergeItemsDialog
+                                    open={showMergeDialog}
+                                    onOpenChange={setShowMergeDialog}
+                                    items={items?.filter(c => selectedIds.includes(c.id)) || []}
+                                    itemType="Tag"
+                                    onMerge={handleMerge}
+                                    isSaving={isSaving}
+                                >
+                                    <Button variant="outline" size="sm">
+                                        <Merge className="mr-2 h-4 w-4" />
+                                        Merge {selectedIds.length} selected tags
+                                    </Button>
+                                </MergeItemsDialog>
                             </div>
                         )}
                         <div className="flex items-center gap-2 pt-4">

@@ -308,7 +308,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                             {item.billingDate && (
                                                 <div className="flex items-center gap-1">
                                                     <CalendarDays className="h-4 w-4" />
-                                                    <span>Bills on the {item.billingDate}th</span>
+                                                    <span>Bills on {item.billingDate}</span>
                                                 </div>
                                             )}
                                         </div>

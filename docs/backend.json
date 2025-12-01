@@ -102,6 +102,20 @@
       },
       "required": ["id", "userId", "type", "amount", "date", "accountId"]
     },
+     "CardDetails": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CardDetails",
+      "type": "object",
+      "description": "Stores non-sensitive details for a credit card.",
+      "properties": {
+        "cardNickname": { "type": "string", "description": "A user-defined nickname for the card." },
+        "last4Digits": { "type": "string", "description": "The last four digits of the card number." },
+        "cardholderName": { "type": "string", "description": "The name of the cardholder as it appears on the card." },
+        "expiryMonth": { "type": "number", "description": "The expiration month of the card (1-12)." },
+        "expiryYear": { "type": "number", "description": "The expiration year of the card (e.g., 2028)." },
+        "network": { "type": "string", "enum": ["visa", "mastercard", "amex", "discover", "rupay", "other"], "description": "The card network." }
+      }
+    },
     "Account": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Account",
@@ -116,7 +130,8 @@
         "limit": { "type": "number", "description": "Credit limit for credit cards." },
         "billingDate": { "type": "number", "description": "Day of the month for credit card billing cycle (1-31)." },
         "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the account." }
+        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the account." },
+        "cardDetails": { "$ref": "#/entities/CardDetails" }
       },
       "required": ["id", "userId", "name", "type", "balance", "icon", "status"]
     },

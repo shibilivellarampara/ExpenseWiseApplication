@@ -9,7 +9,7 @@ import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from "@/firebase";
 import { doc, setDoc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 import { Progress } from "../ui/progress";
-import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle, Merge } from "lucide-react";
+import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle, Merge, CreditCardIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
@@ -22,6 +22,8 @@ import { Separator } from "../ui/separator";
 import { getCurrencySymbol } from "@/lib/currencies";
 import Link from "next/link";
 import { Badge } from "../ui/badge";
+import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogDescription } from "../ui/dialog";
+import Image from "next/image";
 
 interface AccountsListProps {
     accounts: Account[];
@@ -203,6 +205,46 @@ function InactiveAccountsSection({ accounts, title }: { accounts: Account[], tit
 }
 
 
+const CardDisplay = ({ account }: { account: Account }) => {
+    const details = account.cardDetails;
+    const network = details?.network || 'other';
+
+    return (
+        <div className="w-full max-w-sm mx-auto rounded-xl bg-gradient-to-br from-primary/80 to-primary/60 p-6 text-primary-foreground shadow-2xl relative overflow-hidden">
+            <div className="absolute top-4 right-4 h-10 w-16">
+                 <Image src={`/card-networks/${network}.svg`} alt={network} width={64} height={40} className="object-contain" />
+            </div>
+            <div className="absolute -bottom-16 -right-16 w-32 h-32 rounded-full bg-white/10"></div>
+            <div className="absolute -top-8 -left-12 w-24 h-24 rounded-full bg-white/5"></div>
+
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <span className="text-lg font-semibold tracking-wider">{details?.cardNickname || account.name}</span>
+                </div>
+                <div className="text-center font-mono text-2xl tracking-widest">
+                    <span>•••• •••• •••• {details?.last4Digits || '••••'}</span>
+                </div>
+                <div className="flex justify-between items-end">
+                    <div className="text-sm">
+                        <p className="font-light tracking-wider">Card Holder</p>
+                        <p className="font-medium tracking-wide">{details?.cardholderName || 'N/A'}</p>
+                    </div>
+                     <div className="text-sm text-right">
+                        <p className="font-light tracking-wider">Expires</p>
+                        <p className="font-medium tracking-wide">
+                            {details?.expiryMonth && details?.expiryYear ? 
+                                `${String(details.expiryMonth).padStart(2, '0')}/${String(details.expiryYear).slice(-2)}`
+                                : 'MM/YY'
+                            }
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+
 export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsListProps) {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -292,7 +334,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                         {creditCards.length > 0 ? creditCards.map(item => {
                             const limit = item.limit || 0;
                             const availableCredit = item.balance;
-                            const outstandingAmount = limit - availableCredit;
+                            const outstandingAmount = limit > 0 ? limit - availableCredit : -availableCredit;
                             const availablePercentage = limit > 0 ? (availableCredit / limit) * 100 : 0;
                             const isPaid = outstandingAmount <= 0;
                             
@@ -341,6 +383,21 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                            <CreditCardIcon className="mr-2 h-4 w-4" />
+                                                            View Card
+                                                        </DropdownMenuItem>
+                                                    </DialogTrigger>
+                                                    <DialogContent>
+                                                        <DialogHeader>
+                                                            <DialogTitle>Card Details</DialogTitle>
+                                                            <DialogDescription>Non-sensitive card information.</DialogDescription>
+                                                        </DialogHeader>
+                                                        <CardDisplay account={item} />
+                                                    </DialogContent>
+                                                </Dialog>
                                                 <AddAccountSheet accountToEdit={item}>
                                                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                                         <Edit className="mr-2 h-4 w-4" />

@@ -39,6 +39,15 @@ export type Category = {
   userId: string;
 };
 
+export type CardDetails = {
+  cardNickname?: string;
+  last4Digits?: string;
+  cardholderName?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+  network?: 'visa' | 'mastercard' | 'amex' | 'discover' | 'rupay' | 'other';
+};
+
 export type Account = {
   id: string;
   name: string;
@@ -49,6 +58,7 @@ export type Account = {
   icon: string; // lucide-react icon name
   userId: string;
   status: 'active' | 'inactive';
+  cardDetails?: CardDetails;
 }
 
 export type Tag = {

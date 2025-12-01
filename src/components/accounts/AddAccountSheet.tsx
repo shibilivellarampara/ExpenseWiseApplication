@@ -108,7 +108,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     type: accountToEdit.type,
                     // For CC, 'balance' in Firestore is available credit. We show outstanding to user.
                     balance: accountToEdit.type === 'credit_card' 
-                        ? (accountToEdit.limit || 0) - accountToEdit.balance
+                        ? parseFloat(((accountToEdit.limit || 0) - accountToEdit.balance).toFixed(2))
                         : accountToEdit.balance,
                     icon: accountToEdit.icon,
                     limit: accountToEdit.limit,
@@ -260,9 +260,8 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                         <FormItem>
                                             <FormLabel>Credit Limit</FormLabel>
                                             <FormControl>
-                                                <Input type="number" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
+                                                <Input type="number" step="0.01" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
                                             </FormControl>
-                                            {!isEditMode && <FormDescription>Set to 0 if you plan to set it later with a "Credit Limit Upgrade" transaction.</FormDescription>}
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -278,9 +277,8 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                         {accountType === 'credit_card' ? 'Current Outstanding Amount' : 'Current Balance'}
                                     </FormLabel>
                                     <FormControl>
-                                        <Input type="number" placeholder="0.00" {...field} disabled={isEditMode} />
+                                        <Input type="number" step="0.01" placeholder="0.00" {...field} disabled={isEditMode} />
                                     </FormControl>
-                                     {isEditMode && <FormDescription>Balance can only be changed by adding transactions.</FormDescription>}
                                      {accountType !== 'credit_card' && !isEditMode && <FormDescription>An initial transaction will be created for this amount.</FormDescription>}
                                     <FormMessage />
                                 </FormItem>

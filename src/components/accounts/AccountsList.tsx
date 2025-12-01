@@ -22,7 +22,7 @@ import { Separator } from "../ui/separator";
 import { getCurrencySymbol } from "@/lib/currencies";
 import Link from "next/link";
 import { Badge } from "../ui/badge";
-import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogDescription } from "../ui/dialog";
+import { Dialog, DialogTrigger, DialogHeader, DialogTitle, DialogContent, DialogDescription } from "../ui/dialog";
 import Image from "next/image";
 
 interface AccountsListProps {

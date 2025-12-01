@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -261,7 +262,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                             <FormControl>
                                                 <Input type="number" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
                                             </FormControl>
-                                            {isEditMode && <FormDescription>Limit can only be changed via a "Credit Limit Upgrade" transaction.</FormDescription>}
                                             {!isEditMode && <FormDescription>Set to 0 if you plan to set it later with a "Credit Limit Upgrade" transaction.</FormDescription>}
                                             <FormMessage />
                                         </FormItem>

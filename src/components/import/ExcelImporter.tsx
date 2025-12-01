@@ -149,15 +149,22 @@ export function ExcelImporter() {
 
 
     useEffect(() => {
-        if (allAccountsFromFile.length > 0) {
+        if (allAccountsFromFile.length > 0 && accounts) {
             const initialMappings: AccountMapping = {};
+            const existingAccountMap = new Map(accounts.map(acc => [acc.name.toLowerCase(), acc]));
+            
             allAccountsFromFile.forEach(accName => {
-                initialMappings[accName] = { action: 'create', type: detectAccountType(accName) };
+                const existingAccount = existingAccountMap.get(accName.toLowerCase());
+                if (existingAccount) {
+                    initialMappings[accName] = { action: 'map', targetId: existingAccount.id };
+                } else {
+                    initialMappings[accName] = { action: 'create', type: detectAccountType(accName) };
+                }
             });
             setAccountMappings(initialMappings);
             setSelectedAccountsToImport(allAccountsFromFile);
         }
-    }, [allAccountsFromFile]);
+    }, [allAccountsFromFile, accounts]);
 
 
     const handleFileParseAndValidate = (fileToParse: File) => {
@@ -549,9 +556,9 @@ export function ExcelImporter() {
     
     const handleAccountMappingChange = (accountName: string, value: string) => {
         if(value === 'create_new') {
-            setAccountMappings(prev => ({ ...prev, [accountName]: { ...prev[accountName], action: 'create' } }));
+            setAccountMappings(prev => ({ ...prev, [accountName]: { action: 'create', type: detectAccountType(accountName) } }));
         } else {
-             setAccountMappings(prev => ({ ...prev, [accountName]: { ...prev[accountName], action: 'map', targetId: value } }));
+             setAccountMappings(prev => ({ ...prev, [accountName]: { action: 'map', targetId: value } }));
         }
     }
 
@@ -722,15 +729,12 @@ export function ExcelImporter() {
                                                 />
                                                 <Label htmlFor={`select-acc-${accName}`} className="truncate font-medium">
                                                     {accName}
-                                                    {existingAccountNamesLower.has(accName.toLowerCase()) && 
-                                                        <span className="text-xs text-muted-foreground ml-2">(Already exists)</span>
-                                                    }
                                                 </Label>
                                                 <ArrowRight className="h-4 w-4 text-muted-foreground" />
                                                 <div className="flex gap-2">
                                                     <Select 
                                                         onValueChange={(value) => handleAccountMappingChange(accName, value)}
-                                                        defaultValue="create_new"
+                                                        value={accountMappings[accName]?.action === 'map' ? accountMappings[accName].targetId : 'create_new'}
                                                     >
                                                         <SelectTrigger>
                                                             <SelectValue />
@@ -865,5 +869,3 @@ export function ExcelImporter() {
         </Card>
     );
 }
-
-    

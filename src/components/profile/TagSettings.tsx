@@ -191,6 +191,11 @@ export function TagSettings() {
             setSelectedIds(prev => prev.filter(i => i !== id));
         }
     };
+    
+    const lastSelectedIndex = sortedItems.reduce((lastIndex, item, currentIndex) => {
+        return selectedIds.includes(item.id) ? currentIndex : lastIndex;
+    }, -1);
+
 
     return (
         <Card>
@@ -218,73 +223,75 @@ export function TagSettings() {
                                     />
                                     <label htmlFor="select-all-tags" className="text-sm font-medium">Select All</label>
                                 </div>
-                                {sortedItems.map((item) => (
-                                    <div key={item.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
-                                        <Checkbox
-                                            id={`select-tag-${item.id}`}
-                                            checked={selectedIds.includes(item.id)}
-                                            onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
-                                            disabled={isSaving}
-                                        />
-                                        {editingItem?.id === item.id ? (
-                                            <div className="flex items-center gap-2 w-full">
-                                                <Popover>
-                                                    <PopoverTrigger asChild>
-                                                        <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                                        {availableIcons.map(icon => (
-                                                            <Button key={icon} variant="ghost" size="icon" onClick={() => setEditingItem({ ...editingItem, icon })}>
-                                                                {renderIcon(icon)}
-                                                            </Button>
-                                                        ))}
-                                                    </PopoverContent>
-                                                </Popover>
-                                                <Input
-                                                    value={editingItem.name}
-                                                    onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                                                    className="flex-1"
-                                                />
-                                                <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
-                                                    <Check className="h-4 w-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <div className="flex items-center flex-1 gap-2">
-                                                {renderIcon(item.icon)}
-                                                <span>{item.name}</span>
+                                {sortedItems.map((item, index) => (
+                                    <div key={item.id}>
+                                        <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
+                                            <Checkbox
+                                                id={`select-tag-${item.id}`}
+                                                checked={selectedIds.includes(item.id)}
+                                                onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
+                                                disabled={isSaving}
+                                            />
+                                            {editingItem?.id === item.id ? (
+                                                <div className="flex items-center gap-2 w-full">
+                                                    <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                                                            {availableIcons.map(icon => (
+                                                                <Button key={icon} variant="ghost" size="icon" onClick={() => setEditingItem({ ...editingItem, icon })}>
+                                                                    {renderIcon(icon)}
+                                                                </Button>
+                                                            ))}
+                                                        </PopoverContent>
+                                                    </Popover>
+                                                    <Input
+                                                        value={editingItem.name}
+                                                        onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                                        className="flex-1"
+                                                    />
+                                                    <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
+                                                        <Check className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
-                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </>
+                                            ) : (
+                                                <>
+                                                    <div className="flex items-center flex-1 gap-2">
+                                                    {renderIcon(item.icon)}
+                                                    <span>{item.name}</span>
+                                                    </div>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
+                                         {index === lastSelectedIndex && selectedIds.length > 1 && (
+                                            <div className="pt-2 pl-8">
+                                                <MergeItemsDialog
+                                                    open={showMergeDialog}
+                                                    onOpenChange={setShowMergeDialog}
+                                                    items={items?.filter(c => selectedIds.includes(c.id)) || []}
+                                                    itemType="Tag"
+                                                    onMerge={handleMerge}
+                                                    isSaving={isSaving}
+                                                >
+                                                    <Button variant="outline" size="sm">
+                                                        <Merge className="mr-2 h-4 w-4" />
+                                                        Merge {selectedIds.length} selected tags
+                                                    </Button>
+                                                </MergeItemsDialog>
+                                            </div>
                                         )}
                                     </div>
                                 ))}
-                            </div>
-                        )}
-                         {selectedIds.length > 1 && (
-                            <div className="pt-2">
-                                <MergeItemsDialog
-                                    open={showMergeDialog}
-                                    onOpenChange={setShowMergeDialog}
-                                    items={items?.filter(c => selectedIds.includes(c.id)) || []}
-                                    itemType="Tag"
-                                    onMerge={handleMerge}
-                                    isSaving={isSaving}
-                                >
-                                    <Button variant="outline" size="sm">
-                                        <Merge className="mr-2 h-4 w-4" />
-                                        Merge {selectedIds.length} selected tags
-                                    </Button>
-                                </MergeItemsDialog>
                             </div>
                         )}
                         <div className="flex items-center gap-2 pt-4">

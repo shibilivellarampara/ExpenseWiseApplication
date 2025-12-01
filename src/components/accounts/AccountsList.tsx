@@ -335,14 +335,26 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                             const limit = item.limit || 0;
                             const availableCredit = item.balance;
                             const outstandingAmount = limit > 0 ? limit - availableCredit : -availableCredit;
-                            const availablePercentage = limit > 0 ? (availableCredit / limit) * 100 : 0;
                             const isPaid = outstandingAmount <= 0;
+                            const availablePercentage = limit > 0 && limit > outstandingAmount ? ((limit - outstandingAmount) / limit) * 100 : 0;
                             
                             return (
                                 <div key={item.id} className="p-4 flex items-center gap-4 group">
-                                    <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-muted rounded-full">
-                                        {renderIcon(item.icon, "h-7 w-7")}
-                                    </div>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <button className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-muted rounded-full cursor-pointer hover:bg-accent transition-colors">
+                                                {renderIcon(item.icon, "h-7 w-7")}
+                                            </button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Card Details</DialogTitle>
+                                                <DialogDescription>Non-sensitive card information.</DialogDescription>
+                                            </DialogHeader>
+                                            <CardDisplay account={item} />
+                                        </DialogContent>
+                                    </Dialog>
+
                                     <div className="flex-grow">
                                         <div className="flex items-center justify-between">
                                             <div className="font-semibold">{item.name}</div>
@@ -383,21 +395,6 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <Dialog>
-                                                    <DialogTrigger asChild>
-                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                            <CreditCardIcon className="mr-2 h-4 w-4" />
-                                                            View Card
-                                                        </DropdownMenuItem>
-                                                    </DialogTrigger>
-                                                    <DialogContent>
-                                                        <DialogHeader>
-                                                            <DialogTitle>Card Details</DialogTitle>
-                                                            <DialogDescription>Non-sensitive card information.</DialogDescription>
-                                                        </DialogHeader>
-                                                        <CardDisplay account={item} />
-                                                    </DialogContent>
-                                                </Dialog>
                                                 <AddAccountSheet accountToEdit={item}>
                                                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                                         <Edit className="mr-2 h-4 w-4" />

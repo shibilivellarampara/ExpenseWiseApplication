@@ -44,7 +44,7 @@ import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
 import { availableIcons } from '@/lib/defaults';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandPrimitive } from '../ui/command';
 import { Badge } from '../ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';

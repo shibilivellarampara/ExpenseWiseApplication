@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { ReportGenerator } from "@/components/reports/ReportGenerator";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Account, Category, EnrichedExpense, Expense, Tag } from "@/lib/types";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
 import { useMemo, useState } from "react";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +19,14 @@ async function fetchAllTransactions(firestore: any, userId: string, accountId?: 
         expensesQuery = query(collection(firestore, `users/${userId}/expenses`));
     }
     const snapshot = await getDocs(expensesQuery);
-    return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().date.toDate() })) as Expense[];
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+            ...data, 
+            id: doc.id, 
+            date: (data.date as Timestamp)
+        } as Expense;
+    });
 }
 
 export default function ReportsPage() {
@@ -63,7 +70,7 @@ export default function ReportsPage() {
             
             const enriched = rawExpenses.map((expense: Expense): EnrichedExpense => ({
                 ...expense,
-                date: expense.date as Date,
+                date: expense.date.toDate(),
                 category: categoryMap.get(expense.categoryId || ''),
                 account: accountMap.get(expense.accountId),
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],

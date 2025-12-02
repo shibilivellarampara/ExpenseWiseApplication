@@ -231,18 +231,6 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     const [inputValue, setInputValue] = useState("");
     const selectedTagIds = new Set(field.value || []);
 
-    const handleSelect = useCallback((tagId: string) => {
-        const newSelectedIds = new Set(field.value || []);
-        if (newSelectedIds.has(tagId)) {
-            newSelectedIds.delete(tagId);
-        } else {
-            newSelectedIds.add(tagId);
-        }
-        field.onChange(Array.from(newSelectedIds));
-        setInputValue("");
-        inputRef.current?.focus();
-    }, [field]);
-    
     const handleUnselect = useCallback((tagId: string) => {
         const newSelectedIds = new Set(field.value || []);
         newSelectedIds.delete(tagId);
@@ -255,7 +243,11 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
             if (e.key === "Delete" || e.key === "Backspace") {
                 if (input.value === "" && selectedTagIds.size > 0) {
                     const lastTagId = Array.from(selectedTagIds).pop();
-                    if(lastTagId) handleUnselect(lastTagId);
+                    if(lastTagId) {
+                      const newSelectedIds = new Set(field.value || []);
+                      newSelectedIds.delete(lastTagId);
+                      field.onChange(Array.from(newSelectedIds));
+                    }
                 }
             }
             if (e.key === "Escape") {
@@ -311,8 +303,11 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                     <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
                         <CommandList>
                             <ScrollArea className="h-48">
-                                 {filteredTags.length === 0 && inputValue.length > 0 ? (
-                                     <QuickAddItemDialog type="Tag" onSave={onQuickAdd} onOpenChange={setOpen}>
+                                <CommandGroup className={cn(
+                                    "p-2",
+                                    tags.length > 10 ? 'grid grid-cols-2 gap-1' : 'flex flex-col gap-1'
+                                )}>
+                                    <QuickAddItemDialog type="Tag" onSave={onQuickAdd} onOpenChange={setOpen}>
                                         <CommandItem
                                             onSelect={() => {
                                                 inputRef.current?.blur();
@@ -320,15 +315,34 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                             className="flex items-center gap-2 text-primary cursor-pointer w-full"
                                         >
                                             <PlusCircle className="h-4 w-4" />
-                                            Create new tag "{inputValue}"
+                                            Create new tag
                                         </CommandItem>
                                     </QuickAddItemDialog>
-                                ) : (
-                                    <CommandGroup className={cn(
-                                        "p-2",
-                                        tags.length > 10 ? 'grid grid-cols-2 gap-1' : 'flex flex-col gap-1'
-                                    )}>
-                                        <QuickAddItemDialog type="Tag" onSave={onQuickAdd} onOpenChange={setOpen}>
+                                    {filteredTags.map(tag => (
+                                        <CommandItem
+                                            key={tag.id}
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                            }}
+                                            onSelect={() => {
+                                                setInputValue("")
+                                                field.onChange([...selectedTagIds, tag.id])
+                                            }}
+                                            className={cn(
+                                                "flex items-center justify-between cursor-pointer rounded-md border px-2 py-1",
+                                                selectedTagIds.has(tag.id) && "bg-muted"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-2 truncate">
+                                                {renderIcon(tag.icon)}
+                                                <span className="truncate">{tag.name}</span>
+                                            </div>
+                                            <Check className={cn("h-4 w-4", selectedTagIds.has(tag.id) ? "opacity-100" : "opacity-0")} />
+                                        </CommandItem>
+                                    ))}
+                                    {filteredTags.length === 0 && inputValue.length > 0 && (
+                                         <QuickAddItemDialog type="Tag" onSave={onQuickAdd} onOpenChange={setOpen}>
                                             <CommandItem
                                                 onSelect={() => {
                                                     inputRef.current?.blur();
@@ -336,31 +350,11 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                                 className="flex items-center gap-2 text-primary cursor-pointer w-full"
                                             >
                                                 <PlusCircle className="h-4 w-4" />
-                                                Create new tag
+                                                Create new tag "{inputValue}"
                                             </CommandItem>
                                         </QuickAddItemDialog>
-                                        {filteredTags.map(tag => (
-                                            <CommandItem
-                                                key={tag.id}
-                                                onMouseDown={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                }}
-                                                onSelect={() => handleSelect(tag.id)}
-                                                className={cn(
-                                                    "flex items-center justify-between cursor-pointer rounded-md border px-2 py-1",
-                                                    selectedTagIds.has(tag.id) && "bg-muted"
-                                                )}
-                                            >
-                                                <div className="flex items-center gap-2 truncate">
-                                                    {renderIcon(tag.icon)}
-                                                    <span className="truncate">{tag.name}</span>
-                                                </div>
-                                                <Check className={cn("h-4 w-4", selectedTagIds.has(tag.id) ? "opacity-100" : "opacity-0")} />
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                )}
+                                    )}
+                                </CommandGroup>
                             </ScrollArea>
                         </CommandList>
                     </div>
@@ -1085,5 +1079,3 @@ function useExpenseForm({
       tags: tags || []
     };
 }
-
-    

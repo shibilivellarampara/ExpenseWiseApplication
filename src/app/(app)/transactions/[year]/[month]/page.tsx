@@ -80,7 +80,7 @@ export default function MonthlyExpensesPage() {
         let clientFiltered = allExpenses
             .map(expense => ({
                 ...expense,
-                date: expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate(),
+                date: (expense.date as Timestamp).toDate(),
             }))
             .filter(expense => {
                 if (filters.type !== 'all' && expense.type !== filters.type) return false;
@@ -105,7 +105,7 @@ export default function MonthlyExpensesPage() {
         
         const transactionsByAccount = clientFiltered.reduce((acc, tx) => {
             if (!acc[tx.accountId]) { acc[tx.accountId] = []; }
-            acc[tx.accountId].push(tx);
+            acc[tx.accountId].push(tx as (Expense & { date: Date}));
             return acc;
         }, {} as Record<string, (Expense & {date: Date})[]>);
 

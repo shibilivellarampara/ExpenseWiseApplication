@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -8,7 +7,7 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile, SharedExpense } from "@/lib/types";
-import { collection, orderBy, query, doc, getDocs, where } from "firebase/firestore";
+import { collection, orderBy, query, doc, getDocs, where, Timestamp } from "firebase/firestore";
 import { PlusCircle } from "lucide-react";
 import { useMemo, useEffect, useState, useCallback } from "react";
 import { useParams } from 'next/navigation';
@@ -97,10 +96,9 @@ export default function SharedExpenseDetailPage() {
         if (!expenses) return [];
     
         return expenses.map(expense => {
-            const date = (expense.date as any)?.toDate ? (expense.date as any).toDate() : (expense.date instanceof Date ? expense.date : new Date());
              return {
                 ...expense,
-                date: date,
+                date: (expense.date as Timestamp).toDate(),
                 category: categoryMap.get(expense.categoryId ?? ''),
                 account: accountMap.get(expense.accountId),
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],

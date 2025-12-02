@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -7,20 +8,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Pilcrow, Merge } from 'lucide-react';
-import { Category, Tag } from '@/lib/types';
+import { Category, Tag, Account } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface MergeItemsDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     children?: React.ReactNode;
-    items: (Category | Tag)[];
-    itemType: 'Category' | 'Tag';
-    onMerge: (target: { id: string } | { name: string, icon: string }) => Promise<void>;
+    items: (Category | Tag | Account)[];
+    itemType: 'Category' | 'Tag' | 'Account';
+    onMerge: (target: { id: string } | { name: string; icon: string, type?: Account['type'] }) => Promise<void>;
     isSaving: boolean;
 }
 
@@ -29,6 +31,8 @@ export function MergeItemsDialog({ open, onOpenChange, children, items, itemType
     const [targetId, setTargetId] = useState<string>(items[0]?.id || '');
     const [newName, setNewName] = useState('');
     const [newIcon, setNewIcon] = useState(itemType === 'Category' ? 'Shapes' : 'Tag');
+    const [newAccountType, setNewAccountType] = useState<Account['type']>('bank');
+
 
     const renderIcon = (iconName: string) => {
         const IconComponent = (LucideIcons as any)[iconName];
@@ -40,7 +44,11 @@ export function MergeItemsDialog({ open, onOpenChange, children, items, itemType
             onMerge({ id: targetId });
         } else {
             if (!newName) return;
-            onMerge({ name: newName, icon: newIcon });
+             if (itemType === 'Account') {
+                onMerge({ name: newName, icon: newIcon, type: newAccountType });
+            } else {
+                onMerge({ name: newName, icon: newIcon });
+            }
         }
     };
 
@@ -100,6 +108,19 @@ export function MergeItemsDialog({ open, onOpenChange, children, items, itemType
                                     ))}
                                 </PopoverContent>
                             </Popover>
+                             {itemType === 'Account' && (
+                                <Select onValueChange={(value) => setNewAccountType(value as Account['type'])} defaultValue={newAccountType}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select account type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="bank">Bank Account</SelectItem>
+                                        <SelectItem value="credit_card">Credit Card</SelectItem>
+                                        <SelectItem value="wallet">Digital Wallet</SelectItem>
+                                        <SelectItem value="cash">Cash</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            )}
                         </div>
                     )}
                 </div>

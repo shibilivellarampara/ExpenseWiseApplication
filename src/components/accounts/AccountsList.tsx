@@ -24,8 +24,6 @@ import Link from "next/link";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogTrigger, DialogHeader, DialogTitle, DialogContent, DialogDescription } from "../ui/dialog";
 import Image from "next/image";
-import { Checkbox } from "../ui/checkbox";
-import { MergeItemsDialog } from "../profile/MergeItemsDialog";
 
 interface AccountsListProps {
     accounts: Account[];
@@ -247,7 +245,7 @@ const CardDisplay = ({ account }: { account: Account }) => {
 }
 
 
-export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsListProps) {
+export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -255,99 +253,6 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
-
-    const [accounts, setAccounts] = useState(initialAccounts || []);
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [showMergeDialog, setShowMergeDialog] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-
-    useEffect(() => {
-        setAccounts(initialAccounts || []);
-    }, [initialAccounts]);
-    
-    const handleSelectionChange = (id: string, checked: boolean | string) => {
-        setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
-    };
-
-    const handleSelectAll = (checked: boolean | string) => {
-        setSelectedIds(checked ? activeAccounts.map(a => a.id) : []);
-    };
-    
-    const handleMerge = async (target: { id: string } | { name: string; icon: string, type: Account['type'] }) => {
-        if (!user || !firestore || selectedIds.length < 2) return;
-        setIsSaving(true);
-    
-        try {
-            const batch = writeBatch(firestore);
-            let targetAccount: Account;
-    
-            // Step 1: Determine target account (create new if necessary)
-            if ('name' in target) {
-                const newAccRef = doc(collection(firestore, `users/${user.uid}/accounts`));
-                targetAccount = {
-                    id: newAccRef.id,
-                    userId: user.uid,
-                    name: target.name,
-                    icon: target.icon,
-                    type: target.type,
-                    balance: 0, // Will be recalculated
-                    status: 'active',
-                };
-                batch.set(newAccRef, targetAccount);
-            } else {
-                const existingTarget = accounts.find(acc => acc.id === target.id);
-                if (!existingTarget) throw new Error("Target account not found");
-                targetAccount = existingTarget;
-            }
-    
-            const sourceAccounts = accounts.filter(acc => selectedIds.includes(acc.id) && acc.id !== targetAccount.id);
-            const sourceIds = sourceAccounts.map(acc => acc.id);
-    
-            // Step 2: Find all transactions using source accounts
-            const expensesRef = collection(firestore, `users/${user.uid}/expenses`);
-            const q = query(expensesRef, where('accountId', 'in', sourceIds));
-            const expensesToUpdateSnapshot = await getDocs(q);
-    
-            // Step 3: Update transactions
-            expensesToUpdateSnapshot.forEach(doc => {
-                batch.update(doc.ref, { accountId: targetAccount.id });
-            });
-    
-            // Step 4: Recalculate target account balance
-            let finalBalance = targetAccount.balance;
-            let finalLimit = targetAccount.limit || 0;
-            
-            sourceAccounts.forEach(acc => {
-                finalBalance += acc.balance;
-                if(acc.type === 'credit_card' && acc.limit) {
-                    finalLimit += acc.limit;
-                }
-            });
-
-            const targetAccRef = doc(firestore, `users/${user.uid}/accounts`, targetAccount.id);
-            const updatePayload: any = { balance: finalBalance };
-            if(targetAccount.type === 'credit_card') {
-                updatePayload.limit = finalLimit;
-            }
-            batch.update(targetAccRef, updatePayload);
-
-            // Step 5: Delete source accounts
-            sourceIds.forEach(id => {
-                const accRef = doc(firestore, `users/${user.uid}/accounts`, id);
-                batch.delete(accRef);
-            });
-    
-            await batch.commit();
-            toast({ title: "Merge Complete", description: `${selectedIds.length} accounts merged successfully into "${targetAccount.name}".` });
-            setSelectedIds([]);
-            setShowMergeDialog(false);
-        } catch (e: any) {
-            toast({ variant: 'destructive', title: "Merge Failed", description: e.message });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
 
     const activeAccounts = accounts.filter(acc => (acc.status === 'active' || acc.status === undefined));
     const inactiveAccounts = accounts.filter(acc => acc.status === 'inactive');
@@ -358,9 +263,6 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
     const inactiveCreditCards = inactiveAccounts.filter(acc => acc.type === 'credit_card');
     const inactiveOtherAccounts = inactiveAccounts.filter(acc => acc.type !== 'credit_card');
     
-    const lastSelectedCreditCardIndex = creditCards.reduce((lastIndex, item, currentIndex) => selectedIds.includes(item.id) ? currentIndex : lastIndex, -1);
-    const lastSelectedOtherAccountIndex = otherAccounts.reduce((lastIndex, item, currentIndex) => selectedIds.includes(item.id) ? currentIndex : lastIndex, -1);
-
 
     if (isLoading) {
         return (
@@ -403,7 +305,7 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
         )
     }
 
-    if (initialAccounts && initialAccounts.length === 0) {
+    if (accounts && accounts.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg">
                 <h3 className="text-xl font-semibold">No Accounts Found</h3>
@@ -432,12 +334,6 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                             
                             return (
                                 <div key={item.id} className="p-4 flex items-start gap-4 group">
-                                    <Checkbox
-                                        id={`select-cc-${item.id}`}
-                                        className="mt-3"
-                                        checked={selectedIds.includes(item.id)}
-                                        onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
-                                    />
                                     <Dialog>
                                         <DialogTrigger asChild>
                                             <button className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-muted rounded-full cursor-pointer hover:bg-accent transition-colors">
@@ -482,23 +378,6 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                                     <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
                                                     <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
                                                 </div>
-                                            </div>
-                                        )}
-                                        {index === lastSelectedCreditCardIndex && selectedIds.filter(id => creditCards.some(acc => acc.id === id)).length > 1 && (
-                                            <div className="pt-2">
-                                                <MergeItemsDialog
-                                                    open={showMergeDialog}
-                                                    onOpenChange={setShowMergeDialog}
-                                                    items={accounts.filter(acc => selectedIds.includes(acc.id))}
-                                                    itemType="Account"
-                                                    onMerge={handleMerge}
-                                                    isSaving={isSaving}
-                                                >
-                                                     <Button variant="outline" size="sm">
-                                                        <Merge className="mr-2 h-4 w-4" />
-                                                        Merge {selectedIds.length} selected accounts
-                                                    </Button>
-                                                </MergeItemsDialog>
                                             </div>
                                         )}
                                     </div>
@@ -550,12 +429,6 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                     <div className="divide-y">
                         {otherAccounts.length > 0 ? otherAccounts.map((item, index) => (
                             <div key={item.id} className="p-4 flex items-start gap-4 group">
-                                 <Checkbox
-                                    id={`select-other-${item.id}`}
-                                    className="mt-3"
-                                    checked={selectedIds.includes(item.id)}
-                                    onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
-                                />
                                 <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-muted rounded-full">
                                     {renderIcon(item.icon, "h-7 w-7")}
                                 </div>
@@ -567,23 +440,6 @@ export function AccountsList({ accounts: initialAccounts, isLoading }: AccountsL
                                         </div>
                                      </div>
                                     <p className="text-sm text-muted-foreground capitalize">{item.type.replace('_', ' ')}</p>
-                                     {index === lastSelectedOtherAccountIndex && selectedIds.filter(id => otherAccounts.some(acc => acc.id === id)).length > 1 && (
-                                        <div className="pt-2">
-                                            <MergeItemsDialog
-                                                open={showMergeDialog}
-                                                onOpenChange={setShowMergeDialog}
-                                                items={accounts.filter(acc => selectedIds.includes(acc.id))}
-                                                itemType="Account"
-                                                onMerge={handleMerge}
-                                                isSaving={isSaving}
-                                            >
-                                                <Button variant="outline" size="sm">
-                                                    <Merge className="mr-2 h-4 w-4" />
-                                                    Merge {selectedIds.length} selected accounts
-                                                </Button>
-                                            </MergeItemsDialog>
-                                        </div>
-                                    )}
                                 </div>
                                 <div className="flex items-center ml-auto pl-2">
                                     <DropdownMenu>

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -10,6 +11,7 @@ import { DataManagementSettings } from "@/components/profile/DataManagementSetti
 import { SecuritySettings } from "@/components/profile/SecuritySettings";
 import { TransactionFieldOrderSettings } from "@/components/profile/TransactionFieldOrderSettings";
 import { AnalysisSettings } from "@/components/profile/AnalysisSettings";
+import { AccountSettings } from "@/components/profile/AccountSettings";
 
 export default function ProfilePage() {
     return (
@@ -32,6 +34,7 @@ export default function ProfilePage() {
                     <TagSettings />
                     <DashboardSettings />
                     <AnalysisSettings />
+                    <AccountSettings />
                 </div>
             </div>
 

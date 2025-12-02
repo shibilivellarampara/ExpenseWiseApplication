@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -223,6 +224,122 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
 );
 FloatingLabelSelect.displayName = 'FloatingLabelSelect';
 
+// Multi-select combobox for tags
+const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { field: any, tags: Tag[], onQuickAdd: (name: string, icon: string) => Promise<string|undefined>, isRequired: boolean, isSuggesting: boolean }) => {
+    const inputRef = React.useRef<HTMLInputElement>(null);
+    const [open, setOpen] = useState(false);
+    const [inputValue, setInputValue] = useState("");
+    const selectedTags = field.value ? tags.filter(tag => field.value.includes(tag.id)) : [];
+
+    const handleSelect = (tagId: string) => {
+        const currentTags = field.value || [];
+        const isSelected = currentTags.includes(tagId);
+        field.onChange(
+            isSelected
+                ? currentTags.filter((id: string) => id !== tagId)
+                : [...currentTags, tagId]
+        );
+        setInputValue("");
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        const input = inputRef.current;
+        if (input) {
+            if (e.key === "Delete" || e.key === "Backspace") {
+                if (input.value === "" && selectedTags.length > 0) {
+                    const lastTag = selectedTags[selectedTags.length - 1];
+                    handleSelect(lastTag.id);
+                }
+            }
+            if (e.key === "Escape") {
+                input.blur();
+            }
+        }
+    };
+    
+    const filteredTags = tags.filter(tag =>
+        tag.name.toLowerCase().includes(inputValue.toLowerCase())
+    );
+
+
+    return (
+        <Command onKeyDown={handleKeyDown} className={cn(isSuggesting && 'animate-pulse border-primary/50')}>
+             <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                 <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-14">
+                    {selectedTags.map(tag => (
+                        <Badge
+                            key={tag.id}
+                            style={generateColorStyle(tag.name)}
+                            className="badge-colorful"
+                        >
+                            {tag.name}
+                            <button
+                                className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleSelect(tag.id);
+                                }}
+                                onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
+                                onClick={() => handleSelect(tag.id)}
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
+                        </Badge>
+                    ))}
+                    <CommandPrimitive.Input
+                        ref={inputRef}
+                        value={inputValue}
+                        onValueChange={setInputValue}
+                        onBlur={() => setOpen(false)}
+                        onFocus={() => setOpen(true)}
+                        placeholder={selectedTags.length > 0 ? "" : `Tags ${isRequired ? '*' : ''}`}
+                        className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-base md:text-sm h-full p-0 border-none shadow-none focus-visible:ring-0"
+                    />
+                </div>
+            </div>
+            <div className="relative mt-2">
+                {open && (
+                    <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+                        <CommandList>
+                            <CommandEmpty>
+                                {inputValue.length > 0 ? "No results found." : "Type to search..."}
+                            </CommandEmpty>
+                            <ScrollArea className="h-48">
+                                <CommandGroup>
+                                    <QuickAddItemDialog type="Tag" onSave={onQuickAdd}>
+                                        <CommandItem onSelect={() => { inputRef.current?.focus(); }}>
+                                            <div className="flex items-center gap-2 text-primary cursor-pointer w-full">
+                                                <PlusCircle className="h-4 w-4" />
+                                                Create new tag "{inputValue}"
+                                            </div>
+                                        </CommandItem>
+                                    </QuickAddItemDialog>
+                                    {filteredTags.map(tag => (
+                                        <CommandItem
+                                            key={tag.id}
+                                            value={tag.name}
+                                            onSelect={() => handleSelect(tag.id)}
+                                            className="flex items-center justify-between"
+                                        >
+                                            <div className="flex items-center gap-2 truncate">
+                                                {renderIcon(tag.icon)}
+                                                <span className="truncate">{tag.name}</span>
+                                            </div>
+                                            <Check className={cn("h-4 w-4", selectedTags.some(s => s.id === tag.id) ? "opacity-100" : "opacity-0")} />
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </ScrollArea>
+                        </CommandList>
+                    </div>
+                )}
+            </div>
+        </Command>
+    );
+};
+
 
 function ExpenseForm({
   form,
@@ -334,9 +451,6 @@ function ExpenseForm({
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
     
-    const selectedTagIds = form.watch('tagIds') || [];
-    const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
-
     const fieldOrder = userProfile?.transactionFieldOrder || ['description', 'accountId', 'categoryId', 'tagIds'];
     const visibleFields = userProfile?.expenseFieldSettings?.visibleFields || ['description', 'accountId', 'categoryId', 'tagIds'];
 
@@ -422,91 +536,22 @@ function ExpenseForm({
             />
         ),
         tagIds: (
-             <FormField
+            <FormField
                 key="tagIds"
                 control={form.control}
                 name="tagIds"
-                render={({ field }) => {
-                    const handleSelect = (tagId: string) => {
-                        const currentTags = field.value || [];
-                        const isSelected = currentTags.includes(tagId);
-                        field.onChange(
-                            isSelected 
-                                ? currentTags.filter((id: string) => id !== tagId) 
-                                : [...currentTags, tagId]
-                        );
-                    };
-
-                    return (
-                        <FormItem>
-                            <DropdownMenu open={tagDropdownOpen} onOpenChange={setTagDropdownOpen}>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-between h-14 text-base font-normal">
-                                        <span className="text-muted-foreground">
-                                            {selectedTagIds.length > 0 ? `${selectedTagIds.length} tags selected` : `Tags ${isTagRequired ? '*' : ''}`}
-                                        </span>
-                                        <ChevronDown className="h-4 w-4 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] p-0" align="start">
-                                    <Command>
-                                        <CommandInput placeholder="Search tags..."/>
-                                        <CommandList>
-                                            <CommandEmpty>No results found.</CommandEmpty>
-                                            <ScrollArea className="h-48">
-                                                <CommandGroup>
-                                                    <QuickAddItemDialog type="Tag" onSave={(name, icon) => handleQuickAdd('Tag', name, icon)} onOpenChange={(open) => !open && setTagDropdownOpen(true)}>
-                                                        <CommandItem onSelect={(value) => { value; }}>
-                                                            <div className="flex items-center gap-2 text-primary cursor-pointer w-full">
-                                                                <PlusCircle className="h-4 w-4" />
-                                                                Create new tag
-                                                            </div>
-                                                        </CommandItem>
-                                                    </QuickAddItemDialog>
-                                                    {tags.map(tag => (
-                                                        <CommandItem
-                                                            key={tag.id}
-                                                            value={tag.name}
-                                                            onSelect={() => handleSelect(tag.id)}
-                                                            className="flex items-center justify-between gap-2"
-                                                        >
-                                                            <div className="flex items-center gap-2 truncate">
-                                                                {renderIcon(tag.icon)}
-                                                                <span className="truncate">{tag.name}</span>
-                                                            </div>
-                                                            <Check className={cn("h-4 w-4", selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0")} />
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </ScrollArea>
-                                        </CommandList>
-                                    </Command>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            {selectedTagIds.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 pt-2">
-                                     {selectedTagIds.map((id: string) => tags.find(t => t.id === id)).filter(Boolean).map((tag: Tag) => (
-                                         <Badge
-                                            key={tag!.id}
-                                            style={generateColorStyle(tag!.name)}
-                                            className="badge-colorful"
-                                        >
-                                            {tag!.name}
-                                            <button
-                                                type="button"
-                                                className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                                onClick={() => handleSelect(tag.id)}
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </Badge>
-                                     ))}
-                                </div>
-                            )}
-                            <FormMessage />
-                        </FormItem>
-                    )
-                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <TagCombobox
+                            field={field}
+                            tags={tags}
+                            onQuickAdd={(name, icon) => handleQuickAdd('Tag', name, icon)}
+                            isRequired={isTagRequired}
+                            isSuggesting={isSuggesting}
+                        />
+                        <FormMessage />
+                    </FormItem>
+                )}
             />
         )
     }

@@ -269,7 +269,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
 
 
     return (
-        <Command onKeyDown={handleKeyDown} className={cn(isSuggesting && 'animate-pulse border-primary/50')}>
+        <Command onKeyDown={handleKeyDown} className={cn('overflow-visible', isSuggesting && 'animate-pulse border-primary/50')}>
              <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                  <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-14">
                     {selectedTags.map(tag => (
@@ -309,7 +309,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                 {open && (
                     <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
                         <CommandList>
-                            {filteredTags.length === 0 && inputValue.length > 0 && (
+                            {inputValue.length > 0 && filteredTags.length === 0 && (
                                  <CommandEmpty>
                                     <QuickAddItemDialog type="Tag" onSave={onQuickAdd}>
                                         <div className="flex items-center gap-2 text-primary cursor-pointer w-full p-2">
@@ -665,7 +665,7 @@ export function AddExpenseDialog({
                 <div className="flex-1 overflow-y-auto -mx-6 px-6">
                     <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} isShared={!!sharedExpenseId} />
                 </div>
-                <DialogFooter className="flex-row justify-between w-full">
+                 <DialogFooter className="flex-row justify-between w-full">
                     <div className="flex items-center">
                         {isEditMode ? (
                             <AlertDialog>

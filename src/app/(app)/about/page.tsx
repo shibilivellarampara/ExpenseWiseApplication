@@ -35,7 +35,7 @@ const changelog = [
             { type: 'Feature', description: "Made account names in the transaction list clickable to automatically filter by that account." },
             { type: 'Feature', description: "Enhanced the 'Save and New' button to retain both the Date and Account from the previous transaction." },
             { type: 'Feature', description: "Moved the 'Merge' button in Category and Tag settings to be more intuitive and accessible next to the selection checkboxes." },
-            { type 'UI', description: "Replaced the 'Settle Debt' checkmark icon with a more descriptive 'Handshake' icon." },
+            { type: 'UI', description: "Replaced the 'Settle Debt' checkmark icon with a more descriptive 'Handshake' icon." },
             { type: 'Fix', description: "Resolved a timezone bug that could cause date/time entries to be saved on the previous day." },
         ]
     },

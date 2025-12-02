@@ -308,17 +308,17 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                 {open && (
                     <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
                         <CommandList>
-                            {inputValue.length > 0 && filteredTags.length === 0 && (
-                                <CommandEmpty>
-                                    <QuickAddItemDialog type="Tag" onSave={onQuickAdd}>
-                                        <div className="flex items-center gap-2 text-primary cursor-pointer w-full p-2">
-                                            <PlusCircle className="h-4 w-4" />
-                                            Create new tag "{inputValue}"
-                                        </div>
-                                    </QuickAddItemDialog>
-                                </CommandEmpty>
-                            )}
                             <ScrollArea className="h-48">
+                                {filteredTags.length === 0 && inputValue.length > 0 && (
+                                    <CommandEmpty>
+                                        <QuickAddItemDialog type="Tag" onSave={onQuickAdd}>
+                                            <div className="flex items-center gap-2 text-primary cursor-pointer w-full p-2">
+                                                <PlusCircle className="h-4 w-4" />
+                                                Create new tag "{inputValue}"
+                                            </div>
+                                        </QuickAddItemDialog>
+                                    </CommandEmpty>
+                                )}
                                 <CommandGroup className={cn(
                                     "p-2",
                                     tags.length > 10 ? 'grid grid-cols-2 gap-1' : 'flex flex-col gap-1'

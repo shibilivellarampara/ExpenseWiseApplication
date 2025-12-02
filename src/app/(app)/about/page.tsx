@@ -4,8 +4,8 @@
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import pkg from '../../../../package.json';
-const appVersion = pkg.version;
+
+const appVersion = "1.4.2";
 
 
 const changelog = [

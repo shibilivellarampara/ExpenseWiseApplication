@@ -309,19 +309,18 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                 {open && (
                     <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
                         <CommandList>
-                            <CommandEmpty>
-                                {inputValue.length > 0 ? "No results found." : "Type to search..."}
-                            </CommandEmpty>
+                            {filteredTags.length === 0 && inputValue.length > 0 && (
+                                 <CommandEmpty>
+                                    <QuickAddItemDialog type="Tag" onSave={onQuickAdd}>
+                                        <div className="flex items-center gap-2 text-primary cursor-pointer w-full p-2">
+                                            <PlusCircle className="h-4 w-4" />
+                                            Create new tag "{inputValue}"
+                                        </div>
+                                    </QuickAddItemDialog>
+                                </CommandEmpty>
+                            )}
                             <ScrollArea className="h-48">
                                 <CommandGroup>
-                                    <QuickAddItemDialog type="Tag" onSave={onQuickAdd}>
-                                        <CommandItem onSelect={() => { inputRef.current?.focus(); }}>
-                                            <div className="flex items-center gap-2 text-primary cursor-pointer w-full">
-                                                <PlusCircle className="h-4 w-4" />
-                                                Create new tag "{inputValue}"
-                                            </div>
-                                        </CommandItem>
-                                    </QuickAddItemDialog>
                                     {filteredTags.map(tag => (
                                         <CommandItem
                                             key={tag.id}

@@ -10,6 +10,16 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.4.2",
+        date: "2024-08-24",
+        changes: [
+            { type: 'Feature', description: "Added ability to set monthly budgets for categories and track spending against them." },
+            { type: 'Feature', description: "Introduced a new 'Goals' feature to help users save for specific financial targets." },
+            { type: 'UI', description: "Redesigned the 'Shared Expenses' page for better clarity and easier management." },
+            { type: 'Fix', description: "Fixed an issue where the currency symbol was not consistently displayed on the Debts page." },
+        ]
+    },
+    {
         version: "1.4.1",
         date: "2024-08-23",
         changes: [
@@ -25,7 +35,7 @@ const changelog = [
             { type: 'Feature', description: "Made account names in the transaction list clickable to automatically filter by that account." },
             { type: 'Feature', description: "Enhanced the 'Save and New' button to retain both the Date and Account from the previous transaction." },
             { type: 'Feature', description: "Moved the 'Merge' button in Category and Tag settings to be more intuitive and accessible next to the selection checkboxes." },
-            { type: 'UI', description: "Replaced the 'Settle Debt' checkmark icon with a more descriptive 'Handshake' icon." },
+            { type 'UI', description: "Replaced the 'Settle Debt' checkmark icon with a more descriptive 'Handshake' icon." },
             { type: 'Fix', description: "Resolved a timezone bug that could cause date/time entries to be saved on the previous day." },
         ]
     },
@@ -173,7 +183,7 @@ const changelog = [
         ]
     },
     {
-        version: "1.2.5",
+        version: "1_2.5",
         date: "2024-08-07",
         changes: [
             { type: 'Feature', description: "Unified date and time selection into a single input in the transaction form." },
@@ -267,5 +277,3 @@ export default function AboutPage() {
         </div>
     );
 }
-
-    

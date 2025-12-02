@@ -8,15 +8,8 @@ import {
   DialogFooter,
   DialogTrigger,
   DialogTitle,
+  DialogClose,
 } from '@/components/ui/dialog';
-import {
-  Drawer,
-  DrawerTrigger,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -602,45 +595,7 @@ export function AddExpenseDialog({
     onSaveSuccess?: () => void;
 }) {
     const [open, setOpen] = useState(false);
-    const isDesktop = useMediaQuery("(min-width: 768px)");
-
-    const handleOpenChange = (newOpen: boolean) => {
-        setOpen(newOpen);
-    }
     
-    if (isDesktop) {
-        return (
-            <DesktopAddExpenseDialog open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType} onSaveSuccess={onSaveSuccess}>
-                {children}
-            </DesktopAddExpenseDialog>
-        );
-    }
-
-    return (
-        <MobileAddExpenseDrawer open={open} setOpen={handleOpenChange} expenseToEdit={expenseToEdit} sharedExpenseId={sharedExpenseId} initialType={initialType} onSaveSuccess={onSaveSuccess}>
-            {children}
-        </MobileAddExpenseDrawer>
-    );
-}
-
-
-function DesktopAddExpenseDialog({ 
-    children, 
-    open, 
-    setOpen,
-    expenseToEdit,
-    sharedExpenseId,
-    initialType,
-    onSaveSuccess,
-}: { 
-    children: React.ReactNode, 
-    open: boolean, 
-    setOpen: (open: boolean) => void,
-    expenseToEdit?: EnrichedExpense,
-    sharedExpenseId?: string,
-    initialType?: 'income' | 'expense',
-    onSaveSuccess?: () => void;
-}) {
     const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen, 
         expenseToEdit, 
@@ -689,10 +644,17 @@ function DesktopAddExpenseDialog({
                     </div>
                     <div className="flex gap-2 justify-end">
                          {!isEditMode && (
-                             <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline">
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save and New
-                            </Button>
+                            <>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="outline">
+                                        Cancel
+                                    </Button>
+                                </DialogClose>
+                                <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline">
+                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Save and New
+                                </Button>
+                            </>
                          )}
                          <Button type="submit" form={formId} disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -702,85 +664,6 @@ function DesktopAddExpenseDialog({
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    );
-}
-
-function MobileAddExpenseDrawer({ 
-    children, 
-    open, 
-    setOpen,
-    expenseToEdit,
-    sharedExpenseId,
-    initialType,
-    onSaveSuccess,
-}: { 
-    children: React.ReactNode, 
-    open: boolean, 
-    setOpen: (open: boolean) => void,
-    expenseToEdit?: EnrichedExpense,
-    sharedExpenseId?: string;
-    initialType?: 'income' | 'expense';
-    onSaveSuccess?: () => void;
-}) {
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
-        setOpen,
-        expenseToEdit,
-        sharedExpenseId,
-        initialType,
-        open,
-        onSaveSuccess,
-    });
-    
-    return (
-        <Drawer open={open} onOpenChange={setOpen}>
-            <DrawerTrigger asChild>{children}</DrawerTrigger>
-            <DrawerContent>
-                <DrawerHeader className="text-left">
-                    <DrawerTitle>{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DrawerTitle>
-                </DrawerHeader>
-                 <div className="overflow-y-auto px-4">
-                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} isShared={!!sharedExpenseId}/>
-                </div>
-                 <DrawerFooter className="pt-2">
-                    <div className="flex w-full gap-2">
-                        {!isEditMode && (
-                             <Button variant="outline" className="flex-1" onClick={onSaveAndNewSubmit} disabled={isLoading}>
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save and New
-                            </Button>
-                        )}
-                        <Button type="submit" form={formId} className="flex-1" disabled={isLoading}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditMode ? 'Save' : 'Save'}
-                        </Button>
-                    </div>
-                     {isEditMode && (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                 <Button type="button" variant="destructive" className="w-full" disabled={isLoading}>
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Transaction
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete this transaction.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
-                </DrawerFooter>
-            </DrawerContent>
-        </Drawer>
     );
 }
 

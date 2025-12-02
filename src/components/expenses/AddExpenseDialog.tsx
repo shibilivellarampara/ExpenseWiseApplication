@@ -232,15 +232,19 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     const selectedTagIds = new Set(field.value || []);
 
     const handleSelect = useCallback((tagId: string) => {
-        field.onChange((current: string[] = []) =>
-            current.includes(tagId)
-                ? current.filter((id) => id !== tagId)
-                : [...current, tagId]
-        );
+        const newSelectedIds = new Set(field.value || []);
+        if (newSelectedIds.has(tagId)) {
+            newSelectedIds.delete(tagId);
+        } else {
+            newSelectedIds.add(tagId);
+        }
+        field.onChange(Array.from(newSelectedIds));
     }, [field]);
     
     const handleUnselect = useCallback((tagId: string) => {
-        field.onChange((current: string[] = []) => current.filter((id) => id !== tagId));
+        const newSelectedIds = new Set(field.value || []);
+        newSelectedIds.delete(tagId);
+        field.onChange(Array.from(newSelectedIds));
     }, [field]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -327,8 +331,10 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                                 handleSelect(tag.id);
                                                 setInputValue("");
                                             }}
-                                            className="flex-auto items-center justify-between cursor-pointer rounded-full border px-2 py-1"
-                                            style={generateColorStyle(tag.name)}
+                                            className={cn("flex-auto items-center justify-between cursor-pointer rounded-full border px-2 py-1",
+                                             selectedTagIds.has(tag.id) && "bg-muted"
+                                            )}
+                                            style={!selectedTagIds.has(tag.id) ? generateColorStyle(tag.name) : undefined}
                                         >
                                             <div className="flex items-center gap-2 truncate">
                                                 {renderIcon(tag.icon)}
@@ -1062,5 +1068,3 @@ function useExpenseForm({
       tags: tags || []
     };
 }
-
-    

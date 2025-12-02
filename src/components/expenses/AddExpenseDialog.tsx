@@ -655,7 +655,7 @@ export function AddExpenseDialog({
                                 Save and New
                             </Button>
                          )}
-                         <Button type="submit" form={formId} disabled={isLoading}>
+                         <Button type="submit" form={formId} disabled={isLoading} className="min-w-[120px]">
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {isEditMode ? 'Save Changes' : 'Save'}
                         </Button>

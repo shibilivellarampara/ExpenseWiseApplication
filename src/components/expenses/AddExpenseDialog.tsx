@@ -319,7 +319,10 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                 </CommandEmpty>
                             )}
                             <ScrollArea className="h-48">
-                                <CommandGroup className="flex flex-wrap gap-1 p-2">
+                                <CommandGroup className={cn(
+                                    "p-2",
+                                    tags.length > 10 ? 'grid grid-cols-2 gap-1' : 'flex flex-col gap-1'
+                                )}>
                                     {filteredTags.map(tag => (
                                         <CommandItem
                                             key={tag.id}
@@ -331,8 +334,9 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                                 handleSelect(tag.id);
                                                 setInputValue("");
                                             }}
-                                            className={cn("flex-auto items-center justify-between cursor-pointer rounded-full border px-2 py-1",
-                                             selectedTagIds.has(tag.id) && "bg-muted"
+                                            className={cn(
+                                                "flex items-center justify-between cursor-pointer rounded-md border px-2 py-1",
+                                                selectedTagIds.has(tag.id) && "bg-muted"
                                             )}
                                             style={!selectedTagIds.has(tag.id) ? generateColorStyle(tag.name) : undefined}
                                         >
@@ -391,6 +395,12 @@ function ExpenseForm({
     const activeAccounts = useMemo(() => accounts?.filter(acc => acc.status === 'active' || acc.status === undefined) || [], [accounts]);
     
     const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? true;
+
+    const renderIcon = (iconName: string | undefined, className?: string) => {
+        if (!iconName) return <Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
+        const IconComponent = (LucideIcons as any)[iconName];
+        return IconComponent ? <IconComponent className={cn("mr-2 h-4 w-4", className)} /> : <Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
+    };
 
 
     useEffect(() => {
@@ -453,13 +463,7 @@ function ExpenseForm({
             return undefined;
         }
     };
-
-    const renderIcon = (iconName: string | undefined, className?: string) => {
-        if (!iconName) return <Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
-        const IconComponent = (LucideIcons as any)[iconName];
-        return IconComponent ? <IconComponent className={cn("mr-2 h-4 w-4", className)} /> : <Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
-    };
-
+    
     const isDescriptionRequired = userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false;
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;

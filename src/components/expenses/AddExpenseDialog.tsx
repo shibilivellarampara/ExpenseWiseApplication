@@ -231,16 +231,17 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     const [inputValue, setInputValue] = useState("");
     const selectedTagIds = new Set(field.value || []);
 
-    const handleSelect = (tagId: string) => {
-        const newSelectedTagIds = new Set(selectedTagIds);
-        if (newSelectedTagIds.has(tagId)) {
-            newSelectedTagIds.delete(tagId);
-        } else {
-            newSelectedTagIds.add(tagId);
-        }
-        field.onChange(Array.from(newSelectedTagIds));
-        setInputValue("");
-    };
+    const handleSelect = useCallback((tagId: string) => {
+        field.onChange((current: string[] = []) =>
+            current.includes(tagId)
+                ? current.filter((id) => id !== tagId)
+                : [...current, tagId]
+        );
+    }, [field]);
+    
+    const handleUnselect = useCallback((tagId: string) => {
+        field.onChange((current: string[] = []) => current.filter((id) => id !== tagId));
+    }, [field]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         const input = inputRef.current;
@@ -248,7 +249,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
             if (e.key === "Delete" || e.key === "Backspace") {
                 if (input.value === "" && selectedTagIds.size > 0) {
                     const lastTagId = Array.from(selectedTagIds).pop();
-                    if(lastTagId) handleSelect(lastTagId);
+                    if(lastTagId) handleUnselect(lastTagId);
                 }
             }
             if (e.key === "Escape") {
@@ -282,7 +283,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                             <button
                                 type="button"
                                 className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                onClick={() => handleSelect(tag.id)}
+                                onClick={() => handleUnselect(tag.id)}
                             >
                                 <X className="h-3 w-3" />
                             </button>
@@ -303,7 +304,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                 {open && (
                     <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
                         <CommandList>
-                             {inputValue.length > 0 && filteredTags.length === 0 && (
+                            {inputValue.length > 0 && filteredTags.length === 0 && (
                                 <CommandEmpty>
                                     <QuickAddItemDialog type="Tag" onSave={onQuickAdd}>
                                         <div className="flex items-center gap-2 text-primary cursor-pointer w-full p-2">
@@ -314,7 +315,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                 </CommandEmpty>
                             )}
                             <ScrollArea className="h-48">
-                                <CommandGroup>
+                                <CommandGroup className="flex flex-wrap gap-1 p-2">
                                     {filteredTags.map(tag => (
                                         <CommandItem
                                             key={tag.id}
@@ -322,8 +323,12 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                                 e.preventDefault();
                                                 e.stopPropagation();
                                             }}
-                                            onSelect={() => handleSelect(tag.id)}
-                                            className="flex items-center justify-between"
+                                            onSelect={() => {
+                                                handleSelect(tag.id);
+                                                setInputValue("");
+                                            }}
+                                            className="flex-auto items-center justify-between cursor-pointer rounded-full border px-2 py-1"
+                                            style={generateColorStyle(tag.name)}
                                         >
                                             <div className="flex items-center gap-2 truncate">
                                                 {renderIcon(tag.icon)}
@@ -697,7 +702,7 @@ export function AddExpenseDialog({
                     </div>
                     <div className="flex gap-2 justify-end">
                          {!isEditMode && (
-                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline">
+                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline" className="min-w-[120px]">
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Save and New
                             </Button>
@@ -1057,3 +1062,5 @@ function useExpenseForm({
       tags: tags || []
     };
 }
+
+    

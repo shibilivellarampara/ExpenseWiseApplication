@@ -274,8 +274,8 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
 
 
     return (
-        <Command onKeyDown={handleKeyDown} className={cn('overflow-visible', isSuggesting && 'animate-pulse border-primary/50')}>
-             <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+        <Command onKeyDown={handleKeyDown} className={cn('overflow-visible bg-transparent', isSuggesting && 'animate-pulse border-primary/50')}>
+             <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background">
                  <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-14">
                     {tags.filter(tag => selectedTagIds.has(tag.id)).map(tag => (
                         <Badge
@@ -306,23 +306,24 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
             </div>
             <div className="relative mt-2">
                 {open && (
-                    <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+                    <div className="absolute w-full z-10 top-0 rounded-md border bg-background text-popover-foreground shadow-md outline-none animate-in">
                         <CommandList>
                             <ScrollArea className="h-48">
-                                {filteredTags.length === 0 && inputValue.length > 0 && (
-                                    <CommandEmpty>
-                                        <QuickAddItemDialog type="Tag" onSave={onQuickAdd}>
-                                            <div className="flex items-center gap-2 text-primary cursor-pointer w-full p-2">
-                                                <PlusCircle className="h-4 w-4" />
-                                                Create new tag "{inputValue}"
-                                            </div>
-                                        </QuickAddItemDialog>
-                                    </CommandEmpty>
-                                )}
                                 <CommandGroup className={cn(
                                     "p-2",
                                     tags.length > 10 ? 'grid grid-cols-2 gap-1' : 'flex flex-col gap-1'
                                 )}>
+                                    <QuickAddItemDialog type="Tag" onSave={onQuickAdd} onOpenChange={setOpen}>
+                                        <CommandItem
+                                            onSelect={() => {
+                                                inputRef.current?.blur();
+                                            }}
+                                            className="flex items-center gap-2 text-primary cursor-pointer w-full"
+                                        >
+                                            <PlusCircle className="h-4 w-4" />
+                                            Create new tag
+                                        </CommandItem>
+                                    </QuickAddItemDialog>
                                     {filteredTags.map(tag => (
                                         <CommandItem
                                             key={tag.id}
@@ -338,7 +339,6 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                                 "flex items-center justify-between cursor-pointer rounded-md border px-2 py-1",
                                                 selectedTagIds.has(tag.id) && "bg-muted"
                                             )}
-                                            style={!selectedTagIds.has(tag.id) ? generateColorStyle(tag.name) : undefined}
                                         >
                                             <div className="flex items-center gap-2 truncate">
                                                 {renderIcon(tag.icon)}

@@ -616,8 +616,8 @@ export function AddExpenseDialog({
                     <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} isShared={!!sharedExpenseId} />
                 </div>
                 <DialogFooter className="flex-row justify-between w-full">
-                    <div>
-                        {isEditMode && (
+                    <div className="flex items-center">
+                        {isEditMode ? (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button type="button" variant="destructive" disabled={isLoading}>
@@ -640,21 +640,20 @@ export function AddExpenseDialog({
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
+                        ) : (
+                             <DialogClose asChild>
+                                <Button type="button" variant="outline">
+                                    Cancel
+                                </Button>
+                            </DialogClose>
                         )}
                     </div>
                     <div className="flex gap-2 justify-end">
                          {!isEditMode && (
-                            <>
-                                <DialogClose asChild>
-                                    <Button type="button" variant="outline">
-                                        Cancel
-                                    </Button>
-                                </DialogClose>
-                                <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline">
-                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Save and New
-                                </Button>
-                            </>
+                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline">
+                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Save and New
+                            </Button>
                          )}
                          <Button type="submit" form={formId} disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

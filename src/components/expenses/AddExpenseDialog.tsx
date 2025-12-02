@@ -229,16 +229,16 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [open, setOpen] = useState(false);
     const [inputValue, setInputValue] = useState("");
-    const selectedTags = field.value ? tags.filter(tag => field.value.includes(tag.id)) : [];
+    const selectedTagIds = new Set(field.value || []);
 
     const handleSelect = (tagId: string) => {
-        const currentTags = field.value || [];
-        const isSelected = currentTags.includes(tagId);
-        field.onChange(
-            isSelected
-                ? currentTags.filter((id: string) => id !== tagId)
-                : [...currentTags, tagId]
-        );
+        const newSelectedTagIds = new Set(selectedTagIds);
+        if (newSelectedTagIds.has(tagId)) {
+            newSelectedTagIds.delete(tagId);
+        } else {
+            newSelectedTagIds.add(tagId);
+        }
+        field.onChange(Array.from(newSelectedTagIds));
         setInputValue("");
     };
 
@@ -246,9 +246,9 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
         const input = inputRef.current;
         if (input) {
             if (e.key === "Delete" || e.key === "Backspace") {
-                if (input.value === "" && selectedTags.length > 0) {
-                    const lastTag = selectedTags[selectedTags.length - 1];
-                    handleSelect(lastTag.id);
+                if (input.value === "" && selectedTagIds.size > 0) {
+                    const lastTagId = Array.from(selectedTagIds).pop();
+                    if(lastTagId) handleSelect(lastTagId);
                 }
             }
             if (e.key === "Escape") {
@@ -260,7 +260,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     const filteredTags = tags.filter(tag =>
         tag.name.toLowerCase().includes(inputValue.toLowerCase())
     );
-    
+
     const renderIcon = (iconName: string | undefined, className?: string) => {
         if (!iconName) return null;
         const IconComponent = (LucideIcons as any)[iconName];
@@ -272,7 +272,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
         <Command onKeyDown={handleKeyDown} className={cn('overflow-visible', isSuggesting && 'animate-pulse border-primary/50')}>
              <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                  <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-14">
-                    {selectedTags.map(tag => (
+                    {tags.filter(tag => selectedTagIds.has(tag.id)).map(tag => (
                         <Badge
                             key={tag.id}
                             style={generateColorStyle(tag.name)}
@@ -280,14 +280,8 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                         >
                             {tag.name}
                             <button
+                                type="button"
                                 className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleSelect(tag.id);
-                                }}
-                                onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                }}
                                 onClick={() => handleSelect(tag.id)}
                             >
                                 <X className="h-3 w-3" />
@@ -300,7 +294,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                         onValueChange={setInputValue}
                         onBlur={() => setOpen(false)}
                         onFocus={() => setOpen(true)}
-                        placeholder={selectedTags.length > 0 ? "" : `Tags ${isRequired ? '*' : ''}`}
+                        placeholder={selectedTagIds.size > 0 ? "" : `Tags ${isRequired ? '*' : ''}`}
                         className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-base md:text-sm h-full p-0 border-none shadow-none focus-visible:ring-0"
                     />
                 </div>
@@ -309,8 +303,8 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                 {open && (
                     <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
                         <CommandList>
-                            {inputValue.length > 0 && filteredTags.length === 0 && (
-                                 <CommandEmpty>
+                             {inputValue.length > 0 && filteredTags.length === 0 && (
+                                <CommandEmpty>
                                     <QuickAddItemDialog type="Tag" onSave={onQuickAdd}>
                                         <div className="flex items-center gap-2 text-primary cursor-pointer w-full p-2">
                                             <PlusCircle className="h-4 w-4" />
@@ -324,7 +318,10 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                     {filteredTags.map(tag => (
                                         <CommandItem
                                             key={tag.id}
-                                            value={tag.name}
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                            }}
                                             onSelect={() => handleSelect(tag.id)}
                                             className="flex items-center justify-between"
                                         >
@@ -332,7 +329,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                                 {renderIcon(tag.icon)}
                                                 <span className="truncate">{tag.name}</span>
                                             </div>
-                                            <Check className={cn("h-4 w-4", selectedTags.some(s => s.id === tag.id) ? "opacity-100" : "opacity-0")} />
+                                            <Check className={cn("h-4 w-4", selectedTagIds.has(tag.id) ? "opacity-100" : "opacity-0")} />
                                         </CommandItem>
                                     ))}
                                 </CommandGroup>

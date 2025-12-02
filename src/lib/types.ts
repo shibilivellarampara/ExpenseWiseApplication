@@ -74,7 +74,7 @@ export type Expense = {
   type: 'expense' | 'income';
   amount: number;
   description?: string;
-  date: Timestamp | Date; // Firestore Timestamp on read, Date on write
+  date: Timestamp;
   createdAt: Timestamp;
   accountId: string;
   categoryId?: string;

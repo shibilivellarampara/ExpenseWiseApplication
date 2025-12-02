@@ -37,6 +37,7 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
                         <SelectContent>
                             <SelectItem value="default">Default Report</SelectItem>
                             <SelectItem value="enhanced">Enhanced report</SelectItem>
+                             <SelectItem value="expensewise">ExpenseWise Report</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

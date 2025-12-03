@@ -10,6 +10,8 @@ import { collection, getDocs, query, where, Timestamp } from "firebase/firestore
 import { useMemo, useState } from "react";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
+import { ExcelImporter } from "@/components/import/ExcelImporter";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 async function fetchAllTransactions(firestore: any, userId: string, accountId?: string): Promise<Expense[]> {
     let expensesQuery;
@@ -29,7 +31,7 @@ async function fetchAllTransactions(firestore: any, userId: string, accountId?: 
     });
 }
 
-export default function ReportsPage() {
+export default function DataPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const [isLoading, setIsLoading] = useState(false);
@@ -138,15 +140,26 @@ export default function ReportsPage() {
     return (
         <div className="w-full space-y-8">
             <PageHeader
-                title="Generate Reports"
-                description="Export your transaction data to various formats."
+                title="Import & Export"
+                description="Manage your expense data by importing or exporting."
             />
-            <ReportGenerator 
-                accounts={accounts || []} 
-                onAction={handleReportAction}
-                isLoading={isLoading}
-                progress={progress}
-            />
+            <Tabs defaultValue="import" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="import">Import</TabsTrigger>
+                    <TabsTrigger value="export">Export</TabsTrigger>
+                </TabsList>
+                <TabsContent value="import" className="mt-6">
+                    <ExcelImporter />
+                </TabsContent>
+                <TabsContent value="export" className="mt-6">
+                    <ReportGenerator 
+                        accounts={accounts || []} 
+                        onAction={handleReportAction}
+                        isLoading={isLoading}
+                        progress={progress}
+                    />
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
-import { PanelLeft, Bell, Circle, CheckCheck } from 'lucide-react';
+import { PanelLeft, Bell, Circle, CheckCheck, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { NavLink } from './AppSidebar';
 import {
@@ -24,7 +24,6 @@ import {
   Info,
   BarChartHorizontal,
   HandCoins,
-  Target,
 } from 'lucide-react';
 import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
@@ -46,10 +45,8 @@ const baseNavItems = [
   { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
-  { href: '/budgets', icon: <Target className="h-5 w-5" />, label: 'Budgets' },
   { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
-  { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
-  { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
+  { href: '/data', icon: <div className="relative h-5 w-5"><ArrowRight className="absolute left-0 top-0 h-4 w-4" /><ArrowLeft className="absolute right-0 bottom-0 h-4 w-4" /></div>, label: 'Import / Export' },
   { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
   { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
@@ -62,7 +59,12 @@ const getPageTitle = (path: string): string => {
     if (path.startsWith('/shared-expenses/') && path.split('/').length > 2) {
         return "Shared Space";
     }
-    const navItem = baseNavItems.find(item => path.startsWith(item.href) || (item.special_href && path.startsWith(item.special_href)));
+    const navItem = baseNavItems.find(item => {
+        if(item.label === 'Import / Export') {
+            return path.startsWith('/data') || path.startsWith('/import') || path.startsWith('/reports');
+        }
+        return path.startsWith(item.href) || (item.special_href && path.startsWith(item.special_href))
+    });
     return navItem ? navItem.label : 'Dashboard';
 }
 
@@ -192,6 +194,10 @@ export function AppHeader() {
       const href = transactionGrouping === 'monthly' ? item.href : item.special_href;
       const isActive = transactionGrouping === 'monthly' ? pathname.startsWith(item.href) : pathname.startsWith(item.special_href!);
       return { ...item, href: href!, isActive: isActive };
+    }
+     if (item.label === 'Import / Export') {
+        const isActive = pathname.startsWith('/data') || pathname.startsWith('/import') || pathname.startsWith('/reports');
+        return { ...item, isActive: isActive, href: '/data' };
     }
     return { ...item, isActive: pathname.startsWith(item.href) };
   });

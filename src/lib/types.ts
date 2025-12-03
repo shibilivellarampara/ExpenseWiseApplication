@@ -141,17 +141,3 @@ export type EnrichedDebt = Omit<Debt, 'date' | 'settledAt'> & {
   date: Date;
   settledAt?: Date;
 };
-
-export type Budget = {
-    id: string;
-    userId: string;
-    categoryId: string;
-    amount: number;
-    month: string; // YYYY-MM
-    createdAt: Timestamp;
-};
-
-export type EnrichedBudget = Budget & {
-    category?: Category;
-    spentAmount: number;
-};

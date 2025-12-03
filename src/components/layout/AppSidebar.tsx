@@ -15,7 +15,8 @@ import {
   Info,
   BarChartHorizontal,
   HandCoins,
-  Target,
+  ArrowRight,
+  ArrowLeft,
 } from 'lucide-react';
 import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
@@ -34,10 +35,8 @@ const baseNavItems = [
   { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
-  { href: '/budgets', icon: <Target className="h-5 w-5" />, label: 'Budgets' },
   { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
-  { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
-  { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
+  { href: '/data', icon: <div className="relative h-5 w-5"><ArrowRight className="absolute left-0 top-0 h-4 w-4" /><ArrowLeft className="absolute right-0 bottom-0 h-4 w-4" /></div>, label: 'Import / Export' },
   { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
   { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
@@ -106,6 +105,10 @@ export function AppSidebar() {
       const href = transactionGrouping === 'monthly' ? item.href : item.special_href;
       const isActive = transactionGrouping === 'monthly' ? pathname.startsWith(item.href) : pathname.startsWith(item.special_href!);
       return { ...item, href: href!, isActive: isActive };
+    }
+    if (item.label === 'Import / Export') {
+        const isActive = pathname.startsWith('/import') || pathname.startsWith('/reports') || pathname.startsWith('/data');
+        return { ...item, isActive: isActive, href: '/data' };
     }
     return { ...item, isActive: pathname.startsWith(item.href) };
   });

@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Firestore Security Rules for Expense Tracker App
  *
@@ -36,7 +37,8 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
       match /expenses/{expenseId} {
-        allow read, write: if isOwner(userId);
+        // Allow read/write on individual documents and list permission on the collection
+        allow list, read, write: if isOwner(userId);
       }
       match /debts/{debtId} {
         allow read, write: if isOwner(userId);

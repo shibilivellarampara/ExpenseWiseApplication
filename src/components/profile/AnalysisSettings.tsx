@@ -5,11 +5,11 @@ import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, setDocum
 import { Category, UserProfile } from "@/lib/types";
 import { collection, doc } from "firebase/firestore";
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ChevronDown } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import * as LucideIcons from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from "@/lib/utils";
 import { AnalysisSettingsContent } from "./AnalysisSettingsContent";
 

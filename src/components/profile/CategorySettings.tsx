@@ -3,19 +3,19 @@
 
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Category, Expense } from '@/lib/types';
-import { collection, doc, writeBatch, getDocs, query, where, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, writeBatch, query, where, getDocs, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown, Merge } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { Checkbox } from '../ui/checkbox';
+import { Checkbox } from '@/components/ui/checkbox';
 import { MergeItemsDialog } from './MergeItemsDialog';
 
 export function CategorySettings() {

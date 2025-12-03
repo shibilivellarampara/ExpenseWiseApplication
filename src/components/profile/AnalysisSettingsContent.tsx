@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
@@ -8,11 +7,11 @@ import { collection, doc } from "firebase/firestore";
 import { Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import * as LucideIcons from 'lucide-react';
-import { Checkbox } from "../ui/checkbox";
-import { Label } from "../ui/label";
-import { ScrollArea } from "../ui/scroll-area";
-import { Card, CardContent } from "../ui/card";
-import { Switch } from "../ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 
 const renderIcon = (iconName: string) => {
     const IconComponent = (LucideIcons as any)[iconName];

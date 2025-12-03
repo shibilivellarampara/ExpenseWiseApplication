@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MergeItemsDialog } from './MergeItemsDialog';
+import { MergeItemsDialog } from '@/components/profile/MergeItemsDialog';
 
 export function AccountSettings() {
     const { user } = useUser();

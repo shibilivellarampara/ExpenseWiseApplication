@@ -1,7 +1,7 @@
 
 {
   "name": "nextn",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 9002",
@@ -76,5 +76,3 @@
     "typescript": "^5"
   }
 }
-
-  

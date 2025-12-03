@@ -98,7 +98,7 @@ const changelog = [
     },
     {
         version: "1.3.4",
-        date: "2024-08-16",
+        date: "2024-08-15",
         changes: [
             { type: 'Fix', description: "Corrected an issue where special financial categories like 'Credit Card Payment' were always excluded from analysis, regardless of user settings." },
             { type: 'Fix', description: "Resolved a build error caused by an incorrect import path for `AnalysisSettingsContent`." },
@@ -107,7 +107,7 @@ const changelog = [
     },
     {
         version: "1.3.3",
-        date: "2024-08-15",
+        date: "2024-08-14",
         changes: [
             { type: 'Fix', description: "Resolved a layout issue in the category analysis table that caused a runtime error when expanding rows." },
             { type: 'Fix', description: "Corrected the alignment of the notification panel to ensure it appears centered below the bell icon." },
@@ -115,7 +115,7 @@ const changelog = [
     },
     {
         version: "1.3.2",
-        date: "2024-08-14",
+        date: "2024-08-13",
         changes: [
             { type: 'Feature', description: "Added a notification center to the header to provide timely alerts for events like upcoming credit card payments." },
             { type: 'Feature', description: "Added a 'Compact View' option in the Profile settings to allow for a denser transaction list." },
@@ -125,7 +125,7 @@ const changelog = [
     },
     {
         version: "1.3.1",
-        date: "2024-08-13",
+        date: "2024-08-12",
         changes: [
             { type: 'Feature', description: "Added a 'Net' view to the category analysis table to show net cash flow per category." },
             { type: 'Feature', description: "Made category rows on the Analysis page clickable, opening an in-page dialog with the corresponding transactions." },
@@ -138,7 +138,7 @@ const changelog = [
     },
     {
         version: "1.3.0",
-        date: "2024-08-12",
+        date: "2024-08-11",
         changes: [
             { type: 'Fix', description: "Resolved a persistent Firestore query error that was incorrectly reported as 'Missing or insufficient permissions' by refactoring data fetching logic on the transactions and analysis pages." },
             { type: 'Fix', description: "Replaced the date range tabs on the analysis page with a dropdown menu to improve usability and accommodate more options, including a custom date range picker." },
@@ -148,7 +148,7 @@ const changelog = [
     },
     {
         version: "1.2.9",
-        date: "2024-08-11",
+        date: "2024-08-10",
         changes: [
             { type: 'Feature', description: "Introduced a new 'Analysis' page with detailed expense breakdowns, trend charts, and AI-powered insights." },
             { type: 'Feature', description: "Added full support for income categorization, allowing for a complete financial overview on the Analysis page." },
@@ -157,7 +157,7 @@ const changelog = [
     },
     {
         version: "1.2.8",
-        date: "2024-08-10",
+        date: "2024-08-09",
         changes: [
             { type: 'Feature', description: "Added a dedicated theme toggle button to the main header for easier access." },
             { type: 'Feature', description: "Streamlined report generation and added a 'Copy to Clipboard' option." },
@@ -168,21 +168,21 @@ const changelog = [
     },
     {
         version: "1.2.7",
-        date: "2024-08-09",
+        date: "2024-08-08",
         changes: [
             { type: 'Feature', description: "Added a 'Credit Limit Downgrade' category to reduce a credit card's limit via an expense transaction." },
         ]
     },
     {
         version: "1.2.6",
-        date: "2024-08-08",
+        date: "2024-08-07",
         changes: [
             { type: 'Feature', description: "Added a 'Payment History' option to credit card menus for quick access to payment transactions." },
         ]
     },
     {
         version: "1_2.5",
-        date: "2024-08-07",
+        date: "2024-08-06",
         changes: [
             { type: 'Feature', description: "Unified date and time selection into a single input in the transaction form." },
             { type: 'Feature', description: "Implemented a consistent, searchable dropdown for tag selection, matching account and category fields." },
@@ -194,14 +194,14 @@ const changelog = [
     },
     {
         version: "1.2.4",
-        date: "2024-08-06",
+        date: "2024-08-05",
         changes: [
             { type: 'Feature', description: "Optimized transaction list performance by implementing list virtualization for large datasets." },
         ]
     },
     {
         version: "1.2.3",
-        date: "2024-08-05",
+        date: "2024-08-02",
         changes: [
             { type: 'Fix', description: "Resolved multiple TypeScript type errors that were causing persistent build failures." },
             { type: 'Fix', description: "Corrected data handling in login, sign-up, and transaction forms to improve type safety." },
@@ -209,7 +209,7 @@ const changelog = [
     },
     {
         version: "1.2.2",
-        date: "2024-08-02",
+        date: "2024-08-01",
         changes: [
             { type: 'Feature', description: "Added search functionality to the transactions page to filter by description and amount." },
             { type: 'Fix', description: "Changed the search input placeholder to be more concise." },
@@ -217,7 +217,7 @@ const changelog = [
     },
     {
         version: "1.2.1",
-        date: "2024-08-01",
+        date: "2024-07-31",
         changes: [
             { type: 'Feature', description: "Implemented a true running balance calculation for all transactions, visible on the main list without requiring filtering." },
             { type: 'Fix', description: "Corrected bank account running balance to calculate forward from a starting balance of zero for the filtered period." },
@@ -225,7 +225,7 @@ const changelog = [
     },
     {
         version: "1.2.0",
-        date: "2024-07-31",
+        date: "2024-07-30",
         changes: [
             { type: 'Feature', description: "Added 'Select All' checkbox to the Excel importer for easier account selection." },
             { type: 'Fix', description: "Updated 'Clear All Data' function to correctly delete accounts in addition to transactions." },
@@ -233,7 +233,7 @@ const changelog = [
     },
     {
         version: "1.1.0",
-        date: "2024-07-30",
+        date: "2024-07-29",
         changes: [
             { type: 'Feature', description: "Initial release of ExpenseWise." },
         ]
@@ -274,5 +274,7 @@ export default function AboutPage() {
             </div>
         </div>
     );
+
+}
 
     

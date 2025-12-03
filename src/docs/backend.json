@@ -282,7 +282,7 @@
         "schema": { "$ref": "#/entities/Debt" },
         "description": "Stores debt and loan records for a user."
     },
-    "/users/{userId}/budgets/{budgetId}": {
+     "/users/{userId}/budgets/{budgetId}": {
       "schema": { "$ref": "#/entities/Budget" },
       "description": "Stores user's monthly budgets for categories."
     }

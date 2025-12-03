@@ -5,10 +5,17 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.4.2";
+const appVersion = "1.4.3";
 
 
 const changelog = [
+    {
+        version: "1.4.3",
+        date: "2025-12-06",
+        changes: [
+            { type: 'Fix', description: "Resolved all persistent Firestore security rule errors that were preventing data from being displayed on several pages. The rules have been completely overhauled for correctness and stability." },
+        ]
+    },
     {
         version: "1.4.2",
         date: "2025-12-05",

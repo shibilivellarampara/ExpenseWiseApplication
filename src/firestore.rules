@@ -35,17 +35,9 @@ service cloud.firestore {
       match /contributions/{contributionId} {
         allow list, read, write: if isOwner(userId);
       }
-      
-      // Corrected rule for accessing a single expense document
       match /expenses/{expenseId} {
         allow read, write: if isOwner(userId);
       }
-
-      // **THE DEFINITIVE FIX**: Explicitly allow listing the expenses subcollection
-      match /expenses {
-          allow list: if isOwner(userId);
-      }
-      
       match /debts/{debtId} {
         allow list, read, write: if isOwner(userId);
       }

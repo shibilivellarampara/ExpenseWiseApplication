@@ -181,7 +181,7 @@ const changelog = [
         ]
     },
     {
-        version: "1_2.5",
+        version: "1.2.5",
         date: "2024-08-06",
         changes: [
             { type: 'Feature', description: "Unified date and time selection into a single input in the transaction form." },
@@ -276,5 +276,7 @@ export default function AboutPage() {
     );
 
 }
+
+    
 
     

@@ -19,7 +19,7 @@ interface ReportGeneratorProps {
 
 export function ReportGenerator({ accounts, onAction, isLoading, progress }: ReportGeneratorProps) {
     const [selectedAccount, setSelectedAccount] = useState<string>('all');
-    const [selectedTemplate, setSelectedTemplate] = useState<string>('default');
+    const [selectedTemplate, setSelectedTemplate] = useState<string>('enhanced');
     
     return (
         <Card className="max-w-2xl mx-auto">
@@ -35,7 +35,6 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
                             <SelectValue placeholder="Select a template" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="default">Default Report</SelectItem>
                             <SelectItem value="enhanced">Enhanced report</SelectItem>
                              <SelectItem value="expensewise">ExpenseWise Report</SelectItem>
                         </SelectContent>

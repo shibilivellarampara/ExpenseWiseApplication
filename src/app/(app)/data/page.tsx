@@ -82,7 +82,18 @@ export default function DataPage() {
 
             let dataToExport;
             
-            if (template === 'enhanced') {
+            if (template === 'expensewise') {
+                 dataToExport = enriched.map(tx => ({
+                    'Date': tx.date.toLocaleDateString(),
+                    'Time': tx.date.toLocaleTimeString(),
+                    'Description': tx.description,
+                    'Category': tx.category?.name || 'N/A',
+                    'Account': tx.account?.name || 'N/A',
+                    'Amount': tx.amount,
+                    'Type': tx.type,
+                    'Tags': tx.tags.map(t => t.name).join(', '),
+                }));
+            } else { // Enhanced template
                 dataToExport = enriched.map(tx => ({
                     'Date': tx.date.toLocaleDateString(),
                     'Time': tx.date.toLocaleTimeString(),
@@ -91,17 +102,6 @@ export default function DataPage() {
                     'ACCOUNT': tx.account?.name || 'N/A',
                     'CASH IN': tx.type === 'income' ? tx.amount : '',
                     'CASH OUT': tx.type === 'expense' ? tx.amount : '',
-                    'Tags': tx.tags.map(t => t.name).join(', '),
-                }));
-            } else { // Default template
-                dataToExport = enriched.map(tx => ({
-                    'Date': tx.date.toLocaleDateString(),
-                    'Time': tx.date.toLocaleTimeString(),
-                    'Description': tx.description,
-                    'Category': tx.category?.name || 'N/A',
-                    'Account': tx.account?.name || 'N/A',
-                    'Amount': tx.amount,
-                    'Type': tx.type,
                     'Tags': tx.tags.map(t => t.name).join(', '),
                 }));
             }
@@ -118,29 +118,33 @@ export default function DataPage() {
                 const rows = dataToExport.map(row => Object.values(row).join('\t')).join('\n');
                 const shareText = `${headers}\n${rows}`;
                 
-                if (navigator.share) {
-                    await navigator.share({
-                        title: 'ExpenseWise Report',
-                        text: shareText,
-                    });
-                    toast({
-                        title: "Shared Successfully",
-                    });
-                } else {
-                     toast({
-                        variant: 'destructive',
-                        title: "Share Not Supported",
-                        description: "Your browser does not support the Web Share API.",
-                    });
+                try {
+                    if (navigator.share) {
+                        await navigator.share({
+                            title: 'ExpenseWise Report',
+                            text: shareText,
+                        });
+                        toast({
+                            title: "Shared Successfully",
+                        });
+                    } else {
+                         toast({
+                            variant: 'destructive',
+                            title: "Share Not Supported",
+                            description: "Your browser does not support the Web Share API.",
+                        });
+                    }
+                } catch (shareError: any) {
+                    if (shareError.name !== 'AbortError') { // Don't show error if user cancels share
+                        toast({ variant: 'destructive', title: "Error Sharing", description: shareError.message });
+                    }
                 }
             }
             
             setProgress(100);
 
         } catch (error: any) {
-             if (error.name !== 'AbortError') { // Don't show error if user cancels share
-                toast({ variant: 'destructive', title: "Error Generating Report", description: error.message });
-            }
+            toast({ variant: 'destructive', title: "Error Generating Report", description: error.message });
         } finally {
             setTimeout(() => {
                 setIsLoading(false);

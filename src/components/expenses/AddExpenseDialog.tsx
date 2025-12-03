@@ -839,10 +839,17 @@ function useExpenseForm({
             const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
             
             if (isCreditCardPayment) {
-                if (selectedAccount?.type !== 'credit_card' || values.type !== 'income') {
-                    toast({ variant: 'destructive', title: 'Invalid Operation', description: '"Credit Card Payment" must be an "income" transaction to a credit card account.'});
+                // It's a payment TO a credit card, so it's income for the card.
+                if (selectedAccount?.type === 'credit_card' && values.type !== 'income') {
+                    toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments to a credit card must be an "income" transaction for that card.' });
                     setIsLoading(false);
                     return false;
+                }
+                // It's a payment FROM another account, so it's an expense for that account.
+                if (selectedAccount?.type !== 'credit_card' && values.type !== 'expense') {
+                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments from a bank account for a credit card must be an "expense" transaction.' });
+                     setIsLoading(false);
+                     return false;
                 }
             }
 

@@ -6,13 +6,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Account } from '@/lib/types';
-import { FileDown, Loader2, Copy } from 'lucide-react';
+import { FileDown, Loader2, Share2 } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Progress } from '../ui/progress';
 
 interface ReportGeneratorProps {
     accounts: Account[];
-    onAction: (accountId: string, format: 'excel' | 'clipboard', template: string) => void;
+    onAction: (accountId: string, format: 'excel' | 'share', template: string) => void;
     isLoading: boolean;
     progress: number;
 }
@@ -68,9 +68,9 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
                         Download Excel
                     </Button>
-                    <Button variant="outline" onClick={() => onAction(selectedAccount, 'clipboard', selectedTemplate)} disabled={isLoading}>
-                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
-                        Copy to Clipboard
+                    <Button variant="outline" onClick={() => onAction(selectedAccount, 'share', selectedTemplate)} disabled={isLoading}>
+                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
+                        Share
                     </Button>
                 </div>
             </CardFooter>

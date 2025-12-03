@@ -50,7 +50,7 @@ export default function DataPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
 
-    const handleReportAction = async (accountId: string, format: 'excel' | 'clipboard', template: string) => {
+    const handleReportAction = async (accountId: string, format: 'excel' | 'share', template: string) => {
         if (!user || !firestore) return;
         setIsLoading(true);
         setProgress(0);
@@ -113,22 +113,34 @@ export default function DataPage() {
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
                 XLSX.writeFile(workbook, `ExpenseWise_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
-            } else if (format === 'clipboard') {
+            } else if (format === 'share') {
                 const headers = Object.keys(dataToExport[0]).join('\t');
                 const rows = dataToExport.map(row => Object.values(row).join('\t')).join('\n');
-                const clipboardText = `${headers}\n${rows}`;
+                const shareText = `${headers}\n${rows}`;
                 
-                await navigator.clipboard.writeText(clipboardText);
-                toast({
-                    title: "Copied to Clipboard",
-                    description: `${dataToExport.length} transactions have been copied.`,
-                });
+                if (navigator.share) {
+                    await navigator.share({
+                        title: 'ExpenseWise Report',
+                        text: shareText,
+                    });
+                    toast({
+                        title: "Shared Successfully",
+                    });
+                } else {
+                     toast({
+                        variant: 'destructive',
+                        title: "Share Not Supported",
+                        description: "Your browser does not support the Web Share API.",
+                    });
+                }
             }
             
             setProgress(100);
 
         } catch (error: any) {
-            toast({ variant: 'destructive', title: "Error Generating Report", description: error.message });
+             if (error.name !== 'AbortError') { // Don't show error if user cancels share
+                toast({ variant: 'destructive', title: "Error Generating Report", description: error.message });
+            }
         } finally {
             setTimeout(() => {
                 setIsLoading(false);

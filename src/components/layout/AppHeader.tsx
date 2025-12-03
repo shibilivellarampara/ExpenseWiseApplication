@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
@@ -23,6 +24,7 @@ import {
   Info,
   BarChartHorizontal,
   HandCoins,
+  Target,
 } from 'lucide-react';
 import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
@@ -44,6 +46,7 @@ const baseNavItems = [
   { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
+  { href: '/budgets', icon: <Target className="h-5 w-5" />, label: 'Budgets' },
   { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
   { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },

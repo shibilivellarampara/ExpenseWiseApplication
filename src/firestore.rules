@@ -1,0 +1,82 @@
+/**
+ * @fileoverview Firestore Security Rules for Expense Tracker App
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Only the authenticated user who owns a specific data record has read and write access to it.
+ *
+ * Structure:
+ * - /users/{userId} → private user document
+ * - /users/{userId}/{collection}/{docId} -> private user subcollections
+ * - /shared_expenses/{expenseId} → shared group-level expense
+ * - /shared_expenses/{expenseId}/expenses/{subExpenseId} → individual expense items within a shared expense
+ *
+ * Key Decisions:
+ * - Users can only access their own /users/{userId} data and subcollections.
+ * - Shared expenses are publicly readable, but only authenticated users can modify them.
+ * - A collection group rule is used for 'expenses' to allow for app-wide queries (e.g., on dashboards).
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Private User Data ---
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      match /accounts/{accountId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /categories/{categoryId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /tags/{tagId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /contributions/{contributionId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /expenses/{expenseId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /debts/{debtId} {
+        allow read, write: if isOwner(userId);
+      }
+       match /budgets/{budgetId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // --- Collection Group Rules ---
+    // This rule is crucial for allowing cross-user queries like "get all my expenses"
+    // that are used on the dashboard and analysis pages.
+    match /expenses/{expenseId} {
+       allow read, write: if request.auth.uid == resource.data.userId;
+    }
+    
+
+    // --- Shared Data ---
+    match /shared_expenses/{sharedExpenseId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn(); // Further rules could restrict this to members
+
+      match /expenses/{expenseId} {
+         allow read: if isSignedIn();
+         allow create, update, delete: if isSignedIn();
+      }
+    }
+    
+    // --- Admin Data ---
+    match /admin/{docId} {
+        allow read, write: if request.auth.token.isAdmin == true;
+    }
+  }
+
+  // --- Helper Functions ---
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function isOwner(userId) {
+    return request.auth != null && request.auth.uid == userId;
+  }
+}

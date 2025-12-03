@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -14,6 +15,7 @@ import {
   Info,
   BarChartHorizontal,
   HandCoins,
+  Target,
 } from 'lucide-react';
 import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
@@ -32,6 +34,7 @@ const baseNavItems = [
   { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
+  { href: '/budgets', icon: <Target className="h-5 w-5" />, label: 'Budgets' },
   { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
   { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
   { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },

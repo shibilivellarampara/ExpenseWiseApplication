@@ -36,14 +36,12 @@ service cloud.firestore {
         allow list, read, write: if isOwner(userId);
       }
       match /expenses/{expenseId} {
-        // Allow read/write on individual documents
         allow read, write: if isOwner(userId);
       }
-      // This rule specifically allows listing the expenses collection for a user
+      // This rule specifically allows listing the expenses collection for a user. THIS IS THE FIX.
       match /expenses {
           allow list: if isOwner(userId);
       }
-
       match /debts/{debtId} {
         allow list, read, write: if isOwner(userId);
       }

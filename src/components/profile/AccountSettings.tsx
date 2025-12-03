@@ -30,7 +30,7 @@ export function AccountSettings() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showMergeDialog, setShowMergeDialog] = useState(false);
     
-    const handleMerge = async (target: { id: string } | { name: string; icon: string; type?: Account['type'] }) => {
+    const handleMerge = async (target: { id: string } | { name: string; icon: string; type: Account['type'] }) => {
         if (!user || !firestore || !accounts || selectedIds.length < 2) return;
         setIsSaving(true);
     

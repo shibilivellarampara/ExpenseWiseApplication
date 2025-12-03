@@ -124,9 +124,6 @@ export default function DataPage() {
                             title: 'ExpenseWise Report',
                             text: shareText,
                         });
-                        toast({
-                            title: "Shared Successfully",
-                        });
                     } else {
                          toast({
                             variant: 'destructive',
@@ -135,7 +132,7 @@ export default function DataPage() {
                         });
                     }
                 } catch (shareError: any) {
-                    if (shareError.name !== 'AbortError') { // Don't show error if user cancels share
+                    if (shareError.name !== 'AbortError') { 
                         toast({ variant: 'destructive', title: "Error Sharing", description: shareError.message });
                     }
                 }
@@ -149,7 +146,7 @@ export default function DataPage() {
             setTimeout(() => {
                 setIsLoading(false);
                 setProgress(0);
-            }, 500); // Keep progress bar visible for a moment
+            }, 500);
         }
     };
 

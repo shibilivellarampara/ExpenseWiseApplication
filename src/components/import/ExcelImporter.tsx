@@ -42,11 +42,6 @@ type ColumnMapping = {
 };
 
 const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, description: string } } = {
-    'default': {
-        name: 'Default Template',
-        mapping: { date: 'Date', time: 'Time', amount: 'Amount', description: 'Description', category: 'Category', tags: 'Tags', mode: 'Account' },
-        description: "Standard: Date, Time, Amount, Description, etc."
-    },
     'expensewise': {
         name: 'ExpenseWise Report',
         mapping: { date: 'Date', time: 'Time', amount: 'Amount', type: 'Type', description: 'Description', category: 'Category', tags: 'Tags', mode: 'Account' },

@@ -41,6 +41,7 @@ service cloud.firestore {
       match /debts/{debtId} {
         allow read, write: if isOwner(userId);
       }
+      // Rule for budgets collection
        match /budgets/{budgetId} {
         allow read, write: if isOwner(userId);
       }

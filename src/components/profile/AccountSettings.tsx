@@ -5,13 +5,13 @@ import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebas
 import { Account, Category } from '@/lib/types';
 import { collection, doc, writeBatch, getDocs, query, where, setDoc, increment } from 'firebase/firestore';
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Loader2, ChevronDown, Merge } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { Checkbox } from '../ui/checkbox';
+import { Checkbox } from '@/components/ui/checkbox';
 import { MergeItemsDialog } from './MergeItemsDialog';
 
 export function AccountSettings() {
@@ -30,7 +30,7 @@ export function AccountSettings() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showMergeDialog, setShowMergeDialog] = useState(false);
     
-    const handleMerge = async (target: { id: string } | { name: string; icon: string; type: Account['type'] }) => {
+    const handleMerge = async (target: { id: string } | { name: string; icon: string; type?: Account['type'] }) => {
         if (!user || !firestore || !accounts || selectedIds.length < 2) return;
         setIsSaving(true);
     
@@ -46,7 +46,7 @@ export function AccountSettings() {
                     userId: user.uid,
                     name: target.name,
                     icon: target.icon,
-                    type: target.type,
+                    type: target.type || 'bank', // Provide a default
                     balance: 0, // Will be recalculated
                     status: 'active',
                 };

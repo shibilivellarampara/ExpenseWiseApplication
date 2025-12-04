@@ -5,10 +5,20 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.4.4";
+const appVersion = "1.4.5";
 
 
 const changelog = [
+    {
+        version: "1.4.5",
+        date: "2025-12-09",
+        changes: [
+            { type: 'Feature', description: "Added ability to set monthly budgets for categories and track spending against them." },
+            { type: 'Feature', description: "Introduced a new 'Goals' feature to help users save for specific financial targets." },
+            { type: 'UI', description: "Redesigned the 'Shared Expenses' page for better clarity and easier management." },
+            { type: 'Fix', description: "Fixed an issue where the currency symbol was not consistently displayed on the Debts page." },
+        ]
+    },
     {
         version: "1.4.4",
         date: "2025-12-08",
@@ -95,7 +105,7 @@ const changelog = [
             { type: 'Feature', description: "Added 'Last 6 Months' and 'Last Year' options to the date range filter on the Analysis page." },
             { type: 'Feature', description: "Added a setting to specify a default account for new transactions in Form Customization." },
             { type: 'Feature', description: "Added visibility toggles to show or hide fields in the transaction form via Form Customization." },
-            { type: 'Fix', description: "Corrected the credit card progress bar to accurately show available credit relative to the total limit." },
+            { type: 'Fix', description: "Corrected the credit card progress bar to accurately show available credit to the total limit." },
             { type: 'Fix', description: "Resolved UI layout bugs that caused inconsistent scrolling and button behavior." },
             { type: 'Fix', description: "Fixed a runtime error that prevented the 'Create new tag' dialog from opening in the transaction form." },
         ]

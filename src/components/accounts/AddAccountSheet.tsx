@@ -77,6 +77,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
     const { user } = useUser();
     const firestore = useFirestore();
     const isEditMode = !!accountToEdit;
+    const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
     
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
     const { data: accounts } = useCollection<Account>(accountsQuery);
@@ -315,7 +316,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                 <FormItem>
                                     <FormLabel>Icon</FormLabel>
                                     <FormControl>
-                                         <Popover>
+                                         <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
                                             <PopoverTrigger asChild>
                                                 <Button variant="outline" className="w-full justify-start">
                                                     {renderIcon(field.value)}
@@ -324,7 +325,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto grid grid-cols-5 gap-2">
                                                 {availableIcons.map(icon => (
-                                                    <Button key={icon} variant="ghost" size="icon" onClick={() => field.onChange(icon)}>
+                                                    <Button key={icon} variant="ghost" size="icon" onClick={() => {field.onChange(icon); setIconPopoverOpen(false);}}>
                                                         {renderIcon(icon)}
                                                     </Button>
                                                 ))}

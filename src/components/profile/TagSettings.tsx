@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -35,6 +36,8 @@ export function TagSettings() {
     const [isSaving, setIsSaving] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showMergeDialog, setShowMergeDialog] = useState(false);
+    const [newItemPopoverOpen, setNewItemPopoverOpen] = useState(false);
+    const [editingItemPopoverOpen, setEditingItemPopoverOpen] = useState(false);
 
 
     const renderIcon = (iconName: string) => {
@@ -234,13 +237,13 @@ export function TagSettings() {
                                             />
                                             {editingItem?.id === item.id ? (
                                                 <div className="flex items-center gap-2 w-full">
-                                                    <Popover>
+                                                    <Popover open={editingItemPopoverOpen} onOpenChange={setEditingItemPopoverOpen}>
                                                         <PopoverTrigger asChild>
                                                             <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
                                                         </PopoverTrigger>
                                                         <PopoverContent className="w-auto grid grid-cols-5 gap-2">
                                                             {availableIcons.map(icon => (
-                                                                <Button key={icon} variant="ghost" size="icon" onClick={() => setEditingItem({ ...editingItem, icon })}>
+                                                                <Button key={icon} variant="ghost" size="icon" onClick={() => {setEditingItem({ ...editingItem, icon }); setEditingItemPopoverOpen(false);}}>
                                                                     {renderIcon(icon)}
                                                                 </Button>
                                                             ))}
@@ -295,13 +298,13 @@ export function TagSettings() {
                             </div>
                         )}
                         <div className="flex items-center gap-2 pt-4">
-                            <Popover>
+                            <Popover open={newItemPopoverOpen} onOpenChange={setNewItemPopoverOpen}>
                                 <PopoverTrigger asChild>
                                     <Button variant="outline" size="icon" className="shrink-0">{renderIcon(newItem.icon)}</Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto grid grid-cols-5 gap-2">
                                     {availableIcons.map(icon => (
-                                        <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItem({...newItem, icon})}>
+                                        <Button key={icon} variant="ghost" size="icon" onClick={() => {setNewItem({...newItem, icon}); setNewItemPopoverOpen(false);}}>
                                             {renderIcon(icon)}
                                         </Button>
                                     ))}

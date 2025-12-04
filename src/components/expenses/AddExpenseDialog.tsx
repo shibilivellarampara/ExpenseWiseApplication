@@ -95,6 +95,7 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
     const [name, setName] = useState('');
     const [icon, setIcon] = useState(type === 'Category' ? 'Shapes' : 'Tag');
     const [isSaving, setIsSaving] = useState(false);
+    const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
 
     const handleOpen = (newOpen: boolean) => {
         setOpen(newOpen);
@@ -134,7 +135,7 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
                         onChange={(e) => setName(e.target.value)}
                         autoFocus
                     />
-                    <Popover>
+                    <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="w-full justify-start">
                                 {renderIcon(icon)}
@@ -143,7 +144,7 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
                         </PopoverTrigger>
                         <PopoverContent className="w-auto grid grid-cols-5 gap-2">
                             {availableIcons.map(iconName => (
-                                <Button key={iconName} variant="ghost" size="icon" onClick={() => setIcon(iconName)}>
+                                <Button key={iconName} variant="ghost" size="icon" onClick={() => {setIcon(iconName); setIconPopoverOpen(false);}}>
                                     {renderIcon(iconName)}
                                 </Button>
                             ))}
@@ -1086,7 +1087,3 @@ function useExpenseForm({
       tags: tags || []
     };
 }
-
-    
-
-    

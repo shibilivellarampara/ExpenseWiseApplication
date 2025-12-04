@@ -1,11 +1,11 @@
 {
   "name": "ExpenseWise",
   "short_name": "ExpenseWise",
+  "description": "Manage your expenses with ease.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#8b5cf6",
-  "description": "Manage your expenses with ease.",
+  "theme_color": "#8B5CF6",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",

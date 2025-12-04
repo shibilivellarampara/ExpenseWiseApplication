@@ -6,7 +6,7 @@ import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@
 import { Expense, Category, EnrichedExpense, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, query, where, Timestamp, doc, orderBy } from 'firebase/firestore';
 import { useMemo, useState, useTransition, useEffect } from "react";
-import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, parse, format, subYears } from "date-fns";
+import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, parse, format, subYears, isValid } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { analyzeExpenses } from "@/ai/flows/analyze-expenses";
@@ -31,11 +31,20 @@ import { CategoryBarChart } from "@/components/analysis/CategoryBarChart";
 
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'custom';
+type StoredFilters = {
+    timeRangePreset: TimeRangePreset;
+    customDateRange: { from?: string; to?: string };
+    selectedAccounts: string[];
+};
+
 
 export default function AnalysisPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const searchParams = useSearchParams();
+    const FILTERS_STORAGE_KEY = `analysis_filters_${user?.uid}`;
+
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     
     const [timeRangePreset, setTimeRangePreset] = useState<TimeRangePreset>('3-months');
     const [isAiLoading, startAiTransition] = useTransition();
@@ -43,12 +52,59 @@ export default function AnalysisPage() {
     const [customDateRange, setCustomDateRange] = useState<{ from?: Date, to?: Date }>({ from: undefined, to: undefined });
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
     
+    // Load filters from localStorage on initial render
     useEffect(() => {
-        const accountId = searchParams.get('accounts');
-        if (accountId) {
-            setSelectedAccounts([accountId]);
+        if (user) {
+            const storedFiltersRaw = localStorage.getItem(FILTERS_STORAGE_KEY);
+            if (storedFiltersRaw) {
+                try {
+                    const storedFilters: StoredFilters = JSON.parse(storedFiltersRaw);
+                    if (storedFilters.timeRangePreset) {
+                        setTimeRangePreset(storedFilters.timeRangePreset);
+                    }
+                    if (storedFilters.customDateRange) {
+                        setCustomDateRange({
+                            from: storedFilters.customDateRange.from ? parse(storedFilters.customDateRange.from, 'yyyy-MM-dd', new Date()) : undefined,
+                            to: storedFilters.customDateRange.to ? parse(storedFilters.customDateRange.to, 'yyyy-MM-dd', new Date()) : undefined,
+                        });
+                    }
+                    // URL params take precedence over stored accounts
+                    const accountIdFromUrl = searchParams.get('accounts');
+                    if (accountIdFromUrl) {
+                        setSelectedAccounts([accountIdFromUrl]);
+                    } else if (storedFilters.selectedAccounts) {
+                        setSelectedAccounts(storedFilters.selectedAccounts);
+                    }
+                } catch (e) {
+                    console.error("Failed to parse stored filters", e);
+                    localStorage.removeItem(FILTERS_STORAGE_KEY);
+                }
+            } else {
+                 // Check URL params even if no stored filters
+                const accountIdFromUrl = searchParams.get('accounts');
+                if (accountIdFromUrl) {
+                    setSelectedAccounts([accountIdFromUrl]);
+                }
+            }
+            setIsInitialLoad(false);
         }
-    }, [searchParams]);
+    }, [user, searchParams, FILTERS_STORAGE_KEY]);
+
+
+    // Save filters to localStorage whenever they change
+    useEffect(() => {
+        if (user && !isInitialLoad) {
+            const filtersToStore: StoredFilters = {
+                timeRangePreset,
+                customDateRange: {
+                    from: customDateRange.from ? format(customDateRange.from, 'yyyy-MM-dd') : undefined,
+                    to: customDateRange.to ? format(customDateRange.to, 'yyyy-MM-dd') : undefined,
+                },
+                selectedAccounts,
+            };
+            localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filtersToStore));
+        }
+    }, [timeRangePreset, customDateRange, selectedAccounts, user, isInitialLoad, FILTERS_STORAGE_KEY]);
 
 
     const { dateRangeStart, dateRangeEnd } = useMemo(() => {
@@ -73,12 +129,14 @@ export default function AnalysisPage() {
             case 'all':
                 return { dateRangeStart: undefined, dateRangeEnd: undefined };
             case 'custom':
+                 const from = customDateRange.from && isValid(customDateRange.from) ? startOfDay(customDateRange.from) : undefined;
+                 const to = customDateRange.to && isValid(customDateRange.to) ? endOfDay(customDateRange.to) : undefined;
                  return { 
-                    dateRangeStart: customDateRange.from ? startOfDay(customDateRange.from) : undefined, 
-                    dateRangeEnd: customDateRange.to ? endOfDay(customDateRange.to) : undefined
+                    dateRangeStart: from, 
+                    dateRangeEnd: to
                 };
             default:
-                return { dateRangeStart: startOfMonth(now), dateRangeEnd: endOfDay(now) };
+                return { dateRangeStart: startOfDay(subMonths(now, 3)), dateRangeEnd: endOfDay(now) };
         }
     }, [timeRangePreset, customDateRange]);
 
@@ -108,7 +166,7 @@ export default function AnalysisPage() {
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-    const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading;
+    const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || isInitialLoad;
 
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(allAccounts?.map(a => [a.id, a])), [allAccounts]);
@@ -172,7 +230,8 @@ export default function AnalysisPage() {
     }
 
     const formatDateForInput = (date: Date | undefined): string => {
-        return date ? format(date, 'yyyy-MM-dd') : '';
+        if (!date || !isValid(date)) return '';
+        return format(date, 'yyyy-MM-dd');
     }
 
     const handleGenerateInsights = () => {

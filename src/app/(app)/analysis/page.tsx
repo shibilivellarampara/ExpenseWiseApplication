@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AnalysisSettingsContent } from "@/components/profile/AnalysisSettingsContent";
 import { useSearchParams } from "next/navigation";
+import { TagSpendingChart } from "@/components/analysis/TagSpendingChart";
+import { IncomeBreakdownChart } from "@/components/analysis/IncomeBreakdownChart";
 
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'custom';
@@ -327,6 +329,26 @@ export default function AnalysisPage() {
                             {isLoading ? <Skeleton className="h-80 w-full" /> : <SpendingTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />}
                         </CardContent>
                     </Card>
+                     <div className="grid gap-8 md:grid-cols-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Spending by Tag</CardTitle>
+                                <CardDescription>A breakdown of your expenses by tags.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-80 w-full" /> : <TagSpendingChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
+                            </CardContent>
+                        </Card>
+                        <Card>
+                             <CardHeader>
+                                <CardTitle>Income Sources</CardTitle>
+                                <CardDescription>A breakdown of your income by category.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-80 w-full" /> : <IncomeBreakdownChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
                 <div className="lg:col-span-2">
                     <Card className="sticky top-24">

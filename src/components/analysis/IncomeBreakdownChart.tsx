@@ -52,7 +52,12 @@ export function IncomeBreakdownChart({ expenses, currency }: IncomeBreakdownChar
                     }}
                     formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
                 />
-                 <Legend wrapperStyle={{ fontSize: "12px" }}/>
+                 <Legend 
+                    layout="vertical" 
+                    align="right" 
+                    verticalAlign="middle"
+                    wrapperStyle={{ fontSize: "12px", lineHeight: "20px", overflowY: "auto", maxHeight: 300 }}
+                 />
                 <Pie
                     data={incomeData}
                     dataKey="value"

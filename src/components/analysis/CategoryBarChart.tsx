@@ -43,10 +43,10 @@ export function CategoryBarChart({ expenses, currency }: CategoryBarChartProps) 
     
     return (
         <ResponsiveContainer width="100%" height={350}>
-            <RechartsBarChart data={categoryData} layout="vertical">
+            <RechartsBarChart data={categoryData} layout="vertical" margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${currencySymbol}${value}`} />
-                <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} width={100} />
+                <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} width={80} interval={0} />
                 <Tooltip
                     contentStyle={{
                         background: "hsl(var(--background))",

@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, Category, EnrichedExpense, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, query, where, Timestamp, doc, orderBy } from 'firebase/firestore';
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, useEffect } from "react";
 import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, parse, format, subYears } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -25,6 +25,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/compon
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AnalysisSettingsContent } from "@/components/profile/AnalysisSettingsContent";
+import { useSearchParams } from "next/navigation";
 
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'custom';
@@ -32,11 +33,20 @@ type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months'
 export default function AnalysisPage() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const searchParams = useSearchParams();
+    
     const [timeRangePreset, setTimeRangePreset] = useState<TimeRangePreset>('month');
     const [isAiLoading, startAiTransition] = useTransition();
     const [aiAnalysis, setAiAnalysis] = useState<any>(null);
     const [customDateRange, setCustomDateRange] = useState<{ from?: Date, to?: Date }>({ from: undefined, to: undefined });
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
+    
+    useEffect(() => {
+        const accountId = searchParams.get('accounts');
+        if (accountId) {
+            setSelectedAccounts([accountId]);
+        }
+    }, [searchParams]);
 
 
     const { dateRangeStart, dateRangeEnd } = useMemo(() => {

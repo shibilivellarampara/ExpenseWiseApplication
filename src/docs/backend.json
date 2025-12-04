@@ -221,21 +221,6 @@
         "settledAt": { "type": "string", "format": "date-time", "description": "The date when the debt was settled." }
       },
       "required": ["id", "userId", "personName", "amount", "type", "date", "status"]
-    },
-    "Budget": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Budget",
-      "type": "object",
-      "description": "Represents a monthly budget for a specific category.",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "categoryId": { "type": "string" },
-        "amount": { "type": "number" },
-        "month": { "type": "string", "description": "The budget month in YYYY-MM format." },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "userId", "categoryId", "amount", "month"]
     }
   },
   "auth": {
@@ -281,10 +266,7 @@
     "/users/{userId}/debts/{debtId}": {
         "schema": { "$ref": "#/entities/Debt" },
         "description": "Stores debt and loan records for a user."
-    },
-     "/users/{userId}/budgets/{budgetId}": {
-      "schema": { "$ref": "#/entities/Budget" },
-      "description": "Stores user's monthly budgets for categories."
     }
   }
 }
+

@@ -36,7 +36,7 @@ export default function AnalysisPage() {
     const firestore = useFirestore();
     const searchParams = useSearchParams();
     
-    const [timeRangePreset, setTimeRangePreset] = useState<TimeRangePreset>('3-months');
+    const [timeRangePreset, setTimeRangePreset] = useState<TimeRangePreset>('month');
     const [isAiLoading, startAiTransition] = useTransition();
     const [aiAnalysis, setAiAnalysis] = useState<any>(null);
     const [customDateRange, setCustomDateRange] = useState<{ from?: Date, to?: Date }>({ from: undefined, to: undefined });

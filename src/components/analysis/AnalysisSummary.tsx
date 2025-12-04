@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,18 +84,22 @@ export function AnalysisSummary({ isLoading, currency, allExpenses, analysisExpe
             </div>
         </div>
     )
+    
+    // Determine which blocks to show
+    const shouldShowNormal = showNormal;
+    const shouldShowAdjusted = showAdjusted && isDifferent;
 
     return (
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row gap-4">
-                    {showNormal && renderSummaryBlock('Normal Total', normalSummary, false)}
+                    {shouldShowNormal && renderSummaryBlock('Normal Total', normalSummary, false)}
                     
-                    {showNormal && showAdjusted && isDifferent && (
+                    {shouldShowNormal && shouldShowAdjusted && (
                          <Separator orientation="vertical" className="h-auto hidden md:block" />
                     )}
 
-                    {showAdjusted && isDifferent && renderSummaryBlock('Adjusted for Analysis', adjustedSummary, true)}
+                    {shouldShowAdjusted && renderSummaryBlock('Adjusted for Analysis', adjustedSummary, true)}
                 </div>
             </CardContent>
         </Card>

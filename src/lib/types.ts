@@ -28,6 +28,12 @@ export type UserProfile = {
     excludedCategoryIds?: string[];
     showAdjustedTotal?: boolean;
     showNormalTotal?: boolean;
+    showCategoryTable?: boolean;
+    showTrendChart?: boolean;
+    showCategoryBarChart?: boolean;
+    showTagPieChart?: boolean;
+    showIncomePieChart?: boolean;
+    showAiInsights?: boolean;
   };
   transactionFieldOrder?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
   createdAt?: Timestamp;

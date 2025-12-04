@@ -412,7 +412,7 @@ function ExpenseForm({
 
     useEffect(() => {
         const hasInput = debouncedDescription || debouncedCategoryId || (debouncedTagIds && debouncedTagIds.length > 0);
-        if (!hasInput || isShared || !isAiSuggestionEnabled || categories.length === 0 || accounts.length === 0) {
+        if (!hasInput || isShared || !isAiSuggestionEnabled || !userProfile?.dashboardSettings?.isAiSuggestionEnabled || categories.length === 0 || accounts.length === 0) {
             return;
         }
 
@@ -444,7 +444,7 @@ function ExpenseForm({
             }
         });
 
-    }, [debouncedDescription, debouncedCategoryId, debouncedTagIds, form, categories, tags, activeAccounts, isShared, isAiSuggestionEnabled, toast]);
+    }, [debouncedDescription, debouncedCategoryId, debouncedTagIds, form, categories, tags, activeAccounts, isShared, isAiSuggestionEnabled, userProfile, toast]);
 
 
     const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string): Promise<string | undefined> => {
@@ -1086,3 +1086,7 @@ function useExpenseForm({
       tags: tags || []
     };
 }
+
+    
+
+    

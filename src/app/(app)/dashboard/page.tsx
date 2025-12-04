@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { Expense, Category, EnrichedExpense, UserProfile, Account, Tag } from '@/lib/types';
 import { collection, query, where, Timestamp, doc } from 'firebase/firestore';
-import { startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, format, startOfYear, endOfYear, subYears } from 'date-fns';
+import { startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, format, startOfYear, endOfYear, getYear, subYears } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -48,23 +48,23 @@ export default function DashboardPage() {
     const [timeRange, setTimeRange] = useState<TimeRange>('week');
     const [pieChartGrouping, setPieChartGrouping] = useState<PieChartGrouping>('category');
 
-    const { dateRangeStart, dateRangeEnd } = useMemo(() => {
+    const { dateRangeStart, dateRangeEnd, timeRangeLabel } = useMemo(() => {
         const now = new Date();
         switch (timeRange) {
             case 'week':
-                return { dateRangeStart: startOfWeek(now), dateRangeEnd: endOfWeek(now) };
+                return { dateRangeStart: startOfWeek(now), dateRangeEnd: endOfWeek(now), timeRangeLabel: 'this week' };
             case 'month':
-                return { dateRangeStart: startOfMonth(now), dateRangeEnd: endOfMonth(now) };
+                return { dateRangeStart: startOfMonth(now), dateRangeEnd: endOfMonth(now), timeRangeLabel: 'this month' };
             case 'year':
-                return { dateRangeStart: startOfYear(now), dateRangeEnd: endOfYear(now) };
+                return { dateRangeStart: startOfYear(now), dateRangeEnd: endOfYear(now), timeRangeLabel: 'this year' };
             case '5year':
-                 return { dateRangeStart: startOfYear(subYears(now, 4)), dateRangeEnd: endOfYear(now) };
+                 return { dateRangeStart: startOfYear(subYears(now, 4)), dateRangeEnd: endOfYear(now), timeRangeLabel: 'the last 5 years' };
             default:
-                return { dateRangeStart: startOfWeek(now), dateRangeEnd: endOfWeek(now) };
+                return { dateRangeStart: startOfWeek(now), dateRangeEnd: endOfWeek(now), timeRangeLabel: 'this week' };
         }
     }, [timeRange]);
 
-    // Query for the selected time range for the bar chart
+    // Query for the selected time range for both charts
     const chartExpensesQuery = useMemoFirebase(() => {
         if (!user) return null;
         return query(
@@ -73,26 +73,12 @@ export default function DashboardPage() {
             where('date', '<=', Timestamp.fromDate(dateRangeEnd))
         );
     }, [user, firestore, dateRangeStart, dateRangeEnd]);
-
-    // --- Separate Queries for Stats and Pie Chart ---
-    const thisMonthRange = useMemo(() => {
-        const now = new Date();
-        return { start: startOfMonth(now), end: endOfMonth(now) };
-    }, []);
-
-    const lastMonthRange = useMemo(() => {
+    
+    // --- Separate Query for Stats Card (Last Month) ---
+     const lastMonthRange = useMemo(() => {
         const now = new Date();
         return { start: startOfMonth(subMonths(now, 1)), end: endOfMonth(subMonths(now, 1)) };
     }, []);
-
-    const thisMonthExpensesQuery = useMemoFirebase(() => {
-        if (!user) return null;
-        return query(
-            collection(firestore, `users/${user.uid}/expenses`),
-            where('date', '>=', Timestamp.fromDate(thisMonthRange.start)),
-            where('date', '<=', Timestamp.fromDate(thisMonthRange.end))
-        );
-    }, [user, firestore, thisMonthRange]);
 
     const lastMonthExpensesQuery = useMemoFirebase(() => {
         if (!user) return null;
@@ -110,14 +96,13 @@ export default function DashboardPage() {
     const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [firestore, user]);
 
     const { data: chartExpenses, isLoading: chartExpensesLoading } = useCollection<Expense>(chartExpensesQuery);
-    const { data: thisMonthExpenses, isLoading: thisMonthLoading } = useCollection<Expense>(thisMonthExpensesQuery);
     const { data: lastMonthExpenses, isLoading: lastMonthLoading } = useCollection<Expense>(lastMonthExpensesQuery);
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
     const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
-    const isLoading = chartExpensesLoading || thisMonthLoading || lastMonthLoading || categoriesLoading || profileLoading || accountsLoading || tagsLoading;
+    const isLoading = chartExpensesLoading || lastMonthLoading || categoriesLoading || profileLoading || accountsLoading || tagsLoading;
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
     const show5YearView = userProfile?.dashboardSettings?.show5YearView ?? false;
 
@@ -149,14 +134,22 @@ export default function DashboardPage() {
         }, []);
     };
     
-
     const enrichedChartExpenses = useMemo(() => enrichExpenses(chartExpenses), [chartExpenses, categoryMap, accountMap, tagMap]);
-    const enrichedThisMonthExpenses = useMemo(() => enrichExpenses(thisMonthExpenses), [thisMonthExpenses, categoryMap, accountMap, tagMap]);
     const enrichedLastMonthExpenses = useMemo(() => enrichExpenses(lastMonthExpenses), [lastMonthExpenses, categoryMap, accountMap, tagMap]);
 
+    // Use current month expenses from the main query
+    const enrichedThisMonthExpenses = useMemo(() => {
+        if (timeRange !== 'month') {
+            const now = new Date();
+            const start = startOfMonth(now);
+            const end = endOfMonth(now);
+            return enrichedChartExpenses.filter(e => e.date >= start && e.date <= end);
+        }
+        return enrichedChartExpenses;
+    }, [enrichedChartExpenses, timeRange]);
 
     const generatePieChartData = (grouping: PieChartGrouping) => {
-        const expenseOnly = enrichedThisMonthExpenses.filter(e => e.type === 'expense');
+        const expenseOnly = enrichedChartExpenses.filter(e => e.type === 'expense');
         const dataMap = new Map<string, number>();
 
         expenseOnly.forEach(item => {
@@ -190,9 +183,9 @@ export default function DashboardPage() {
         return Array.from(dataMap, ([name, value]) => ({ name, value }));
     };
     
-    const pieChartCategoryData = useMemo(() => generatePieChartData('category'), [enrichedThisMonthExpenses, categories]);
-    const pieChartAccountData = useMemo(() => generatePieChartData('account'), [enrichedThisMonthExpenses, accounts]);
-    const pieChartTagData = useMemo(() => generatePieChartData('tag'), [enrichedThisMonthExpenses, tags]);
+    const pieChartCategoryData = useMemo(() => generatePieChartData('category'), [enrichedChartExpenses, categories]);
+    const pieChartAccountData = useMemo(() => generatePieChartData('account'), [enrichedChartExpenses, accounts]);
+    const pieChartTagData = useMemo(() => generatePieChartData('tag'), [enrichedChartExpenses, tags]);
 
     const useCategoryColors = userProfile?.dashboardSettings?.useCategoryColorsInChart ?? true;
 
@@ -252,7 +245,7 @@ export default function DashboardPage() {
                         <Card className="lg:col-span-3">
                             <CardHeader>
                                 <CardTitle className="font-headline">Spending Breakdown</CardTitle>
-                                 <CardDescription>Breakdown of expenses this month.</CardDescription>
+                                 <CardDescription>Breakdown of expenses for {timeRangeLabel}.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <Tabs defaultValue="category" value={pieChartGrouping} onValueChange={(value) => setPieChartGrouping(value as PieChartGrouping)}>

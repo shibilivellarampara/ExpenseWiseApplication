@@ -39,7 +39,7 @@ export const availableIcons = [
   "Briefcase", "Coffee", "Droplets", "Pizza", "GraduationCap", "PawPrint",
   "Wallet", "CreditCard", "Landmark", "Tag", "Ticket", "User", "IndianRupee",
   "Contact", "Undo2", "Repeat", "MoreHorizontal", "Banknote", "Coins", "TrendingUp",
-  "TrendingDown", "PenTool", "CandlestickChart",
+  "TrendingDown", "PenTool", "CandlestickChart", "Carrot", "Fuel",
 ];
 
 // This is a legacy export and can be removed in the future

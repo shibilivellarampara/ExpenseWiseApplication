@@ -14,7 +14,7 @@ export const defaultCategories = [
   { name: 'Other', icon: 'MoreHorizontal' },
   { name: 'Credit Limit Upgrade', icon: 'TrendingUp' },
   { name: 'Credit Limit Downgrade', icon: 'TrendingDown' },
-  { name 'Credit Card Payment', icon: 'Landmark' },
+  { name: 'Credit Card Payment', icon: 'Landmark' },
   { name: 'Grocery', icon: 'Carrot' },
   { name: 'Fuel', icon: 'Fuel' },
   { name: 'Rent', icon: 'Home' },
@@ -32,6 +32,26 @@ export const defaultCategories = [
   { name: 'Insurance', icon: 'Shield' },
   { name: 'Self Transfer', icon: 'ArrowRightLeft' },
   { name: 'Correction', icon: 'Eraser' },
+  { name: 'Bank Charges', icon: 'Receipt' },
+  { name: 'Credit Card Fee', icon: 'Receipt' },
+  { name: 'Delivery Charge', icon: 'Truck' },
+  { name: 'Family Support', icon: 'Users' },
+  { name: 'Fees', icon: 'Receipt' },
+  { name: 'Fine', icon: 'AlertTriangle' },
+  { name: 'Income Tax Fee', icon: 'Receipt' },
+  { name: 'Recharge', icon: 'Smartphone' },
+  { name: 'Refund', icon: 'Undo2' },
+  { name: 'Service', icon: 'Wrench' },
+  { name: 'Stay', icon: 'Building' },
+  { name: 'Transfer', icon: 'ArrowRightLeft' },
+  { name: 'Trip', icon: 'Plane' },
+  { name: 'Uncategorized', icon: 'MoreHorizontal' },
+  { name: 'Unknown', icon: 'MoreHorizontal' },
+  { name: 'Utility Bills', icon: 'Receipt' },
+  { name: 'Wallet Recharge', icon: 'Wallet' },
+  { name: 'Wallet Topup', icon: 'Wallet' },
+  { name: 'Wedding', icon: 'Ring' },
+  { name: 'Withdraw', icon: 'Banknote' },
 ];
 
 // Default accounts for new users
@@ -61,7 +81,7 @@ export const availableIcons = [
   "Dumbbell", "Shield", "Stethoscope", "Scissors", "Smartphone", "ArrowRightLeft",
   "Server", "Building", "Recycle", "Package", "Construction", "BusFront",
   "FerrisWheel", "Baby", "Bone", "Cake", "Cat", "Dog", "Fish", "Flower", "IceCream",
-  "Sandwich", "Wine", "Wrench", "CircleDollarSign", "CalendarClock"
+  "Sandwich", "Wine", "Wrench", "CircleDollarSign", "CalendarClock", "Ring"
 ];
 
 // This is a legacy export and can be removed in the future

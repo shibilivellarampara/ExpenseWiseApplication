@@ -13,10 +13,7 @@ const changelog = [
         version: "1.4.4",
         date: "2025-12-08",
         changes: [
-            { type: 'Feature', description: "Added ability to set monthly budgets for categories and track spending against them." },
-            { type: 'Feature', description: "Introduced a new 'Goals' feature to help users save for specific financial targets." },
-            { type: 'UI', description: "Redesigned the 'Shared Expenses' page for better clarity and easier management." },
-            { type: 'Fix', description: "Fixed an issue where the currency symbol was not consistently displayed on the Debts page." },
+            { type: 'Fix', description: "Corrected the logic for 'Credit Card Payment' transactions to allow them to be recorded as an expense from non-credit card accounts (e.g., a bank account)." },
         ]
     },
     {

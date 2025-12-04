@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -14,7 +12,7 @@ import { analyzeExpenses } from "@/ai/flows/analyze-expenses";
 import { CategoryAnalysisTable } from "@/components/analysis/CategoryAnalysisTable";
 import { SpendingTrendChart } from "@/components/analysis/SpendingTrendChart";
 import { AiInsights } from "@/components/analysis/AiInsights";
-import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
+import { AnalysisSummary } from "@/components/analysis/AnalysisSummary";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -299,15 +297,14 @@ export default function AnalysisPage() {
                 </div>
             )}
             
-            {showNormalTotal && <ExpensesSummary expenses={allEnrichedExpenses} isLoading={isLoading} currency={userProfile?.defaultCurrency} />}
-            
-            {showAdjustedTotal && (
-                <div className="border-l-4 border-primary/50 pl-4">
-                    <p className="text-sm font-semibold">Adjusted for Analysis</p>
-                    <ExpensesSummary expenses={expensesForAnalysis} isLoading={isLoading} currency={userProfile?.defaultCurrency} />
-                    <p className="text-xs text-muted-foreground mt-1">This summary excludes categories you've hidden from analysis.</p>
-                </div>
-            )}
+            <AnalysisSummary 
+                allExpenses={allEnrichedExpenses}
+                analysisExpenses={expensesForAnalysis}
+                isLoading={isLoading}
+                currency={userProfile?.defaultCurrency}
+                showNormal={showNormalTotal}
+                showAdjusted={showAdjustedTotal}
+            />
 
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">
@@ -351,5 +348,3 @@ export default function AnalysisPage() {
         </div>
     );
 }
-
-    

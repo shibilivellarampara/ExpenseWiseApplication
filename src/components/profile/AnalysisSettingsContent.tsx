@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Separator } from "../ui/separator";
 
 const renderIcon = (iconName: string) => {
     const IconComponent = (LucideIcons as any)[iconName];
@@ -34,7 +35,7 @@ export function AnalysisSettingsContent() {
 
     const isLoading = categoriesLoading || profileLoading;
 
-    const handleSettingChange = (key: 'excludedCategoryIds' | 'showAdjustedTotal' | 'showNormalTotal', value: string[] | boolean) => {
+    const handleSettingChange = (key: keyof NonNullable<UserProfile['analysisSettings']>, value: any) => {
         if (!userProfileRef) return;
     
         const newSettings = {
@@ -61,9 +62,17 @@ export function AnalysisSettingsContent() {
     };
     
     const sortedCategories = categories ? [...categories].sort((a, b) => a.name.localeCompare(b.name)) : [];
-    const excludedIds = userProfile?.analysisSettings?.excludedCategoryIds || [];
-    const showAdjustedTotal = userProfile?.analysisSettings?.showAdjustedTotal ?? true;
-    const showNormalTotal = userProfile?.analysisSettings?.showNormalTotal ?? true;
+    
+    const analysisSettings = userProfile?.analysisSettings;
+
+    const chartVisibilitySettings = [
+        { key: 'showCategoryTable', label: 'Spending by Category Table' },
+        { key: 'showTrendChart', label: 'Income vs. Expense Trend Chart' },
+        { key: 'showCategoryBarChart', label: 'Top Spending Categories Chart' },
+        { key: 'showTagPieChart', label: 'Spending by Tag Chart' },
+        { key: 'showIncomePieChart', label: 'Income Sources Chart' },
+        { key: 'showAiInsights', label: 'AI-Powered Insights' },
+    ];
 
 
     return (
@@ -72,6 +81,7 @@ export function AnalysisSettingsContent() {
                 <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
             ) : (
                 <>
+                    <h4 className="font-semibold">Summary Cards</h4>
                      <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
                             <Label>Show Normal Total</Label>
@@ -80,7 +90,7 @@ export function AnalysisSettingsContent() {
                             </p>
                         </div>
                         <Switch
-                            checked={showNormalTotal}
+                            checked={analysisSettings?.showNormalTotal ?? true}
                             onCheckedChange={(value) => handleSettingChange('showNormalTotal', value)}
                         />
                     </div>
@@ -92,10 +102,30 @@ export function AnalysisSettingsContent() {
                             </p>
                         </div>
                         <Switch
-                            checked={showAdjustedTotal}
+                            checked={analysisSettings?.showAdjustedTotal ?? true}
                             onCheckedChange={(value) => handleSettingChange('showAdjustedTotal', value)}
                         />
                     </div>
+                    
+                    <Separator />
+                    
+                    <h4 className="font-semibold">Chart Visibility</h4>
+                    <div className="space-y-2">
+                        {chartVisibilitySettings.map(({ key, label }) => (
+                            <div key={key} className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                                <Label htmlFor={`vis-${key}`}>{label}</Label>
+                                <Switch
+                                    id={`vis-${key}`}
+                                    checked={analysisSettings?.[key as keyof typeof analysisSettings] ?? true}
+                                    onCheckedChange={(value) => handleSettingChange(key as keyof typeof analysisSettings, value)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    <Separator />
+
+                    <h4 className="font-semibold">Excluded Categories</h4>
                     <p className="text-sm text-muted-foreground">Select categories to exclude from charts and AI insights.</p>
                     <Card>
                         <CardContent className="p-0">
@@ -105,7 +135,7 @@ export function AnalysisSettingsContent() {
                                         <div key={category.id} className="flex items-center space-x-2">
                                             <Checkbox
                                                 id={`exclude-${category.id}`}
-                                                checked={excludedIds.includes(category.id)}
+                                                checked={analysisSettings?.excludedCategoryIds?.includes(category.id) ?? false}
                                                 onCheckedChange={() => handleCategoryToggle(category.id)}
                                             />
                                             <Label htmlFor={`exclude-${category.id}`} className="flex items-center font-normal">
@@ -123,3 +153,5 @@ export function AnalysisSettingsContent() {
         </div>
     );
 }
+
+    

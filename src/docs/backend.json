@@ -61,6 +61,36 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Whether to show the 'Normal Total' summary."
+                },
+                 "showCategoryTable": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'Spending by Category' table."
+                },
+                "showTrendChart": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'Income vs. Expense Trend' chart."
+                },
+                "showCategoryBarChart": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'Top Spending Categories' bar chart."
+                },
+                "showTagPieChart": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'Spending by Tag' pie chart."
+                },
+                "showIncomePieChart": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'Income Sources' pie chart."
+                },
+                "showAiInsights": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'AI-Powered Insights' card."
                 }
             }
         },
@@ -270,3 +300,4 @@
   }
 }
 
+    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -113,10 +114,7 @@ export default function AnalysisPage() {
     const accountMap = useMemo(() => new Map(allAccounts?.map(a => [a.id, a])), [allAccounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
-    const excludedCategoryIds = useMemo(() => userProfile?.analysisSettings?.excludedCategoryIds || [], [userProfile]);
-    const showAdjustedTotal = useMemo(() => userProfile?.analysisSettings?.showAdjustedTotal ?? true, [userProfile]);
-    const showNormalTotal = useMemo(() => userProfile?.analysisSettings?.showNormalTotal ?? true, [userProfile]);
-
+    const analysisSettings = userProfile?.analysisSettings;
 
     const allEnrichedExpenses = useMemo((): EnrichedExpense[] => {
         if (!allExpenses || !categoryMap.size || !accountMap.size) return [];
@@ -137,13 +135,14 @@ export default function AnalysisPage() {
     }, [allExpenses, categoryMap, accountMap, tagMap, selectedAccounts]);
 
     const expensesForAnalysis = useMemo((): EnrichedExpense[] => {
+        const excludedCategoryIds = analysisSettings?.excludedCategoryIds || [];
         if (excludedCategoryIds.length === 0) {
             return allEnrichedExpenses;
         }
         return allEnrichedExpenses.filter(expense => {
             return !expense.category || !excludedCategoryIds.includes(expense.category.id);
         });
-    }, [allEnrichedExpenses, excludedCategoryIds]);
+    }, [allEnrichedExpenses, analysisSettings]);
     
 
     const handleTimeRangeChange = (value: string) => {
@@ -305,78 +304,92 @@ export default function AnalysisPage() {
                 analysisExpenses={expensesForAnalysis}
                 isLoading={isLoading}
                 currency={userProfile?.defaultCurrency}
-                showNormal={showNormalTotal}
-                showAdjusted={showAdjustedTotal}
+                showNormal={analysisSettings?.showNormalTotal ?? true}
+                showAdjusted={analysisSettings?.showAdjustedTotal ?? true}
             />
 
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">
                 <div className="lg:col-span-3 space-y-8">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Spending by Category</CardTitle>
-                            <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-64 w-full" /> : <CategoryAnalysisTable expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Income vs. Expense Trend</CardTitle>
-                            <CardDescription>Your cash flow over the selected period.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-80 w-full" /> : <SpendingTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />}
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Top Spending Categories</CardTitle>
-                            <CardDescription>A bar chart showing your top spending categories.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-80 w-full" /> : <CategoryBarChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
-                        </CardContent>
-                    </Card>
-                     <div className="grid gap-8 md:grid-cols-2">
+                    {(analysisSettings?.showCategoryTable ?? true) && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Spending by Tag</CardTitle>
-                                <CardDescription>A breakdown of your expenses by tags.</CardDescription>
+                                <CardTitle>Spending by Category</CardTitle>
+                                <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {isLoading ? <Skeleton className="h-80 w-full" /> : <TagSpendingChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
+                                {isLoading ? <Skeleton className="h-64 w-full" /> : <CategoryAnalysisTable expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
                             </CardContent>
                         </Card>
+                    )}
+                    {(analysisSettings?.showTrendChart ?? true) && (
                         <Card>
-                             <CardHeader>
-                                <CardTitle>Income Sources</CardTitle>
-                                <CardDescription>A breakdown of your income by category.</CardDescription>
+                            <CardHeader>
+                                <CardTitle>Income vs. Expense Trend</CardTitle>
+                                <CardDescription>Your cash flow over the selected period.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {isLoading ? <Skeleton className="h-80 w-full" /> : <IncomeBreakdownChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
+                                {isLoading ? <Skeleton className="h-80 w-full" /> : <SpendingTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />}
+                            </CardContent>
+                        </Card>
+                    )}
+                     {(analysisSettings?.showCategoryBarChart ?? true) && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Top Spending Categories</CardTitle>
+                                <CardDescription>A bar chart showing your top spending categories.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-80 w-full" /> : <CategoryBarChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
+                            </CardContent>
+                        </Card>
+                    )}
+                     <div className="grid gap-8 md:grid-cols-2">
+                        {(analysisSettings?.showTagPieChart ?? true) && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Spending by Tag</CardTitle>
+                                    <CardDescription>A breakdown of your expenses by tags.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {isLoading ? <Skeleton className="h-80 w-full" /> : <TagSpendingChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
+                                </CardContent>
+                            </Card>
+                        )}
+                        {(analysisSettings?.showIncomePieChart ?? true) && (
+                            <Card>
+                                 <CardHeader>
+                                    <CardTitle>Income Sources</CardTitle>
+                                    <CardDescription>A breakdown of your income by category.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {isLoading ? <Skeleton className="h-80 w-full" /> : <IncomeBreakdownChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+                </div>
+                {(analysisSettings?.showAiInsights ?? true) && (
+                    <div className="lg:col-span-2">
+                        <Card className="sticky top-24">
+                            <CardHeader>
+                                <CardTitle>AI-Powered Insights</CardTitle>
+                                <CardDescription>Let AI analyze your spending and provide personalized advice.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <AiInsights
+                                    onGenerate={handleGenerateInsights}
+                                    analysis={aiAnalysis}
+                                    isLoading={isAiLoading}
+                                    hasData={expensesForAnalysis.length > 0}
+                                />
                             </CardContent>
                         </Card>
                     </div>
-                </div>
-                <div className="lg:col-span-2">
-                    <Card className="sticky top-24">
-                        <CardHeader>
-                            <CardTitle>AI-Powered Insights</CardTitle>
-                            <CardDescription>Let AI analyze your spending and provide personalized advice.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <AiInsights
-                                onGenerate={handleGenerateInsights}
-                                analysis={aiAnalysis}
-                                isLoading={isAiLoading}
-                                hasData={expensesForAnalysis.length > 0}
-                            />
-                        </CardContent>
-                    </Card>
-                </div>
+                )}
             </div>
         </div>
     );
 }
+
+    

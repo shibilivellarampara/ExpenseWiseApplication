@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +31,7 @@ export function TransactionFieldOrderSettings() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
     
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, `users/${user.uid}`) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
@@ -136,7 +135,7 @@ export function TransactionFieldOrderSettings() {
 
     return (
          <Card>
-            <Collapsible open={isOpen} onOpenChange={setIsOpen} defaultOpen={true}>
+            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 <CollapsibleTrigger asChild>
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>

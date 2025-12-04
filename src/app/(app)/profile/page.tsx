@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -17,25 +18,22 @@ export default function ProfilePage() {
                 title="Settings"
                 description="Manage your account settings and preferences."
             />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 {/* Left Column */}
                 <div className="lg:col-span-1 space-y-6">
                     <ProfileForm />
                     <SecuritySettings />
+                    <DataManagementSettings />
                 </div>
 
                 {/* Right Column */}
-                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="lg:col-span-2 space-y-6">
                     <TransactionFieldOrderSettings />
-                    <CategorySettings />
-                    <TagSettings />
                     <DashboardSettings />
                     <AnalysisSettings />
+                    <CategorySettings />
+                    <TagSettings />
                 </div>
-            </div>
-
-            <div className="pt-8">
-                <DataManagementSettings />
             </div>
         </div>
     );

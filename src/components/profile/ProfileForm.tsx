@@ -12,7 +12,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Loader2, Upload, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { updateProfile, RecaptchaVerifier, updatePhoneNumber, PhoneAuthProvider, updateEmail, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { updateProfile, RecaptchaVerifier, updatePhoneNumber, PhoneAuthProvider, updateEmail, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 import { doc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { cn } from "@/lib/utils";
@@ -77,7 +77,13 @@ export function ProfileForm() {
     // State for email update
     const [showEmailDialog, setShowEmailDialog] = useState(false);
     const [newEmail, setNewEmail] = useState('');
-    const [currentPassword, setCurrentPassword] = useState('');
+    const [currentPasswordForEmail, setCurrentPasswordForEmail] = useState('');
+    
+    // State for password change
+    const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+    const [currentPasswordForPassword, setCurrentPasswordForPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
 
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -218,7 +224,7 @@ export function ProfileForm() {
     };
     
     const handleEmailUpdate = async () => {
-        if (!user || !auth?.currentUser || !newEmail || !currentPassword) {
+        if (!user || !auth?.currentUser || !newEmail || !currentPasswordForEmail) {
             toast({ variant: "destructive", title: "Missing fields", description: "Please enter new email and current password." });
             return;
         }
@@ -228,7 +234,7 @@ export function ProfileForm() {
         try {
             // Re-authenticate the user
             if (!user.email) throw new Error("User email not found for re-authentication.");
-            const credential = EmailAuthProvider.credential(user.email, currentPassword);
+            const credential = EmailAuthProvider.credential(user.email, currentPasswordForEmail);
             await reauthenticateWithCredential(auth.currentUser, credential);
 
             // Update email in Firebase Auth
@@ -241,7 +247,7 @@ export function ProfileForm() {
             toast({ title: "Email Updated", description: "Your email has been successfully updated." });
             setShowEmailDialog(false);
             setNewEmail('');
-            setCurrentPassword('');
+            setCurrentPasswordForEmail('');
 
         } catch (error: any) {
             toast({ variant: "destructive", title: "Email Update Failed", description: error.message });
@@ -249,6 +255,39 @@ export function ProfileForm() {
             setIsLoading(false);
         }
     };
+    
+     const handlePasswordChange = async () => {
+        if (!auth?.currentUser) return;
+        if (newPassword !== confirmPassword) {
+            toast({ variant: "destructive", title: "Error", description: "New passwords do not match." });
+            return;
+        }
+        if (newPassword.length < 6) {
+            toast({ variant: "destructive", title: "Error", description: "Password must be at least 6 characters long." });
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            if (!auth.currentUser.email) throw new Error("User email not found.");
+            
+            const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPasswordForPassword);
+            await reauthenticateWithCredential(auth.currentUser, credential);
+            
+            await updatePassword(auth.currentUser, newPassword);
+
+            toast({ title: "Password Updated", description: "Your password has been changed successfully." });
+            setShowPasswordDialog(false);
+            setCurrentPasswordForPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Update Failed", description: error.message });
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
 
     const currentPhoto = tempDisplayPhotoUrl ?? userProfile?.photoURL;
     
@@ -274,8 +313,8 @@ export function ProfileForm() {
                 <CollapsibleTrigger asChild>
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                         <div>
-                            <h3 className="text-base font-semibold font-headline">Profile Details</h3>
-                            <CardDescription className="text-sm">Update your personal information here.</CardDescription>
+                            <h3 className="text-base font-semibold font-headline">Profile & Security</h3>
+                            <CardDescription className="text-sm">Update your personal information and password.</CardDescription>
                         </div>
                         <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
                     </CardHeader>
@@ -379,8 +418,8 @@ export function ProfileForm() {
                                         <Input 
                                             placeholder="Current password" 
                                             type="password"
-                                            value={currentPassword} 
-                                            onChange={(e) => setCurrentPassword(e.target.value)}
+                                            value={currentPasswordForEmail} 
+                                            onChange={(e) => setCurrentPasswordForEmail(e.target.value)}
                                         />
                                     </div>
                                     <DialogFooter>
@@ -426,6 +465,58 @@ export function ProfileForm() {
                                 </DialogContent>
                             </Dialog>
                         </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Password</Label>
+                        <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+                            <DialogTrigger asChild>
+                                <Button type="button" variant="outline" className="w-full">Change Password</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Change Your Password</DialogTitle>
+                                    <DialogDescription>
+                                        Enter your current password and a new password below.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="current-password">Current Password</Label>
+                                        <Input
+                                            id="current-password"
+                                            type="password"
+                                            value={currentPasswordForPassword}
+                                            onChange={(e) => setCurrentPasswordForPassword(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new-password">New Password</Label>
+                                        <Input
+                                            id="new-password"
+                                            type="password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="confirm-password">Confirm New Password</Label>
+                                        <Input
+                                            id="confirm-password"
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>Cancel</Button>
+                                    <Button onClick={handlePasswordChange} disabled={isLoading || !currentPasswordForPassword || !newPassword || !confirmPassword}>
+                                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Save Changes
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </CardContent>
                 <CardFooter className="border-t p-4 flex justify-end">

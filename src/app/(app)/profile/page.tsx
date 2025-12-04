@@ -7,7 +7,6 @@ import { CategorySettings } from "@/components/profile/CategorySettings";
 import { TagSettings } from "@/components/profile/TagSettings";
 import { DashboardSettings } from "@/components/profile/DashboardSettings";
 import { DataManagementSettings } from "@/components/profile/DataManagementSettings";
-import { SecuritySettings } from "@/components/profile/SecuritySettings";
 import { TransactionFieldOrderSettings } from "@/components/profile/TransactionFieldOrderSettings";
 import { AnalysisSettings } from "@/components/profile/AnalysisSettings";
 
@@ -22,7 +21,6 @@ export default function ProfilePage() {
                 {/* Left Column */}
                 <div className="lg:col-span-1 space-y-6">
                     <ProfileForm />
-                    <SecuritySettings />
                     <DataManagementSettings />
                 </div>
 

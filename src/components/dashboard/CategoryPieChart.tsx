@@ -84,6 +84,13 @@ export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
   };
+
+  const handleLegendClick = (payload: any) => {
+      const index = data.findIndex(entry => entry.name === payload.value);
+      if (index !== -1) {
+          setActiveIndex(index);
+      }
+  };
     
   if (data.length === 0) {
     return (
@@ -125,6 +132,7 @@ export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps
           }}
           formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
         />
+        <Legend onClick={handleLegendClick} />
       </PieChart>
     </ResponsiveContainer>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { PieChart as PieChartIcon } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
@@ -14,6 +14,7 @@ interface IncomeBreakdownChartProps {
 
 export function IncomeBreakdownChart({ expenses, currency }: IncomeBreakdownChartProps) {
     const currencySymbol = getCurrencySymbol(currency);
+    const [activeIndex, setActiveIndex] = useState(0);
 
     const incomeData = useMemo(() => {
         const incomeTransactions = expenses.filter(e => e.type === 'income');
@@ -29,6 +30,17 @@ export function IncomeBreakdownChart({ expenses, currency }: IncomeBreakdownChar
         return Array.from(dataMap, ([name, value]) => ({ name, value }));
 
     }, [expenses]);
+    
+    const handleLegendClick = (payload: any) => {
+      const index = incomeData.findIndex(entry => entry.name === payload.value);
+      if (index !== -1) {
+          setActiveIndex(index);
+      }
+    };
+    
+    const handlePieEnter = (_:any, index: number) => {
+        setActiveIndex(index);
+    }
 
     if (incomeData.length === 0) {
         return (
@@ -56,9 +68,11 @@ export function IncomeBreakdownChart({ expenses, currency }: IncomeBreakdownChar
                     layout="vertical" 
                     align="right" 
                     verticalAlign="middle"
-                    wrapperStyle={{ fontSize: "12px", lineHeight: "20px", overflowY: "auto", maxHeight: 300 }}
+                    wrapperStyle={{ fontSize: "12px", lineHeight: "20px", overflowY: "auto", maxHeight: 300, cursor: 'pointer' }}
+                    onClick={handleLegendClick}
                  />
                 <Pie
+                    activeIndex={activeIndex}
                     data={incomeData}
                     dataKey="value"
                     nameKey="name"
@@ -67,6 +81,7 @@ export function IncomeBreakdownChart({ expenses, currency }: IncomeBreakdownChar
                     outerRadius={100}
                     fill="hsl(var(--primary))"
                     labelLine={false}
+                    onMouseEnter={handlePieEnter}
                     label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
                         const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                         const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));

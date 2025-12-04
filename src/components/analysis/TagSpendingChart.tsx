@@ -1,7 +1,7 @@
 'use client';
 
 import { PieChart as PieChartIcon } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
@@ -14,6 +14,7 @@ interface TagSpendingChartProps {
 
 export function TagSpendingChart({ expenses, currency }: TagSpendingChartProps) {
     const currencySymbol = getCurrencySymbol(currency);
+    const [activeIndex, setActiveIndex] = useState(0);
 
     const tagData = useMemo(() => {
         const expenseTransactions = expenses.filter(e => e.type === 'expense');
@@ -35,6 +36,18 @@ export function TagSpendingChart({ expenses, currency }: TagSpendingChartProps) 
         return Array.from(dataMap, ([name, value]) => ({ name, value }));
 
     }, [expenses]);
+
+    const handleLegendClick = (payload: any) => {
+      const index = tagData.findIndex(entry => entry.name === payload.value);
+      if (index !== -1) {
+          setActiveIndex(index);
+      }
+    };
+    
+    const handlePieEnter = (_:any, index: number) => {
+        setActiveIndex(index);
+    }
+
 
     if (tagData.length === 0) {
         return (
@@ -62,9 +75,11 @@ export function TagSpendingChart({ expenses, currency }: TagSpendingChartProps) 
                     layout="vertical" 
                     align="right" 
                     verticalAlign="middle"
-                    wrapperStyle={{ fontSize: "12px", lineHeight: "20px", overflowY: "auto", maxHeight: 300 }}
+                    wrapperStyle={{ fontSize: "12px", lineHeight: "20px", overflowY: "auto", maxHeight: 300, cursor: 'pointer' }}
+                    onClick={handleLegendClick}
                  />
                 <Pie
+                    activeIndex={activeIndex}
                     data={tagData}
                     dataKey="value"
                     nameKey="name"
@@ -73,6 +88,7 @@ export function TagSpendingChart({ expenses, currency }: TagSpendingChartProps) 
                     outerRadius={100}
                     fill="hsl(var(--primary))"
                     labelLine={false}
+                    onMouseEnter={handlePieEnter}
                     label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
                         const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                         const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));

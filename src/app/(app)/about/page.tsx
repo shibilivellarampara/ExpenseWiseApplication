@@ -13,10 +13,13 @@ const changelog = [
         version: "1.4.5",
         date: "2025-12-09",
         changes: [
-            { type: 'Feature', description: "Added ability to set monthly budgets for categories and track spending against them." },
-            { type: 'Feature', description: "Introduced a new 'Goals' feature to help users save for specific financial targets." },
-            { type: 'UI', description: "Redesigned the 'Shared Expenses' page for better clarity and easier management." },
-            { type: 'Fix', description: "Fixed an issue where the currency symbol was not consistently displayed on the Debts page." },
+            { type: 'UI', description: "Streamlined the Settings page by combining 'Profile' and 'Security' sections and moving the 'Danger Zone' to the bottom for safety." },
+            { type: 'UI', description: "Set 'Profile Details' and 'Form Customization' sections in Settings to be collapsed by default." },
+            { type: 'Feature', description: "Added 'Cash In'/'Cash Out' buttons to the monthly transaction summary page for quicker access." },
+            { type: 'Feature', description: "Added a 'Go to Analysis' link in the account menu to directly view analysis filtered for that account." },
+            { type: 'Feature', description: "Added new icons for 'Grocery' and 'Fuel' and many other categories to provide more visual customization." },
+            { type: 'Fix', description: "The Analysis page now defaults to the 'Last 3 Months' view instead of 'This Month'." },
+            { type: 'Fix', description: "Resolved a bug where AI suggestions were not being disabled correctly in the transaction form." },
         ]
     },
     {
@@ -300,3 +303,5 @@ export default function AboutPage() {
     );
 
 }
+
+    

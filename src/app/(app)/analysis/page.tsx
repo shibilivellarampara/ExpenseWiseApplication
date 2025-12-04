@@ -26,6 +26,7 @@ import { AnalysisSettingsContent } from "@/components/profile/AnalysisSettingsCo
 import { useSearchParams } from "next/navigation";
 import { TagSpendingChart } from "@/components/analysis/TagSpendingChart";
 import { IncomeBreakdownChart } from "@/components/analysis/IncomeBreakdownChart";
+import { CategoryBarChart } from "@/components/analysis/CategoryBarChart";
 
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'custom';
@@ -327,6 +328,15 @@ export default function AnalysisPage() {
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-80 w-full" /> : <SpendingTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />}
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Top Spending Categories</CardTitle>
+                            <CardDescription>A bar chart showing your top spending categories.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoading ? <Skeleton className="h-80 w-full" /> : <CategoryBarChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
                         </CardContent>
                     </Card>
                      <div className="grid gap-8 md:grid-cols-2">

@@ -5,10 +5,17 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.4.5";
+const appVersion = "1.4.6";
 
 
 const changelog = [
+    {
+        version: "1.4.6",
+        date: "2025-12-10",
+        changes: [
+            { type: 'Feature', description: "Added visibility toggles in Analysis Settings to show or hide individual charts and the AI insights card on the Analysis page." },
+        ]
+    },
     {
         version: "1.4.5",
         date: "2025-12-09",
@@ -304,4 +311,5 @@ export default function AboutPage() {
 
 }
 
+    
     

@@ -116,7 +116,7 @@ export function AnalysisSettingsContent() {
                                 <Label htmlFor={`vis-${key}`}>{label}</Label>
                                 <Switch
                                     id={`vis-${key}`}
-                                    checked={analysisSettings?.[key as keyof typeof analysisSettings] ?? true}
+                                    checked={(analysisSettings?.[key as keyof typeof analysisSettings] as boolean) ?? true}
                                     onCheckedChange={(value) => handleSettingChange(key as keyof typeof analysisSettings, value)}
                                 />
                             </div>
@@ -153,5 +153,3 @@ export function AnalysisSettingsContent() {
         </div>
     );
 }
-
-    

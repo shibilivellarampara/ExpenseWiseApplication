@@ -130,7 +130,7 @@ export function TransactionFieldOrderSettings() {
                         requiredFields.isCategoryRequired !== (userProfile?.expenseFieldSettings?.isCategoryRequired ?? true) ||
                         requiredFields.isDescriptionRequired !== (userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false) ||
                         requiredFields.isTagRequired !== (userProfile?.expenseFieldSettings?.isTagRequired ?? false) ||
-                        defaultAccountId !== (userProfile?.expenseFieldSettings?.defaultAccountId);
+                        (defaultAccountId || undefined) !== (userProfile?.expenseFieldSettings?.defaultAccountId || undefined);
 
 
     return (

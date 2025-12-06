@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useFirestore, useUser, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
@@ -126,15 +126,17 @@ export function AddDebtSheet({ children, personName }: AddDebtSheetProps) {
                                         <FormItem>
                                             <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'lent' ? "border-green-600 text-green-600" : "border-muted")}>
                                                 <RadioGroupItem value="lent" className="sr-only" />
-                                                <span>You Lent</span>
-                                                <span className="text-xs font-normal">(Someone owes you)</span>
+                                                <ArrowRight className="h-5 w-5 mb-1" />
+                                                <span>Money Out</span>
+                                                <span className="text-xs font-normal text-muted-foreground">(You Lent)</span>
                                             </Label>
                                         </FormItem>
                                         <FormItem>
                                             <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'borrowed' ? "border-destructive text-destructive" : "border-muted")}>
                                                 <RadioGroupItem value="borrowed" className="sr-only" />
-                                                <span>You Borrowed</span>
-                                                 <span className="text-xs font-normal">(You owe someone)</span>
+                                                <ArrowLeft className="h-5 w-5 mb-1" />
+                                                <span>Money In</span>
+                                                 <span className="text-xs font-normal text-muted-foreground">(You Borrowed)</span>
                                             </Label>
                                         </FormItem>
                                     </RadioGroup>

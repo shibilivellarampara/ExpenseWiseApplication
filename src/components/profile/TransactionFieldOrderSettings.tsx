@@ -83,9 +83,6 @@ export function TransactionFieldOrderSettings() {
         if (newSettings.defaultAccountId) {
             settingsData.expenseFieldSettings.defaultAccountId = newSettings.defaultAccountId;
         } else {
-             // To remove the field from Firestore, we need to handle it specially
-             // For now, we'll just not include it if it's undefined.
-             // A better solution would use `deleteField()` from Firestore, but this works for now.
              if (settingsData.expenseFieldSettings.hasOwnProperty('defaultAccountId')) {
                  delete settingsData.expenseFieldSettings.defaultAccountId;
              }
@@ -101,20 +98,21 @@ export function TransactionFieldOrderSettings() {
     }
 
     useEffect(() => {
-        // Don't save on initial load
-        if (isProfileLoading) return;
+        // Don't save on initial load or if userProfile data isn't available yet.
+        if (isProfileLoading || !userProfile) return;
         
         const initialSettings = {
-            orderedFields: userProfile?.transactionFieldOrder || allPossibleFields,
-            visibleFields: userProfile?.expenseFieldSettings?.visibleFields || allPossibleFields,
-            defaultAccountId: userProfile?.expenseFieldSettings?.defaultAccountId,
+            orderedFields: userProfile.transactionFieldOrder || allPossibleFields,
+            visibleFields: userProfile.expenseFieldSettings?.visibleFields || allPossibleFields,
+            defaultAccountId: userProfile.expenseFieldSettings?.defaultAccountId,
             requiredFields: {
-                isDescriptionRequired: userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false,
-                isTagRequired: userProfile?.expenseFieldSettings?.isTagRequired ?? false,
-                isCategoryRequired: userProfile?.expenseFieldSettings?.isCategoryRequired ?? true,
+                isDescriptionRequired: userProfile.expenseFieldSettings?.isDescriptionRequired ?? false,
+                isTagRequired: userProfile.expenseFieldSettings?.isTagRequired ?? false,
+                isCategoryRequired: userProfile.expenseFieldSettings?.isCategoryRequired ?? true,
             }
         };
 
+        // Deep comparison to prevent saving if nothing has changed.
         if (JSON.stringify(debouncedSettings) !== JSON.stringify(initialSettings)) {
             handleSave(debouncedSettings);
         }

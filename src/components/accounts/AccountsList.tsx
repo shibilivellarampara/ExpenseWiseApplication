@@ -328,7 +328,8 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                         {creditCards.length > 0 ? creditCards.map((item, index) => {
                             const limit = item.limit || 0;
                             const availableCredit = item.balance;
-                            const outstandingAmount = limit > 0 ? limit - availableCredit : -availableCredit;
+                            // Round to 2 decimal places to avoid floating point issues like -0.00
+                            const outstandingAmount = Math.round((limit > 0 ? limit - availableCredit : -availableCredit) * 100) / 100;
                             const isPaid = outstandingAmount <= 0;
                             const availablePercentage = limit > 0 && limit > outstandingAmount ? ((limit - outstandingAmount) / limit) * 100 : 0;
                             

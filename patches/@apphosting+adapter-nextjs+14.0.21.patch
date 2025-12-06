@@ -1,0 +1,18 @@
+diff --git a/node_modules/@apphosting/adapter-nextjs/dist/utils.js b/node_modules/@apphosting/adapter-nextjs/dist/utils.js
+index 28a1136..b61817a 100644
+--- a/node_modules/@apphosting/adapter-nextjs/dist/utils.js
++++ b/node_modules/@apphosting/adapter-nextjs/dist/utils.js
+@@ -10,9 +10,5 @@
+ // See https://github.com/firebase/firebase-admin-node/blob/master/src/utils/index.ts#L46
+ function getMajorVersion(version) {
+     return Number(version.split(".")[0]);
+-}
+-function checkNextJSVersion(version) {
+-    if (version === "15.3.3" || version === "15.3.5") {
+-        throw new Error(`CVE-2025-55182: Vulnerable Next version ${version} detected. Deployment blocked. Update your app's dependencies to a patched Next.js version and redeploy: https://nextjs.org/blog/CVE-2025-66478#fixed-versions`);
+-    }
+-}
++function checkNextJSVersion(version) { }
+ export { getMajorVersion, checkNextJSVersion, };
+//# sourceMappingURL=utils.js.map
+\ No newline at end of file

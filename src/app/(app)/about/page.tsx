@@ -11,7 +11,7 @@ const appVersion = "1.4.8";
 const changelog = [
     {
         version: "1.4.8",
-        date: "2025-12-14",
+        date: "2025-12-06",
         changes: [
             { type: 'UI', description: "Improved the 'Spending by Tag' and 'Income Sources' pie charts on the Analysis page to group smaller items into an 'Others' category for a cleaner look, while still providing a full, scrollable list of all items below." },
             { type: 'Feature', description: "Added a convenient 'All Accounts' option to the account filter on the Analysis page." },

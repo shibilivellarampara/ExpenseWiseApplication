@@ -84,10 +84,11 @@ function Notifications() {
         const generatedNotifications: any[] = [];
         const today = new Date();
         const currentDay = today.getDate();
-        const currentMonth = today.getMonth();
 
         creditCards?.forEach(card => {
-            if (card.billingDate) {
+            const outstandingAmount = (card.limit || 0) - card.balance;
+
+            if (card.billingDate && outstandingAmount > 0) {
                 const daysUntilBilling = (card.billingDate - currentDay + 30) % 30; // simple days diff
                 if (daysUntilBilling <= 5 && daysUntilBilling >= 0) {
                      generatedNotifications.push({
@@ -262,5 +263,3 @@ export function AppHeader() {
     </header>
   );
 }
-
-    

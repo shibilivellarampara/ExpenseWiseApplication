@@ -5,10 +5,17 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.4.8";
+const appVersion = "1.4.9";
 
 
 const changelog = [
+    {
+        version: "1.4.9",
+        date: "2025-12-14",
+        changes: [
+            { type: 'Fix', description: "Refined credit card payment notifications to only appear when there is an outstanding balance, preventing unnecessary alerts for paid-off cards." },
+        ]
+    },
     {
         version: "1.4.8",
         date: "2025-12-06",
@@ -330,5 +337,3 @@ export default function AboutPage() {
     );
 
 }
-
-    

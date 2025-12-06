@@ -115,6 +115,9 @@ function Notifications() {
         e.stopPropagation();
         e.preventDefault();
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        setTimeout(() => {
+            setNotifications([]);
+        }, 500); // Hide after a short delay for animation
     };
 
 

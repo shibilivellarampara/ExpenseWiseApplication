@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, useCollection } from "@/firebase";
-import { doc, collection, query, where } from "firebase/firestore";
+import { doc, collection, query, where, deleteField } from "firebase/firestore";
 import { UserProfile, Account } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
@@ -83,9 +83,8 @@ export function TransactionFieldOrderSettings() {
         if (newSettings.defaultAccountId) {
             settingsData.expenseFieldSettings.defaultAccountId = newSettings.defaultAccountId;
         } else {
-             if (settingsData.expenseFieldSettings.hasOwnProperty('defaultAccountId')) {
-                 delete settingsData.expenseFieldSettings.defaultAccountId;
-             }
+             // Correctly delete the field from Firestore
+             settingsData.expenseFieldSettings.defaultAccountId = deleteField();
         }
         
         setDocumentNonBlocking(userProfileRef, settingsData, { merge: true })

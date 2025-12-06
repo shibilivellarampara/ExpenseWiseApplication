@@ -180,12 +180,23 @@ export default function DashboardPage() {
                  dataMap.set(key, (dataMap.get(key) || 0) + amountPerKey);
             })
         });
-        return Array.from(dataMap, ([name, value]) => ({ name, value }));
+        
+        const allData = Array.from(dataMap, ([name, value]) => ({ name, value, icon: '' })).sort((a,b) => b.value - a.value);
+
+        const topN = 7;
+        let chartData = allData;
+        if (allData.length > topN) {
+            const topData = allData.slice(0, topN);
+            const otherValue = allData.slice(topN).reduce((sum, item) => sum + item.value, 0);
+            chartData = [...topData, { name: 'Others', value: otherValue, icon: '' }];
+        }
+
+        return { chartData, allData };
     };
     
-    const pieChartCategoryData = useMemo(() => generatePieChartData('category'), [enrichedChartExpenses, categories]);
-    const pieChartAccountData = useMemo(() => generatePieChartData('account'), [enrichedChartExpenses, accounts]);
-    const pieChartTagData = useMemo(() => generatePieChartData('tag'), [enrichedChartExpenses, tags]);
+    const { chartData: pieChartCategoryData, allData: allCategoryData } = useMemo(() => generatePieChartData('category'), [enrichedChartExpenses, categories]);
+    const { chartData: pieChartAccountData, allData: allAccountData } = useMemo(() => generatePieChartData('account'), [enrichedChartExpenses, accounts]);
+    const { chartData: pieChartTagData, allData: allTagData } = useMemo(() => generatePieChartData('tag'), [enrichedChartExpenses, tags]);
 
     const useCategoryColors = userProfile?.dashboardSettings?.useCategoryColorsInChart ?? true;
 
@@ -242,7 +253,7 @@ export default function DashboardPage() {
                                 </Tabs>
                             </CardContent>
                         </Card>
-                        <Card className="lg:col-span-3">
+                        <Card className="lg:col-span-3 h-auto">
                             <CardHeader>
                                 <CardTitle className="font-headline">Spending Breakdown</CardTitle>
                                  <CardDescription>Breakdown of expenses for {timeRangeLabel}.</CardDescription>
@@ -255,17 +266,17 @@ export default function DashboardPage() {
                                         <TabsTrigger value="tag">Tag</TabsTrigger>
                                     </TabsList>
                                     {isLoading ? (
-                                        <Skeleton className="h-[350px] w-full" />
+                                        <Skeleton className="h-[450px] w-full" />
                                     ) : (
                                         <>
                                             <TabsContent value="category">
-                                                <CategoryPieChart data={pieChartCategoryData} currencySymbol={currencySymbol} />
+                                                <CategoryPieChart data={pieChartCategoryData} allData={allCategoryData} currencySymbol={currencySymbol} />
                                             </TabsContent>
                                             <TabsContent value="account">
-                                                <CategoryPieChart data={pieChartAccountData} currencySymbol={currencySymbol} />
+                                                <CategoryPieChart data={pieChartAccountData} allData={allAccountData} currencySymbol={currencySymbol} />
                                             </TabsContent>
                                             <TabsContent value="tag">
-                                                <CategoryPieChart data={pieChartTagData} currencySymbol={currencySymbol} />
+                                                <CategoryPieChart data={pieChartTagData} allData={allTagData} currencySymbol={currencySymbol} />
                                             </TabsContent>
                                         </>
                                     )}
@@ -278,3 +289,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    

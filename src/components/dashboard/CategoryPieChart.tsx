@@ -1,11 +1,13 @@
 
-
 'use client';
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
 import { useMemo, useState } from 'react';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { CHART_COLORS } from '@/lib/colors';
+import { ScrollArea } from '../ui/scroll-area';
+import { cn } from '@/lib/utils';
+import { Badge } from '../ui/badge';
 
 interface PieChartDataPoint {
   name: string;
@@ -13,6 +15,7 @@ interface PieChartDataPoint {
 }
 interface CategoryPieChartProps {
   data: PieChartDataPoint[];
+  allData: PieChartDataPoint[];
   currencySymbol: string;
 }
 
@@ -78,62 +81,84 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
 };
 
 
-export function CategoryPieChart({ data, currencySymbol }: CategoryPieChartProps) {
+export function CategoryPieChart({ data, allData, currencySymbol }: CategoryPieChartProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
   };
 
-  const handleLegendClick = (payload: any) => {
-      const index = data.findIndex(entry => entry.name === payload.value);
-      if (index !== -1) {
-          setActiveIndex(index);
-      }
-  };
-    
   if (data.length === 0) {
     return (
         <div className="flex h-[350px] w-full items-center justify-center rounded-lg border-2 border-dashed">
             <div className="flex flex-col items-center text-center text-muted-foreground">
                 <PieChartIcon className="h-12 w-12" />
-                <p className="mt-4">No expense data for this month.</p>
+                <p className="mt-4">No expense data for this period.</p>
                 <p className="text-sm">Add some expenses to see your spending breakdown.</p>
             </div>
         </div>
     );
   }
 
+  const totalAmount = allData.reduce((sum, item) => sum + item.value, 0);
+
   return (
-    <ResponsiveContainer width="100%" height={350}>
-      <PieChart>
-        <Pie
-          activeIndex={activeIndex}
-          activeShape={(props: ActiveShapeProps) => renderActiveShape(props, currencySymbol)}
-          data={data}
-          cx="50%"
-          cy="50%"
-          innerRadius={80}
-          outerRadius={110}
-          fill="hsl(var(--primary))"
-          dataKey="value"
-          nameKey="name"
-          onMouseEnter={onPieEnter}
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip
-          contentStyle={{
-            background: "hsl(var(--background))",
-            border: "1px solid hsl(var(--border))",
-            borderRadius: "var(--radius)"
-          }}
-          formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
-        />
-        <Legend onClick={handleLegendClick} />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="w-full flex flex-col h-[450px]">
+        <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  activeIndex={activeIndex}
+                  activeShape={(props: ActiveShapeProps) => renderActiveShape(props, currencySymbol)}
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={90}
+                  fill="hsl(var(--primary))"
+                  dataKey="value"
+                  nameKey="name"
+                  onMouseEnter={onPieEnter}
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "var(--radius)"
+                  }}
+                  formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+        </div>
+        <div className="flex-grow min-h-0">
+            <ScrollArea className="h-full">
+                 <div className="space-y-2 p-2">
+                    {allData.map((item, index) => (
+                        <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-accent">
+                            <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}/>
+                                <span>{item.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="font-mono">
+                                    {currencySymbol}{item.value.toFixed(2)}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground w-12 text-right">
+                                    ({((item.value / totalAmount) * 100).toFixed(1)}%)
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                 </div>
+            </ScrollArea>
+        </div>
+    </div>
   );
 }
+
+    

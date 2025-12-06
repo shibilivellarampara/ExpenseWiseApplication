@@ -362,7 +362,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                         <div className="flex items-center justify-between">
                                             <div className="font-semibold">{item.name}</div>
                                             <div className="flex items-center gap-2">
-                                                 {isPaid && outstandingAmount === 0 && <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">Paid</Badge>}
+                                                 {isPaid && <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">Paid</Badge>}
                                                 <div className={cn(
                                                     "font-bold text-lg",
                                                     outstandingAmount > 0 ? "text-red-500" : "text-green-600"
@@ -457,7 +457,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                          </div>
                                         <p className="text-sm text-muted-foreground capitalize">{item.type.replace('_', ' ')}</p>
                                     </div>
-                                    <div className="flex items-center ml-auto pl-2" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center ml-auto pl-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8">

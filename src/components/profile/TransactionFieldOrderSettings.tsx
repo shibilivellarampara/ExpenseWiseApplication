@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, useCollection } from "@/firebase";
-import { doc, collection, query, where, deleteField } from "firebase/firestore";
+import { doc, collection, query, where } from "firebase/firestore";
 import { UserProfile, Account } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
@@ -15,6 +15,8 @@ import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import * as LucideIcons from 'lucide-react';
+import { useDebounce } from 'use-debounce';
+
 
 const allPossibleFields: FieldKey[] = ['description', 'accountId', 'categoryId', 'tagIds'];
 
@@ -50,7 +52,8 @@ export function TransactionFieldOrderSettings() {
         isTagRequired: false,
         isCategoryRequired: true,
     });
-    const [isSaving, setIsSaving] = useState(false);
+    
+    const [debouncedSettings] = useDebounce({ orderedFields, visibleFields, defaultAccountId, requiredFields }, 500);
 
     useEffect(() => {
         if (userProfile) {
@@ -64,6 +67,54 @@ export function TransactionFieldOrderSettings() {
             });
         }
     }, [userProfile]);
+    
+    const handleSave = (newSettings: Partial<typeof debouncedSettings>) => {
+        if (!userProfileRef) return;
+        
+        const settingsData = {
+            transactionFieldOrder: newSettings.orderedFields,
+            expenseFieldSettings: {
+                ...userProfile?.expenseFieldSettings,
+                ...newSettings.requiredFields,
+                visibleFields: newSettings.visibleFields,
+                defaultAccountId: newSettings.defaultAccountId,
+            },
+        };
+        
+        if (settingsData.expenseFieldSettings.defaultAccountId === undefined) {
+            delete (settingsData.expenseFieldSettings as any).defaultAccountId;
+        }
+
+        setDocumentNonBlocking(userProfileRef, settingsData, { merge: true })
+            .then(() => {
+                toast({ title: "Settings Saved", description: "Your form customization has been updated." });
+            })
+            .catch((error) => {
+                toast({ variant: 'destructive', title: "Error Saving Settings", description: error.message });
+            });
+    }
+
+    useEffect(() => {
+        // Don't save on initial load
+        if (isProfileLoading) return;
+        
+        const initialSettings = {
+            orderedFields: userProfile?.transactionFieldOrder || allPossibleFields,
+            visibleFields: userProfile?.expenseFieldSettings?.visibleFields || allPossibleFields,
+            defaultAccountId: userProfile?.expenseFieldSettings?.defaultAccountId,
+            requiredFields: {
+                isDescriptionRequired: userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false,
+                isTagRequired: userProfile?.expenseFieldSettings?.isTagRequired ?? false,
+                isCategoryRequired: userProfile?.expenseFieldSettings?.isCategoryRequired ?? true,
+            }
+        };
+
+        if (JSON.stringify(debouncedSettings) !== JSON.stringify(initialSettings)) {
+            handleSave(debouncedSettings);
+        }
+
+    }, [debouncedSettings, userProfile, isProfileLoading]);
+
 
     const handleMoveField = (index: number, direction: 'up' | 'down') => {
         const newFields = [...orderedFields];
@@ -88,38 +139,6 @@ export function TransactionFieldOrderSettings() {
             setVisibleFields(prev => prev.filter(f => f !== field));
         }
     };
-
-    const handleSaveChanges = () => {
-        if (!userProfileRef) return;
-        setIsSaving(true);
-        
-        const settingsData = {
-            transactionFieldOrder: orderedFields,
-            expenseFieldSettings: {
-                ...userProfile?.expenseFieldSettings,
-                ...requiredFields,
-                visibleFields: visibleFields,
-                defaultAccountId: defaultAccountId,
-            },
-        };
-
-        // Firestore does not allow 'undefined' values.
-        // If defaultAccountId is undefined, we delete the field instead.
-        if (settingsData.expenseFieldSettings.defaultAccountId === undefined) {
-             delete (settingsData.expenseFieldSettings as any).defaultAccountId;
-        }
-        
-        setDocumentNonBlocking(userProfileRef, settingsData, { merge: true })
-            .then(() => {
-                toast({ title: "Settings Saved", description: "Your form customization has been updated." });
-            })
-            .catch((error) => {
-                toast({ variant: 'destructive', title: "Error Saving Settings", description: error.message });
-            })
-            .finally(() => {
-                setIsSaving(false);
-            });
-    };
     
     const renderIcon = (iconName: string | undefined, className?: string) => {
         if (!iconName) return <LucideIcons.Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
@@ -130,13 +149,6 @@ export function TransactionFieldOrderSettings() {
     if (isProfileLoading) {
         return <Card><CardHeader><CardTitle>Loading settings...</CardTitle></CardHeader></Card>;
     }
-
-    const isChanged = JSON.stringify(orderedFields) !== JSON.stringify(userProfile?.transactionFieldOrder || allPossibleFields) ||
-                        JSON.stringify(visibleFields.sort()) !== JSON.stringify((userProfile?.expenseFieldSettings?.visibleFields || allPossibleFields).sort()) ||
-                        requiredFields.isCategoryRequired !== (userProfile?.expenseFieldSettings?.isCategoryRequired ?? true) ||
-                        requiredFields.isDescriptionRequired !== (userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false) ||
-                        requiredFields.isTagRequired !== (userProfile?.expenseFieldSettings?.isTagRequired ?? false) ||
-                        (defaultAccountId || null) !== (userProfile?.expenseFieldSettings?.defaultAccountId || null);
 
 
     return (
@@ -238,12 +250,6 @@ export function TransactionFieldOrderSettings() {
                                 )
                             })}
                         </div>
-                        {isChanged && (
-                             <Button onClick={handleSaveChanges} disabled={isSaving} size="sm">
-                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save Changes
-                            </Button>
-                        )}
                     </CardContent>
                 </CollapsibleContent>
             </Collapsible>

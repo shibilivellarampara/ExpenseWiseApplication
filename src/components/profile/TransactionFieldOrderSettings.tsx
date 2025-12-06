@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, useCollection } from "@/firebase";
-import { doc, collection, query, where } from "firebase/firestore";
+import { doc, collection, query, where, deleteField } from "firebase/firestore";
 import { UserProfile, Account } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
@@ -102,6 +102,12 @@ export function TransactionFieldOrderSettings() {
                 defaultAccountId: defaultAccountId,
             },
         };
+
+        // Firestore does not allow 'undefined' values.
+        // If defaultAccountId is undefined, we delete the field instead.
+        if (settingsData.expenseFieldSettings.defaultAccountId === undefined) {
+             delete (settingsData.expenseFieldSettings as any).defaultAccountId;
+        }
         
         setDocumentNonBlocking(userProfileRef, settingsData, { merge: true })
             .then(() => {
@@ -130,7 +136,7 @@ export function TransactionFieldOrderSettings() {
                         requiredFields.isCategoryRequired !== (userProfile?.expenseFieldSettings?.isCategoryRequired ?? true) ||
                         requiredFields.isDescriptionRequired !== (userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false) ||
                         requiredFields.isTagRequired !== (userProfile?.expenseFieldSettings?.isTagRequired ?? false) ||
-                        (defaultAccountId || undefined) !== (userProfile?.expenseFieldSettings?.defaultAccountId || undefined);
+                        (defaultAccountId || null) !== (userProfile?.expenseFieldSettings?.defaultAccountId || null);
 
 
     return (

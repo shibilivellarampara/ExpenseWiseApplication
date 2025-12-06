@@ -5,10 +5,21 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.4.7";
+const appVersion = "1.4.8";
 
 
 const changelog = [
+    {
+        version: "1.4.8",
+        date: "2025-12-14",
+        changes: [
+            { type: 'UI', description: "Improved the 'Spending by Tag' and 'Income Sources' pie charts on the Analysis page to group smaller items into an 'Others' category for a cleaner look, while still providing a full, scrollable list of all items below." },
+            { type: 'Feature', description: "Added a convenient 'All Accounts' option to the account filter on the Analysis page." },
+            { type: 'UI', description: "Made the 'Spending by Category' card on the Analysis page collapsible to save space." },
+            { type: 'Fix', description: "Corrected number formatting in the 'Income vs. Expense Trend' chart to always show two decimal places." },
+            { type: 'UI', description: "Removed the redundant description from the 'Spending by Category' card." },
+        ]
+    },
     {
         version: "1.4.7",
         date: "2025-12-12",
@@ -319,7 +330,5 @@ export default function AboutPage() {
     );
 
 }
-
-    
 
     

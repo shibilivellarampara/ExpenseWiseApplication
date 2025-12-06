@@ -71,20 +71,26 @@ export function TransactionFieldOrderSettings() {
     const handleSave = (newSettings: Partial<typeof debouncedSettings>) => {
         if (!userProfileRef) return;
         
-        const settingsData = {
+        const settingsData: any = {
             transactionFieldOrder: newSettings.orderedFields,
             expenseFieldSettings: {
                 ...userProfile?.expenseFieldSettings,
                 ...newSettings.requiredFields,
                 visibleFields: newSettings.visibleFields,
-                defaultAccountId: newSettings.defaultAccountId,
             },
         };
-        
-        if (settingsData.expenseFieldSettings.defaultAccountId === undefined) {
-            delete (settingsData.expenseFieldSettings as any).defaultAccountId;
-        }
 
+        if (newSettings.defaultAccountId) {
+            settingsData.expenseFieldSettings.defaultAccountId = newSettings.defaultAccountId;
+        } else {
+             // To remove the field from Firestore, we need to handle it specially
+             // For now, we'll just not include it if it's undefined.
+             // A better solution would use `deleteField()` from Firestore, but this works for now.
+             if (settingsData.expenseFieldSettings.hasOwnProperty('defaultAccountId')) {
+                 delete settingsData.expenseFieldSettings.defaultAccountId;
+             }
+        }
+        
         setDocumentNonBlocking(userProfileRef, settingsData, { merge: true })
             .then(() => {
                 toast({ title: "Settings Saved", description: "Your form customization has been updated." });

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
@@ -258,7 +258,16 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     const inactiveAccounts = accounts.filter(acc => acc.status === 'inactive');
 
     const creditCards = activeAccounts.filter(acc => acc.type === 'credit_card');
-    const otherAccounts = activeAccounts.filter(acc => acc.type !== 'credit_card');
+
+    const otherAccounts = useMemo(() => {
+        const other = activeAccounts.filter(acc => acc.type !== 'credit_card');
+        const typeOrder = { 'bank': 1, 'wallet': 2, 'cash': 3 };
+        return other.sort((a, b) => {
+            const orderA = typeOrder[a.type as keyof typeof typeOrder] || 4;
+            const orderB = typeOrder[b.type as keyof typeof typeOrder] || 4;
+            return orderA - orderB;
+        });
+    }, [activeAccounts]);
     
     const inactiveCreditCards = inactiveAccounts.filter(acc => acc.type === 'credit_card');
     const inactiveOtherAccounts = inactiveAccounts.filter(acc => acc.type !== 'credit_card');
@@ -334,89 +343,86 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                             const availablePercentage = limit > 0 && limit > outstandingAmount ? ((limit - outstandingAmount) / limit) * 100 : 0;
                             
                             return (
-                                <Link key={item.id} href={`/expenses?accounts=${item.id}`} passHref>
-                                    <div className="p-4 flex items-start gap-4 group hover:bg-muted/50 cursor-pointer transition-colors">
-                                        <Dialog>
-                                            <DialogTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                                <button className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-muted rounded-full cursor-pointer hover:bg-accent transition-colors">
-                                                    {renderIcon(item.icon, "h-7 w-7")}
-                                                </button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Card Details</DialogTitle>
-                                                    <DialogDescription>Non-sensitive card information.</DialogDescription>
-                                                </DialogHeader>
-                                                <CardDisplay account={item} />
-                                            </DialogContent>
-                                        </Dialog>
-
-                                        <div className="flex-grow">
-                                            <div className="flex items-center justify-between">
-                                                <div className="font-semibold">{item.name}</div>
-                                                <div className="flex items-center gap-2">
-                                                     {isPaid && <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">Paid</Badge>}
-                                                    <div className={cn(
-                                                        "font-bold text-lg",
-                                                        outstandingAmount > 0 ? "text-red-500" : "text-green-600"
-                                                    )}>
-                                                         {outstandingAmount > 0 ? '-' : ''}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
-                                                    </div>
+                                <div key={item.id} className="p-4 flex items-start gap-4 group hover:bg-muted/50 transition-colors">
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <button className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-muted rounded-full cursor-pointer hover:bg-accent transition-colors">
+                                                {renderIcon(item.icon, "h-7 w-7")}
+                                            </button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Card Details</DialogTitle>
+                                                <DialogDescription>Non-sensitive card information.</DialogDescription>
+                                            </DialogHeader>
+                                            <CardDisplay account={item} />
+                                        </DialogContent>
+                                    </Dialog>
+                                    <Link href={`/expenses?accounts=${item.id}`} passHref className="flex-grow cursor-pointer">
+                                        <div className="flex items-center justify-between">
+                                            <div className="font-semibold">{item.name}</div>
+                                            <div className="flex items-center gap-2">
+                                                 {isPaid && outstandingAmount === 0 && <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">Paid</Badge>}
+                                                <div className={cn(
+                                                    "font-bold text-lg",
+                                                    outstandingAmount > 0 ? "text-red-500" : "text-green-600"
+                                                )}>
+                                                     {outstandingAmount > 0 ? '-' : ''}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                                <span>Outstanding Amount</span>
-                                                {item.billingDate && (
-                                                    <div className="flex items-center gap-1">
-                                                        <CalendarDays className="h-4 w-4" />
-                                                        <span>Bills on {item.billingDate}{getOrdinalSuffix(item.billingDate)}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {limit > 0 && (
-                                                <div className="mt-1">
-                                                    <Progress value={availablePercentage} className="h-2" />
-                                                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                                                        <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
-                                                        <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
-                                                    </div>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                            <span>Outstanding Amount</span>
+                                            {item.billingDate && (
+                                                <div className="flex items-center gap-1">
+                                                    <CalendarDays className="h-4 w-4" />
+                                                    <span>Bills on {item.billingDate}{getOrdinalSuffix(item.billingDate)}</span>
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex items-center ml-auto pl-2" onClick={(e) => e.stopPropagation()}>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <AddAccountSheet accountToEdit={item}>
-                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                            <Edit className="mr-2 h-4 w-4" />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                    </AddAccountSheet>
-                                                    <DropdownMenuItem asChild>
-                                                        <Link href={`/analysis?accounts=${item.id}`}>
-                                                            <BarChartHorizontal className="mr-2 h-4 w-4" />
-                                                            Go to Analysis
-                                                        </Link>
+                                        {limit > 0 && (
+                                            <div className="mt-1">
+                                                <Progress value={availablePercentage} className="h-2" />
+                                                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                                                    <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
+                                                    <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </Link>
+                                    <div className="flex items-center ml-auto pl-2">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <AddAccountSheet accountToEdit={item}>
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        Edit
                                                     </DropdownMenuItem>
-                                                     <DropdownMenuItem asChild>
-                                                        <Link href={`/expenses?accounts=${item.id}&type=income`}>
-                                                            <History className="mr-2 h-4 w-4" />
-                                                            Payment History
-                                                        </Link>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DeactivateAccountButton account={item} />
-                                                    <CloseAccountButton account={item} />
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
+                                                </AddAccountSheet>
+                                                <DropdownMenuItem asChild>
+                                                    <Link href={`/analysis?accounts=${item.id}`}>
+                                                        <BarChartHorizontal className="mr-2 h-4 w-4" />
+                                                        Go to Analysis
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                 <DropdownMenuItem asChild>
+                                                    <Link href={`/expenses?accounts=${item.id}&type=income`}>
+                                                        <History className="mr-2 h-4 w-4" />
+                                                        Payment History
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DeactivateAccountButton account={item} />
+                                                <CloseAccountButton account={item} />
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
-                                </Link>
+                                </div>
                             )
                         }) : (
                              <p className="text-muted-foreground text-center p-8">No active credit card accounts yet.</p>

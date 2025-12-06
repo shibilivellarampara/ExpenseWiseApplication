@@ -5,10 +5,19 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.4.6";
+const appVersion = "1.4.7";
 
 
 const changelog = [
+    {
+        version: "1.4.7",
+        date: "2025-12-12",
+        changes: [
+            { type: 'Fix', description: "Resolved a persistent build failure by upgrading Next.js to the latest patched version to address a critical security vulnerability." },
+            { type: 'Fix', description: "Corrected a visual bug where fully paid or overpaid credit cards were not correctly marked as 'Paid'." },
+            { type: 'UI', description: "Improved the Accounts page by ensuring bank accounts are listed first and preventing card icons from triggering navigation." },
+        ]
+    },
     {
         version: "1.4.6",
         date: "2025-12-10",
@@ -310,5 +319,7 @@ export default function AboutPage() {
     );
 
 }
+
+    
 
     

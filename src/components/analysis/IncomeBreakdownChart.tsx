@@ -1,50 +1,96 @@
+
 'use client';
 
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { Cell, Pie, PieChart as RechartsPieChart, ResponsiveContainer, Tooltip, Sector } from 'recharts';
 import { EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { CHART_COLORS } from '@/lib/colors';
+import { ScrollArea } from '../ui/scroll-area';
+import { Badge } from '../ui/badge';
 
+interface PieChartDataPoint {
+  name: string;
+  value: number;
+}
 interface IncomeBreakdownChartProps {
     expenses: EnrichedExpense[];
     currency?: string;
 }
+interface ActiveShapeProps {
+    cx?: number; cy?: number; midAngle?: number; innerRadius?: number; outerRadius?: number; startAngle?: number; endAngle?: number; fill?: string; payload?: any; percent?: number; value?: number;
+}
+
+const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
+  const RADIAN = Math.PI / 180;
+  const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+  const sin = Math.sin(-RADIAN * (midAngle || 0));
+  const cos = Math.cos(-RADIAN * (midAngle || 0));
+  const sx = (cx || 0) + ((outerRadius || 0) + 6) * cos;
+  const sy = (cy || 0) + ((outerRadius || 0) + 6) * sin;
+  const mx = (cx || 0) + ((outerRadius || 0) + 15) * cos;
+  const my = (cy || 0) + ((outerRadius || 0) + 15) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
+  const ey = my;
+  const textAnchor = cos >= 0 ? 'start' : 'end';
+
+  return (
+    <g>
+      <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="font-headline text-lg">
+        {payload.name}
+      </text>
+      <Sector
+        cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius} startAngle={startAngle} endAngle={endAngle} fill={fill}
+      />
+      <Sector
+        cx={cx} cy={cy} startAngle={startAngle} endAngle={endAngle} innerRadius={(outerRadius || 0) + 4} outerRadius={(outerRadius || 0) + 8} fill={fill}
+      />
+      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
+      <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
+      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} textAnchor={textAnchor} fill="hsl(var(--foreground))" className="text-sm">{`${currencySymbol}${value?.toFixed(2)}`}</text>
+      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} dy={18} textAnchor={textAnchor} fill="hsl(var(--muted-foreground))" className="text-xs">
+        {`(${(percent || 0 * 100).toFixed(2)}%)`}
+      </text>
+    </g>
+  );
+};
 
 export function IncomeBreakdownChart({ expenses, currency }: IncomeBreakdownChartProps) {
     const currencySymbol = getCurrencySymbol(currency);
     const [activeIndex, setActiveIndex] = useState(0);
 
-    const incomeData = useMemo(() => {
+    const { chartData, allData } = useMemo(() => {
         const incomeTransactions = expenses.filter(e => e.type === 'income');
-        if (incomeTransactions.length === 0) return [];
+        if (incomeTransactions.length === 0) return { chartData: [], allData: [] };
 
         const dataMap = new Map<string, number>();
-
         incomeTransactions.forEach(item => {
             const key = item.category?.name || 'Uncategorized';
             dataMap.set(key, (dataMap.get(key) || 0) + item.amount);
         });
         
-        return Array.from(dataMap, ([name, value]) => ({ name, value }));
+        const allDataPoints = Array.from(dataMap, ([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
+        
+        const topN = 7;
+        let chartDataPoints = allDataPoints;
+        if (allDataPoints.length > topN) {
+            const topData = allDataPoints.slice(0, topN);
+            const otherValue = allDataPoints.slice(topN).reduce((sum, item) => sum + item.value, 0);
+            chartDataPoints = [...topData, { name: 'Others', value: otherValue }];
+        }
+        
+        return { chartData: chartDataPoints, allData: allDataPoints };
 
     }, [expenses]);
     
-    const handleLegendClick = (payload: any) => {
-      const index = incomeData.findIndex(entry => entry.name === payload.value);
-      if (index !== -1) {
-          setActiveIndex(index);
-      }
-    };
-    
-    const handlePieEnter = (_:any, index: number) => {
+    const onPieEnter = (_:any, index: number) => {
         setActiveIndex(index);
     }
 
-    if (incomeData.length === 0) {
+    if (allData.length === 0) {
         return (
-            <div className="flex h-[350px] w-full items-center justify-center rounded-lg border-2 border-dashed">
+            <div className="flex h-full min-h-[300px] w-full items-center justify-center rounded-lg border-2 border-dashed">
                 <div className="flex flex-col items-center text-center text-muted-foreground">
                     <PieChartIcon className="h-12 w-12" />
                     <p className="mt-4">No income data for this period.</p>
@@ -53,54 +99,63 @@ export function IncomeBreakdownChart({ expenses, currency }: IncomeBreakdownChar
         );
     }
     
+    const totalAmount = allData.reduce((sum, item) => sum + item.value, 0);
+    
     return (
-        <ResponsiveContainer width="100%" height={350}>
-            <PieChart>
-                <Tooltip
-                    contentStyle={{
-                        background: "hsl(var(--background))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "var(--radius)"
-                    }}
-                    formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
-                />
-                 <Legend 
-                    layout="vertical" 
-                    align="right" 
-                    verticalAlign="middle"
-                    wrapperStyle={{ fontSize: "12px", lineHeight: "20px", overflowY: "auto", maxHeight: 300, cursor: 'pointer' }}
-                    onClick={handleLegendClick}
-                 />
-                <Pie
-                    activeIndex={activeIndex}
-                    data={incomeData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    fill="hsl(var(--primary))"
-                    labelLine={false}
-                    onMouseEnter={handlePieEnter}
-                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                        const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                        const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-
-                        if ((percent ?? 0) < 0.05) return null; // Hide label if it's too small
-
-                        return (
-                            <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-medium">
-                                {`${(percent * 100).toFixed(0)}%`}
-                            </text>
-                        );
-                    }}
-                >
-                    {incomeData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                </Pie>
-            </PieChart>
-        </ResponsiveContainer>
+        <div className="w-full flex flex-col h-[400px]">
+             <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                        <Pie
+                            activeIndex={activeIndex}
+                            activeShape={(props: ActiveShapeProps) => renderActiveShape(props, currencySymbol)}
+                            data={chartData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={90}
+                            fill="hsl(var(--primary))"
+                            onMouseEnter={onPieEnter}
+                        >
+                            {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip
+                            contentStyle={{
+                                background: "hsl(var(--background))",
+                                border: "1px solid hsl(var(--border))",
+                                borderRadius: "var(--radius)"
+                            }}
+                            formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
+                        />
+                    </RechartsPieChart>
+                </ResponsiveContainer>
+            </div>
+            <div className="flex-grow min-h-0">
+                <ScrollArea className="h-full">
+                     <div className="space-y-2 p-2">
+                        {allData.map((item, index) => (
+                            <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-accent">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}/>
+                                    <span>{item.name}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="secondary" className="font-mono">
+                                        {currencySymbol}{item.value.toFixed(2)}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground w-12 text-right">
+                                        ({((item.value / totalAmount) * 100).toFixed(1)}%)
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                     </div>
+                </ScrollArea>
+            </div>
+        </div>
     );
 }

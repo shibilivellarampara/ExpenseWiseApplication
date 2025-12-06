@@ -388,7 +388,6 @@ export default function AnalysisPage() {
                                 <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
                                     <div>
                                         <CardTitle>Spending by Category</CardTitle>
-                                        <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
                                     </div>
                                     <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
                                 </CardHeader>
@@ -431,7 +430,7 @@ export default function AnalysisPage() {
                                     <CardDescription>A breakdown of your expenses by tags.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    {isLoading ? <Skeleton className="h-80 w-full" /> : <TagSpendingChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
+                                    {isLoading ? <Skeleton className="h-96 w-full" /> : <TagSpendingChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
                                 </CardContent>
                             </Card>
                         )}
@@ -442,7 +441,7 @@ export default function AnalysisPage() {
                                     <CardDescription>A breakdown of your income by category.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    {isLoading ? <Skeleton className="h-80 w-full" /> : <IncomeBreakdownChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
+                                    {isLoading ? <Skeleton className="h-96 w-full" /> : <IncomeBreakdownChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
                                 </CardContent>
                             </Card>
                         )}

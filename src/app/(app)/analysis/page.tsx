@@ -386,7 +386,7 @@ export default function AnalysisPage() {
                         <Card>
                             <CollapsibleTrigger asChild>
                                 <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
-                                    <div>
+                                    <div className="space-y-1">
                                         <CardTitle>Spending by Category</CardTitle>
                                         <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
                                     </div>
@@ -470,3 +470,5 @@ export default function AnalysisPage() {
         </div>
     );
 }
+
+    

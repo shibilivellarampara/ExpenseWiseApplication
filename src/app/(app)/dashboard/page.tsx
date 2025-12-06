@@ -183,7 +183,7 @@ export default function DashboardPage() {
         
         const allData = Array.from(dataMap, ([name, value]) => ({ name, value, icon: '' })).sort((a,b) => b.value - a.value);
 
-        const topN = 7;
+        const topN = 11;
         let chartData = allData;
         if (allData.length > topN) {
             const topData = allData.slice(0, topN);

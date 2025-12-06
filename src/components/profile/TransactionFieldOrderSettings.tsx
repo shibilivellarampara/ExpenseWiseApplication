@@ -89,9 +89,6 @@ export function TransactionFieldOrderSettings() {
         }
         
         setDocumentNonBlocking(userProfileRef, settingsData, { merge: true })
-            .then(() => {
-                toast({ title: "Settings Saved", description: "Your form customization has been updated." });
-            })
             .catch((error) => {
                 toast({ variant: 'destructive', title: "Error Saving Settings", description: error.message });
             });

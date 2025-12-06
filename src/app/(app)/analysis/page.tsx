@@ -28,6 +28,7 @@ import { useSearchParams } from "next/navigation";
 import { TagSpendingChart } from "@/components/analysis/TagSpendingChart";
 import { IncomeBreakdownChart } from "@/components/analysis/IncomeBreakdownChart";
 import { CategoryBarChart } from "@/components/analysis/CategoryBarChart";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'custom';
@@ -222,6 +223,10 @@ export default function AnalysisPage() {
     }
     
     const handleAccountSelectChange = (accountId: string) => {
+        if (accountId === 'all') {
+            setSelectedAccounts([]);
+            return;
+        }
         setSelectedAccounts(prev => 
             prev.includes(accountId)
                 ? prev.filter(id => id !== accountId)
@@ -298,6 +303,13 @@ export default function AnalysisPage() {
                                 <CommandList>
                                     <CommandEmpty>No results found.</CommandEmpty>
                                     <CommandGroup>
+                                         <CommandItem
+                                            onSelect={() => handleAccountSelectChange('all')}
+                                            className="flex justify-between cursor-pointer"
+                                        >
+                                            All Accounts
+                                            <Check className={cn("h-4 w-4", selectedAccounts.length === 0 ? "opacity-100" : "opacity-0")} />
+                                        </CommandItem>
                                         {(allAccounts || []).map(item => (
                                             <CommandItem
                                                 key={item.id}
@@ -370,17 +382,25 @@ export default function AnalysisPage() {
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">
                 <div className="lg:col-span-3 space-y-8">
-                    {(analysisSettings?.showCategoryTable ?? true) && (
+                    <Collapsible defaultOpen>
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Spending by Category</CardTitle>
-                                <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {isLoading ? <Skeleton className="h-64 w-full" /> : <CategoryAnalysisTable expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
-                            </CardContent>
+                            <CollapsibleTrigger asChild>
+                                <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                                    <div>
+                                        <CardTitle>Spending by Category</CardTitle>
+                                        <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
+                                    </div>
+                                    <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
+                                </CardHeader>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <CardContent>
+                                    {isLoading ? <Skeleton className="h-64 w-full" /> : <CategoryAnalysisTable expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
+                                </CardContent>
+                            </CollapsibleContent>
                         </Card>
-                    )}
+                    </Collapsible>
+                    
                     {(analysisSettings?.showTrendChart ?? true) && (
                         <Card>
                             <CardHeader>

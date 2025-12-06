@@ -7,6 +7,7 @@ import { useMemo } from 'react';
 import { EnrichedExpense } from '@/lib/types';
 import { format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, getYear, subMonths, subYears, eachYearOfInterval } from 'date-fns';
 import { BarChart as BarChartIcon } from 'lucide-react';
+import { getCurrencySymbol } from '@/lib/currencies';
 
 interface SpendingTrendChartProps {
   expenses: EnrichedExpense[];
@@ -15,6 +16,7 @@ interface SpendingTrendChartProps {
 }
 
 export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTrendChartProps) {
+    const currencySymbol = getCurrencySymbol(currency);
     
     const chartData = useMemo(() => {
         if (!expenses.length) return [];
@@ -132,6 +134,10 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
         );
     }
 
+    const formatCurrency = (value: number) => {
+        return `${currencySymbol}${value.toFixed(2)}`;
+    }
+
     return (
         <ResponsiveContainer width="100%" height={350}>
             <LineChart data={chartData}>
@@ -148,7 +154,7 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `${currency}${value}`}
+                    tickFormatter={(value) => `${currencySymbol}${value}`}
                 />
                 <Tooltip
                     contentStyle={{
@@ -157,6 +163,7 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
                         borderRadius: "var(--radius)"
                     }}
                     cursor={{ fill: 'hsl(var(--muted))' }}
+                    formatter={formatCurrency}
                 />
                 <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} />
                  <Line type="monotone" dataKey="income" stroke="hsl(var(--primary))" strokeWidth={2} name="Income" />

@@ -388,6 +388,7 @@ export default function AnalysisPage() {
                                 <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
                                     <div>
                                         <CardTitle>Spending by Category</CardTitle>
+                                        <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
                                     </div>
                                     <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
                                 </CardHeader>

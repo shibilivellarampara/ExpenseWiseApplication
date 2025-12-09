@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -150,7 +149,7 @@ export default function ExpensesPage() {
 
     }, [allExpenses, filters, debouncedSearchQuery, categoryMap, accountMap, tagMap, accounts]);
     
-    useEffect(() => {
+     useEffect(() => {
         const mainElement = document.getElementById('main-content');
         mainContentRef.current = mainElement;
 
@@ -173,7 +172,7 @@ export default function ExpensesPage() {
                 mainContentRef.current.removeEventListener('scroll', handleScroll);
             }
         };
-    }, [filteredAndEnrichedExpenses]); // Re-check on data change
+    }, [filteredAndEnrichedExpenses]);
 
     const handleFiltersChange = (newFilters: Filters) => {
         setFilters(newFilters);
@@ -267,12 +266,6 @@ export default function ExpensesPage() {
                         <span className="sr-only">Scroll to top</span>
                     </Button>
                 )}
-                 {showScrollBottom && (
-                    <Button onClick={scrollToBottom} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
-                        <ArrowDown className="h-6 w-6" />
-                        <span className="sr-only">Scroll to bottom</span>
-                    </Button>
-                )}
                 <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
                         <Plus className="h-6 w-6" />
@@ -285,7 +278,14 @@ export default function ExpensesPage() {
                         <span className="sr-only">Add Expense</span>
                     </Button>
                 </AddExpenseDialog>
+                 {showScrollBottom && (
+                    <Button onClick={scrollToBottom} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
+                        <ArrowDown className="h-6 w-6" />
+                        <span className="sr-only">Scroll to bottom</span>
+                    </Button>
+                )}
             </div>
         </div>
     );
-}
+
+    

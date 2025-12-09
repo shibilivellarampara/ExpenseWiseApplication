@@ -72,8 +72,8 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
       />
       <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
       <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} textAnchor={textAnchor} fill="hsl(var(--foreground))" className="text-sm">{`${currencySymbol}${value?.toFixed(2)}`}</text>
-      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} dy={18} textAnchor={textAnchor} fill="hsl(var(--muted-foreground))" className="text-xs">
+      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} textAnchor={textAnchor} className="text-sm fill-foreground">{`${currencySymbol}${value?.toFixed(2)}`}</text>
+      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} dy={18} textAnchor={textAnchor} className="text-xs fill-muted-foreground">
         {`(${(percent || 0 * 100).toFixed(2)}%)`}
       </text>
     </g>
@@ -160,5 +160,3 @@ export function CategoryPieChart({ data, allData, currencySymbol }: CategoryPieC
     </div>
   );
 }
-
-    

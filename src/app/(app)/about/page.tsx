@@ -5,10 +5,17 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.4.9";
+const appVersion = "1.5.0";
 
 
 const changelog = [
+    {
+        version: "1.5.0",
+        date: "2025-12-15",
+        changes: [
+            { type: 'Feature', description: "Added the ability to archive and reactivate categories and tags to hide them from transaction forms." },
+        ]
+    },
     {
         version: "1.4.9",
         date: "2025-12-14",

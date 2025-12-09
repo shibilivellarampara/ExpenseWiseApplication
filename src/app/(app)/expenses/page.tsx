@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -34,7 +35,6 @@ export default function ExpensesPage() {
             accounts: accountId ? [accountId] : [],
             tags: [],
             searchQuery: '',
-            billingCycle: undefined,
         };
     });
     
@@ -44,19 +44,16 @@ export default function ExpensesPage() {
         if (!user) return null;
 
         let q = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
-        // If a billing cycle is active, its date range takes precedence.
-        // Otherwise, use the manual date range filter.
-        if (!filters.billingCycle) {
-            if (filters.dateRange.from) {
-                q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
-            }
-            if (filters.dateRange.to) {
-                q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
-            }
+        
+        if (filters.dateRange.from) {
+            q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
+        }
+        if (filters.dateRange.to) {
+            q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
         }
         
         return q;
-    }, [user, firestore, filters.dateRange, filters.billingCycle]);
+    }, [user, firestore, filters.dateRange]);
     
     // Queries for filter dropdowns
     const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [firestore, user]);
@@ -114,12 +111,6 @@ export default function ExpensesPage() {
                 date: (expense.date as Timestamp).toDate(),
             }))
             .filter(expense => {
-                 // Billing cycle filter application
-                if (filters.billingCycle && filters.dateRange.from && filters.dateRange.to) {
-                     if (expense.date < startOfDay(filters.dateRange.from) || expense.date > endOfDay(filters.dateRange.to)) {
-                        return false;
-                    }
-                }
                 if (filters.type !== 'all' && expense.type !== filters.type) return false;
                 if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId)) return false;
                 if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) return false;

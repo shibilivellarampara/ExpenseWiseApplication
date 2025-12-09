@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ChevronDown, FilterX, ListFilter, Pilcrow, Search, CalendarDays } from 'lucide-react';
 import { Check, X } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, parse, addDays, getDaysInMonth, subYears } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, parse, addDays } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Account, Category, Tag } from '@/lib/types';
 import {
@@ -50,13 +51,17 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
 };
 
 
-function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter }: ExpensesFiltersProps & { setDateRangePreset: (preset: string) => void, dateRangePreset: string }) {
+function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter, showBillingCycleOptions, selectedAccounts }: ExpensesFiltersProps & { setDateRangePreset: (preset: string) => void, dateRangePreset: string, showBillingCycleOptions: boolean, selectedAccounts: Account[] }) {
     
     const handleDateRangePresetChange = (preset: string) => {
         setDateRangePreset(preset);
         let from: Date | undefined;
         let to: Date | undefined;
         const now = new Date();
+        const billingDate = showBillingCycleOptions ? selectedAccounts[0].billingDate! : now.getDate();
+        const currentDay = now.getDate();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
         switch (preset) {
             case 'this-month':
@@ -72,13 +77,31 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                 from = startOfYear(now);
                 to = endOfYear(now);
                 break;
+            case 'current-cycle':
+                if (currentDay <= billingDate) {
+                    to = new Date(currentYear, currentMonth, billingDate);
+                    from = addDays(new Date(currentYear, currentMonth - 1, billingDate), 1);
+                } else {
+                    to = new Date(currentYear, currentMonth + 1, billingDate);
+                    from = addDays(new Date(currentYear, currentMonth, billingDate), 1);
+                }
+                break;
+            case 'last-cycle':
+                 if (currentDay <= billingDate) {
+                    to = new Date(currentYear, currentMonth - 1, billingDate);
+                    from = addDays(new Date(currentYear, currentMonth - 2, billingDate), 1);
+                } else {
+                    to = new Date(currentYear, currentMonth, billingDate);
+                    from = addDays(new Date(currentYear, currentMonth - 1, billingDate), 1);
+                }
+                break;
             case 'all':
             default:
                 from = undefined;
                 to = undefined;
                 break;
         }
-        onFiltersChange({ ...filters, dateRange: { from, to }, billingCycle: undefined });
+        onFiltersChange({ ...filters, dateRange: { from, to } });
     }
 
     const handleDateChange = (dateStr: string | undefined, field: 'from' | 'to') => {
@@ -92,7 +115,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                 date = undefined;
             }
         }
-        onFiltersChange({ ...filters, dateRange: { ...filters.dateRange, [field]: date }, billingCycle: undefined });
+        onFiltersChange({ ...filters, dateRange: { ...filters.dateRange, [field]: date } });
     }
     
     const handleTypeChange = (type: 'all' | 'income' | 'expense') => {
@@ -104,15 +127,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
         const newValues = currentValues.includes(value)
             ? currentValues.filter(v => v !== value)
             : [...currentValues, value];
-        
-        const newFilters = { ...filters, [field]: newValues };
-        
-        // If accounts change, reset billing cycle
-        if (field === 'accounts') {
-            newFilters.billingCycle = undefined;
-        }
-
-        onFiltersChange(newFilters);
+        onFiltersChange({ ...filters, [field]: newValues });
     }
     
     const formatDateForInput = (date: Date | undefined): string => {
@@ -178,6 +193,10 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                 <SelectItem value="this-month">This Month</SelectItem>
                                 <SelectItem value="last-month">Last Month</SelectItem>
                                 <SelectItem value="this-year">This Year</SelectItem>
+                                 {showBillingCycleOptions && <Separator className="my-1" />}
+                                {showBillingCycleOptions && <SelectItem value="current-cycle">Current Billing Cycle</SelectItem>}
+                                {showBillingCycleOptions && <SelectItem value="last-cycle">Last Billing Cycle</SelectItem>}
+                                 <Separator className="my-1" />
                                 <SelectItem value="custom">Custom Range</SelectItem>
                             </SelectContent>
                         </Select>
@@ -271,50 +290,15 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
         accounts.filter(acc => filters.accounts.includes(acc.id)), 
     [accounts, filters.accounts]);
 
-    const showBillingCycleFilter = selectedAccounts.length > 0 && selectedAccounts.every(acc => acc.type === 'credit_card' && acc.billingDate);
-
-    const billingCycles = useMemo(() => {
-        if (!showBillingCycleFilter) return [];
-        
-        // Use the billing date of the first selected card as the reference
-        const billingDate = selectedAccounts[0].billingDate!;
-        const cycles: { value: string, label: string, from: Date, to: Date }[] = [];
-        const now = new Date();
-
-        for (let i = 0; i < 12; i++) {
-            const cycleEndDate = new Date(now.getFullYear(), now.getMonth() - i, billingDate);
-            const cycleStartDate = addDays(subMonths(cycleEndDate, 1), 1);
-            
-            cycles.push({
-                value: format(cycleStartDate, 'yyyy-MM'),
-                label: `${format(cycleStartDate, 'dd MMM yyyy')} - ${format(cycleEndDate, 'dd MMM yyyy')}`,
-                from: cycleStartDate,
-                to: cycleEndDate,
-            });
-        }
-        return cycles;
-    }, [showBillingCycleFilter, selectedAccounts]);
-
-    const handleBillingCycleChange = (value: string) => {
-        if (value === 'all') {
-            onFiltersChange({
-                ...filters,
-                dateRange: { from: undefined, to: undefined },
-                billingCycle: undefined
-            });
+    const showBillingCycleOptions = selectedAccounts.length > 0 && selectedAccounts.every(acc => acc.type === 'credit_card' && acc.billingDate);
+    
+    useEffect(() => {
+        // If billing cycle filter is not applicable anymore, reset it
+        if (!showBillingCycleOptions && (dateRangePreset === 'current-cycle' || dateRangePreset === 'last-cycle')) {
             setDateRangePreset('all');
-        } else {
-            const selectedCycle = billingCycles.find(c => c.value === value);
-            if (selectedCycle) {
-                onFiltersChange({
-                    ...filters,
-                    dateRange: { from: selectedCycle.from, to: selectedCycle.to },
-                    billingCycle: value
-                });
-                setDateRangePreset('custom');
-            }
+            onFiltersChange({ ...filters, dateRange: { from: undefined, to: undefined } });
         }
-    }
+    }, [showBillingCycleOptions, dateRangePreset, onFiltersChange, filters]);
 
     return (
         <div className="flex flex-wrap gap-2 items-center">
@@ -338,22 +322,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                     </Button>
                 )}
             </div>
-             {showBillingCycleFilter && (
-                <Select value={filters.billingCycle || 'all'} onValueChange={handleBillingCycleChange}>
-                    <SelectTrigger className="w-[280px]">
-                        <div className="flex items-center gap-2">
-                             <CalendarDays className="h-4 w-4 text-muted-foreground"/>
-                             <SelectValue placeholder="Select a billing cycle..." />
-                        </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Cycles</SelectItem>
-                        {billingCycles.map(cycle => (
-                            <SelectItem key={cycle.value} value={cycle.value}>{cycle.label}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            )}
+            
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                      <Button variant="outline" className="relative">
@@ -373,7 +342,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                             </Button>
                          )}
                     </div>
-                     <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter }} />
+                     <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter, showBillingCycleOptions, selectedAccounts }} />
                 </PopoverContent>
             </Popover>
             

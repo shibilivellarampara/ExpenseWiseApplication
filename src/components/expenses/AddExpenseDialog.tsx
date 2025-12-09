@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -387,6 +386,7 @@ function ExpenseForm({
     const firestore = useFirestore();
     const { toast } = useToast();
     
+    const transactionType = form.watch('type');
     const descriptionValue = form.watch('description');
     const categoryIdValue = form.watch('categoryId');
     const tagIdsValue = form.watch('tagIds');
@@ -639,6 +639,10 @@ function ExpenseForm({
                                 type="number"
                                 {...field}
                                 value={field.value ?? ''}
+                                className={cn(
+                                    transactionType === 'expense' && 'text-red-500',
+                                    transactionType === 'income' && 'text-green-600'
+                                )}
                             />
                             <FormMessage />
                         </FormItem>
@@ -1087,3 +1091,5 @@ function useExpenseForm({
       tags: tags || []
     };
 }
+
+    

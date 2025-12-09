@@ -1,7 +1,7 @@
 
 'use client';
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Sector } from 'recharts';
 import { useMemo, useState } from 'react';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { CHART_COLORS } from '@/lib/colors';
@@ -124,14 +124,6 @@ export function CategoryPieChart({ data, allData, currencySymbol }: CategoryPieC
                     <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--background))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "var(--radius)"
-                  }}
-                  formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
-                />
               </PieChart>
             </ResponsiveContainer>
         </div>

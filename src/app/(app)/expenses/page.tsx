@@ -243,19 +243,35 @@ export default function ExpensesPage() {
             />
 
             <div className="fixed bottom-0 left-0 right-0 p-4 z-10 md:hidden">
-                 <div className="container mx-auto flex justify-around gap-2">
-                    <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
-                        <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg text-base font-semibold py-6">
-                            <Plus className="mr-2 h-5 w-5" />
-                            CASH IN
-                        </Button>
-                    </AddExpenseDialog>
-                    <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
-                        <Button className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg text-base font-semibold py-6">
-                            <Minus className="mr-2 h-5 w-5" />
-                            CASH OUT
-                        </Button>
-                    </AddExpenseDialog>
+                <div className="container mx-auto flex flex-col items-center gap-3">
+                    <div className="flex gap-3">
+                        {showScrollTop && (
+                            <Button onClick={scrollToTop} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
+                                <ArrowUp className="h-6 w-6" />
+                                <span className="sr-only">Scroll to top</span>
+                            </Button>
+                        )}
+                        {showScrollBottom && (
+                            <Button onClick={scrollToBottom} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
+                                <ArrowDown className="h-6 w-6" />
+                                <span className="sr-only">Scroll to bottom</span>
+                            </Button>
+                        )}
+                    </div>
+                     <div className="flex justify-around gap-2 w-full">
+                        <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
+                            <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg text-base font-semibold py-6">
+                                <Plus className="mr-2 h-5 w-5" />
+                                CASH IN
+                            </Button>
+                        </AddExpenseDialog>
+                        <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
+                            <Button className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg text-base font-semibold py-6">
+                                <Minus className="mr-2 h-5 w-5" />
+                                CASH OUT
+                            </Button>
+                        </AddExpenseDialog>
+                    </div>
                 </div>
             </div>
 
@@ -289,3 +305,4 @@ export default function ExpensesPage() {
     );
 
     
+}

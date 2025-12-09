@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, orderBy, query, doc, where, Timestamp }from "firebase/firestore";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, ArrowUp, ArrowDown } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
@@ -22,6 +22,9 @@ export default function ExpensesPage() {
     const firestore = useFirestore();
     const mainContentRef = useRef<HTMLElement | null>(null);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [showScrollTop, setShowScrollTop] = useState(false);
+    const [showScrollBottom, setShowScrollBottom] = useState(false);
+
     const searchParams = useSearchParams();
 
     const [filters, setFilters] = useState<Filters>(() => {
@@ -72,28 +75,29 @@ export default function ExpensesPage() {
     }, []);
 
     useEffect(() => {
-        // Use the new ID to find the main scrollable element
         const mainElement = document.getElementById('main-content');
         mainContentRef.current = mainElement;
 
         const handleScroll = () => {
             if (mainContentRef.current) {
-                // Adjust this threshold as needed
-                setIsScrolled(mainContentRef.current.scrollTop > 1);
+                const { scrollTop, scrollHeight, clientHeight } = mainContentRef.current;
+                setIsScrolled(scrollTop > 1);
+                setShowScrollTop(scrollTop > 200);
+                setShowScrollBottom(scrollHeight - scrollTop - clientHeight > 200);
             }
         };
 
         if (mainContentRef.current) {
             mainContentRef.current.addEventListener('scroll', handleScroll);
+            handleScroll(); // Initial check
         }
 
-        // Cleanup function
         return () => {
             if (mainContentRef.current) {
                 mainContentRef.current.removeEventListener('scroll', handleScroll);
             }
         };
-    }, []);
+    }, [filteredAndEnrichedExpenses]); // Re-check on data change
 
 
     const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
@@ -200,6 +204,14 @@ export default function ExpensesPage() {
             }));
         }
     };
+    
+    const scrollToTop = () => {
+        mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const scrollToBottom = () => {
+        mainContentRef.current?.scrollTo({ top: mainContentRef.current.scrollHeight, behavior: 'smooth' });
+    };
 
 
     return (
@@ -250,6 +262,18 @@ export default function ExpensesPage() {
             </div>
 
              <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">
+                 {showScrollTop && (
+                    <Button onClick={scrollToTop} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
+                        <ArrowUp className="h-6 w-6" />
+                        <span className="sr-only">Scroll to top</span>
+                    </Button>
+                )}
+                 {showScrollBottom && (
+                    <Button onClick={scrollToBottom} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
+                        <ArrowDown className="h-6 w-6" />
+                        <span className="sr-only">Scroll to bottom</span>
+                    </Button>
+                )}
                 <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
                         <Plus className="h-6 w-6" />

@@ -74,32 +74,6 @@ export default function ExpensesPage() {
         // This is a placeholder for the ExpensesTable. Data is re-fetched automatically by useCollection.
     }, []);
 
-    useEffect(() => {
-        const mainElement = document.getElementById('main-content');
-        mainContentRef.current = mainElement;
-
-        const handleScroll = () => {
-            if (mainContentRef.current) {
-                const { scrollTop, scrollHeight, clientHeight } = mainContentRef.current;
-                setIsScrolled(scrollTop > 1);
-                setShowScrollTop(scrollTop > 200);
-                setShowScrollBottom(scrollHeight - scrollTop - clientHeight > 200);
-            }
-        };
-
-        if (mainContentRef.current) {
-            mainContentRef.current.addEventListener('scroll', handleScroll);
-            handleScroll(); // Initial check
-        }
-
-        return () => {
-            if (mainContentRef.current) {
-                mainContentRef.current.removeEventListener('scroll', handleScroll);
-            }
-        };
-    }, [filteredAndEnrichedExpenses]); // Re-check on data change
-
-
     const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
 
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
@@ -176,6 +150,31 @@ export default function ExpensesPage() {
 
     }, [allExpenses, filters, debouncedSearchQuery, categoryMap, accountMap, tagMap, accounts]);
     
+    useEffect(() => {
+        const mainElement = document.getElementById('main-content');
+        mainContentRef.current = mainElement;
+
+        const handleScroll = () => {
+            if (mainContentRef.current) {
+                const { scrollTop, scrollHeight, clientHeight } = mainContentRef.current;
+                setIsScrolled(scrollTop > 1);
+                setShowScrollTop(scrollTop > 200);
+                setShowScrollBottom(scrollHeight - scrollTop - clientHeight > 200);
+            }
+        };
+
+        if (mainContentRef.current) {
+            mainContentRef.current.addEventListener('scroll', handleScroll);
+            handleScroll(); // Initial check
+        }
+
+        return () => {
+            if (mainContentRef.current) {
+                mainContentRef.current.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, [filteredAndEnrichedExpenses]); // Re-check on data change
+
     const handleFiltersChange = (newFilters: Filters) => {
         setFilters(newFilters);
     };

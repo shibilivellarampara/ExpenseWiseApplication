@@ -296,22 +296,23 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
     }, [showBillingCycleFilter, selectedAccounts]);
 
     const handleBillingCycleChange = (value: string) => {
-        const selectedCycle = billingCycles.find(c => c.value === value);
-        if (selectedCycle) {
-            onFiltersChange({
-                ...filters,
-                dateRange: { from: selectedCycle.from, to: selectedCycle.to },
-                billingCycle: value
-            });
-             setDateRangePreset('custom');
-        } else {
-            // Handle 'all cycles' or reset
+        if (value === 'all') {
             onFiltersChange({
                 ...filters,
                 dateRange: { from: undefined, to: undefined },
                 billingCycle: undefined
             });
             setDateRangePreset('all');
+        } else {
+            const selectedCycle = billingCycles.find(c => c.value === value);
+            if (selectedCycle) {
+                onFiltersChange({
+                    ...filters,
+                    dateRange: { from: selectedCycle.from, to: selectedCycle.to },
+                    billingCycle: value
+                });
+                setDateRangePreset('custom');
+            }
         }
     }
 
@@ -338,7 +339,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                 )}
             </div>
              {showBillingCycleFilter && (
-                <Select value={filters.billingCycle || ''} onValueChange={handleBillingCycleChange}>
+                <Select value={filters.billingCycle || 'all'} onValueChange={handleBillingCycleChange}>
                     <SelectTrigger className="w-[280px]">
                         <div className="flex items-center gap-2">
                              <CalendarDays className="h-4 w-4 text-muted-foreground"/>
@@ -346,7 +347,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                         </div>
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">All Cycles</SelectItem>
+                        <SelectItem value="all">All Cycles</SelectItem>
                         {billingCycles.map(cycle => (
                             <SelectItem key={cycle.value} value={cycle.value}>{cycle.label}</SelectItem>
                         ))}

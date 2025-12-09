@@ -2,14 +2,14 @@
 
 'use client';
 
-import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError, setDocumentNonBlocking } from '@/firebase';
 import { Category, Expense } from '@/lib/types';
-import { collection, doc, setDoc, writeBatch, query, where, getDocs, arrayRemove, arrayUnion } from 'firebase/firestore';
+import { collection, doc, writeBatch, query, where, getDocs } from 'firebase/firestore';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown, Merge } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown, Merge, Archive, Eye, EyeOff, RotateCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { availableIcons } from '@/lib/defaults';
@@ -18,6 +18,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MergeItemsDialog } from './MergeItemsDialog';
+import { Separator } from '../ui/separator';
 
 export function CategorySettings() {
     const { user } = useUser();
@@ -38,6 +39,7 @@ export function CategorySettings() {
     const [showMergeDialog, setShowMergeDialog] = useState(false);
     const [newItemPopoverOpen, setNewItemPopoverOpen] = useState(false);
     const [editingItemPopoverOpen, setEditingItemPopoverOpen] = useState(false);
+    const [showArchived, setShowArchived] = useState(false);
 
     const SYSTEM_CATEGORIES = ['Credit Limit Upgrade', 'Credit Card Payment', 'Credit Limit Downgrade'];
 
@@ -61,9 +63,9 @@ export function CategorySettings() {
         setIsSaving(true);
         const ref = collection(firestore, `users/${user.uid}/categories`);
         const newDocRef = doc(ref);
-        const categoryData = { id: newDocRef.id, name: newItem.name, icon: newItem.icon, userId: user.uid };
+        const categoryData = { id: newDocRef.id, name: newItem.name, icon: newItem.icon, userId: user.uid, status: 'active' };
 
-        setDoc(newDocRef, categoryData)
+        setDocumentNonBlocking(newDocRef, categoryData)
             .then(() => {
                 setNewItem({ name: '', icon: 'Shapes' });
                 toast({ title: 'Category Added' });
@@ -110,6 +112,23 @@ export function CategorySettings() {
             });
     };
 
+    const handleUpdateStatus = (itemId: string, status: 'active' | 'inactive') => {
+        if (!user || !firestore) return;
+
+        const item = categories?.find(c => c.id === itemId);
+        if (SYSTEM_CATEGORIES.includes(item?.name || '')) {
+            toast({ variant: 'destructive', title: 'Action Not Allowed', description: `"${item?.name}" is a system category and cannot be archived.` });
+            return;
+        }
+
+        const itemRef = doc(firestore, `users/${user.uid}/categories`, itemId);
+        setDocumentNonBlocking(itemRef, { status: status }, { merge: true }).then(() => {
+            toast({ title: `Category ${status === 'active' ? 'Restored' : 'Archived'}` });
+        }).catch((err) => {
+             toast({ variant: 'destructive', title: 'Error', description: err.message });
+        });
+    }
+
     const handleSaveEdit = async () => {
         if (!editingItem || !user || !firestore) return;
 
@@ -134,7 +153,7 @@ export function CategorySettings() {
         const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
         const updatedData = { name: editingItem.name, icon: editingItem.icon };
 
-        setDoc(itemRef, updatedData, { merge: true })
+        setDocumentNonBlocking(itemRef, updatedData, { merge: true })
             .then(() => {
                 toast({ title: "Category Updated" });
             })
@@ -199,7 +218,18 @@ export function CategorySettings() {
     };
 
     
-    const sortedCategories = categories ? [...categories].sort((a, b) => a.name.localeCompare(b.name)) : [];
+    const { activeCategories, inactiveCategories } = (categories || []).reduce((acc, category) => {
+        if (category.status === 'inactive') {
+            acc.inactiveCategories.push(category);
+        } else {
+            acc.activeCategories.push(category);
+        }
+        return acc;
+    }, { activeCategories: [] as Category[], inactiveCategories: [] as Category[] });
+
+    activeCategories.sort((a,b) => a.name.localeCompare(b.name));
+    inactiveCategories.sort((a,b) => a.name.localeCompare(b.name));
+
 
     const handleSelectionChange = (id: string, checked: boolean | string) => {
         if (checked) {
@@ -209,7 +239,7 @@ export function CategorySettings() {
         }
     };
     
-    const lastSelectedIndex = sortedCategories.reduce((lastIndex, item, currentIndex) => {
+    const lastSelectedIndex = activeCategories.reduce((lastIndex, item, currentIndex) => {
         return selectedIds.includes(item.id) ? currentIndex : lastIndex;
     }, -1);
 
@@ -235,12 +265,12 @@ export function CategorySettings() {
                                 <div className="flex items-center gap-2">
                                     <Checkbox
                                         id="select-all-categories"
-                                        checked={selectedIds.length === sortedCategories.length && sortedCategories.length > 0}
-                                        onCheckedChange={(checked) => setSelectedIds(checked ? sortedCategories.map(c => c.id) : [])}
+                                        checked={selectedIds.length === activeCategories.length && activeCategories.length > 0}
+                                        onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.map(c => c.id) : [])}
                                     />
                                     <label htmlFor="select-all-categories" className="text-sm font-medium">Select All</label>
                                 </div>
-                                {sortedCategories.map((item, index) => (
+                                {activeCategories.map((item, index) => (
                                     <div key={item.id}>
                                         <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
                                             <Checkbox
@@ -284,6 +314,9 @@ export function CategorySettings() {
                                                     </div>
                                                     <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
                                                         <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                     <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
+                                                        <Archive className="h-4 w-4" />
                                                     </Button>
                                                     <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
                                                         <Trash2 className="h-4 w-4" />
@@ -334,6 +367,32 @@ export function CategorySettings() {
                                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
                             </Button>
                         </div>
+
+                         {inactiveCategories.length > 0 && (
+                            <Collapsible open={showArchived} onOpenChange={setShowArchived}>
+                                <Separator className="my-4"/>
+                                <CollapsibleTrigger asChild>
+                                    <button className="flex w-full items-center justify-between p-2 text-sm font-medium text-muted-foreground">
+                                        <span>View {inactiveCategories.length} archived categories</span>
+                                        {showArchived ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="space-y-2 p-2 pt-0">
+                                    {inactiveCategories.map(item => (
+                                        <div key={item.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                            <div className="flex items-center gap-2">
+                                                {renderIcon(item.icon)}
+                                                <span className="text-muted-foreground">{item.name}</span>
+                                            </div>
+                                            <Button variant="ghost" size="sm" onClick={() => handleUpdateStatus(item.id, 'active')}>
+                                                <RotateCw className="mr-2 h-4 w-4" />
+                                                Restore
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </CollapsibleContent>
+                            </Collapsible>
+                        )}
                     </CardContent>
                 </CollapsibleContent>
             </Collapsible>

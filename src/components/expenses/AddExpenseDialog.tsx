@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -401,6 +402,8 @@ function ExpenseForm({
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
      
     const activeAccounts = useMemo(() => accounts?.filter(acc => acc.status === 'active' || acc.status === undefined) || [], [accounts]);
+    const activeCategories = useMemo(() => categories?.filter(c => c.status === 'active' || c.status === undefined) || [], [categories]);
+    const activeTags = useMemo(() => tags?.filter(t => t.status === 'active' || t.status === undefined) || [], [tags]);
     
     const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? true;
 
@@ -413,19 +416,19 @@ function ExpenseForm({
 
     useEffect(() => {
         const hasInput = debouncedDescription || debouncedCategoryId || (debouncedTagIds && debouncedTagIds.length > 0);
-        if (!hasInput || isShared || !isAiSuggestionEnabled || !userProfile?.dashboardSettings?.isAiSuggestionEnabled || categories.length === 0 || accounts.length === 0) {
+        if (!hasInput || isShared || !isAiSuggestionEnabled || !userProfile?.dashboardSettings?.isAiSuggestionEnabled || activeCategories.length === 0 || activeAccounts.length === 0) {
             return;
         }
 
         startSuggestionTransition(async () => {
             try {
-                const selectedCategory = categories.find(c => c.id === debouncedCategoryId);
-                const selectedTags = tags.filter(t => debouncedTagIds?.includes(t.id));
+                const selectedCategory = activeCategories.find(c => c.id === debouncedCategoryId);
+                const selectedTags = activeTags.filter(t => debouncedTagIds?.includes(t.id));
 
                 const suggestions = await suggestExpenseDetails({
                     description: debouncedDescription || '',
-                    categories: categories.map(({ id, name }) => ({ id, name })),
-                    tags: tags.map(({ id, name }) => ({ id, name })),
+                    categories: activeCategories.map(({ id, name }) => ({ id, name })),
+                    tags: activeTags.map(({ id, name }) => ({ id, name })),
                     accounts: activeAccounts.map(({ id, name }) => ({ id, name })),
                     selectedCategoryId: debouncedCategoryId,
                     selectedCategoryName: selectedCategory?.name,
@@ -445,7 +448,7 @@ function ExpenseForm({
             }
         });
 
-    }, [debouncedDescription, debouncedCategoryId, debouncedTagIds, form, categories, tags, activeAccounts, isShared, isAiSuggestionEnabled, userProfile, toast]);
+    }, [debouncedDescription, debouncedCategoryId, debouncedTagIds, form, activeCategories, activeTags, activeAccounts, isShared, isAiSuggestionEnabled, userProfile, toast]);
 
 
     const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string): Promise<string | undefined> => {
@@ -546,7 +549,7 @@ function ExpenseForm({
                                 </div>
                              </QuickAddItemDialog>
                              <SelectItem value="__none__">No Category</SelectItem>
-                             {categories?.map(cat => (
+                             {activeCategories?.map(cat => (
                                  <SelectItem key={cat.id} value={cat.id}>
                                      <div className="flex items-center">
                                          {renderIcon(cat.icon)}
@@ -569,7 +572,7 @@ function ExpenseForm({
                     <FormItem>
                         <TagCombobox
                             field={field}
-                            tags={tags}
+                            tags={activeTags}
                             onQuickAdd={(name, icon) => handleQuickAdd('Tag', name, icon)}
                             isRequired={isTagRequired}
                             isSuggesting={isSuggesting}
@@ -1091,5 +1094,3 @@ function useExpenseForm({
       tags: tags || []
     };
 }
-
-    

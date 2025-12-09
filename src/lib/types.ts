@@ -45,6 +45,7 @@ export type Category = {
   name: string;
   icon: string; // lucide-react icon name
   userId: string;
+  status?: 'active' | 'inactive';
 };
 
 export type CardDetails = {
@@ -74,6 +75,7 @@ export type Tag = {
   name: string;
   icon: string; // lucide-react icon name
   userId: string;
+  status?: 'active' | 'inactive';
 }
 
 export type Expense = {

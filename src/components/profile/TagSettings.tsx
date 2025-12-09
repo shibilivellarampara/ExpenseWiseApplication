@@ -2,14 +2,14 @@
 
 'use client';
 
-import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError, setDocumentNonBlocking } from '@/firebase';
 import { Tag, Expense } from '@/lib/types';
-import { collection, doc, setDoc, writeBatch, query, where, getDocs, arrayRemove, arrayUnion } from 'firebase/firestore';
+import { collection, doc, writeBatch, query, where, getDocs, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown, Merge } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown, Merge, Archive, Eye, EyeOff, RotateCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { availableIcons } from '@/lib/defaults';
@@ -18,6 +18,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/colla
 import { cn } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
 import { MergeItemsDialog } from './MergeItemsDialog';
+import { Separator } from '../ui/separator';
 
 export function TagSettings() {
     const { user } = useUser();
@@ -38,6 +39,7 @@ export function TagSettings() {
     const [showMergeDialog, setShowMergeDialog] = useState(false);
     const [newItemPopoverOpen, setNewItemPopoverOpen] = useState(false);
     const [editingItemPopoverOpen, setEditingItemPopoverOpen] = useState(false);
+    const [showArchived, setShowArchived] = useState(false);
 
 
     const renderIcon = (iconName: string) => {
@@ -60,9 +62,9 @@ export function TagSettings() {
         setIsSaving(true);
         const ref = collection(firestore, `users/${user.uid}/tags`);
         const newDocRef = doc(ref);
-        const tagData = { id: newDocRef.id, name: newItem.name, icon: newItem.icon, userId: user.uid };
+        const tagData = { id: newDocRef.id, name: newItem.name, icon: newItem.icon, userId: user.uid, status: 'active' };
 
-        setDoc(newDocRef, tagData)
+        setDocumentNonBlocking(newDocRef, tagData)
             .then(() => {
                 setNewItem({ name: '', icon: 'Tag' });
                 toast({ title: 'Tag Added' });
@@ -107,6 +109,17 @@ export function TagSettings() {
                 setIsSaving(false);
             });
     };
+    
+    const handleUpdateStatus = (itemId: string, status: 'active' | 'inactive') => {
+        if (!user || !firestore) return;
+
+        const itemRef = doc(firestore, `users/${user.uid}/tags`, itemId);
+        setDocumentNonBlocking(itemRef, { status: status }, { merge: true }).then(() => {
+            toast({ title: `Tag ${status === 'active' ? 'Restored' : 'Archived'}` });
+        }).catch((err) => {
+             toast({ variant: 'destructive', title: 'Error', description: err.message });
+        });
+    }
 
     const handleSaveEdit = async () => {
         if (!editingItem || !user || !firestore) return;
@@ -123,7 +136,7 @@ export function TagSettings() {
         setIsSaving(true);
         const itemRef = doc(firestore, `users/${user.uid}/tags`, editingItem.id);
         const updatedData = { name: editingItem.name, icon: editingItem.icon };
-        setDoc(itemRef, updatedData, { merge: true })
+        setDocumentNonBlocking(itemRef, updatedData, { merge: true })
             .catch(async (serverError) => {
                  errorEmitter.emit('permission-error', new FirestorePermissionError({
                     path: itemRef.path,
@@ -185,7 +198,18 @@ export function TagSettings() {
     };
 
 
-    const sortedItems = items ? [...items].sort((a, b) => a.name.localeCompare(b.name)) : [];
+    const { activeTags, inactiveTags } = (items || []).reduce((acc, tag) => {
+        if (tag.status === 'inactive') {
+            acc.inactiveTags.push(tag);
+        } else {
+            acc.activeTags.push(tag);
+        }
+        return acc;
+    }, { activeTags: [] as Tag[], inactiveTags: [] as Tag[] });
+
+    activeTags.sort((a,b) => a.name.localeCompare(b.name));
+    inactiveTags.sort((a,b) => a.name.localeCompare(b.name));
+
     
      const handleSelectionChange = (id: string, checked: boolean | string) => {
         if (checked) {
@@ -195,7 +219,7 @@ export function TagSettings() {
         }
     };
     
-    const lastSelectedIndex = sortedItems.reduce((lastIndex, item, currentIndex) => {
+    const lastSelectedIndex = activeTags.reduce((lastIndex, item, currentIndex) => {
         return selectedIds.includes(item.id) ? currentIndex : lastIndex;
     }, -1);
 
@@ -221,12 +245,12 @@ export function TagSettings() {
                                 <div className="flex items-center gap-2">
                                     <Checkbox
                                         id="select-all-tags"
-                                        checked={selectedIds.length === sortedItems.length && sortedItems.length > 0}
-                                        onCheckedChange={(checked) => setSelectedIds(checked ? sortedItems.map(c => c.id) : [])}
+                                        checked={selectedIds.length === activeTags.length && activeTags.length > 0}
+                                        onCheckedChange={(checked) => setSelectedIds(checked ? activeTags.map(c => c.id) : [])}
                                     />
                                     <label htmlFor="select-all-tags" className="text-sm font-medium">Select All</label>
                                 </div>
-                                {sortedItems.map((item, index) => (
+                                {activeTags.map((item, index) => (
                                     <div key={item.id}>
                                         <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
                                             <Checkbox
@@ -269,6 +293,9 @@ export function TagSettings() {
                                                     </div>
                                                     <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
                                                         <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')}>
+                                                        <Archive className="h-4 w-4" />
                                                     </Button>
                                                     <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)}>
                                                         <Trash2 className="h-4 w-4" />
@@ -319,6 +346,32 @@ export function TagSettings() {
                                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
                             </Button>
                         </div>
+                        
+                        {inactiveTags.length > 0 && (
+                            <Collapsible open={showArchived} onOpenChange={setShowArchived}>
+                                <Separator className="my-4"/>
+                                <CollapsibleTrigger asChild>
+                                    <button className="flex w-full items-center justify-between p-2 text-sm font-medium text-muted-foreground">
+                                        <span>View {inactiveTags.length} archived tags</span>
+                                        {showArchived ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="space-y-2 p-2 pt-0">
+                                    {inactiveTags.map(item => (
+                                        <div key={item.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                            <div className="flex items-center gap-2">
+                                                {renderIcon(item.icon)}
+                                                <span className="text-muted-foreground">{item.name}</span>
+                                            </div>
+                                            <Button variant="ghost" size="sm" onClick={() => handleUpdateStatus(item.id, 'active')}>
+                                                <RotateCw className="mr-2 h-4 w-4" />
+                                                Restore
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </CollapsibleContent>
+                            </Collapsible>
+                        )}
                     </CardContent>
                 </CollapsibleContent>
             </Collapsible>

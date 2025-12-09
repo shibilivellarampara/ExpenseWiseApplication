@@ -144,7 +144,8 @@
         "id": { "type": "string" },
         "name": { "type": "string" },
         "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "userId": { "type": "string" }
+        "userId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the category." }
       },
       "required": ["name", "icon", "userId"]
     },
@@ -157,7 +158,8 @@
         "id": { "type": "string" },
         "name": { "type": "string" },
         "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "userId": { "type": "string" }
+        "userId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the tag." }
       },
       "required": ["name", "icon", "userId"]
     },

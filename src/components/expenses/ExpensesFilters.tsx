@@ -4,9 +4,9 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, FilterX, ListFilter, Pilcrow, Search } from 'lucide-react';
+import { ChevronDown, FilterX, ListFilter, Pilcrow, Search, CalendarDays } from 'lucide-react';
 import { Check, X } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, parse } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, parse, addDays, getDaysInMonth, subYears } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Account, Category, Tag } from '@/lib/types';
 import {
@@ -32,6 +32,7 @@ export type Filters = {
     accounts: string[];
     tags: string[];
     searchQuery: string;
+    billingCycle?: string;
 }
 interface ExpensesFiltersProps {
     filters: Filters;
@@ -49,7 +50,7 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
 };
 
 
-function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter, setPopoverOpen }: ExpensesFiltersProps & { setDateRangePreset: (preset: string) => void, dateRangePreset: string, setPopoverOpen: (open: boolean) => void }) {
+function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter }: ExpensesFiltersProps & { setDateRangePreset: (preset: string) => void, dateRangePreset: string }) {
     
     const handleDateRangePresetChange = (preset: string) => {
         setDateRangePreset(preset);
@@ -77,7 +78,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                 to = undefined;
                 break;
         }
-        onFiltersChange({ ...filters, dateRange: { from, to } });
+        onFiltersChange({ ...filters, dateRange: { from, to }, billingCycle: undefined });
     }
 
     const handleDateChange = (dateStr: string | undefined, field: 'from' | 'to') => {
@@ -91,7 +92,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                 date = undefined;
             }
         }
-        onFiltersChange({ ...filters, dateRange: { ...filters.dateRange, [field]: date } });
+        onFiltersChange({ ...filters, dateRange: { ...filters.dateRange, [field]: date }, billingCycle: undefined });
     }
     
     const handleTypeChange = (type: 'all' | 'income' | 'expense') => {
@@ -103,7 +104,15 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
         const newValues = currentValues.includes(value)
             ? currentValues.filter(v => v !== value)
             : [...currentValues, value];
-        onFiltersChange({ ...filters, [field]: newValues });
+        
+        const newFilters = { ...filters, [field]: newValues };
+        
+        // If accounts change, reset billing cycle
+        if (field === 'accounts') {
+            newFilters.billingCycle = undefined;
+        }
+
+        onFiltersChange(newFilters);
     }
     
     const formatDateForInput = (date: Date | undefined): string => {
@@ -242,6 +251,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
             accounts: [],
             tags: [],
             searchQuery: '',
+            billingCycle: undefined,
         };
         onFiltersChange(newFilters);
         if (!disableDateFilter) {
@@ -256,6 +266,54 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
         filters.accounts.length +
         filters.tags.length +
         (filters.searchQuery ? 1 : 0);
+        
+    const selectedAccounts = useMemo(() => 
+        accounts.filter(acc => filters.accounts.includes(acc.id)), 
+    [accounts, filters.accounts]);
+
+    const showBillingCycleFilter = selectedAccounts.length > 0 && selectedAccounts.every(acc => acc.type === 'credit_card' && acc.billingDate);
+
+    const billingCycles = useMemo(() => {
+        if (!showBillingCycleFilter) return [];
+        
+        // Use the billing date of the first selected card as the reference
+        const billingDate = selectedAccounts[0].billingDate!;
+        const cycles: { value: string, label: string, from: Date, to: Date }[] = [];
+        const now = new Date();
+
+        for (let i = 0; i < 12; i++) {
+            const cycleEndDate = new Date(now.getFullYear(), now.getMonth() - i, billingDate);
+            const cycleStartDate = addDays(subMonths(cycleEndDate, 1), 1);
+            
+            cycles.push({
+                value: format(cycleStartDate, 'yyyy-MM'),
+                label: `${format(cycleStartDate, 'dd MMM yyyy')} - ${format(cycleEndDate, 'dd MMM yyyy')}`,
+                from: cycleStartDate,
+                to: cycleEndDate,
+            });
+        }
+        return cycles;
+    }, [showBillingCycleFilter, selectedAccounts]);
+
+    const handleBillingCycleChange = (value: string) => {
+        const selectedCycle = billingCycles.find(c => c.value === value);
+        if (selectedCycle) {
+            onFiltersChange({
+                ...filters,
+                dateRange: { from: selectedCycle.from, to: selectedCycle.to },
+                billingCycle: value
+            });
+             setDateRangePreset('custom');
+        } else {
+            // Handle 'all cycles' or reset
+            onFiltersChange({
+                ...filters,
+                dateRange: { from: undefined, to: undefined },
+                billingCycle: undefined
+            });
+            setDateRangePreset('all');
+        }
+    }
 
     return (
         <div className="flex flex-wrap gap-2 items-center">
@@ -279,6 +337,22 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                     </Button>
                 )}
             </div>
+             {showBillingCycleFilter && (
+                <Select value={filters.billingCycle || ''} onValueChange={handleBillingCycleChange}>
+                    <SelectTrigger className="w-[280px]">
+                        <div className="flex items-center gap-2">
+                             <CalendarDays className="h-4 w-4 text-muted-foreground"/>
+                             <SelectValue placeholder="Select a billing cycle..." />
+                        </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="">All Cycles</SelectItem>
+                        {billingCycles.map(cycle => (
+                            <SelectItem key={cycle.value} value={cycle.value}>{cycle.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                      <Button variant="outline" className="relative">
@@ -298,7 +372,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                             </Button>
                          )}
                     </div>
-                     <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter, setPopoverOpen }} />
+                     <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter }} />
                 </PopoverContent>
             </Popover>
             

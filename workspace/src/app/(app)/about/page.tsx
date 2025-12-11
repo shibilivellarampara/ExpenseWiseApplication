@@ -5,10 +5,55 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.4.6";
+const appVersion = "1.5.1";
 
 
 const changelog = [
+    {
+        version: "1.5.1",
+        date: "2025-12-16",
+        changes: [
+            { type: 'Feature', description: "Added contextual page-specific settings to the user profile dropdown for quick access without navigating away." },
+            { type: 'Feature', description: "Enhanced both 'ExpenseWise' and 'Enhanced' Excel exports to include icon names for categories and tags." },
+            { type: 'Feature', description: "Added an 'All Accounts' option to clear all transactions without deleting account structures." },
+            { type: 'Feature', description: "Replaced the 'Reset Everything' button with a selective reset dialog, allowing users to choose which data types to delete." },
+            { type: 'UI', description: "Added confirmation dialogs when deleting categories and tags to prevent accidental removal." },
+        ]
+    },
+    {
+        version: "1.5.0",
+        date: "2025-12-15",
+        changes: [
+            { type: 'Feature', description: "Added the ability to archive and reactivate categories and tags to hide them from transaction forms." },
+        ]
+    },
+    {
+        version: "1.4.9",
+        date: "2025-12-14",
+        changes: [
+            { type: 'Fix', description: "Refined credit card payment notifications to only appear when there is an outstanding balance, preventing unnecessary alerts for paid-off cards." },
+        ]
+    },
+    {
+        version: "1.4.8",
+        date: "2025-12-06",
+        changes: [
+            { type: 'UI', description: "Improved the 'Spending by Tag' and 'Income Sources' pie charts on the Analysis page to group smaller items into an 'Others' category for a cleaner look, while still providing a full, scrollable list of all items below." },
+            { type: 'Feature', description: "Added a convenient 'All Accounts' option to the account filter on the Analysis page." },
+            { type: 'UI', description: "Made the 'Spending by Category' card on the Analysis page collapsible to save space." },
+            { type: 'Fix', description: "Corrected number formatting in the 'Income vs. Expense Trend' chart to always show two decimal places." },
+            { type: 'UI', description: "Removed the redundant description from the 'Spending by Category' card." },
+        ]
+    },
+    {
+        version: "1.4.7",
+        date: "2025-12-12",
+        changes: [
+            { type: 'Fix', description: "Resolved a persistent build failure by upgrading Next.js to the latest patched version to address a critical security vulnerability." },
+            { type: 'Fix', description: "Corrected a visual bug where fully paid or overpaid credit cards were not correctly marked as 'Paid'." },
+            { type: 'UI', description: "Improved the Accounts page by ensuring bank accounts are listed first and preventing card icons from triggering navigation." },
+        ]
+    },
     {
         version: "1.4.6",
         date: "2025-12-10",
@@ -310,5 +355,3 @@ export default function AboutPage() {
     );
 
 }
-
-    

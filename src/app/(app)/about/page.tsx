@@ -5,10 +5,21 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.5.0";
+const appVersion = "1.5.1";
 
 
 const changelog = [
+    {
+        version: "1.5.1",
+        date: "2025-12-16",
+        changes: [
+            { type: 'Feature', description: "Added contextual page-specific settings to the user profile dropdown for quick access without navigating away." },
+            { type: 'Feature', description: "Enhanced both 'ExpenseWise' and 'Enhanced' Excel exports to include icon names for categories and tags." },
+            { type: 'Feature', description: "Added an 'All Accounts' option to clear all transactions without deleting account structures." },
+            { type: 'Feature', description: "Replaced the 'Reset Everything' button with a selective reset dialog, allowing users to choose which data types to delete." },
+            { type: 'UI', description: "Added confirmation dialogs when deleting categories and tags to prevent accidental removal." },
+        ]
+    },
     {
         version: "1.5.0",
         date: "2025-12-15",

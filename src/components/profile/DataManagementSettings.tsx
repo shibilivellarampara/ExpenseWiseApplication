@@ -56,7 +56,7 @@ export function DataManagementSettings() {
         return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <LucideIcons.Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
     };
 
-    const handleClearAllData = async () => {
+    const handleResetEverything = async () => {
         if (!user || !firestore) return;
         setIsClearing(true);
         setProgress(0);
@@ -75,7 +75,6 @@ export function DataManagementSettings() {
                 });
             });
 
-            // This is a rough approximation of progress. We can't easily track batch commit progress.
             const progressInterval = setInterval(() => {
                 setProgress(p => Math.min(p + 10, 90));
             }, 200);
@@ -100,43 +99,41 @@ export function DataManagementSettings() {
             return;
         }
 
-        const accountToClear = accounts?.find(a => a.id === selectedAccount);
-        if (!accountToClear) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Selected account not found.' });
-            return;
-        }
-
         setIsClearing(true);
         setProgress(0);
+        
         try {
-            const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), where('accountId', '==', selectedAccount));
-            const expensesSnapshot = await getDocs(expensesQuery);
-            const totalDocs = expensesSnapshot.size + 1; // +1 for the account itself
-            let processedDocs = 0;
-            
             const batch = writeBatch(firestore);
+            let q;
+            let actionText = '';
+
+            if (selectedAccount === 'all') {
+                q = query(collection(firestore, `users/${user.uid}/expenses`));
+                actionText = 'All transactions have been deleted from all accounts.';
+            } else {
+                const accountToClear = accounts?.find(a => a.id === selectedAccount);
+                if (!accountToClear) throw new Error('Selected account not found.');
+                q = query(collection(firestore, `users/${user.uid}/expenses`), where('accountId', '==', selectedAccount));
+                
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, selectedAccount);
+                batch.delete(accountRef);
+                actionText = `All transactions for ${accountToClear.name} have been deleted, and the account has been removed.`;
+            }
+
+            const expensesSnapshot = await getDocs(q);
             expensesSnapshot.forEach(expenseDoc => {
                 batch.delete(expenseDoc.ref);
-                processedDocs++;
-                setProgress((processedDocs / totalDocs) * 100);
             });
-
-            const accountRef = doc(firestore, `users/${user.uid}/accounts`, selectedAccount);
-            batch.delete(accountRef);
-            processedDocs++;
-            setProgress((processedDocs / totalDocs) * 100);
             
             await commitBatchNonBlocking(batch, `users/${user.uid}`);
             
-            const accountName = accountToClear.name || "the account";
-            const actionText = `All transactions for ${accountName} have been deleted, and the account has been removed.`;
-
-            toast({ title: 'Account Data Cleared', description: actionText });
+            toast({ title: 'Data Cleared', description: actionText });
             setSelectedAccount(null);
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
             setIsClearing(false);
+            setProgress(0);
         }
     }
     
@@ -230,7 +227,7 @@ export function DataManagementSettings() {
                 <CollapsibleContent>
                     <CardContent className="p-4 pt-0 space-y-4">
                         <div className="rounded-lg border border-destructive/50 p-4">
-                            <h4 className="font-semibold">Clear All Transaction Data</h4>
+                            <h4 className="font-semibold">Reset Everything</h4>
                             <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete all your transactions, accounts, categories, and tags.</p>
                             {isClearing && !selectedAccount && (
                                 <div className="space-y-2 mt-2">
@@ -240,7 +237,7 @@ export function DataManagementSettings() {
                             )}
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="sm" disabled={isClearing}>Clear All Data</Button>
+                                    <Button variant="destructive" size="sm" disabled={isClearing}>Reset All Data</Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
@@ -251,7 +248,7 @@ export function DataManagementSettings() {
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleClearAllData} className="bg-destructive hover:bg-destructive/90">
+                                        <AlertDialogAction onClick={handleResetEverything} className="bg-destructive hover:bg-destructive/90">
                                             {isClearing ? <Loader2 className="animate-spin" /> : "Yes, clear everything"}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
@@ -260,8 +257,8 @@ export function DataManagementSettings() {
                         </div>
 
                         <div className="rounded-lg border border-destructive/50 p-4">
-                            <h4 className="font-semibold">Clear Specific Account Data</h4>
-                            <p className="text-sm text-muted-foreground mt-1 mb-3">Select an account to delete all its associated transactions. The account itself will also be removed.</p>
+                            <h4 className="font-semibold">Clear Account Data</h4>
+                            <p className="text-sm text-muted-foreground mt-1 mb-3">Select an account to clear its transactions. Or, select 'All Accounts' to clear all transactions while keeping your accounts.</p>
                              {isClearing && selectedAccount && (
                                 <div className="space-y-2 my-2">
                                     <Progress value={progress} className="[&>div]:bg-destructive" />
@@ -271,9 +268,12 @@ export function DataManagementSettings() {
                             <div className="flex gap-2">
                                 <Select onValueChange={setSelectedAccount} value={selectedAccount || ''}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select an account" />
+                                        <SelectValue placeholder="Select an account..." />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="all">
+                                            <div className="font-semibold">All Accounts (Transactions Only)</div>
+                                        </SelectItem>
                                         {accounts?.map(acc => (
                                             <SelectItem key={acc.id} value={acc.id}>
                                                 <div className="flex items-center">
@@ -287,19 +287,22 @@ export function DataManagementSettings() {
 
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="sm" disabled={!selectedAccount || isClearing}>Clear Account</Button>
+                                        <Button variant="destructive" size="sm" disabled={!selectedAccount || isClearing}>Clear Data</Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
-                                            <AlertDialogTitle>Clear data for "{accounts?.find(a => a.id === selectedAccount)?.name}"?</AlertDialogTitle>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This will permanently delete this account and all transactions associated with it. This action cannot be undone.
+                                                {selectedAccount === 'all'
+                                                    ? 'This will permanently delete ALL transactions from every account. Your accounts, categories, and tags will remain. This action cannot be undone.'
+                                                    : `This will permanently delete the account "${accounts?.find(a => a.id === selectedAccount)?.name}" and all transactions associated with it. This action cannot be undone.`
+                                                }
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                                             <AlertDialogAction onClick={handleClearAccountData} className="bg-destructive hover:bg-destructive/90">
-                                                {isClearing ? <Loader2 className="animate-spin" /> : "Yes, clear account data"}
+                                                {isClearing ? <Loader2 className="animate-spin" /> : "Yes, clear data"}
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
@@ -372,3 +375,4 @@ export function DataManagementSettings() {
         </Card>
     );
 }
+

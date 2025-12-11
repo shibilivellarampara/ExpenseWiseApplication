@@ -88,10 +88,12 @@ export default function DataPage() {
                     'Time': tx.date.toLocaleTimeString(),
                     'Description': tx.description,
                     'Category': tx.category?.name || 'N/A',
+                    'Category Icon': tx.category?.icon || 'N/A',
                     'Account': tx.account?.name || 'N/A',
                     'Amount': tx.amount,
                     'Type': tx.type,
                     'Tags': tx.tags.map(t => t.name).join(', '),
+                    'Tag Icons': tx.tags.map(t => t.icon).join(', '),
                 }));
             } else { // Enhanced template
                 dataToExport = enriched.map(tx => ({

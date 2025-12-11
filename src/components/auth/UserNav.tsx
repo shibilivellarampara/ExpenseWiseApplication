@@ -34,7 +34,7 @@ const pageSettingsMap: Record<string, { label: string; component: React.Componen
     '/dashboard': { label: 'Dashboard Settings', component: DashboardSettings },
     '/transactions': { label: 'Transaction Form Settings', component: TransactionFieldOrderSettings },
     '/expenses': { label: 'Transaction Form Settings', component: TransactionFieldOrderSettings },
-    '/accounts': { label: 'Transaction Form Settings', component: TransactionFieldOrderSettings },
+    '/accounts': { label: 'Account Settings', component: TransactionFieldOrderSettings },
     '/analysis': { label: 'Analysis Settings', component: AnalysisSettings },
 };
 

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -100,10 +101,6 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
                     <Button onClick={() => onAction(selectedAccount, 'excel', selectedTemplate)} disabled={isLoading}>
                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
                         Download Excel
-                    </Button>
-                    <Button variant="outline" onClick={handleShare} disabled={isLoading}>
-                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
-                        Share
                     </Button>
                 </div>
             </CardFooter>

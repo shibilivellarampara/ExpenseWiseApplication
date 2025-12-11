@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
 import { MergeItemsDialog } from './MergeItemsDialog';
 import { Separator } from '../ui/separator';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 
 export function TagSettings() {
     const { user } = useUser();
@@ -297,9 +298,27 @@ export function TagSettings() {
                                                     <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')}>
                                                         <Archive className="h-4 w-4" />
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" type="button">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This action cannot be undone. This will permanently delete the "{item.name}" tag and remove it from all associated transactions.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleRemoveItem(item.id)} className="bg-destructive hover:bg-destructive/90">
+                                                                    {isSaving ? <Loader2 className="animate-spin" /> : "Delete"}
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
                                                 </>
                                             )}
                                         </div>

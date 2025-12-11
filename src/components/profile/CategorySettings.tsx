@@ -19,6 +19,8 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MergeItemsDialog } from './MergeItemsDialog';
 import { Separator } from '../ui/separator';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
+
 
 export function CategorySettings() {
     const { user } = useUser();
@@ -318,9 +320,27 @@ export function CategorySettings() {
                                                      <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
                                                         <Archive className="h-4 w-4" />
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" type="button" onClick={() => handleRemoveItem(item.id)} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" type="button" disabled={SYSTEM_CATEGORIES.includes(item.name)}>
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This action cannot be undone. This will permanently delete the "{item.name}" category.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleRemoveItem(item.id)} className="bg-destructive hover:bg-destructive/90">
+                                                                    {isSaving ? <Loader2 className="animate-spin" /> : "Delete"}
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
                                                 </>
                                             )}
                                         </div>

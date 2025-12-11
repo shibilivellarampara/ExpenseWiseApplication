@@ -308,7 +308,7 @@ export function ProfileForm() {
 
     return (
         <Card className="h-fit">
-            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <Collapsible defaultOpen={false}>
              <form onSubmit={handleProfileSubmit}>
                 <CollapsibleTrigger asChild>
                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
@@ -316,7 +316,7 @@ export function ProfileForm() {
                             <h3 className="text-base font-semibold font-headline">Profile & Security</h3>
                             <CardDescription className="text-sm">Update your personal information and password.</CardDescription>
                         </div>
-                        <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
+                        <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
                     </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>

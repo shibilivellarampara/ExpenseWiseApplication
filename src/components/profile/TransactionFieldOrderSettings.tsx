@@ -1,14 +1,12 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, useCollection } from "@/firebase";
 import { doc, collection, query, where, deleteField } from "firebase/firestore";
 import { UserProfile, Account } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { useState, useEffect } from "react";
-import { ChevronDown, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
+import { ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
@@ -33,7 +31,6 @@ export function TransactionFieldOrderSettings() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
-    const [isOpen, setIsOpen] = useState(false);
     
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, `users/${user.uid}`) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
@@ -147,112 +144,101 @@ export function TransactionFieldOrderSettings() {
     };
 
     if (isProfileLoading) {
-        return <Card><CardHeader><CardTitle>Loading settings...</CardTitle></CardHeader></Card>;
+         return (
+            <div className="flex items-center justify-center p-8">
+                <Loader2 className="animate-spin" />
+            </div>
+        );
     }
 
 
     return (
-         <Card>
-            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-                <CollapsibleTrigger asChild>
-                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
-                        <div>
-                            <h3 className="text-base font-semibold font-headline">Form Customization</h3>
-                            <CardDescription className="text-sm">Customize transaction form fields.</CardDescription>
-                        </div>
-                        <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
-                    </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                    <CardContent className="p-4 pt-0 space-y-4">
-                         <div className="space-y-2">
-                             <Label>Field Visibility & Order</Label>
-                            {orderedFields.map((field, index) => {
-                                const isToggleable = field !== 'accountId';
-                                let requiredKey: keyof typeof requiredFields | null = null;
-                                if (field === 'description') requiredKey = 'isDescriptionRequired';
-                                if (field === 'categoryId') requiredKey = 'isCategoryRequired';
-                                if (field === 'tagIds') requiredKey = 'isTagRequired';
+         <div className="space-y-4">
+             <div className="space-y-2">
+                 <Label>Field Visibility & Order</Label>
+                {orderedFields.map((field, index) => {
+                    const isToggleable = field !== 'accountId';
+                    let requiredKey: keyof typeof requiredFields | null = null;
+                    if (field === 'description') requiredKey = 'isDescriptionRequired';
+                    if (field === 'categoryId') requiredKey = 'isCategoryRequired';
+                    if (field === 'tagIds') requiredKey = 'isTagRequired';
 
-                                return (
-                                    <div
-                                        key={field}
-                                        className="flex items-center gap-2 p-2 rounded-md border bg-background flex-wrap"
-                                    >
-                                        <span className="flex-1 font-medium min-w-[80px]">{fieldLabels[field]}</span>
-                                        
-                                        {field === 'accountId' ? (
-                                             <div className="flex-1 min-w-[150px]">
-                                                <Select value={defaultAccountId || 'none'} onValueChange={(value) => setDefaultAccountId(value === 'none' ? undefined : value)}>
-                                                    <SelectTrigger className="h-8 text-xs">
-                                                        <SelectValue placeholder="Set default..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="none">No Default</SelectItem>
-                                                        {accounts?.map(account => (
-                                                            <SelectItem key={account.id} value={account.id}>
-                                                                <div className="flex items-center gap-2">
-                                                                    {renderIcon(account.icon)}
-                                                                    {account.name}
-                                                                </div>
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                {isToggleable && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Switch
-                                                            id={`visible-${field}`}
-                                                            checked={visibleFields.includes(field)}
-                                                            onCheckedChange={(checked) => handleVisibilityChange(field, checked)}
-                                                        />
-                                                        <Label htmlFor={`visible-${field}`} className="text-xs text-muted-foreground">Show</Label>
+                    return (
+                        <div
+                            key={field}
+                            className="flex items-center gap-2 p-2 rounded-md border bg-background flex-wrap"
+                        >
+                            <span className="flex-1 font-medium min-w-[80px]">{fieldLabels[field]}</span>
+                            
+                            {field === 'accountId' ? (
+                                 <div className="flex-1 min-w-[150px]">
+                                    <Select value={defaultAccountId || 'none'} onValueChange={(value) => setDefaultAccountId(value === 'none' ? undefined : value)}>
+                                        <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue placeholder="Set default..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">No Default</SelectItem>
+                                            {accounts?.map(account => (
+                                                <SelectItem key={account.id} value={account.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        {renderIcon(account.icon)}
+                                                        {account.name}
                                                     </div>
-                                                )}
-                                                
-                                                {requiredKey && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Switch
-                                                            id={`required-${field}`}
-                                                            checked={requiredFields[requiredKey]}
-                                                            onCheckedChange={(value) => handleRequiredChange(requiredKey!, value)}
-                                                        />
-                                                        <Label htmlFor={`required-${field}`} className="text-xs text-muted-foreground">Required</Label>
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
-
-                                        <div className="flex items-center gap-1 ml-auto">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7"
-                                                onClick={() => handleMoveField(index, 'up')}
-                                                disabled={index === 0}
-                                            >
-                                                <ArrowUp className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7"
-                                                onClick={() => handleMoveField(index, 'down')}
-                                                disabled={index === orderedFields.length - 1}
-                                            >
-                                                <ArrowDown className="h-4 w-4" />
-                                            </Button>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            ) : (
+                                <>
+                                    {isToggleable && (
+                                        <div className="flex items-center gap-1">
+                                            <Switch
+                                                id={`visible-${field}`}
+                                                checked={visibleFields.includes(field)}
+                                                onCheckedChange={(checked) => handleVisibilityChange(field, checked)}
+                                            />
+                                            <Label htmlFor={`visible-${field}`} className="text-xs text-muted-foreground">Show</Label>
                                         </div>
-                                    </div>
-                                )
-                            })}
+                                    )}
+                                    
+                                    {requiredKey && (
+                                        <div className="flex items-center gap-1">
+                                            <Switch
+                                                id={`required-${field}`}
+                                                checked={requiredFields[requiredKey]}
+                                                onCheckedChange={(value) => handleRequiredChange(requiredKey!, value)}
+                                            />
+                                            <Label htmlFor={`required-${field}`} className="text-xs text-muted-foreground">Required</Label>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            <div className="flex items-center gap-1 ml-auto">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => handleMoveField(index, 'up')}
+                                    disabled={index === 0}
+                                >
+                                    <ArrowUp className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => handleMoveField(index, 'down')}
+                                    disabled={index === orderedFields.length - 1}
+                                >
+                                    <ArrowDown className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
-                    </CardContent>
-                </CollapsibleContent>
-            </Collapsible>
-        </Card>
+                    )
+                })}
+            </div>
+        </div>
     );
 }

@@ -5,10 +5,17 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.5.1";
+const appVersion = "1.6.0";
 
 
 const changelog = [
+    {
+        version: "1.6.0",
+        date: "2025-12-11",
+        changes: [
+            { type: 'Security', description: "Upgraded Next.js to version 16.0.7 to patch a critical security vulnerability (CVE-2025-55182)." },
+        ]
+    },
     {
         version: "1.5.1",
         date: "2025-12-16",
@@ -340,7 +347,7 @@ export default function AboutPage() {
                             <ul className="space-y-2">
                                 {entry.changes.map((change, index) => (
                                     <li key={index} className="flex items-start gap-3">
-                                        <Badge variant={change.type === 'Feature' || change.type === 'UI' ? 'default' : 'secondary'}>
+                                        <Badge variant={change.type === 'Feature' || change.type === 'UI' || change.type === 'Security' ? 'default' : 'secondary'}>
                                             {change.type}
                                         </Badge>
                                         <p className="text-sm text-foreground">{change.description}</p>

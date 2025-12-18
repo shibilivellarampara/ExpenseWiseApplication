@@ -10,7 +10,7 @@ import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking,
 import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs, addDoc } from 'firebase/firestore';
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import { Handshake, Loader2, ChevronDown, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from "lucide-react";
+import { Handshake, Loader2, ChevronDown, User, ArrowRight, ArrowLeft, PlusCircle, Trash2, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
 import {
@@ -107,13 +107,14 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
                 <Tooltip>
                     <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <AlertDialogTrigger asChild>
-                            <Button size="icon" variant="outline" className="h-8 w-8">
-                                <Handshake className="h-4 w-4" />
+                            <Button size="sm" variant="outline" className="h-8">
+                                <Handshake className="mr-2 h-4 w-4" />
+                                Settle Up
                             </Button>
                         </AlertDialogTrigger>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>Settle Up</p>
+                        <p>Settle outstanding balance</p>
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
@@ -176,7 +177,7 @@ function DeletePersonButton({ personName }: { personName: string }) {
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="ml-1 h-8 w-8 text-destructive/70 hover:text-destructive">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive">
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </AlertDialogTrigger>
@@ -242,7 +243,7 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
             }
         });
         
-        return Object.values(groups).sort((a, b) => b.netAmount - a.netAmount);
+        return Object.values(groups).sort((a, b) => Math.abs(b.netAmount) - Math.abs(a.netAmount));
     }, [debts]);
 
     if (isLoading) {
@@ -252,12 +253,14 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                      <Card key={i}>
                         <CardHeader>
                             <Skeleton className="h-6 w-3/4" />
-                            <Skeleton className="h-4 w-1/2" />
                         </CardHeader>
                         <CardContent>
-                           <Skeleton className="h-8 w-1/4 mb-2" />
+                           <Skeleton className="h-10 w-1/2 mb-2" />
                            <Skeleton className="h-4 w-full" />
                         </CardContent>
+                         <CardFooter>
+                           <Skeleton className="h-9 w-full" />
+                        </CardFooter>
                     </Card>
                 ))}
             </div>
@@ -274,56 +277,74 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {groupedDebts.map(group => (
                 <Card key={group.personName}>
-                    <Collapsible>
-                         <CollapsibleTrigger asChild>
-                            <div className="flex items-center p-4 cursor-pointer hover:bg-muted/50 rounded-t-lg">
-                                <h3 className="text-lg font-semibold flex items-center gap-2 flex-1">
-                                    <User className="h-5 w-5" />
-                                    {group.personName}
-                                </h3>
-                                <div className="text-sm text-right">
-                                    {group.netAmount > 0 ? (
-                                        <span className="text-green-600 font-medium">Owes you {currencySymbol}{group.netAmount.toFixed(2)}</span>
-                                    ) : group.netAmount < 0 ? (
-                                        <span className="text-red-500 font-medium">You owe {currencySymbol}{Math.abs(group.netAmount).toFixed(2)}</span>
-                                    ) : (
-                                        <span className="text-muted-foreground">All settled up</span>
-                                    )}
-                                </div>
-                                <div onClick={(e) => e.stopPropagation()}>
-                                    <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                                </div>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                             <User className="h-5 w-5" />
+                            {group.personName}
+                        </CardTitle>
+                        <div className="flex items-center gap-1">
+                            <AddDebtSheet personName={group.personName}>
+                                <Button size="icon" variant="ghost" className="h-8 w-8">
+                                    <PlusCircle className="h-4 w-4" />
+                                </Button>
+                            </AddDebtSheet>
+                            <DeletePersonButton personName={group.personName} />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-center space-y-1">
+                            <p className="text-sm text-muted-foreground">
+                                {group.netAmount > 0 ? `Owes you` : group.netAmount < 0 ? `You owe` : `All Settled`}
+                            </p>
+                            <p className={cn("text-3xl font-bold tracking-tight",
+                                group.netAmount > 0 && "text-green-600",
+                                group.netAmount < 0 && "text-red-500"
+                            )}>
+                                {currencySymbol}{Math.abs(group.netAmount).toFixed(2)}
+                            </p>
+                             <div className="pt-2">
+                                <SettleUpButton group={group} currencySymbol={currencySymbol} />
                             </div>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                            <div className="border-t">
-                                {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
-                                    <div key={record.id} className="flex items-center gap-4 px-4 py-3 border-b text-sm">
-                                        <div>
-                                            {record.type === 'lent' ? 
-                                                <ArrowRight className="h-5 w-5 text-green-500" /> : 
-                                                <ArrowLeft className="h-5 w-5 text-red-500" />}
+                        </div>
+                    </CardContent>
+                    <CardFooter className="p-0">
+                         <Collapsible className="w-full">
+                             <CollapsibleTrigger asChild>
+                                <div className="flex items-center justify-center p-4 border-t cursor-pointer hover:bg-muted/50 rounded-b-lg">
+                                    <History className="h-4 w-4 mr-2" />
+                                    <span className="text-sm font-medium">View History</span>
+                                </div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="bg-muted/50">
+                                <div className="border-t">
+                                    {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
+                                        <div key={record.id} className="flex items-center gap-4 px-4 py-3 border-b text-sm">
+                                            <div>
+                                                {record.type === 'lent' ? 
+                                                    <ArrowRight className="h-5 w-5 text-green-500" /> : 
+                                                    <ArrowLeft className="h-5 w-5 text-red-500" />}
+                                            </div>
+                                            <div className="flex-grow">
+                                                <p className="font-medium">{record.description || (record.type === 'lent' ? 'Lent' : 'Borrowed')}</p>
+                                                <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                 <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
+                                                     {currencySymbol}{record.amount.toFixed(2)}
+                                                 </p>
+                                            </div>
                                         </div>
-                                        <div className="flex-grow">
-                                            <p className="font-medium">{record.description || (record.type === 'lent' ? 'Lent' : 'Borrowed')}</p>
-                                            <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
-                                        </div>
-                                        <div className="text-right">
-                                             <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
-                                                 {currencySymbol}{record.amount.toFixed(2)}
-                                             </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CollapsibleContent>
-                    </Collapsible>
+                                    ))}
+                                </div>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </CardFooter>
                 </Card>
             ))}
         </div>
     );
 }
-    
+

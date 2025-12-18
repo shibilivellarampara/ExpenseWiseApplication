@@ -5,10 +5,19 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.6.1";
+const appVersion = "1.6.2";
 
 
 const changelog = [
+    {
+        version: "1.6.2",
+        date: "2025-12-18",
+        changes: [
+            { type: 'UI', description: "Adjusted transaction filter controls to prevent wrapping on mobile for a cleaner single-line layout." },
+            { type: 'UI', description: "Increased the size and added a border to the 'Clear Filters' button for better visibility and easier tapping on mobile." },
+            { type: 'Fix', description: "Corrected an issue where the 'Scroll to Top/Bottom' buttons were not visible on mobile devices in the transaction list." },
+        ]
+    },
     {
         version: "1.6.1",
         date: "2025-12-17",

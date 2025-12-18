@@ -27,7 +27,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Separator } from "../ui/separator";
 import { AddDebtSheet } from "./AddDebtSheet";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { Tooltip, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface DebtsListProps {
     debts: EnrichedDebt[];
@@ -317,18 +317,10 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         return (
             <div className="space-y-4">
                 {Array.from({ length: 3 }).map((_, i) => (
-                     <Card key={i}>
-                         <CardHeader>
-                            <Skeleton className="h-6 w-1/3" />
-                         </CardHeader>
-                         <CardContent>
-                             <Skeleton className="h-8 w-1/4" />
-                             <Skeleton className="h-4 w-1/2 mt-2" />
-                         </CardContent>
-                         <CardFooter>
-                              <Skeleton className="h-9 w-full" />
-                         </CardFooter>
-                     </Card>
+                    <div key={i} className="p-4 border rounded-lg">
+                        <Skeleton className="h-6 w-1/3" />
+                        <Skeleton className="h-4 w-1/2 mt-2" />
+                    </div>
                 ))}
             </div>
         )
@@ -346,11 +338,20 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     return (
         <div className="space-y-4">
             {groupedDebts.map((group) => (
-                <Card key={group.personName}>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                         <div>
-                            <CardTitle>{group.personName}</CardTitle>
-                         </div>
+                <Collapsible key={group.personName} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                         <CollapsibleTrigger asChild>
+                            <div className="flex-grow cursor-pointer">
+                                <h3 className="text-lg font-semibold">{group.personName}</h3>
+                                <p className={cn("font-bold",
+                                    group.netAmount > 0 && "text-green-600",
+                                    group.netAmount < 0 && "text-red-500",
+                                    group.netAmount === 0 && "text-muted-foreground"
+                                )}>
+                                    {group.netAmount > 0 ? `Owes you ${currencySymbol}${group.netAmount.toFixed(2)}` : group.netAmount < 0 ? `You owe ${currencySymbol}${Math.abs(group.netAmount).toFixed(2)}` : `All Settled`}
+                                </p>
+                            </div>
+                        </CollapsibleTrigger>
                          <div className="flex items-center gap-1">
                             <SettleUpButton group={group} currencySymbol={currencySymbol} />
                             <AddDebtSheet personName={group.personName}>
@@ -367,56 +368,35 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                             </AddDebtSheet>
                             <DeletePersonButton personName={group.personName} />
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        <p className={cn("text-2xl font-bold",
-                            group.netAmount > 0 && "text-green-600",
-                            group.netAmount < 0 && "text-red-500",
-                            group.netAmount === 0 && "text-muted-foreground"
-                        )}>
-                            {group.netAmount > 0 ? `${currencySymbol}${group.netAmount.toFixed(2)}` : group.netAmount < 0 ? `-${currencySymbol}${Math.abs(group.netAmount).toFixed(2)}` : `${currencySymbol}0.00`}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                             {group.netAmount > 0 ? `Owed to you` : group.netAmount < 0 ? `You owe` : `All Settled`}
-                        </p>
-                    </CardContent>
-                    <Collapsible>
-                        <CollapsibleContent>
-                            <div className="bg-muted/30 px-6 py-4 border-t">
-                                {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
-                                    <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
-                                        <div>
-                                            {record.type === 'lent' ? 
-                                                <ArrowRight className="h-5 w-5 text-green-500" /> : 
-                                                <ArrowLeft className="h-5 w-5 text-red-500" />}
-                                        </div>
-                                        <div className="flex-grow">
-                                            <p className={cn("font-medium", record.status === 'settled' && 'line-through text-muted-foreground')}>
-                                                {record.description || (record.type === 'lent' ? 'Lent' : 'Borrowed')}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
-                                        </div>
-                                        <div className="text-right">
-                                                <p className={cn("font-semibold", record.status === 'settled' ? 'text-muted-foreground line-through' : (record.type === 'lent' ? 'text-green-600' : 'text-red-500'))}>
-                                                    {currencySymbol}{record.amount.toFixed(2)}
-                                                </p>
-                                        </div>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <DeleteTransactionButton debt={record} currencySymbol={currencySymbol} />
-                                        </div>
+                    </div>
+                    <CollapsibleContent>
+                        <div className="mt-4 pt-4 border-t">
+                            {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
+                                <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
+                                    <div>
+                                        {record.type === 'lent' ? 
+                                            <ArrowRight className="h-5 w-5 text-green-500" /> : 
+                                            <ArrowLeft className="h-5 w-5 text-red-500" />}
                                     </div>
-                                ))}
-                            </div>
-                        </CollapsibleContent>
-                        <CardFooter>
-                            <CollapsibleTrigger asChild>
-                                <Button variant="ghost" className="w-full">
-                                    <History className="mr-2 h-4 w-4" /> View History
-                                </Button>
-                            </CollapsibleTrigger>
-                        </CardFooter>
-                    </Collapsible>
-                </Card>
+                                    <div className="flex-grow">
+                                        <p className={cn("font-medium", record.status === 'settled' && 'line-through text-muted-foreground')}>
+                                            {record.description || (record.type === 'lent' ? 'Lent' : 'Borrowed')}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
+                                    </div>
+                                    <div className="text-right">
+                                            <p className={cn("font-semibold", record.status === 'settled' ? 'text-muted-foreground line-through' : (record.type === 'lent' ? 'text-green-600' : 'text-red-500'))}>
+                                                {currencySymbol}{record.amount.toFixed(2)}
+                                            </p>
+                                    </div>
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <DeleteTransactionButton debt={record} currencySymbol={currencySymbol} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CollapsibleContent>
+                </Collapsible>
             ))}
         </div>
     );

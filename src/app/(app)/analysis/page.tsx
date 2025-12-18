@@ -325,23 +325,6 @@ export default function AnalysisPage() {
                             </Command>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="icon">
-                                <Settings className="h-4 w-4" />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Analysis Settings</DialogTitle>
-                                <DialogDescription>
-                                    Customize your analysis page settings.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <AnalysisSettingsContent />
-                        </DialogContent>
-                    </Dialog>
                 </div>
             </PageHeader>
             

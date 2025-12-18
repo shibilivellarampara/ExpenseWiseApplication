@@ -2,13 +2,14 @@
 'use client';
 
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '../ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -105,17 +106,17 @@ export function AddDebtSheet({ children, personName, open, onOpenChange }: AddDe
     }
     
     return (
-        <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetTrigger asChild>{children}</SheetTrigger>
-            <SheetContent className="overflow-y-auto">
-                <SheetHeader>
-                    <SheetTitle className="font-headline">Add Debt or Due</SheetTitle>
-                    <SheetDescription>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="font-headline">Add Debt or Due</DialogTitle>
+                    <DialogDescription>
                         Track money you've lent to others or borrowed from them.
-                    </SheetDescription>
-                </SheetHeader>
+                    </DialogDescription>
+                </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-6">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-2">
                         <FormField
                             control={form.control}
                             name="type"
@@ -202,12 +203,15 @@ export function AddDebtSheet({ children, personName, open, onOpenChange }: AddDe
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
-                        </Button>
+                         <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => onOpenChange?.(false)}>Cancel</Button>
+                            <Button type="submit" className="w-full" disabled={isLoading}>
+                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
+                            </Button>
+                        </DialogFooter>
                     </form>
                 </Form>
-            </SheetContent>
-        </Sheet>
+            </DialogContent>
+        </Dialog>
     );
 }

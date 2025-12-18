@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { EnrichedDebt, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from "@/firebase";
-import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs, addDoc } from 'firebase/firestore';
+import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
 import { Handshake, Loader2, ChevronDown, User, ArrowRight, ArrowLeft, PlusCircle, Trash2, History } from "lucide-react";
@@ -107,9 +107,8 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
                 <Tooltip>
                     <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="outline" className="h-8">
-                                <Handshake className="mr-2 h-4 w-4" />
-                                Settle Up
+                             <Button size="icon" variant="ghost" className="h-8 w-8">
+                                <Handshake className="h-4 w-4" />
                             </Button>
                         </AlertDialogTrigger>
                     </TooltipTrigger>
@@ -142,7 +141,8 @@ function DeletePersonButton({ personName }: { personName: string }) {
     const [isDeleting, setIsDeleting] = useState(false);
     const { toast } = useToast();
 
-    const handleDelete = async () => {
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.stopPropagation();
         if (!user || !firestore) return;
         setIsDeleting(true);
 
@@ -176,11 +176,20 @@ function DeletePersonButton({ personName }: { personName: string }) {
 
     return (
         <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-            </AlertDialogTrigger>
+             <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Delete all records for {personName}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -192,6 +201,64 @@ function DeletePersonButton({ personName }: { personName: string }) {
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
                         {isDeleting ? <Loader2 className="animate-spin" /> : `Yes, delete ${personName}`}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}
+
+function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt, currencySymbol: string }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { toast } = useToast();
+
+    const handleDelete = async () => {
+        if (!user || !firestore) return;
+        setIsDeleting(true);
+
+        try {
+            const debtRef = doc(firestore, `users/${user.uid}/debts`, debt.id);
+            await deleteDocumentNonBlocking(debtRef);
+            toast({
+                title: "Transaction Deleted",
+                description: `The record has been removed.`,
+            });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: "Error", description: error.message });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    return (
+        <AlertDialog>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <AlertDialogTrigger asChild>
+                             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                    </TooltipTrigger>
+                     <TooltipContent>
+                        <p>Delete this transaction</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this transaction?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                       You are about to permanently delete the transaction: "{debt.description || 'Transaction'}" of {currencySymbol}{debt.amount.toFixed(2)}. This cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                        {isDeleting ? <Loader2 className="animate-spin" /> : "Yes, delete"}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -248,20 +315,14 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
 
     if (isLoading) {
         return (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="border rounded-lg p-4 space-y-4">
                 {Array.from({ length: 3 }).map((_, i) => (
-                     <Card key={i}>
-                        <CardHeader>
-                            <Skeleton className="h-6 w-3/4" />
-                        </CardHeader>
-                        <CardContent>
-                           <Skeleton className="h-10 w-1/2 mb-2" />
-                           <Skeleton className="h-4 w-full" />
-                        </CardContent>
-                         <CardFooter>
-                           <Skeleton className="h-9 w-full" />
-                        </CardFooter>
-                    </Card>
+                     <div key={i}>
+                        <div className="flex items-center gap-4">
+                            <Skeleton className="h-6 w-1/3" />
+                            <Skeleton className="h-6 w-1/4 ml-auto" />
+                        </div>
+                     </div>
                 ))}
             </div>
         )
@@ -277,74 +338,72 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     }
 
     return (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {groupedDebts.map(group => (
-                <Card key={group.personName}>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="flex items-center gap-2">
-                             <User className="h-5 w-5" />
-                            {group.personName}
-                        </CardTitle>
-                        <div className="flex items-center gap-1">
-                            <AddDebtSheet personName={group.personName}>
-                                <Button size="icon" variant="ghost" className="h-8 w-8">
-                                    <PlusCircle className="h-4 w-4" />
-                                </Button>
-                            </AddDebtSheet>
-                            <DeletePersonButton personName={group.personName} />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-center space-y-1">
-                            <p className="text-sm text-muted-foreground">
-                                {group.netAmount > 0 ? `Owes you` : group.netAmount < 0 ? `You owe` : `All Settled`}
-                            </p>
-                            <p className={cn("text-3xl font-bold tracking-tight",
-                                group.netAmount > 0 && "text-green-600",
-                                group.netAmount < 0 && "text-red-500"
-                            )}>
-                                {currencySymbol}{Math.abs(group.netAmount).toFixed(2)}
-                            </p>
-                             <div className="pt-2">
+        <div className="border rounded-lg">
+            {groupedDebts.map((group, index) => (
+                <Collapsible key={group.personName} className={cn(index < groupedDebts.length - 1 && "border-b")}>
+                    <CollapsibleTrigger asChild>
+                        <div className="flex items-center p-4 cursor-pointer hover:bg-muted/50">
+                            <div className="flex-grow">
+                                <h3 className="font-semibold text-lg">{group.personName}</h3>
+                                <p className={cn("text-sm",
+                                    group.netAmount > 0 && "text-green-600",
+                                    group.netAmount < 0 && "text-red-500",
+                                    group.netAmount === 0 && "text-muted-foreground"
+                                )}>
+                                    {group.netAmount > 0 ? `Owes you ${currencySymbol}${group.netAmount.toFixed(2)}` : group.netAmount < 0 ? `You owe ${currencySymbol}${Math.abs(group.netAmount).toFixed(2)}` : `All Settled`}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-1">
                                 <SettleUpButton group={group} currencySymbol={currencySymbol} />
+                                <AddDebtSheet personName={group.personName}>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                                                    <PlusCircle className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Add transaction for {group.personName}</TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </AddDebtSheet>
+                                <DeletePersonButton personName={group.personName} />
+                                <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                             </div>
                         </div>
-                    </CardContent>
-                    <CardFooter className="p-0">
-                         <Collapsible className="w-full">
-                             <CollapsibleTrigger asChild>
-                                <div className="flex items-center justify-center p-4 border-t cursor-pointer hover:bg-muted/50 rounded-b-lg">
-                                    <History className="h-4 w-4 mr-2" />
-                                    <span className="text-sm font-medium">View History</span>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <div className="bg-muted/30">
+                            {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
+                                <div key={record.id} className="flex items-center gap-4 px-4 py-3 border-t text-sm group">
+                                    <div>
+                                        {record.type === 'lent' ? 
+                                            <ArrowRight className="h-5 w-5 text-green-500" /> : 
+                                            <ArrowLeft className="h-5 w-5 text-red-500" />}
+                                    </div>
+                                    <div className="flex-grow">
+                                        <p className={cn("font-medium", record.status === 'settled' && 'line-through text-muted-foreground')}>
+                                            {record.description || (record.type === 'lent' ? 'Lent' : 'Borrowed')}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
+                                    </div>
+                                    <div className="text-right">
+                                            <p className={cn("font-semibold", record.status === 'settled' ? 'text-muted-foreground line-through' : (record.type === 'lent' ? 'text-green-600' : 'text-red-500'))}>
+                                                {currencySymbol}{record.amount.toFixed(2)}
+                                            </p>
+                                    </div>
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <DeleteTransactionButton debt={record} currencySymbol={currencySymbol} />
+                                    </div>
                                 </div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="bg-muted/50">
-                                <div className="border-t">
-                                    {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
-                                        <div key={record.id} className="flex items-center gap-4 px-4 py-3 border-b text-sm">
-                                            <div>
-                                                {record.type === 'lent' ? 
-                                                    <ArrowRight className="h-5 w-5 text-green-500" /> : 
-                                                    <ArrowLeft className="h-5 w-5 text-red-500" />}
-                                            </div>
-                                            <div className="flex-grow">
-                                                <p className="font-medium">{record.description || (record.type === 'lent' ? 'Lent' : 'Borrowed')}</p>
-                                                <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                 <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
-                                                     {currencySymbol}{record.amount.toFixed(2)}
-                                                 </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </CollapsibleContent>
-                        </Collapsible>
-                    </CardFooter>
-                </Card>
+                            ))}
+                        </div>
+                    </CollapsibleContent>
+                </Collapsible>
             ))}
         </div>
     );
 }
 
+
+    

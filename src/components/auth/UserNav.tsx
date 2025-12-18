@@ -32,9 +32,8 @@ import { AnalysisSettings } from "@/components/profile/AnalysisSettings";
 
 const pageSettingsMap: Record<string, { label: string; component: React.ComponentType<any> }> = {
     '/dashboard': { label: 'Dashboard Settings', component: DashboardSettings },
-    '/transactions': { label: 'Transaction Form Settings', component: TransactionFieldOrderSettings },
-    '/expenses': { label: 'Transaction Form Settings', component: TransactionFieldOrderSettings },
-    '/accounts': { label: 'Account Settings', component: TransactionFieldOrderSettings },
+    '/transactions': { label: 'Transaction Page Settings', component: TransactionFieldOrderSettings },
+    '/expenses': { label: 'Transaction Page Settings', component: TransactionFieldOrderSettings },
     '/analysis': { label: 'Analysis Settings', component: AnalysisSettings },
 };
 

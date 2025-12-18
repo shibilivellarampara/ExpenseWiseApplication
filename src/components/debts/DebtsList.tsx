@@ -226,7 +226,7 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 description: `The record has been removed.`,
             });
         } catch (error) {
-             toast({ variant: 'destructive', title: "Error", description: (error as Error).message });
+            toast({ variant: 'destructive', title: "Error", description: (error as Error).message });
         } finally {
             setIsDeleting(false);
         }
@@ -343,7 +343,7 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                         <CollapsibleTrigger asChild>
                             <div className="flex-grow cursor-pointer">
                                 <h3 className="text-lg font-semibold">{group.personName}</h3>
-                                <p className={cn("font-semibold text-lg",
+                                <p className={cn("font-semibold text-base",
                                     group.netAmount > 0 && "text-green-600",
                                     group.netAmount < 0 && "text-red-500",
                                     group.netAmount === 0 && "text-muted-foreground"

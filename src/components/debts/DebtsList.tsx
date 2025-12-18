@@ -225,7 +225,7 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 title: "Transaction Deleted",
                 description: `The record has been removed.`,
             });
-        } catch (error: any) {
+        } catch (error) {
             toast({ variant: 'destructive', title: "Error", description: error.message });
         } finally {
             setIsDeleting(false);
@@ -284,7 +284,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                     </div>
                     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                        <AddDebtSheet personName={group.personName} open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
+                         <AddDebtSheet personName={group.personName} open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
                              <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -329,7 +329,6 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                                 <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
                                     {currencySymbol}{record.amount.toFixed(2)}
                                 </p>
-                                {record.status === 'settled' && <Badge variant="secondary" className="mt-1">Settled</Badge>}
                             </div>
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <DeleteTransactionButton debt={record} currencySymbol={currencySymbol} />
@@ -425,4 +424,5 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     );
 }
 
+    
     

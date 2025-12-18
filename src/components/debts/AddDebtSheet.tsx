@@ -109,7 +109,7 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                                         <RadioGroupItem value="lent" className="sr-only" />
                                         <ArrowRight className="h-5 w-5 mb-1" />
                                         <span>Money Out</span>
-                                        <span className="text-xs font-normal text-muted-foreground">(You Lent)</span>
+                                        <span className="text-xs font-normal text-muted-foreground">(You are giving money)</span>
                                     </Label>
                                 </FormItem>
                                 <FormItem>
@@ -117,7 +117,7 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                                         <RadioGroupItem value="borrowed" className="sr-only" />
                                         <ArrowLeft className="h-5 w-5 mb-1" />
                                         <span>Money In</span>
-                                            <span className="text-xs font-normal text-muted-foreground">(You Borrowed)</span>
+                                            <span className="text-xs font-normal text-muted-foreground">(You are receiving money)</span>
                                     </Label>
                                 </FormItem>
                             </RadioGroup>

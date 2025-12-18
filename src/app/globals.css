@@ -96,6 +96,57 @@
     --sidebar-active-foreground: 210 40% 98%;
     --sidebar-border: 214.3 31.8% 91.4%;
   }
+
+  .glass {
+    --background: 220 50% 10%;
+    --foreground: 210 40% 98%;
+
+    --card: 217.2 32.6% 17.5% / 0.75;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9% / 0.8;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 263.4 95.2% 66.3%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217.2 32.6% 25% / 0.5;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 25% / 0.5;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 25% / 0.5;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 40.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 25%;
+    --input: 217.2 32.6% 25%;
+    --ring: 263.4 95.2% 66.3%;
+
+    --radius: 0.75rem;
+    
+    /* Sidebar Vars - Glass */
+    --sidebar-background: 224 71% 10% / 0.7;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-muted-foreground: 215 20.2% 65.1%;
+    --sidebar-active: 263.4 95.2% 66.3%;
+    --sidebar-active-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 25%;
+  }
+
+  .glass body {
+    background-image: linear-gradient(to bottom right, hsl(210 60% 20%), hsl(280 50% 30%));
+    background-attachment: fixed;
+  }
+
+  .glass [data-sidebar="sidebar"],
+  .glass .bg-card {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
 }
 
 @layer base {

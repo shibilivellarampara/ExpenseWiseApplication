@@ -225,8 +225,8 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 title: "Transaction Deleted",
                 description: `The record has been removed.`,
             });
-        } catch (error) {
-             toast({ variant: 'destructive', title: "Error", description: (error as Error).message });
+        } catch (error: any) {
+             toast({ variant: 'destructive', title: "Error", description: error.message });
         } finally {
             setIsDeleting(false);
         }
@@ -263,6 +263,81 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+    );
+}
+
+function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymbol: string }) {
+    const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+    return (
+         <Collapsible key={group.personName} className="border rounded-lg bg-card overflow-hidden">
+            <CollapsibleTrigger asChild>
+                <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50">
+                    <div className="flex-grow">
+                        <h3 className="text-lg font-semibold">{group.personName}</h3>
+                        <p className={cn("font-semibold text-base",
+                            group.netAmount > 0 && "text-green-600",
+                            group.netAmount < 0 && "text-red-500",
+                            group.netAmount === 0 && "text-muted-foreground"
+                        )}>
+                            {group.netAmount > 0 ? `Owes you ${currencySymbol}${group.netAmount.toFixed(2)}` : group.netAmount < 0 ? `You owe ${currencySymbol}${Math.abs(group.netAmount).toFixed(2)}` : `All Settled`}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <SettleUpButton group={group} currencySymbol={currencySymbol} />
+                        <AddDebtSheet personName={group.personName} open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setIsAddSheetOpen(true);
+                                            }}
+                                        >
+                                            <PlusCircle className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Add transaction for {group.personName}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </AddDebtSheet>
+                        <DeletePersonButton personName={group.personName} />
+                    </div>
+                </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+                <div className="px-4 pb-4 pt-2">
+                    {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
+                        <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
+                            <div>
+                                {record.type === 'lent' ? 
+                                    <ArrowRight className="h-5 w-5 text-green-500" /> : 
+                                    <ArrowLeft className="h-5 w-5 text-red-500" />}
+                            </div>
+                            <div className="flex-grow">
+                                <p className="font-medium">
+                                    {record.description || (record.type === 'lent' ? 'Lent' : 'Borrowed')}
+                                </p>
+                                <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
+                                    {currencySymbol}{record.amount.toFixed(2)}
+                                </p>
+                            </div>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <DeleteTransactionButton debt={record} currencySymbol={currencySymbol} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </CollapsibleContent>
+        </Collapsible>
     );
 }
 
@@ -338,67 +413,7 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     return (
         <div className="space-y-3">
             {groupedDebts.map((group) => (
-                 <Collapsible key={group.personName} className="border rounded-lg bg-card overflow-hidden">
-                     <CollapsibleTrigger asChild>
-                        <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50">
-                            <div className="flex-grow">
-                                <h3 className="text-lg font-semibold">{group.personName}</h3>
-                                <p className={cn("font-semibold text-base",
-                                    group.netAmount > 0 && "text-green-600",
-                                    group.netAmount < 0 && "text-red-500",
-                                    group.netAmount === 0 && "text-muted-foreground"
-                                )}>
-                                    {group.netAmount > 0 ? `Owes you ${currencySymbol}${group.netAmount.toFixed(2)}` : group.netAmount < 0 ? `You owe ${currencySymbol}${Math.abs(group.netAmount).toFixed(2)}` : `All Settled`}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                                <AddDebtSheet personName={group.personName}>
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8">
-                                                    <PlusCircle className="h-4 w-4" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Add transaction for {group.personName}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </AddDebtSheet>
-                                <DeletePersonButton personName={group.personName} />
-                            </div>
-                        </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <div className="px-4 pb-4 pt-2">
-                            {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
-                                <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
-                                    <div>
-                                        {record.type === 'lent' ? 
-                                            <ArrowRight className="h-5 w-5 text-green-500" /> : 
-                                            <ArrowLeft className="h-5 w-5 text-red-500" />}
-                                    </div>
-                                    <div className="flex-grow">
-                                        <p className="font-medium">
-                                            {record.description || (record.type === 'lent' ? 'Lent' : 'Borrowed')}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
-                                            {currencySymbol}{record.amount.toFixed(2)}
-                                        </p>
-                                    </div>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <DeleteTransactionButton debt={record} currencySymbol={currencySymbol} />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CollapsibleContent>
-                </Collapsible>
+                <DebtGroup key={group.personName} group={group} currencySymbol={currencySymbol} />
             ))}
         </div>
     );

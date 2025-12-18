@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -38,11 +39,11 @@ type DebtFormData = z.infer<typeof debtSchema>;
 interface AddDebtSheetProps {
     children: React.ReactNode;
     personName?: string;
+    open?: boolean;
     onOpenChange?: (open: boolean) => void;
 }
 
-export function AddDebtSheet({ children, personName, onOpenChange }: AddDebtSheetProps) {
-    const [open, setOpen] = useState(false);
+export function AddDebtSheet({ children, personName, open, onOpenChange }: AddDebtSheetProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
@@ -59,13 +60,6 @@ export function AddDebtSheet({ children, personName, onOpenChange }: AddDebtShee
         },
     });
     
-    const handleOpenChange = (newOpen: boolean) => {
-        setOpen(newOpen);
-        if (onOpenChange) {
-            onOpenChange(newOpen);
-        }
-    }
-
     useEffect(() => {
         if(open) {
             form.reset({
@@ -99,7 +93,9 @@ export function AddDebtSheet({ children, personName, onOpenChange }: AddDebtShee
                 title: 'Record Added!',
                 description: 'Your debt/due has been recorded.',
             });
-            handleOpenChange(false);
+            if (onOpenChange) {
+                onOpenChange(false);
+            }
 
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Error', description: error.message });
@@ -109,7 +105,7 @@ export function AddDebtSheet({ children, personName, onOpenChange }: AddDebtShee
     }
     
     return (
-        <Sheet open={open} onOpenChange={handleOpenChange}>
+        <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetTrigger asChild>{children}</SheetTrigger>
             <SheetContent className="overflow-y-auto">
                 <SheetHeader>

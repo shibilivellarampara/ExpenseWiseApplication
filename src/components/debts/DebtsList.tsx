@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -226,7 +227,7 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 description: `The record has been removed.`,
             });
         } catch (error) {
-            toast({ variant: 'destructive', title: "Error", description: (error as Error).message });
+             toast({ variant: 'destructive', title: "Error", description: (error as Error).message });
         } finally {
             setIsDeleting(false);
         }
@@ -336,10 +337,10 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {groupedDebts.map((group) => (
-                 <Collapsible key={group.personName} className="border rounded-lg bg-card">
-                    <div className="flex items-center justify-between p-4">
+                 <Collapsible key={group.personName} className="border rounded-lg bg-card p-4">
+                    <div className="flex items-center justify-between">
                         <CollapsibleTrigger asChild>
                             <div className="flex-grow cursor-pointer">
                                 <h3 className="text-lg font-semibold">{group.personName}</h3>
@@ -358,7 +359,7 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
                                                 <PlusCircle className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
@@ -372,24 +373,24 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                         </div>
                     </div>
                     <CollapsibleContent>
-                        <div className="px-4 pb-4">
+                        <div className="px-4 pb-4 pt-2 mt-2 border-t">
                             {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
-                                <div key={record.id} className="flex items-center gap-4 py-3 border-t last:border-b-0 text-sm group">
+                                <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
                                     <div>
                                         {record.type === 'lent' ? 
                                             <ArrowRight className="h-5 w-5 text-green-500" /> : 
                                             <ArrowLeft className="h-5 w-5 text-red-500" />}
                                     </div>
                                     <div className="flex-grow">
-                                        <p className={cn("font-medium", record.status === 'settled' && 'line-through text-muted-foreground')}>
+                                        <p className="font-medium">
                                             {record.description || (record.type === 'lent' ? 'Lent' : 'Borrowed')}
                                         </p>
                                         <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
                                     </div>
                                     <div className="text-right">
-                                            <p className={cn("font-semibold", record.status === 'settled' ? 'text-muted-foreground line-through' : (record.type === 'lent' ? 'text-green-600' : 'text-red-500'))}>
-                                                {currencySymbol}{record.amount.toFixed(2)}
-                                            </p>
+                                        <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
+                                            {currencySymbol}{record.amount.toFixed(2)}
+                                        </p>
                                     </div>
                                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                         <DeleteTransactionButton debt={record} currencySymbol={currencySymbol} />

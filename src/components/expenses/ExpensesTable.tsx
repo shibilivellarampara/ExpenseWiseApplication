@@ -1,20 +1,22 @@
 
 'use client';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Pilcrow, TrendingUp, Edit, User as UserIcon, Wallet, AlertTriangle } from "lucide-react";
+import { Pilcrow, Edit, User as UserIcon, Wallet, AlertTriangle } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { generateColorStyle } from '@/lib/utils';
 
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];
@@ -22,9 +24,10 @@ interface ExpensesTableProps {
   isShared?: boolean;
   onDataChange: () => void;
   error?: string | null;
+  onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void;
 }
 
-const renderIcon = (iconName: string | undefined, className?: string) => {
+const RenderIcon = (iconName: string | undefined, className?: string) => {
   if (!iconName) return <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
   const IconComponent = (LucideIcons as any)[iconName];
   return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
@@ -35,25 +38,6 @@ const getInitials = (name?: string | null) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 };
 
-// Function to generate a color from a string
-const generateColorFromString = (str: string): { backgroundColor: string, textColor: string } => {
-    if (!str) {
-        const defaultHue = 0;
-        return {
-            backgroundColor: `hsl(${defaultHue}, 70%, 90%)`,
-            textColor: `hsl(${defaultHue}, 70%, 25%)`
-        };
-    }
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const hue = hash % 360;
-    const backgroundColor = `hsl(${hue}, 70%, 90%)`; // Lighter background
-    const textColor = `hsl(${hue}, 70%, 25%)`; // Darker text
-    return { backgroundColor, textColor };
-};
-
 const formatAmount = (amount: number) => {
     if (amount % 1 === 0) {
         return amount.toString();
@@ -61,196 +45,238 @@ const formatAmount = (amount: number) => {
     return amount.toFixed(2);
 };
 
+type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense: EnrichedExpense };
 
-function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; }) {
-
-    const groupedExpenses = useMemo(() => {
-        return expenses.reduce((acc, expense) => {
+function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, viewMode, onBadgeClick }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; }) {
+    
+    const allRows = useMemo(() => {
+        const rows: VirtualRow[] = [];
+        const groupedExpenses = expenses.reduce((acc, expense) => {
             const date = expense.date.toISOString().split('T')[0];
             if (!acc[date]) {
                 acc[date] = [];
             }
             acc[date].push(expense);
             return acc;
-        }, {} as Record<string, EnrichedExpense[]>);
+        }, {} as { [key: string]: EnrichedExpense[] });
+
+        Object.keys(groupedExpenses).forEach(date => {
+            rows.push({ type: 'header', date });
+            groupedExpenses[date].forEach(expense => {
+                rows.push({ type: 'expense', expense });
+            });
+        });
+        return rows;
     }, [expenses]);
 
-    const sortedDates = useMemo(() => Object.keys(groupedExpenses).sort((a, b) => new Date(b).getTime() - new Date(a).getTime()), [groupedExpenses]);
+
+    const parentRef = useRef<HTMLDivElement>(null);
+
+    const rowVirtualizer = useVirtualizer({
+        count: allRows.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: (index) => {
+             const row = allRows[index];
+             if (row.type === 'header') return viewMode === 'compact' ? 30 : 38;
+             if (viewMode === 'compact') return 48; // Compact view row height
+             // Estimate normal view height
+             let height = 60;
+             if (row.expense.tags && row.expense.tags.length > 0) height += 20;
+             if (row.expense.category) height += 20;
+             return height;
+        },
+        overscan: 5,
+        measureElement: typeof window !== 'undefined' && navigator.userAgent.indexOf('Firefox') === -1
+            ? (element) => element.getBoundingClientRect().height
+            : undefined,
+    });
 
     return (
-        <div className="space-y-4">
-            {sortedDates.map(date => (
-                <Card key={date}>
-                    <CardHeader className="py-3 px-4 border-b">
-                        <CardTitle className="text-base">
-                             {new Date(date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="divide-y">
-                            {groupedExpenses[date].map(expense => {
-                                const categoryColor = expense.category ? generateColorFromString(expense.category.name) : null;
-                                return (
-                                <div key={expense.id} className="p-4 flex items-start gap-4 group">
-                                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center mt-1">
-                                        {expense.type === 'income' ?
-                                            <Wallet className="h-5 w-5 text-green-500" /> :
-                                            renderIcon(expense.category?.icon, 'h-5 w-5 text-gray-700')
+        <div ref={parentRef} className="h-[80vh] overflow-y-auto bg-card rounded-lg border">
+            <div
+                style={{
+                    height: `${rowVirtualizer.getTotalSize()}px`,
+                    width: '100%',
+                    position: 'relative',
+                }}
+            >
+                {rowVirtualizer.getVirtualItems().map(virtualItem => {
+                    const row = allRows[virtualItem.index];
+                    return (
+                        <div
+                            key={virtualItem.key}
+                            data-index={virtualItem.index}
+                            ref={rowVirtualizer.measureElement}
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                transform: `translateY(${virtualItem.start}px)`,
+                            }}
+                        >
+                            {row.type === 'header' ? (
+                                <div className={cn(
+                                    "px-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b",
+                                    viewMode === 'compact' ? 'py-1' : 'py-2'
+                                )}>
+                                    <h3 className="text-sm font-semibold">
+                                        {new Date(row.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </h3>
+                                </div>
+                            ) : (
+                                <div className={cn(
+                                    "flex items-center gap-3 group border-b",
+                                    viewMode === 'compact' ? 'p-2' : 'p-3'
+                                )}>
+                                    <div className={cn(
+                                        "flex-shrink-0 rounded-full bg-muted flex items-center justify-center",
+                                        viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8'
+                                    )}>
+                                        {row.expense.type === 'income' ?
+                                            <Wallet className={cn("text-green-500", viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4')} /> :
+                                            RenderIcon(row.expense.category?.icon, cn('text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))
                                         }
                                     </div>
-                                    <div className="flex-grow space-y-1 w-full min-w-0">
+                                    <div className="flex-grow space-y-0.5 w-full min-w-0">
                                         <div className="flex justify-between items-start">
-                                            <div className="font-semibold truncate flex-1 pr-4">{expense.description || (expense.type === 'income' ? 'Income' : expense.category?.name || 'Transaction')}</div>
+                                            <div className="font-medium text-sm break-words flex-1 pr-4">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
                                             <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
                                                 <div className="flex items-center">
-                                                    <AddExpenseDialog expenseToEdit={expense} sharedExpenseId={expense.sharedExpenseId} onSaveSuccess={onDataChange}>
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <Edit className="h-4 w-4" />
+                                                    <AddExpenseDialog expenseToEdit={row.expense} sharedExpenseId={row.expense.sharedExpenseId} onSaveSuccess={onDataChange}>
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Edit className="h-3.5 w-3.5" />
                                                         </Button>
                                                     </AddExpenseDialog>
                                                     <div className={cn(
-                                                        'font-bold text-lg',
-                                                        expense.type === 'income' ? 'text-green-600' : 'text-red-500'
+                                                        'font-bold',
+                                                        viewMode === 'compact' ? 'text-sm' : 'text-base',
+                                                        row.expense.type === 'income' ? 'text-green-600' : 'text-red-500'
                                                     )}>
-                                                        {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}
+                                                        {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
                                                     </div>
                                                 </div>
-                                                 {typeof expense.runningBalance === 'number' && (
-                                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                                        Bal: {currencySymbol}{formatAmount(expense.runningBalance)}
-                                                    </div>
-                                                )}
-                                                {typeof expense.accountBalance === 'number' && typeof expense.runningBalance !== 'number' && (
-                                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                                        Acct. Bal: {currencySymbol}{formatAmount(expense.accountBalance)}
+                                                 {typeof row.expense.runningBalance === 'number' && (
+                                                    <div className={cn("text-muted-foreground", viewMode === 'compact' ? 'text-xs' : 'text-xs mt-0.5')}>
+                                                        Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="text-xs text-muted-foreground flex items-center gap-4">
+                                        <div className="text-xs text-muted-foreground flex items-center gap-3">
                                             <div className="flex items-center gap-1">
-                                                {isShared && expense.user ? (
+                                                {isShared && row.expense.user ? (
                                                     <TooltipProvider>
                                                         <Tooltip>
                                                             <TooltipTrigger className="flex items-center gap-1">
                                                                 <Avatar className="h-4 w-4">
-                                                                    <AvatarImage src={expense.user.photoURL || ''} alt={expense.user.name || 'user'}/>
-                                                                    <AvatarFallback>{getInitials(expense.user.name)}</AvatarFallback>
+                                                                    <AvatarImage src={row.expense.user.photoURL || ''} alt={row.expense.user.name || 'user'}/>
+                                                                    <AvatarFallback>{getInitials(row.expense.user.name)}</AvatarFallback>
                                                                 </Avatar>
-                                                                <span>{expense.user.name}</span>
+                                                                <span>{row.expense.user.name}</span>
                                                             </TooltipTrigger>
                                                             <TooltipContent>
-                                                                <p>Transaction added by {expense.user.name}</p>
+                                                                <p>Transaction added by {row.expense.user.name}</p>
                                                             </TooltipContent>
                                                         </Tooltip>
                                                     </TooltipProvider>
                                                 ) : (
-                                                    <>
-                                                        {renderIcon(expense.account?.icon, "h-3 w-3")}
-                                                        <span>{expense.account?.name}</span>
-                                                    </>
+                                                    <button className="flex items-center gap-1 cursor-pointer hover:underline" onClick={() => onBadgeClick?.('account', row.expense.account!.id)}>
+                                                        {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
+                                                        <span>{row.expense.account?.name}</span>
+                                                    </button>
                                                 )}
                                             </div>
                                             <div>
-                                                {expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
                                         
-                                        <div className="flex flex-wrap items-center gap-2 pt-1 w-full">
-                                            {expense.category && categoryColor && (
-                                                <Badge 
-                                                    style={{ backgroundColor: categoryColor.backgroundColor, color: categoryColor.textColor }}
-                                                    className="flex items-center gap-1 border-transparent"
+                                        {viewMode === 'normal' && <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
+                                            {row.expense.category && (
+                                                <Badge
+                                                    style={generateColorStyle(row.expense.category.name)}
+                                                    className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                    onClick={() => onBadgeClick?.('category', row.expense.category!.id)}
                                                 >
-                                                    {renderIcon(expense.category.icon, "h-3 w-3")}
-                                                    {expense.category.name}
+                                                    {RenderIcon(row.expense.category.icon, "h-3 w-3")}
+                                                    {row.expense.category.name}
                                                 </Badge>
                                             )}
-                                            {expense.tags?.map(tag => {
-                                                const tagColor = generateColorFromString(tag.name);
+                                            {row.expense.tags?.map(tag => {
                                                 return (
-                                                <Badge 
+                                                <Badge
                                                     key={tag.id}
-                                                    style={{ backgroundColor: tagColor.backgroundColor, color: tagColor.textColor }}
-                                                    className="flex items-center gap-1 border-transparent"
+                                                    style={generateColorStyle(tag.name)}
+                                                    className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                    onClick={() => onBadgeClick?.('tag', tag.id)}
                                                 >
-                                                    {renderIcon(tag.icon, "h-3 w-3")}
+                                                    {RenderIcon(tag.icon, "h-3 w-3")}
                                                     {tag.name}
                                                 </Badge>
                                             )})}
-                                        </div>
+                                        </div>}
                                     </div>
                                 </div>
-                            )})}
+                            )}
                         </div>
-                    </CardContent>
-                </Card>
-            ))}
+                    )
+                })}
+            </div>
         </div>
-    )
+    );
 }
 
-export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, error }: ExpensesTableProps) {
+export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, error, onBadgeClick }: ExpensesTableProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
   const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
-
+  const viewMode = userProfile?.dashboardSettings?.transactionViewMode || 'normal';
+  
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-                <CardHeader>
-                    <Skeleton className="h-5 w-1/3" />
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    {Array.from({length: 2}).map((_, j) => (
-                        <div key={j} className="p-4 flex items-center gap-4">
-                            <Skeleton className="w-10 h-10 rounded-full" />
-                            <div className="flex-grow grid grid-cols-2 gap-2">
-                                <Skeleton className="h-5 w-3/4" />
-                                <Skeleton className="h-5 w-1/2 ml-auto" />
-                                <Skeleton className="h-4 w-1/2" />
-                                <Skeleton className="h-4 w-1/3 ml-auto" />
-                            </div>
+        <div className="bg-card rounded-lg border">
+            <div className="space-y-2 p-4">
+                {Array.from({ length: 10 }).map((_, i) => (
+                    <div key={i} className="p-2 flex items-center gap-4">
+                        <Skeleton className="w-8 h-8 rounded-full" />
+                        <div className="flex-grow grid grid-cols-2 gap-2">
+                            <Skeleton className="h-5 w-3/4" />
+                            <Skeleton className="h-5 w-1/2 ml-auto" />
+                            <Skeleton className="h-4 w-1/2" />
                         </div>
-                    ))}
-                </CardContent>
-            </Card>
-        ))}
-      </div>
+                    </div>
+                ))}
+            </div>
+        </div>
     )
   }
 
   if (error) {
     return (
-        <Card>
-            <CardContent className="pt-6">
-                <div className="h-48 flex flex-col items-center justify-center text-center text-destructive">
-                   <AlertTriangle className="h-10 w-10 mb-4" />
-                   <h3 className="text-lg font-semibold">Could not load transactions</h3>
-                   <p className="text-sm">There was an issue fetching your data. This may be due to the combination of filters selected. Try simplifying your filter.</p>
-                </div>
-            </CardContent>
-        </Card>
+        <div className="bg-card rounded-lg border">
+            <div className="h-48 flex flex-col items-center justify-center text-center text-destructive p-4">
+               <AlertTriangle className="h-10 w-10 mb-4" />
+               <h3 className="text-lg font-semibold">Could not load transactions</h3>
+               <p className="text-sm">{error}</p>
+            </div>
+        </div>
     );
   }
 
   if (expenses.length === 0) {
     return (
-       <Card>
-          <CardContent className="pt-6">
-              <div className="h-48 flex flex-col items-center justify-center text-center">
-                 <h3 className="text-lg font-semibold">No transactions found.</h3>
-                 <p className="text-muted-foreground">Try adjusting your filters or add a new transaction.</p>
-              </div>
-          </CardContent>
-       </Card>
+       <div className="bg-card rounded-lg border">
+          <div className="h-48 flex flex-col items-center justify-center text-center p-4">
+             <h3 className="text-lg font-semibold">No transactions found.</h3>
+             <p className="text-muted-foreground">Try adjusting your filters or add a new transaction.</p>
+          </div>
+       </div>
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} />;
+  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick}/>;
 }

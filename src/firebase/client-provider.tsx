@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, type ReactNode } from 'react';
@@ -7,6 +8,7 @@ import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import { FirebaseStorage } from 'firebase/storage';
+import { registerSW } from '@/app/register-sw';
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
@@ -27,6 +29,10 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     if (firebaseSdks.firebaseApp && firebaseSdks.auth && firebaseSdks.firestore && firebaseSdks.storage) {
         setSdks(firebaseSdks as FirebaseSDKs);
     }
+  }, []);
+
+  useEffect(() => {
+    registerSW();
   }, []);
 
   if (!sdks) {

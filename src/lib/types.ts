@@ -1,4 +1,5 @@
 
+
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -13,13 +14,29 @@ export type UserProfile = {
     isDescriptionRequired?: boolean;
     isTagRequired?: boolean;
     isCategoryRequired?: boolean;
+    visibleFields?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
+    defaultAccountId?: string;
   };
   dashboardSettings?: {
     useCategoryColorsInChart?: boolean;
     show5YearView?: boolean;
+    isAiSuggestionEnabled?: boolean;
+    transactionViewMode?: 'normal' | 'compact';
+    transactionGrouping?: 'daily' | 'monthly';
   };
+  analysisSettings?: {
+    excludedCategoryIds?: string[];
+    showAdjustedTotal?: boolean;
+    showNormalTotal?: boolean;
+    showCategoryTable?: boolean;
+    showTrendChart?: boolean;
+    showCategoryBarChart?: boolean;
+    showTagPieChart?: boolean;
+    showIncomePieChart?: boolean;
+    showAiInsights?: boolean;
+  };
+  transactionFieldOrder?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
   createdAt?: Timestamp;
-  sharedExpenseIds?: string[];
   isAdmin?: boolean;
 };
 
@@ -28,6 +45,16 @@ export type Category = {
   name: string;
   icon: string; // lucide-react icon name
   userId: string;
+  status?: 'active' | 'inactive';
+};
+
+export type CardDetails = {
+  cardNickname?: string;
+  last4Digits?: string;
+  cardholderName?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+  network?: 'visa' | 'mastercard' | 'amex' | 'discover' | 'rupay' | 'other';
 };
 
 export type Account = {
@@ -40,6 +67,7 @@ export type Account = {
   icon: string; // lucide-react icon name
   userId: string;
   status: 'active' | 'inactive';
+  cardDetails?: CardDetails;
 }
 
 export type Tag = {
@@ -47,6 +75,7 @@ export type Tag = {
   name: string;
   icon: string; // lucide-react icon name
   userId: string;
+  status?: 'active' | 'inactive';
 }
 
 export type Expense = {
@@ -55,14 +84,13 @@ export type Expense = {
   type: 'expense' | 'income';
   amount: number;
   description?: string;
-  date: Timestamp | Date; // Firestore Timestamp on read, Date on write
+  date: Timestamp;
   createdAt: Timestamp;
   accountId: string;
   categoryId?: string;
   tagIds?: string[];
   sharedExpenseId?: string;
   runningBalance?: number;
-  accountBalance?: number;
 };
 
 export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds' | 'date'> & {
@@ -103,3 +131,27 @@ export type EnrichedContribution = Omit<Contribution, 'date' | 'paidById' | 'con
     paidBy?: UserProfile;
     contributors?: (Partial<UserProfile> & { share: number })[];
 }
+
+
+export type Debt = {
+  id: string;
+  userId: string;
+  personName: string;
+  amount: number;
+  type: 'lent' | 'borrowed';
+  description?: string;
+  date: Timestamp;
+  status: 'pending' | 'settled';
+  settledAt?: Timestamp;
+};
+
+export type EnrichedDebt = Omit<Debt, 'date' | 'settledAt'> & {
+  date: Date;
+  settledAt?: Date;
+};
+
+
+export type EnrichedDebtWithBalance = EnrichedDebt & {
+  runningBalance?: number;
+};
+

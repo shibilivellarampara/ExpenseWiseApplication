@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../ui/dialog';
-import PhoneInput from 'react-phone-number-input';
+import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React from 'react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '../ui/input-otp';
@@ -29,6 +30,9 @@ const phoneSchema = z.object({
   loginId: z.string().refine((value) => value ? isPossiblePhoneNumber(value) : true, { message: "Please enter a valid phone number." }),
   password: z.string().optional(), // Not used for phone, but keeps structure
 });
+
+const formSchema = z.union([emailSchema, phoneSchema]);
+
 
 // Create a stable component for the phone input to prevent re-renders
 const MemoizedPhoneInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>((props, ref) => (
@@ -66,7 +70,7 @@ export function LoginForm() {
     return zodResolver(phoneSchema)(data, context, options);
   }, [loginMethod]);
 
-  const form = useForm<{loginId: string, password?: string}>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: formResolver,
     defaultValues: {
       loginId: '',
@@ -116,7 +120,7 @@ export function LoginForm() {
         toast({ variant: 'destructive', title: title, description: description });
     }
 
-  async function handleEmailSubmit(values: z.infer<typeof emailSchema>) {
+  const handleEmailSubmit: SubmitHandler<z.infer<typeof emailSchema>> = async (values) => {
     setIsLoading(true);
     if (!auth) {
         toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.' });
@@ -126,7 +130,7 @@ export function LoginForm() {
 
     try {
         await signInWithEmailAndPassword(auth, values.loginId, values.password);
-        toast({ title: 'Success!', description: 'You are now signed in.' });
+        toast({ title: 'Success!', description: 'You are now signed in.', duration: 1000 });
         router.push('/dashboard');
     } catch (error: any) {
         handleLoginError(error);
@@ -135,7 +139,7 @@ export function LoginForm() {
     }
   }
 
-  async function handlePhoneSubmit(values: z.infer<typeof phoneSchema>) {
+  const handlePhoneSubmit: SubmitHandler<z.infer<typeof phoneSchema>> = async (values) => {
       if (!auth || !recaptchaVerifier.current || !values.loginId) {
           toast({ variant: "destructive", title: "Error", description: "Authentication service not ready." });
           return;
@@ -159,7 +163,7 @@ export function LoginForm() {
       try {
           await confirmationResult.confirm(otp);
           setShowOtpDialog(false);
-          toast({ title: "Success!", description: "You are now signed in." });
+          toast({ title: "Success!", description: "You are now signed in.", duration: 1000 });
           router.push('/dashboard');
       } catch (error: any) {
           handleLoginError(error);
@@ -180,7 +184,7 @@ export function LoginForm() {
         const provider = new GoogleAuthProvider();
          try {
             await signInWithPopup(auth, provider);
-            toast({ title: 'Success!', description: 'You are now signed in with Google.' });
+            toast({ title: 'Success!', description: 'You are now signed in with Google.', duration: 1000 });
             router.push('/dashboard');
         } catch (error: any) {
             handleLoginError(error)
@@ -227,7 +231,13 @@ export function LoginForm() {
             <TabsTrigger value="phone">Phone</TabsTrigger>
         </TabsList>
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(loginMethod === 'email' ? handleEmailSubmit : handlePhoneSubmit)} className="space-y-4 pt-4">
+            <form onSubmit={form.handleSubmit((data) => {
+                if (loginMethod === 'email') {
+                    handleEmailSubmit(data as z.infer<typeof emailSchema>);
+                } else {
+                    handlePhoneSubmit(data as z.infer<typeof phoneSchema>);
+                }
+            })} className="space-y-4 pt-4">
                 <TabsContent value="email" className="space-y-4 m-0">
                     <FormField
                         control={form.control}
@@ -389,6 +399,3 @@ export function LoginForm() {
   );
 }
 
-    
-
-    

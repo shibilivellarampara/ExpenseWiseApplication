@@ -1,62 +1,84 @@
 
+
 'use client';
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Account, EnrichedExpense } from '@/lib/types';
-import { FileDown, FileText, Bot, Loader2 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { Account } from '@/lib/types';
+import { FileDown, Loader2, Share2, ClipboardCopy } from 'lucide-react';
+import { Label } from '../ui/label';
+import { Progress } from '../ui/progress';
+import { useToast } from '@/hooks/use-toast';
 
 interface ReportGeneratorProps {
     accounts: Account[];
-    transactions: EnrichedExpense[];
-    onGenerate: (accountId: string, format: 'excel' | 'pdf') => void;
+    onAction: (accountId: string, format: 'excel' | 'share', template: string) => void;
     isLoading: boolean;
+    progress: number;
 }
 
-export function ReportGenerator({ accounts, onGenerate, transactions, isLoading }: ReportGeneratorProps) {
+export function ReportGenerator({ accounts, onAction, isLoading, progress }: ReportGeneratorProps) {
     const [selectedAccount, setSelectedAccount] = useState<string>('all');
-    const [selectedFormat, setSelectedFormat] = useState<'excel' | 'pdf'>('excel');
-    const [isDownloading, setIsDownloading] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState<string>('enhanced');
+    const [shareText, setShareText] = useState<string | null>(null);
+    const { toast } = useToast();
 
-    const handleDownload = () => {
-        if (transactions.length === 0) return;
-        setIsDownloading(true);
-
-        if (selectedFormat === 'excel') {
-            const dataToExport = transactions.map(tx => ({
-                Date: tx.date.toLocaleDateString(),
-                Time: tx.date.toLocaleTimeString(),
-                Description: tx.description,
-                Category: tx.category?.name || 'N/A',
-                Account: tx.account?.name || 'N/A',
-                'Amount (INR)': tx.amount,
-                Type: tx.type,
-                Tags: tx.tags.map(t => t.name).join(', '),
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
-            XLSX.writeFile(workbook, `ExpenseWise_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+    const handleShare = async () => {
+        if (!shareText) return;
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: 'ExpenseWise Report',
+                    text: shareText,
+                });
+                toast({ title: "Shared Successfully" });
+            } else {
+                toast({ variant: 'destructive', title: "Share Not Supported", description: "Your browser does not support this feature." });
+            }
+        } catch (error: any) {
+            if (error.name !== 'AbortError') {
+                toast({ variant: 'destructive', title: "Error Sharing", description: error.message });
+            }
+        } finally {
+            setShareText(null); // Clear after sharing attempt
         }
-        
-        setIsDownloading(false);
     };
+    
+    const copyToClipboard = () => {
+        if (!shareText) return;
+        navigator.clipboard.writeText(shareText);
+        toast({ title: "Copied!", description: "Report data copied to clipboard." });
+    }
 
+    const handleGenerateForShare = () => {
+        onAction(selectedAccount, 'share', selectedTemplate);
+    }
+    
     return (
         <Card className="max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle>Report Options</CardTitle>
-                <CardDescription>Select the account and format for your report.</CardDescription>
+                <CardDescription>Select an account and template to generate a report.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="grid gap-6">
+                 <div className="space-y-2">
+                    <Label htmlFor="report-template">Report Template</Label>
+                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate} disabled={isLoading}>
+                        <SelectTrigger id="report-template">
+                            <SelectValue placeholder="Select a template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="enhanced">Enhanced report</SelectItem>
+                             <SelectItem value="expensewise">ExpenseWise Report</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
                 <div className="space-y-2">
-                    <label>Account</label>
-                    <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-                        <SelectTrigger>
+                    <Label htmlFor="report-account">Account</Label>
+                    <Select value={selectedAccount} onValueChange={setSelectedAccount} disabled={isLoading}>
+                        <SelectTrigger id="report-account">
                             <SelectValue placeholder="Select an account" />
                         </SelectTrigger>
                         <SelectContent>
@@ -67,35 +89,20 @@ export function ReportGenerator({ accounts, onGenerate, transactions, isLoading 
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="space-y-2">
-                    <label>Format</label>
-                     <Select value={selectedFormat} onValueChange={(value) => setSelectedFormat(value as 'excel' | 'pdf')}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a format" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="excel">Excel (.xlsx)</SelectItem>
-                            <SelectItem value="pdf" disabled>PDF (.pdf) - Coming Soon</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
             </CardContent>
             <CardFooter className="flex-col items-start gap-4">
-                <div className="flex gap-2">
-                    <Button onClick={() => onGenerate(selectedAccount, selectedFormat)} disabled={isLoading}>
-                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                        Generate Report
+                 {isLoading && (
+                    <div className="w-full space-y-2">
+                        <Progress value={progress} />
+                        <p className="text-sm text-muted-foreground text-center">Generating your report...</p>
+                    </div>
+                )}
+                <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => onAction(selectedAccount, 'excel', selectedTemplate)} disabled={isLoading}>
+                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                        Download Excel
                     </Button>
-                    {transactions.length > 0 && (
-                        <Button onClick={handleDownload} disabled={isDownloading}>
-                            {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
-                            Download Report
-                        </Button>
-                    )}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                    Google Drive integration is coming soon.
-                </p>
             </CardFooter>
         </Card>
     );

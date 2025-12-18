@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -19,27 +20,48 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useCollection, useFirestore, useUser, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
-import { Loader2, Pilcrow } from 'lucide-react';
+import { Loader2, Pilcrow, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
-import { Account, Category } from '@/lib/types';
+import { Account, Category, CardDetails } from '@/lib/types';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { cn } from '@/lib/utils';
+import { Separator } from '../ui/separator';
+
+const cardDetailsSchema = z.object({
+    cardNickname: z.string().optional(),
+    last4Digits: z.string().length(4, "Must be 4 digits").optional().or(z.literal('')),
+    cardholderName: z.string().optional(),
+    expiryMonth: z.coerce.number().min(1).max(12).optional(),
+    expiryYear: z.coerce.number().min(new Date().getFullYear()).max(new Date().getFullYear() + 20).optional(),
+    network: z.enum(['visa', 'mastercard', 'amex', 'discover', 'rupay', 'other']).optional(),
+});
+
 
 const accountSchemaBase = z.object({
     name: z.string().min(1, 'Account name is required.'),
     type: z.enum(['bank', 'credit_card', 'wallet', 'cash']),
-    balance: z.coerce.number(),
+    balance: z.coerce.number().step(0.01),
     limit: z.coerce.number().optional(),
     billingDate: z.coerce.number().min(1).max(31).optional(),
     icon: z.string().min(1, "Icon is required."),
     status: z.enum(['active', 'inactive']).default('active'),
+    cardDetails: cardDetailsSchema.optional(),
 });
 
-const accountSchema = accountSchemaBase.refine(data => data.type !== 'credit_card' || (data.limit !== undefined && data.limit > 0), {
-    message: "Credit limit is required for credit card accounts and must be positive.",
+const accountSchema = accountSchemaBase.refine(data => {
+    if (data.type !== 'credit_card') return true;
+    if (data.balance > 0) {
+        return data.limit !== undefined && data.limit > 0;
+    }
+    return true;
+}, {
+    message: "A positive credit limit is required if you enter an initial outstanding amount.",
     path: ["limit"],
 });
+
 
 type AccountFormData = z.infer<typeof accountSchema>;
 
@@ -55,6 +77,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
     const { user } = useUser();
     const firestore = useFirestore();
     const isEditMode = !!accountToEdit;
+    const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
     
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
     const { data: accounts } = useCollection<Account>(accountsQuery);
@@ -78,11 +101,12 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
         defaultValues: {
             name: '',
             type: 'bank',
-            balance: 0,
+            balance: undefined,
             icon: 'Landmark',
             limit: undefined,
             billingDate: undefined,
             status: 'active',
+            cardDetails: { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined }
         },
     });
 
@@ -94,21 +118,25 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                  form.reset({
                     name: accountToEdit.name,
                     type: accountToEdit.type,
-                    balance: accountToEdit.balance,
+                    balance: accountToEdit.type === 'credit_card' 
+                        ? parseFloat(((accountToEdit.limit || 0) - accountToEdit.balance).toFixed(2))
+                        : accountToEdit.balance,
                     icon: accountToEdit.icon,
                     limit: accountToEdit.limit,
                     billingDate: accountToEdit.billingDate,
                     status: accountToEdit.status,
+                    cardDetails: accountToEdit.cardDetails || { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined }
                 });
             } else {
                 form.reset({
                     name: '',
                     type: 'bank',
-                    balance: 0,
+                    balance: undefined,
                     icon: 'Landmark',
                     limit: undefined,
                     billingDate: undefined,
                     status: 'active',
+                    cardDetails: { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined }
                 });
             }
         }
@@ -116,8 +144,8 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
 
     async function onSubmit(values: AccountFormData) {
         setIsLoading(true);
-        if (!firestore || !user || !categories) {
-             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in and categories must be loaded.' });
+        if (!firestore || !user) {
+             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
              setIsLoading(false);
              return;
         }
@@ -127,28 +155,35 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             userId: user.uid,
         };
         
+        if (values.type === 'credit_card') {
+            accountData.balance = (values.limit || 0) - (values.balance || 0);
+        }
+
         if (values.type !== 'credit_card') {
             delete accountData.limit;
             delete accountData.billingDate;
+            delete accountData.cardDetails;
         }
+
 
         try {
             if (isEditMode && accountToEdit) {
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountToEdit.id);
+                delete accountData.balance;
+                
                 setDocumentNonBlocking(accountRef, accountData, { merge: true });
                 toast({
                     title: 'Account Updated!',
                     description: 'Your account details have been saved.',
                 });
             } else {
-                const newAccountRef = await addDocumentNonBlocking(collection(firestore, `users/${user.uid}/accounts`), {});
+                const newAccountRef = doc(collection(firestore, `users/${user.uid}/accounts`));
                 
-                setDocumentNonBlocking(newAccountRef, { ...accountData, id: newAccountRef.id });
+                await setDocumentNonBlocking(newAccountRef, { ...accountData, id: newAccountRef.id });
                 
-                const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
-                
-                if (values.type !== 'credit_card' && values.balance !== 0) {
-                    addDocumentNonBlocking(expensesCol, {
+                if (values.type !== 'credit_card' && values.balance) {
+                    const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
+                    await addDocumentNonBlocking(expensesCol, {
                         userId: user.uid,
                         type: 'income',
                         amount: Math.abs(values.balance),
@@ -157,22 +192,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                         createdAt: serverTimestamp(),
                         accountId: newAccountRef.id,
                     });
-                }
-                
-                if (values.type === 'credit_card' && values.limit && values.limit > 0) {
-                    const upgradeCategory = categories.find(c => c.name === 'Credit Limit Upgrade');
-                    if (upgradeCategory) {
-                        addDocumentNonBlocking(expensesCol, {
-                            userId: user.uid,
-                            type: 'income',
-                            amount: values.limit,
-                            description: 'Initial Credit Limit',
-                            date: new Date(),
-                            createdAt: serverTimestamp(),
-                            accountId: newAccountRef.id,
-                            categoryId: upgradeCategory.id,
-                        });
-                    }
                 }
                 
                 toast({
@@ -242,22 +261,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="balance"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>
-                                        {accountType === 'credit_card' ? 'Current Outstanding Amount' : 'Current Balance'}
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input type="number" placeholder="0.00" {...field} disabled={isEditMode} />
-                                    </FormControl>
-                                     {isEditMode && <FormDescription>Balance can only be changed by adding transactions.</FormDescription>}
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
                         {accountType === 'credit_card' && (
                              <>
                                 <FormField
@@ -267,27 +270,44 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                         <FormItem>
                                             <FormLabel>Credit Limit</FormLabel>
                                             <FormControl>
-                                                <Input type="number" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
-                                            </FormControl>
-                                            {isEditMode && <FormDescription>Limit can only be changed via a "Credit Limit Upgrade" transaction.</FormDescription>}
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="billingDate"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Billing Date (Day of Month)</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" min="1" max="31" placeholder="e.g., 15" {...field} value={field.value ?? ''}/>
+                                                <Input type="number" step="0.01" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                              </>
+                        )}
+                        <FormField
+                            control={form.control}
+                            name="balance"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>
+                                        {accountType === 'credit_card' ? 'Current Outstanding Amount' : 'Current Balance'}
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input type="number" step="0.01" placeholder="0.00" {...field} disabled={isEditMode} />
+                                    </FormControl>
+                                     {accountType !== 'credit_card' && !isEditMode && <FormDescription>An initial transaction will be created for this amount.</FormDescription>}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {accountType === 'credit_card' && (
+                            <FormField
+                                control={form.control}
+                                name="billingDate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Billing Date (Day of Month)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" min="1" max="31" placeholder="e.g., 15" {...field} value={field.value ?? ''}/>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         )}
                          <FormField
                             control={form.control}
@@ -296,7 +316,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                 <FormItem>
                                     <FormLabel>Icon</FormLabel>
                                     <FormControl>
-                                         <Popover>
+                                         <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
                                             <PopoverTrigger asChild>
                                                 <Button variant="outline" className="w-full justify-start">
                                                     {renderIcon(field.value)}
@@ -305,7 +325,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto grid grid-cols-5 gap-2">
                                                 {availableIcons.map(icon => (
-                                                    <Button key={icon} variant="ghost" size="icon" onClick={() => field.onChange(icon)}>
+                                                    <Button key={icon} variant="ghost" size="icon" onClick={() => {field.onChange(icon); setIconPopoverOpen(false);}}>
                                                         {renderIcon(icon)}
                                                     </Button>
                                                 ))}
@@ -316,6 +336,95 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                 </FormItem>
                             )}
                         />
+
+                        {accountType === 'credit_card' && (
+                             <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                    <Button variant="link" className="p-0 h-auto flex items-center gap-1">
+                                        <ChevronDown className="h-4 w-4" />
+                                        Add Card Details (Optional)
+                                    </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="space-y-4 pt-4">
+                                    <Separator />
+                                     <FormField
+                                        control={form.control}
+                                        name="cardDetails.cardNickname"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Card Nickname</FormLabel>
+                                                <FormControl><Input placeholder="e.g., Personal HDFC Card" {...field} value={field.value ?? ''} /></FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="cardDetails.last4Digits"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Last 4 Digits</FormLabel>
+                                                <FormControl><Input placeholder="1234" maxLength={4} {...field} value={field.value ?? ''} /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <FormField
+                                        control={form.control}
+                                        name="cardDetails.cardholderName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Cardholder Name</FormLabel>
+                                                <FormControl><Input placeholder="John Doe" {...field} value={field.value ?? ''} /></FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="cardDetails.expiryMonth"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Expiry Month</FormLabel>
+                                                    <FormControl><Input type="number" min="1" max="12" placeholder="MM" {...field} value={field.value ?? ''} /></FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="cardDetails.expiryYear"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Expiry Year</FormLabel>
+                                                    <FormControl><Input type="number" placeholder="YYYY" {...field} value={field.value ?? ''} /></FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <FormField
+                                        control={form.control}
+                                        name="cardDetails.network"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Card Network</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select network..." /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="visa">Visa</SelectItem>
+                                                        <SelectItem value="mastercard">Mastercard</SelectItem>
+                                                        <SelectItem value="amex">American Express</SelectItem>
+                                                        <SelectItem value="discover">Discover</SelectItem>
+                                                        <SelectItem value="rupay">RuPay</SelectItem>
+                                                        <SelectItem value="other">Other</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                </CollapsibleContent>
+                            </Collapsible>
+                        )}
+
 
                         <Button type="submit" className="w-full" disabled={isLoading}>
                             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Account"}

@@ -1,26 +1,32 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { COLORS } from "./colors";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Function to generate a color from a string
-export const generateColorFromString = (str: string): { backgroundColor: string, textColor: string } => {
+// Function to generate a style object with CSS variables from a string
+export const generateColorStyle = (str: string): React.CSSProperties => {
     if (!str) {
-        // Return a default color for undefined/null/empty strings
-        const defaultHue = 0;
-        return {
-            backgroundColor: `hsl(${defaultHue}, 70%, 90%)`,
-            textColor: `hsl(${defaultHue}, 70%, 25%)`
-        };
+        // Fallback to a neutral style if string is empty
+        return {} as React.CSSProperties;
     }
+
+    // Simple hash function to get a consistent index from a string
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const hue = hash % 360;
-    const backgroundColor = `hsl(${hue}, 70%, 80%)`; // Lighter background
-    const textColor = `hsl(${hue}, 90%, 15%)`; // Darker text
-    return { backgroundColor, textColor };
+    
+    // Use the hash to pick a color from the predefined list
+    const color = COLORS[Math.abs(hash % COLORS.length)];
+
+    // Return a style object with CSS variables
+    return {
+        '--badge-bg-light': `hsl(${color.light.bg})`,
+        '--badge-text-light': `hsl(${color.light.text})`,
+        '--badge-bg-dark': `hsl(${color.dark.bg})`,
+        '--badge-text-dark': `hsl(${color.dark.text})`,
+    } as React.CSSProperties;
 };

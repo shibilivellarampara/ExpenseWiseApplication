@@ -1,4 +1,5 @@
 
+
 {
   "entities": {
     "UserProfile": {
@@ -19,15 +20,79 @@
           "properties": {
             "isDescriptionRequired": { "type": "boolean", "default": false },
             "isTagRequired": { "type": "boolean", "default": false },
-            "isCategoryRequired": { "type": "boolean", "default": true }
+            "isCategoryRequired": { "type": "boolean", "default": true },
+            "visibleFields": { 
+              "type": "array", 
+              "items": { "type": "string", "enum": ["description", "accountId", "categoryId", "tagIds"] },
+              "description": "An array of fields that should be visible in the transaction form."
+            },
+            "defaultAccountId": {
+              "type": "string",
+              "description": "The ID of the account to be selected by default in new transactions."
+            }
           }
         },
         "dashboardSettings": {
           "type": "object",
           "description": "User preferences for the dashboard.",
           "properties": {
-            "useCategoryColorsInChart": { "type": "boolean", "default": true }
+            "useCategoryColorsInChart": { "type": "boolean", "default": true },
+            "show5YearView": { "type": "boolean", "default": false },
+            "isAiSuggestionEnabled": { "type": "boolean", "default": true },
+            "transactionViewMode": { "type": "string", "enum": ["normal", "compact"], "default": "normal" },
+            "transactionGrouping": { "type": "string", "enum": ["daily", "monthly"], "default": "daily" }
           }
+        },
+        "analysisSettings": {
+            "type": "object",
+            "description": "User preferences for the analysis page.",
+            "properties": {
+                "excludedCategoryIds": { 
+                    "type": "array", 
+                    "items": { "type": "string" },
+                    "description": "An array of category IDs to exclude from analysis."
+                },
+                "showAdjustedTotal": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to show the 'Adjusted for Analysis' summary."
+                },
+                "showNormalTotal": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to show the 'Normal Total' summary."
+                },
+                 "showCategoryTable": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'Spending by Category' table."
+                },
+                "showTrendChart": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'Income vs. Expense Trend' chart."
+                },
+                "showCategoryBarChart": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'Top Spending Categories' bar chart."
+                },
+                "showTagPieChart": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'Spending by Tag' pie chart."
+                },
+                "showIncomePieChart": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'Income Sources' pie chart."
+                },
+                "showAiInsights": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'AI-Powered Insights' card."
+                }
+            }
         },
         "sharedExpenseIds": {
           "type": "array",
@@ -38,6 +103,11 @@
           "type": "boolean",
           "description": "Indicates if the user has administrative privileges.",
           "default": false
+        },
+        "transactionFieldOrder": {
+            "type": "array",
+            "description": "User's preferred order for transaction fields.",
+            "items": { "type": "string" }
         }
       },
       "required": ["id", "name", "email"]
@@ -62,6 +132,20 @@
       },
       "required": ["id", "userId", "type", "amount", "date", "accountId"]
     },
+     "CardDetails": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CardDetails",
+      "type": "object",
+      "description": "Stores non-sensitive details for a credit card.",
+      "properties": {
+        "cardNickname": { "type": "string", "description": "A user-defined nickname for the card." },
+        "last4Digits": { "type": "string", "description": "The last four digits of the card number." },
+        "cardholderName": { "type": "string", "description": "The name of the cardholder as it appears on the card." },
+        "expiryMonth": { "type": "number", "description": "The expiration month of the card (1-12)." },
+        "expiryYear": { "type": "number", "description": "The expiration year of the card (e.g., 2028)." },
+        "network": { "type": "string", "enum": ["visa", "mastercard", "amex", "discover", "rupay", "other"], "description": "The card network." }
+      }
+    },
     "Account": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Account",
@@ -76,7 +160,8 @@
         "limit": { "type": "number", "description": "Credit limit for credit cards." },
         "billingDate": { "type": "number", "description": "Day of the month for credit card billing cycle (1-31)." },
         "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the account." }
+        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the account." },
+        "cardDetails": { "$ref": "#/entities/CardDetails" }
       },
       "required": ["id", "userId", "name", "type", "balance", "icon", "status"]
     },
@@ -148,6 +233,24 @@
         }
       },
       "required": ["id", "totalAmount", "description", "userId", "date", "paidById"]
+    },
+    "Debt": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Debt",
+      "type": "object",
+      "description": "Represents a debt or a loan between the user and another person.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "personName": { "type": "string", "description": "The name of the person involved in the transaction." },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["lent", "borrowed"], "description": "'lent' if you gave money, 'borrowed' if you received money." },
+        "description": { "type": "string", "description": "A brief description of the debt." },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "settled"], "default": "pending" },
+        "settledAt": { "type": "string", "format": "date-time", "description": "The date when the debt was settled." }
+      },
+      "required": ["id", "userId", "personName", "amount", "type", "date", "status"]
     }
   },
   "auth": {
@@ -189,6 +292,12 @@
     "/admin/{adminId}": {
         "schema": { "$ref": "#/entities/UserProfile" },
         "description": "Admin access control."
+    },
+    "/users/{userId}/debts/{debtId}": {
+        "schema": { "$ref": "#/entities/Debt" },
+        "description": "Stores debt and loan records for a user."
     }
   }
 }
+
+    

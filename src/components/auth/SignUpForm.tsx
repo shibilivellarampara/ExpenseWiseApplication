@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,8 @@ const phoneSchema = z.object({
   password: z.string().optional(),
 });
 
+const formSchema = z.union([emailSchema, phoneSchema]);
+
 // Create a stable component for the phone input to prevent re-renders
 const MemoizedPhoneInput = React.forwardRef<HTMLInputElement>((props, ref) => (
     <Input {...props} ref={ref as React.Ref<HTMLInputElement>} className="!rounded-l-none" />
@@ -66,7 +69,7 @@ export function SignUpForm() {
     return zodResolver(phoneSchema)(data, context, options);
   }, [signupMethod]);
 
-  const form = useForm<z.infer<typeof emailSchema> | z.infer<typeof phoneSchema>>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: formResolver,
     defaultValues: {
       name: '',
@@ -100,7 +103,7 @@ export function SignUpForm() {
       createdAt: serverTimestamp() as any, 
       defaultCurrency: 'INR',
       expenseFieldSettings: { isCategoryRequired: true, isDescriptionRequired: false, isTagRequired: false },
-      dashboardSettings: { useCategoryColorsInChart: true },
+      dashboardSettings: { useCategoryColorsInChart: true, transactionViewMode: 'normal' },
     };
     batch.set(userDocRef, newUserProfile);
     
@@ -124,9 +127,9 @@ export function SignUpForm() {
     await batch.commit();
   }
 
-  async function handleEmailSubmit(values: z.infer<typeof emailSchema>) {
+  const handleEmailSubmit: SubmitHandler<z.infer<typeof emailSchema>> = async (values) => {
     setIsLoading(true);
-    if (!auth || !firestore) {
+    if (!auth || !firestore || !values.password) {
         toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.'});
         setIsLoading(false);
         return;
@@ -151,7 +154,7 @@ export function SignUpForm() {
     }
   }
 
-  async function handlePhoneSubmit(values: z.infer<typeof phoneSchema>) {
+  const handlePhoneSubmit: SubmitHandler<z.infer<typeof phoneSchema>> = async (values) => {
     if (!auth || !recaptchaVerifier.current || !values.phoneNumber) {
         toast({ variant: "destructive", title: "Error", description: "Authentication service not ready." });
         return;
@@ -179,7 +182,7 @@ export function SignUpForm() {
           await provisionNewUser(user, values.name, values.email, values.phoneNumber);
 
           setShowOtpDialog(false);
-          toast({ title: "Account created!", description: "You're all set and have been logged in." });
+          toast({ title: "Account created!", description: "You're all set and have been logged in.", duration: 1000 });
           router.push('/dashboard');
       } catch (error: any) {
           toast({ variant: 'destructive', title: 'Verification failed.', description: error.message });
@@ -201,7 +204,7 @@ export function SignUpForm() {
                 <TabsTrigger value="phone">Phone & OTP</TabsTrigger>
             </TabsList>
              <Form {...form}>
-                <form onSubmit={form.handleSubmit(signupMethod === 'email' ? handleEmailSubmit : handlePhoneSubmit)} className="space-y-4 pt-4">
+                <form onSubmit={form.handleSubmit((data) => (signupMethod === 'email' ? handleEmailSubmit(data as z.infer<typeof emailSchema>) : handlePhoneSubmit(data as z.infer<typeof phoneSchema>)))} className="space-y-4 pt-4">
                      <FormField
                         control={form.control}
                         name="name"
@@ -320,5 +323,7 @@ export function SignUpForm() {
     </>
   );
 }
+
+    
 
     

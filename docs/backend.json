@@ -1,4 +1,5 @@
 
+
 {
   "entities": {
     "UserProfile": {
@@ -19,8 +20,64 @@
           "properties": {
             "isDescriptionRequired": { "type": "boolean", "default": false },
             "isTagRequired": { "type": "boolean", "default": false },
-            "isCategoryRequired": { "type": "boolean", "default": true }
+            "isCategoryRequired": { "type": "boolean", "default": true },
+            "visibleFields": { 
+              "type": "array", 
+              "items": { "type": "string", "enum": ["description", "accountId", "categoryId", "tagIds"] },
+              "description": "An array of fields that should be visible in the transaction form."
+            },
+            "defaultAccountId": {
+              "type": "string",
+              "description": "The ID of the account to be selected by default in new transactions."
+            }
           }
+        },
+        "dashboardSettings": {
+          "type": "object",
+          "description": "User preferences for the dashboard.",
+          "properties": {
+            "useCategoryColorsInChart": { "type": "boolean", "default": true },
+            "show5YearView": { "type": "boolean", "default": false },
+            "isAiSuggestionEnabled": { "type": "boolean", "default": true },
+            "transactionViewMode": { "type": "string", "enum": ["normal", "compact"], "default": "normal" },
+            "transactionGrouping": { "type": "string", "enum": ["daily", "monthly"], "default": "daily" }
+          }
+        },
+        "analysisSettings": {
+            "type": "object",
+            "description": "User preferences for the analysis page.",
+            "properties": {
+                "excludedCategoryIds": { 
+                    "type": "array", 
+                    "items": { "type": "string" },
+                    "description": "An array of category IDs to exclude from analysis."
+                },
+                "showAdjustedTotal": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to show the 'Adjusted for Analysis' summary."
+                },
+                "showNormalTotal": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to show the 'Normal Total' summary."
+                }
+            }
+        },
+        "sharedExpenseIds": {
+          "type": "array",
+          "description": "A list of IDs of the shared expenses this user is a member of.",
+          "items": { "type": "string" }
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Indicates if the user has administrative privileges.",
+          "default": false
+        },
+        "transactionFieldOrder": {
+            "type": "array",
+            "description": "User's preferred order for transaction fields.",
+            "items": { "type": "string" }
         }
       },
       "required": ["id", "name", "email"]
@@ -40,9 +97,24 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "accountId": { "type": "string", "description": "Reference to the Account document ID." },
         "categoryId": { "type": "string", "description": "Reference to the Category document ID (for expenses)." },
-        "tagId": { "type": "string", "description": "Reference to the Tag document ID." }
+        "tagIds": { "type": "array", "items": { "type": "string" }, "description": "Reference to the Tag document IDs." },
+        "sharedExpenseId": { "type": "string", "description": "Reference to the SharedExpense this transaction belongs to." }
       },
       "required": ["id", "userId", "type", "amount", "date", "accountId"]
+    },
+     "CardDetails": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CardDetails",
+      "type": "object",
+      "description": "Stores non-sensitive details for a credit card.",
+      "properties": {
+        "cardNickname": { "type": "string", "description": "A user-defined nickname for the card." },
+        "last4Digits": { "type": "string", "description": "The last four digits of the card number." },
+        "cardholderName": { "type": "string", "description": "The name of the cardholder as it appears on the card." },
+        "expiryMonth": { "type": "number", "description": "The expiration month of the card (1-12)." },
+        "expiryYear": { "type": "number", "description": "The expiration year of the card (e.g., 2028)." },
+        "network": { "type": "string", "enum": ["visa", "mastercard", "amex", "discover", "rupay", "other"], "description": "The card network." }
+      }
     },
     "Account": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -56,9 +128,58 @@
         "type": { "type": "string", "enum": ["bank", "credit_card", "wallet", "cash"] },
         "balance": { "type": "number", "description": "Current balance or outstanding amount." },
         "limit": { "type": "number", "description": "Credit limit for credit cards." },
-        "icon": { "type": "string", "description": "Name of the lucide-react icon." }
+        "billingDate": { "type": "number", "description": "Day of the month for credit card billing cycle (1-31)." },
+        "icon": { "type": "string", "description": "Name of the lucide-react icon." },
+        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the account." },
+        "cardDetails": { "$ref": "#/entities/CardDetails" }
       },
-      "required": ["id", "userId", "name", "type", "balance", "icon"]
+      "required": ["id", "userId", "name", "type", "balance", "icon", "status"]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a user-defined expense category.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string", "description": "Name of the lucide-react icon." },
+        "userId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the category." }
+      },
+      "required": ["name", "icon", "userId"]
+    },
+    "Tag": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Tag",
+      "type": "object",
+      "description": "Represents a user-defined tag for expenses.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string", "description": "Name of the lucide-react icon." },
+        "userId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the tag." }
+      },
+      "required": ["name", "icon", "userId"]
+    },
+    "SharedExpense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SharedExpense",
+      "type": "object",
+      "description": "Represents a shared expense space where multiple users can add transactions.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "memberIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "joinId": { "type": "string", "description": "6-character unique code for joining." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "ownerId", "memberIds", "joinId"]
     },
     "Contribution": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -85,62 +206,68 @@
       },
       "required": ["id", "totalAmount", "description", "userId", "date", "paidById"]
     },
-    "Category": {
+    "Debt": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Category",
+      "title": "Debt",
       "type": "object",
-      "description": "Represents a user-defined expense category.",
+      "description": "Represents a debt or a loan between the user and another person.",
       "properties": {
         "id": { "type": "string" },
-        "name": { "type": "string" },
-        "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "userId": { "type": "string" }
+        "userId": { "type": "string" },
+        "personName": { "type": "string", "description": "The name of the person involved in the transaction." },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["lent", "borrowed"], "description": "'lent' if you gave money, 'borrowed' if you received money." },
+        "description": { "type": "string", "description": "A brief description of the debt." },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "settled"], "default": "pending" },
+        "settledAt": { "type": "string", "format": "date-time", "description": "The date when the debt was settled." }
       },
-      "required": ["name", "icon", "userId"]
-    },
-    "Tag": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Tag",
-      "type": "object",
-      "description": "Represents a user-defined tag for expenses.",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "userId": { "type": "string" }
-      },
-      "required": ["name", "icon", "userId"]
+      "required": ["id", "userId", "personName", "amount", "type", "date", "status"]
     }
   },
   "auth": {
     "providers": ["password", "anonymous", "phone", "google.com"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": { "entityName": "UserProfile", "schema": { "$ref": "#/entities/UserProfile" } }
-      },
-      {
-        "path": "/users/{userId}/expenses/{expenseId}",
-        "definition": { "entityName": "Expense", "schema": { "$ref": "#/entities/Expense" } }
-      },
-      {
-        "path": "/users/{userId}/accounts/{accountId}",
-        "definition": { "entityName": "Account", "schema": { "$ref": "#/entities/Account" } }
-      },
-      {
-        "path": "/users/{userId}/contributions/{contributionId}",
-        "definition": { "entityName": "Contribution", "schema": { "$ref": "#/entities/Contribution" } }
-      },
-      {
-        "path": "/users/{userId}/categories/{categoryId}",
-        "definition": { "entityName": "Category", "schema": { "$ref": "#/entities/Category" } }
-      },
-      {
-        "path": "/users/{userId}/tags/{tagId}",
-        "definition": { "entityName": "Tag", "schema": { "$ref": "#/entities/Tag" } }
-      }
-    ]
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores user profile information."
+    },
+    "/users/{userId}/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/Expense" },
+      "description": "Stores individual expense records for a user."
+    },
+    "/users/{userId}/accounts/{accountId}": {
+      "schema": { "$ref": "#/entities/Account" },
+      "description": "Stores user's financial accounts."
+    },
+    "/users/{userId}/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Stores user-defined expense categories."
+    },
+    "/users/{userId}/tags/{tagId}": {
+      "schema": { "$ref": "#/entities/Tag" },
+      "description": "Stores user-defined expense tags."
+    },
+    "/shared_expenses/{sharedExpenseId}": {
+      "schema": { "$ref": "#/entities/SharedExpense" },
+      "description": "Stores shared expense spaces, accessible by multiple users."
+    },
+    "/shared_expenses/{sharedExpenseId}/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/Expense"},
+      "description": "Stores expense records for a specific shared space."
+    },
+    "/users/{userId}/contributions/{contributionId}": {
+        "schema": { "$ref": "#/entities/Contribution" },
+        "description": "Stores contribution records for shared expenses."
+    },
+    "/admin/{adminId}": {
+        "schema": { "$ref": "#/entities/UserProfile" },
+        "description": "Admin access control."
+    },
+    "/users/{userId}/debts/{debtId}": {
+        "schema": { "$ref": "#/entities/Debt" },
+        "description": "Stores debt and loan records for a user."
+    }
   }
 }

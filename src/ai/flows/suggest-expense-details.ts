@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to suggest expense details based on user input.
@@ -19,7 +20,12 @@ const suggestionPrompt = ai.definePrompt({
     name: 'expenseSuggestionPrompt',
     input: { schema: SuggestExpenseDetailsInputSchema },
     output: { schema: SuggestExpenseDetailsOutputSchema },
-    prompt: `You are an expert financial assistant. Based on the user's expense description, your task is to suggest the most relevant category, account, and any applicable tags from the provided lists. You should also provide a concise, cleaned-up version of the description.
+    prompt: `You are an expert financial assistant. Your goal is to intelligently complete the transaction details based on the information provided by the user.
+
+Here is the information available:
+- User's Description: "{{{description}}}"
+- Selected Category: "{{{selectedCategoryName}}}"
+- Selected Tags: "{{{selectedTagNames}}}"
 
 Available Categories (id, name):
 {{#each categories}}
@@ -36,15 +42,19 @@ Available Accounts (id, name):
 - {{id}}, {{name}}
 {{/each}}
 
-User's Description:
-"{{{description}}}"
+**Your Tasks:**
 
-Rules:
-1.  **Category:** Choose the ONE most appropriate category ID from the list.
-2.  **Account:** Choose the ONE most likely account ID the user would use for this type of transaction.
-3.  **Tags:** Choose ANY relevant tag IDs from the list. It can be zero, one, or multiple.
-4.  **Description:** Refine the user's description to be clear and concise. For example, "coffee at starbucks with jane" could become "Coffee at Starbucks with Jane". Capitalize correctly and make it readable.
-5.  If you cannot make a confident suggestion for a field, omit it from the output. The IDs you return MUST exist in the lists provided.
+1.  **Suggest Missing Fields:** Based on all the context (description, category, tags), suggest the most likely values for any fields that are currently empty.
+    -   **Category:** If not already selected, choose the ONE most appropriate category ID.
+    -   **Account:** Suggest the ONE most likely account ID.
+    -   **Tags:** Suggest ANY relevant tag IDs.
+
+2.  **Generate a Better Description:** Based on all available information (what the user typed, the category, and the tags), create a refined, clear, and concise description. For example, if the description is "coffee" and the category is "Food & Drink", a good suggestion would be "Coffee". If the description is "uber home" and category is "Transport", suggest "Uber ride home".
+
+**Rules:**
+- Prioritize the user's explicit selections. Only suggest values for fields that are empty.
+- The IDs you return MUST exist in the lists provided.
+- If you cannot make a confident suggestion for a field, omit it from the output.
 `,
 });
 
@@ -55,8 +65,14 @@ const suggestExpenseDetailsFlow = ai.defineFlow(
         outputSchema: SuggestExpenseDetailsOutputSchema,
     },
     async (input) => {
-        const { output } = await suggestionPrompt(input);
-        return output!;
+        try {
+            const { output } = await suggestionPrompt(input);
+            return output!;
+        } catch (error) {
+            console.error("Error in suggestExpenseDetailsFlow:", error);
+            // Return an empty object or a specific error structure if the flow fails
+            return {};
+        }
     }
 );
 

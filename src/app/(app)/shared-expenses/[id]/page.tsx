@@ -7,9 +7,9 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile, SharedExpense } from "@/lib/types";
-import { collection, orderBy, query, doc, getDocs, where } from "firebase/firestore";
+import { collection, orderBy, query, doc, getDocs, where, Timestamp } from "firebase/firestore";
 import { PlusCircle } from "lucide-react";
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useCallback } from "react";
 import { useParams } from 'next/navigation';
 
 export default function SharedExpenseDetailPage() {
@@ -24,13 +24,13 @@ export default function SharedExpenseDetailPage() {
     const sharedExpenseRef = useMemoFirebase(() => 
         firestore ? doc(firestore, `shared_expenses`, sharedExpenseId) : null
     , [firestore, sharedExpenseId]);
-    const { data: sharedExpense, isLoading: sharedExpenseLoading } = useDoc<SharedExpense>(sharedExpenseRef);
+    const { data: sharedExpense, isLoading: sharedExpenseLoading, error: sharedExpenseError } = useDoc<SharedExpense>(sharedExpenseRef);
 
     // Expenses for this shared space
     const expensesQuery = useMemoFirebase(() => 
         firestore ? query(collection(firestore, `shared_expenses/${sharedExpenseId}/expenses`), orderBy('date', 'desc')) : null
     , [firestore, sharedExpenseId]);
-    const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
+    const { data: expenses, isLoading: expensesLoading, error: expensesError } = useCollection<Expense>(expensesQuery);
 
     // All necessary user data (categories, tags, accounts of the current user)
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [firestore, user]);
@@ -59,18 +59,29 @@ export default function SharedExpenseDetailPage() {
             // To fetch multiple documents efficiently, we can use a `where` clause with `in` operator
             const usersRef = collection(firestore, 'users');
             const q = query(usersRef, where('id', 'in', memberIds));
-            const querySnapshot = await getDocs(q);
             
-            querySnapshot.forEach(doc => {
-                profiles.set(doc.id, doc.data() as UserProfile);
-            });
+            try {
+                 const querySnapshot = await getDocs(q);
+                
+                querySnapshot.forEach(doc => {
+                    profiles.set(doc.id, doc.data() as UserProfile);
+                });
 
-            setMemberProfiles(profiles);
-            setMembersLoading(false);
+                setMemberProfiles(profiles);
+            } catch (error) {
+                console.error("Failed to fetch member profiles:", error)
+            } finally {
+                setMembersLoading(false);
+            }
         };
 
         fetchMemberProfiles();
     }, [firestore, sharedExpense]);
+
+    const handleDataChange = useCallback(() => {
+        // This function is a placeholder to satisfy the prop requirement.
+        // The real-time listener already handles updates automatically.
+    }, []);
 
 
     const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || sharedExpenseLoading || membersLoading;
@@ -87,7 +98,7 @@ export default function SharedExpenseDetailPage() {
         return expenses.map(expense => {
              return {
                 ...expense,
-                date: expense.date.toDate(),
+                date: (expense.date as Timestamp).toDate(),
                 category: categoryMap.get(expense.categoryId ?? ''),
                 account: accountMap.get(expense.accountId),
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
@@ -96,6 +107,8 @@ export default function SharedExpenseDetailPage() {
         }).sort((a, b) => b.date.getTime() - a.date.getTime()); // Ensure final sort
     
     }, [expenses, categoryMap, accountMap, tagMap, memberProfiles]);
+    
+    const error = sharedExpenseError || expensesError;
 
     return (
         <div className="w-full space-y-8">
@@ -103,7 +116,7 @@ export default function SharedExpenseDetailPage() {
                 title={sharedExpense?.name || "Shared Space"} 
                 description="A detailed list of transactions in this shared space."
             >
-                <AddExpenseDialog sharedExpenseId={sharedExpenseId}>
+                <AddExpenseDialog sharedExpenseId={sharedExpenseId} onSaveSuccess={handleDataChange}>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Transaction
@@ -111,7 +124,13 @@ export default function SharedExpenseDetailPage() {
                 </AddExpenseDialog>
             </PageHeader>
 
-            <ExpensesTable expenses={enrichedExpenses} isLoading={isLoading} isShared={true} />
+            <ExpensesTable 
+                expenses={enrichedExpenses} 
+                isLoading={isLoading} 
+                isShared={true} 
+                onDataChange={handleDataChange}
+                error={error ? 'Error loading transactions. Check permissions or network.' : null}
+            />
         </div>
     );
 }

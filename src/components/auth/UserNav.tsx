@@ -20,15 +20,30 @@ import {
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, Settings, Moon, Sun, MessageSquare } from 'lucide-react';
+import { LogOut, Settings, Moon, Sun, MessageSquare, Cog, GlassWater } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import { PageSettingsDialog } from "./PageSettingsDialog";
+
+// Define the mapping from routes to settings components
+import { DashboardSettings } from "@/components/profile/DashboardSettings";
+import { TransactionFieldOrderSettings } from "@/components/profile/TransactionFieldOrderSettings";
+import { AnalysisSettings } from "@/components/profile/AnalysisSettings";
+
+const pageSettingsMap: Record<string, { label: string; component: React.ComponentType<any> }> = {
+    '/dashboard': { label: 'Dashboard Settings', component: DashboardSettings },
+    '/transactions': { label: 'Transaction Settings', component: TransactionFieldOrderSettings },
+    '/expenses': { label: 'Transaction Settings', component: TransactionFieldOrderSettings },
+    '/analysis': { label: 'Analysis Settings', component: AnalysisSettings },
+};
+
 
 export function UserNav() {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
   const { setTheme } = useTheme();
+  const pathname = usePathname();
 
   const handleSignOut = async () => {
     if (auth) {
@@ -44,10 +59,13 @@ export function UserNav() {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
+  const currentPageSetting = Object.keys(pageSettingsMap).find(key => pathname.startsWith(key));
+  const settingsDetails = currentPageSetting ? pageSettingsMap[currentPageSetting] : null;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button variant="outline" size="icon" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
             <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
             <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
@@ -66,9 +84,23 @@ export function UserNav() {
           <DropdownMenuItem asChild>
             <Link href="/profile">
               <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+              <span>All Settings</span>
             </Link>
           </DropdownMenuItem>
+
+           {settingsDetails && (
+             <PageSettingsDialog
+                title={settingsDetails.label}
+                description={`Customize settings for the ${pathname.split('/')[1] || 'current'} page.`}
+                SettingsComponent={settingsDetails.component}
+              >
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <Cog className="mr-2 h-4 w-4" />
+                      <span>{settingsDetails.label}</span>
+                  </DropdownMenuItem>
+             </PageSettingsDialog>
+          )}
+
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -88,6 +120,10 @@ export function UserNav() {
                 <DropdownMenuItem onClick={() => setTheme("chat")}>
                   <MessageSquare className="mr-2 h-4 w-4" />
                   <span>Chat</span>
+                </DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => setTheme("glass")}>
+                  <GlassWater className="mr-2 h-4 w-4" />
+                  <span>Liquid Glass</span>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>

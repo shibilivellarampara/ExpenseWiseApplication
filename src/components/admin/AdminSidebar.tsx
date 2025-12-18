@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -11,6 +12,9 @@ import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { useSidebar } from '../ui/sidebar';
+import pkg from '../../../package.json';
+
+const appVersion = pkg.version;
 
 const adminNavItems = [
   { href: '/admin', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Admin Dashboard' },
@@ -68,8 +72,9 @@ export function AdminSidebar() {
                 />
                 ))}
             </nav>
-            <div className="mt-auto">
-                <Separator className='my-4 bg-sidebar-border' />
+            <div className="mt-auto p-4 text-center text-xs text-sidebar-muted-foreground">
+                <Separator className='my-2 bg-sidebar-border' />
+                <span>Version {appVersion}</span>
             </div>
         </div>
     </aside>

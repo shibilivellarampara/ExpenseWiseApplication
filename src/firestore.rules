@@ -1,0 +1,63 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Private User Data ---
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      match /accounts/{accountId} {
+        allow list, read, write: if isOwner(userId);
+      }
+      match /categories/{categoryId} {
+        allow list, read, write: if isOwner(userId);
+      }
+      match /tags/{tagId} {
+        allow list, read, write: if isOwner(userId);
+      }
+      match /contributions/{contributionId} {
+        allow list, read, write: if isOwner(userId);
+      }
+      match /expenses/{expenseId} {
+        allow list, read, write: if isOwner(userId);
+      }
+      match /debts/{debtId} {
+        allow list, read, write: if isOwner(userId);
+      }
+    }
+    
+    // --- Collection Group Rules ---
+    // This rule is crucial for allowing cross-user queries like "get all my expenses"
+    // that are used on the dashboard and analysis pages.
+    match /expenses/{expenseId} {
+       allow read, write: if request.auth.uid == resource.data.userId;
+    }
+    
+
+    // --- Shared Data ---
+    match /shared_expenses/{sharedExpenseId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn(); // Further rules could restrict this to members
+
+      match /expenses/{expenseId} {
+         allow read: if isSignedIn();
+         allow create, update, delete: if isSignedIn();
+      }
+    }
+    
+    // --- Admin Data ---
+    match /admin/{docId} {
+        allow read, write: if request.auth.token.isAdmin == true;
+    }
+  }
+
+  // --- Helper Functions ---
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function isOwner(userId) {
+    return request.auth != null && request.auth.uid == userId;
+  }
+}

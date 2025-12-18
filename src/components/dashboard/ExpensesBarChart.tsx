@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { EnrichedExpense, Category } from '@/lib/types';
 import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, startOfYear, endOfYear, getYear, subYears } from 'date-fns';
 import { BarChart as BarChartIcon } from 'lucide-react';
-import { COLORS } from '@/lib/colors';
+import { CHART_COLORS } from '@/lib/colors';
 
 interface ExpensesBarChartProps {
   expenses: EnrichedExpense[];
@@ -22,7 +22,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
     const categoryColors = useMemo(() => {
         const colors = new Map<string, string>();
         allCategories.forEach((cat, index) => {
-            colors.set(cat.name, COLORS[index % COLORS.length]);
+            colors.set(cat.name, CHART_COLORS[index % CHART_COLORS.length]);
         });
         colors.set('Uncategorized', '#B0BEC5'); // A neutral color for uncategorized
         return colors;

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
-import { FileUp, Loader2, CheckCircle, ArrowRight, ListChecks, FileCheck2, AlertTriangle, Sparkles, Pilcrow, ArrowLeft, Send } from "lucide-react";
+import { FileUp, Loader2, CheckCircle, ArrowRight, ListChecks, FileCheck2, AlertTriangle, Sparkles, Pilcrow, ArrowLeft, Send, Wallet } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { useDoc, useFirestore, useUser, useMemoFirebase, useCollection } from "@/firebase";
 import { doc } from 'firebase/firestore';
@@ -38,27 +38,23 @@ type ColumnMapping = {
     cashOut?: string | null;
     // For default style
     amount?: string | null;
+    type?: string | null;
 };
 
 const TEMPLATES: { [key: string]: { name: string, mapping: ColumnMapping, description: string } } = {
-    'default': {
-        name: 'Default Template',
-        mapping: { date: 'Date', time: 'Time', amount: 'Amount', description: 'Description', category: 'Category', tags: 'Tags', mode: 'Account' },
-        description: "Standard: Date, Time, Amount, Description, etc."
+    'expensewise': {
+        name: 'ExpenseWise Report',
+        mapping: { date: 'Date', time: 'Time', amount: 'Amount', type: 'Type', description: 'Description', category: 'Category', tags: 'Tags', mode: 'Account' },
+        description: "For importing this app's own exported reports."
     },
     'cashbook': {
         name: 'Cashbook App',
         mapping: { date: 'Date', time: 'Time', description: 'Remark', category: 'Category', cashIn: 'Cash In', cashOut: 'Cash Out', mode: 'Mode' },
         description: "For Cashbook app exports."
     },
-    'spendee': {
-        name: 'Spendee App',
-        mapping: { date: 'Date', time: 'Time', amount: 'Amount', description: 'Notes', category: 'Category', tags: 'Tags', mode: 'Wallet' },
-        description: "For Spendee exports."
-    },
-    'custom_detailed': {
-        name: 'Custom Detailed',
-        mapping: { date: 'Date', time: 'Time', description: 'Old Description', category: 'Category', tags: 'Tags', cashIn: 'CASH IN', cashOut: 'CASH OUT', mode: 'ACCOUNT'},
+    'enhanced_report': {
+        name: 'Enhanced template',
+        mapping: { date: 'Date', time: 'Time', description: 'Description', category: 'Category', tags: 'Tags', cashIn: 'CASH IN', cashOut: 'CASH OUT', mode: 'ACCOUNT'},
         description: "For detailed sheets with separate cash in/out."
     },
 };
@@ -69,6 +65,41 @@ type AccountAction = {
     type?: Account['type']; // only if action is 'create'
 }
 type AccountMapping = { [key:string]: AccountAction };
+
+// Helper function to normalize names
+const normalizeName = (name: string): string => {
+    if (!name) return '';
+    let processedName = String(name).trim();
+
+    // Check if it's a spaced-out acronym like "G Y M"
+    if (/^[A-Z](?:\s[A-Z])+$/.test(processedName)) {
+        processedName = processedName.replace(/\s/g, '');
+    }
+
+    // Converts "cash back" or "cashBack" to "Cash Back"
+    return processedName
+        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+        .trim()
+        .toLowerCase()
+        .split(/\s+/) // Split by one or more spaces
+        .filter(word => word.length > 0) // Remove empty strings from multiple spaces
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
+const detectAccountType = (name: string): Account['type'] => {
+    const lowerCaseName = name.toLowerCase();
+    if (lowerCaseName.includes('cc') || lowerCaseName.includes('credit card')) {
+        return 'credit_card';
+    }
+    if (lowerCaseName.includes('wallet')) {
+        return 'wallet';
+    }
+    if (lowerCaseName.includes('bank')) {
+        return 'bank';
+    }
+    return 'bank'; // Default to bank if no keywords match
+};
 
 
 export function ExcelImporter() {
@@ -83,7 +114,7 @@ export function ExcelImporter() {
 
     const [newCategories, setNewCategories] = useState<string[]>([]);
     const [newTags, setNewTags] = useState<string[]>([]);
-    const [newAccounts, setNewAccounts] = useState<string[]>([]);
+    const [allAccountsFromFile, setAllAccountsFromFile] = useState<string[]>([]);
     
     const [selectedAccountsToImport, setSelectedAccountsToImport] = useState<string[]>([]);
 
@@ -113,15 +144,22 @@ export function ExcelImporter() {
 
 
     useEffect(() => {
-        if (newAccounts.length > 0) {
+        if (allAccountsFromFile.length > 0 && accounts) {
             const initialMappings: AccountMapping = {};
-            newAccounts.forEach(accName => {
-                initialMappings[accName] = { action: 'create', type: 'bank' };
+            const existingAccountMap = new Map(accounts.map(acc => [acc.name.toLowerCase(), acc]));
+            
+            allAccountsFromFile.forEach(accName => {
+                const existingAccount = existingAccountMap.get(accName.toLowerCase());
+                if (existingAccount) {
+                    initialMappings[accName] = { action: 'map', targetId: existingAccount.id };
+                } else {
+                    initialMappings[accName] = { action: 'create', type: detectAccountType(accName) };
+                }
             });
             setAccountMappings(initialMappings);
-            setSelectedAccountsToImport(newAccounts); // By default, select all new accounts for import
+            setSelectedAccountsToImport(allAccountsFromFile);
         }
-    }, [newAccounts]);
+    }, [allAccountsFromFile, accounts]);
 
 
     const handleFileParseAndValidate = (fileToParse: File) => {
@@ -156,41 +194,47 @@ export function ExcelImporter() {
                 const jsonData = XLSX.utils.sheet_to_json<RowData>(worksheet, { raw: false });
                 setRawData(jsonData);
 
-                const existingCategoryNames = new Set(existingCategories?.map(c => c.name.toLowerCase()));
-                const existingTagNames = new Set(existingTags?.map(t => t.name.toLowerCase()));
-                const existingAccountNames = new Set(accounts?.map(a => a.name.toLowerCase()));
+                const existingCategoryNames = new Set(existingCategories?.map(c => normalizeName(c.name)));
+                const existingTagNames = new Set(existingTags?.map(t => normalizeName(t.name)));
                 
                 const foundNewCategories = new Set<string>();
                 const foundNewTags = new Set<string>();
-                const foundNewAccounts = new Set<string>();
+                const foundAllAccounts = new Set<string>();
 
                 jsonData.forEach(row => {
-                    const categoryName = row[expectedMapping.category];
-                    if (categoryName && !existingCategoryNames.has(String(categoryName).toLowerCase())) {
-                        foundNewCategories.add(String(categoryName));
+                    const categoryNameRaw = row[expectedMapping.category];
+                    if (categoryNameRaw) {
+                        const normalizedCategoryName = normalizeName(String(categoryNameRaw));
+                        if (normalizedCategoryName && !existingCategoryNames.has(normalizedCategoryName)) {
+                            foundNewCategories.add(normalizedCategoryName);
+                        }
                     }
+
                     if (expectedMapping.tags) {
                         const tagsString = row[expectedMapping.tags];
                         if (tagsString) {
                             const tags = String(tagsString).split(',').map((t: string) => t.trim());
-                            tags.forEach((tagName: string) => {
-                                if (tagName && !existingTagNames.has(tagName.toLowerCase())) {
-                                    foundNewTags.add(tagName);
+                            tags.forEach((tagNameRaw: string) => {
+                                if (tagNameRaw) {
+                                    const normalizedTagName = normalizeName(tagNameRaw);
+                                    if (normalizedTagName && !existingTagNames.has(normalizedTagName)) {
+                                        foundNewTags.add(normalizedTagName);
+                                    }
                                 }
                             });
                         }
                     }
                     if (expectedMapping.mode) {
                         const accountName = row[expectedMapping.mode];
-                        if(accountName && !existingAccountNames.has(String(accountName).toLowerCase())){
-                            foundNewAccounts.add(String(accountName));
+                        if(accountName){
+                            foundAllAccounts.add(String(accountName));
                         }
                     }
                 });
 
                 setNewCategories(Array.from(foundNewCategories));
                 setNewTags(Array.from(foundNewTags));
-                setNewAccounts(Array.from(foundNewAccounts));
+                setAllAccountsFromFile(Array.from(foundAllAccounts));
                 setFile(fileToParse);
                 setStep(3);
 
@@ -221,67 +265,92 @@ export function ExcelImporter() {
             if (typeof dateValue === 'number') {
                 const dateStruct = XLSX.SSF.parse_date_code(dateValue);
                 finalDate = new Date(dateStruct.y, dateStruct.m - 1, dateStruct.d, dateStruct.H, dateStruct.M, dateStruct.S);
-
-                if (timeValue && typeof timeValue === 'number') {
-                    const timeStruct = XLSX.SSF.parse_date_code(timeValue);
-                    finalDate.setHours(timeStruct.H, timeStruct.M, timeStruct.S);
-                } else if (timeValue && typeof timeValue === 'string') {
-                    const timeMatch = timeValue.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?/i);
-                    if (timeMatch) {
-                        let [_, hoursStr, minutesStr, secondsStr, ampm] = timeMatch;
-                        let hours = parseInt(hoursStr, 10);
-                        const minutes = parseInt(minutesStr, 10);
-                        const seconds = secondsStr ? parseInt(secondsStr, 10) : 0;
-                        if (ampm && ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
-                        if (ampm && ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
-                        finalDate.setHours(hours, minutes, seconds);
-                    }
-                }
             } else if (typeof dateValue === 'string') {
                 finalDate = new Date(dateValue);
             } else {
                 finalDate = new Date(); // Fallback
             }
 
-            const description = row[mapping.description] || 'Imported Transaction';
-            const categoryName = row[mapping.category] || 'Other';
-            const tags = mapping.tags && row[mapping.tags] ? String(row[mapping.tags]).split(',').map((t: string) => t.trim()) : [];
+            // If time is a separate column and is a valid string, parse and apply it
+            if (timeValue) {
+                let hours = 0;
+                let minutes = 0;
+                let seconds = 0;
+
+                if (typeof timeValue === 'number') { // Excel time serial number
+                     const timeStruct = XLSX.SSF.parse_date_code(timeValue);
+                     hours = timeStruct.H;
+                     minutes = timeStruct.M;
+                     seconds = timeStruct.S;
+                } else if (typeof timeValue === 'string') { // String time like "10:30 AM"
+                     const timeMatch = timeValue.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?/i);
+                    if (timeMatch) {
+                        let [_, hoursStr, minutesStr, secondsStr, ampm] = timeMatch;
+                        hours = parseInt(hoursStr, 10);
+                        minutes = parseInt(minutesStr, 10);
+                        seconds = secondsStr ? parseInt(secondsStr, 10) : 0;
+                        if (ampm && ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
+                        if (ampm && ampm.toUpperCase() === 'AM' && hours === 12) hours = 0; // Midnight case
+                    }
+                }
+                finalDate.setHours(hours, minutes, seconds, 0);
+            }
+
+            const description = row[mapping.description] || row['Description'] || 'Imported Transaction';
+            const categoryName = normalizeName(row[mapping.category] || 'Other');
+            const tags = mapping.tags && row[mapping.tags] ? String(row[mapping.tags]).split(',').map((t: string) => normalizeName(t.trim())) : [];
             const accountName = mapping.mode ? row[mapping.mode] : null;
             
             let amount = 0;
             let type: 'income' | 'expense' = 'expense';
 
-            if (mapping.cashIn && mapping.cashOut) {
-                const cashIn = parseFloat(row[mapping.cashIn]);
-                const cashOut = parseFloat(row[mapping.cashOut]);
+            if (mapping.amount && mapping.type && row[mapping.type]) {
+                const parsedAmount = parseFloat(String(row[mapping.amount] || '0').replace(/[^0-9.-]+/g,""));
+                if (!isNaN(parsedAmount)) {
+                   amount = Math.abs(parsedAmount);
+                   const typeValue = String(row[mapping.type]).toLowerCase();
+                   if (typeValue === 'income' || typeValue === 'expense') {
+                        type = typeValue;
+                   }
+                }
+            } else if (mapping.cashIn && row[mapping.cashIn]) {
+                const cashIn = parseFloat(String(row[mapping.cashIn] || '0').replace(/[^0-9.-]+/g, ""));
                 if (!isNaN(cashIn) && cashIn > 0) {
                     amount = cashIn;
                     type = 'income';
-                } else if (!isNaN(cashOut) && cashOut > 0) {
+                }
+            } else if (mapping.cashOut && row[mapping.cashOut]) {
+                const cashOut = parseFloat(String(row[mapping.cashOut] || '0').replace(/[^0-9.-]+/g, ""));
+                if (!isNaN(cashOut) && cashOut > 0) {
                     amount = cashOut;
                     type = 'expense';
                 }
             } else if (mapping.amount) {
-                const parsedAmount = parseFloat(String(row[mapping.amount]).replace(/[^0-9.-]+/g,""));
+                const parsedAmount = parseFloat(String(row[mapping.amount] || '0').replace(/[^0-9.-]+/g,""));
                 if (!isNaN(parsedAmount)) {
                     amount = Math.abs(parsedAmount);
                     type = parsedAmount < 0 ? 'expense' : 'income';
                 }
             }
             
-            return { date: finalDate, amount, description, categoryName, tags, type, accountName };
-        }).filter(item => !isNaN(item.amount) && item.amount > 0 && !isNaN(item.date.getTime()));
+            return { date: finalDate, amount, description, categoryName, tags, type, accountName: accountName ? String(accountName) : null };
+        }).filter(item => !isNaN(item.date.getTime()) && item.amount > 0);
     }, [rawData, template]);
 
     const processedData = useMemo(() => {
         if (!template) return [];
+
         // If there's an account column in the template, filter by selected accounts
         if (TEMPLATES[template].mapping.mode) {
-             return allProcessedData.filter(item => selectedAccountsToImport.includes(item.accountName));
+             return allProcessedData.filter(item => item.accountName && selectedAccountsToImport.includes(item.accountName));
         }
-        // Otherwise, just return all data (for imports into a single chosen account)
-        return allProcessedData;
-    }, [allProcessedData, selectedAccountsToImport, template]);
+        // Otherwise, if an account is selected from the dropdown, return all data
+        if (importAccountId) {
+            return allProcessedData;
+        }
+        // If no account is selected from the dropdown for a template without an account column, return no data.
+        return [];
+    }, [allProcessedData, selectedAccountsToImport, template, importAccountId]);
 
 
     const handleImport = async () => {
@@ -295,105 +364,154 @@ export function ExcelImporter() {
         const mapping = TEMPLATES[template].mapping;
     
         try {
-            // --- 1. Create new categories, tags, and accounts in a preliminary batch ---
+            // --- 1. Create new categories and tags in a preliminary batch ---
             const preliminaryBatch = writeBatch(firestore);
             const newCategoryRefs = new Map<string, string>();
-            const newTagRefs = new Map<string, string>();
-            const newAccountRefs = new Map<string, { id: string; type: Account['type'] }>();
+            const newTagRefs = new Map<string, { id: string; name: string }>();
             
             const categoriesCol = collection(firestore, `users/${user.uid}/categories`);
             const tagsCol = collection(firestore, `users/${user.uid}/tags`);
-            const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
     
             newCategories.forEach(catName => {
                 const catRef = firestoreDoc(categoriesCol);
                 preliminaryBatch.set(catRef, { id: catRef.id, name: catName, icon: 'Shapes', userId: user.uid });
-                newCategoryRefs.set(catName.toLowerCase(), catRef.id);
+                newCategoryRefs.set(catName, catRef.id);
             });
     
             newTags.forEach(tagName => {
                 const tagRef = firestoreDoc(tagsCol);
                 preliminaryBatch.set(tagRef, { id: tagRef.id, name: tagName, icon: 'Tag', userId: user.uid });
-                newTagRefs.set(tagName.toLowerCase(), tagRef.id);
+                newTagRefs.set(tagName, { id: tagRef.id, name: tagName });
             });
-    
+            await preliminaryBatch.commit();
+            
+            // --- 2. Create new accounts and calculate their initial outstanding balance ---
+            const accountCreationBatch = writeBatch(firestore);
+            const newAccountRefs = new Map<string, { id: string; type: Account['type'] }>();
+            const accountsCol = collection(firestore, `users/${user.uid}/accounts`);
+            
             Object.keys(accountMappings).forEach(accName => {
                 if (selectedAccountsToImport.includes(accName)) {
                     const mappingInfo = accountMappings[accName];
                     if (mappingInfo.action === 'create') {
                         const accRef = firestoreDoc(accountsCol);
                         const accountType = mappingInfo.type || 'bank';
-                        preliminaryBatch.set(accRef, { id: accRef.id, name: accName, icon: 'Landmark', type: accountType, balance: 0, status: 'active', userId: user.uid });
-                        newAccountRefs.set(accName.toLowerCase(), { id: accRef.id, type: accountType });
+                        const isCreditCard = accountType === 'credit_card';
+
+                        const transactionsForThisAccount = allProcessedData.filter(t => t.accountName === accName);
+                        
+                        let initialBalance = 0;
+                        let initialLimit = 0;
+                        
+                        if (isCreditCard) {
+                             const limitUpgrades = transactionsForThisAccount
+                                .filter(t => normalizeName(t.categoryName) === 'Credit Limit Upgrade' && t.type === 'income')
+                                .reduce((sum, t) => sum + t.amount, 0);
+                            const limitDowngrades = transactionsForThisAccount
+                                .filter(t => normalizeName(t.categoryName) === 'Credit Limit Downgrade' && t.type === 'expense')
+                                .reduce((sum, t) => sum + t.amount, 0);
+                            
+                            initialLimit = limitUpgrades - limitDowngrades;
+
+                            const totalPayments = transactionsForThisAccount
+                                .filter(t => t.type === 'income' && normalizeName(t.categoryName) !== 'Credit Limit Upgrade')
+                                .reduce((sum, t) => sum + t.amount, 0);
+
+                            const totalSpending = transactionsForThisAccount
+                                .filter(t => t.type === 'expense' && normalizeName(t.categoryName) !== 'Credit Limit Downgrade')
+                                .reduce((sum, t) => sum + t.amount, 0);
+                            
+                            // Available Credit = Limit + Payments - Spending
+                            initialBalance = initialLimit + totalPayments - totalSpending;
+                        } else {
+                            const totalIncome = transactionsForThisAccount.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+                            const totalExpense = transactionsForThisAccount.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+                            initialBalance = totalIncome - totalExpense;
+                        }
+
+                        const accountData: any = { 
+                            id: accRef.id, 
+                            name: accName, 
+                            icon: isCreditCard ? 'CreditCard' : 'Landmark', 
+                            type: accountType, 
+                            balance: initialBalance,
+                            status: 'active', 
+                            userId: user.uid 
+                        };
+
+                        if (isCreditCard) {
+                            accountData.limit = initialLimit;
+                        }
+
+                        accountCreationBatch.set(accRef, accountData);
+                        newAccountRefs.set(accName, { id: accRef.id, type: accountType });
                     }
                 }
             });
-            await preliminaryBatch.commit();
+            await accountCreationBatch.commit();
     
-            // --- 2. Build comprehensive maps for all items (existing + new) ---
-            const allAccounts: Account[] = [
-                ...(accounts || []),
-                ...Array.from(newAccountRefs.entries()).map(([name, { id, type }]) => ({ id, name, type, balance: 0, userId: user.uid, status: 'active', icon: 'Landmark' }))
-            ];
-            const accountMap = new Map(allAccounts.map(a => [a.name.toLowerCase(), a]));
+            // --- 3. Build comprehensive maps for all items (existing + new) ---
+            const allAccountsFromDB = (await getDocs(accountsQuery!)).docs.map(d => d.data() as Account);
+            const accountMap = new Map(allAccountsFromDB.map(a => [a.name, a]));
             
-            const allCategories: Category[] = [...(existingCategories || []), ...Array.from(newCategoryRefs.entries()).map(([name, id]) => ({ id, name, icon: 'Shapes', userId: user.uid }))];
-            const categoryMap = new Map(allCategories.map(c => [c.name.toLowerCase(), c.id]));
+            const allCategoriesFromDB = (await getDocs(categoriesQuery!)).docs.map(d => d.data() as Category);
+            const categoryMap = new Map(allCategoriesFromDB.map(c => [normalizeName(c.name), c.id]));
     
-            const allTags: Tag[] = [...(existingTags || []), ...Array.from(newTagRefs.entries()).map(([name, id]) => ({ id, name, icon: 'Tag', userId: user.uid }))];
-            const tagMap = new Map(allTags.map(t => [t.name.toLowerCase(), t.id]));
+            const allTagsFromDB = (await getDocs(tagsQuery!)).docs.map(d => d.data() as Tag);
+            const tagMap = new Map(allTagsFromDB.map(t => [normalizeName(t.name), t.id]));
             
-            const chosenAccountId = importAccountId || allAccounts.find(a => a.type === 'cash')?.id || allAccounts[0]?.id;
+            const chosenAccountId = importAccountId || allAccountsFromDB.find(a => a.type === 'cash')?.id || allAccountsFromDB[0]?.id;
     
-            // --- 3. Process transactions in chunks ---
+            // --- 4. Process transactions in chunks (without balance updates, as it's already set) ---
+            let docsImportedInLoop = 0;
             for (let i = 0; i < totalBatches; i++) {
                 const batch = writeBatch(firestore);
                 const chunk = processedData.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
-                const balanceChanges = new Map<string, number>();
     
                 chunk.forEach(item => {
                     const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
                     const expenseRef = firestoreDoc(expensesCol);
     
-                    const categoryId = categoryMap.get(String(item.categoryName)?.toLowerCase());
-                    const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName.toLowerCase())).filter(Boolean) as string[];
+                    const categoryId = categoryMap.get(item.categoryName);
+                    const tagIds = item.tags.map((tagName: string) => tagMap.get(tagName)).filter(Boolean) as string[];
     
                     let finalAccountId: string | undefined = chosenAccountId;
-                    let accountForTx: Account | undefined;
     
                     if (mapping.mode && item.accountName) {
-                        const accNameLower = String(item.accountName).toLowerCase();
-                        const mappingAction = accountMappings[item.accountName];
+                        const accName = String(item.accountName);
+                        const mappingAction = accountMappings[accName];
     
                         if (mappingAction?.action === 'map' && mappingAction.targetId) {
                             finalAccountId = mappingAction.targetId;
                         } else {
-                            finalAccountId = accountMap.get(accNameLower)?.id;
+                            finalAccountId = accountMap.get(accName)?.id;
                         }
                     }
-                    accountForTx = allAccounts.find(a => a.id === finalAccountId);
                     
-                    if (!finalAccountId || !accountForTx) return;
+                    if (!finalAccountId) return;
     
-                    batch.set(expenseRef, {
+                    const expenseDocData: any = {
                         id: expenseRef.id, userId: user.uid, type: item.type, amount: item.amount,
                         description: item.description, date: item.date, accountId: finalAccountId,
-                        categoryId: categoryId, tagIds: tagIds, createdAt: new Date(),
-                    });
+                        tagIds: tagIds, createdAt: new Date(),
+                    };
                     
-                    const change = accountForTx.type === 'credit_card'
-                        ? (item.type === 'expense' ? item.amount : -item.amount)
-                        : (item.type === 'income' ? item.amount : -item.amount);
-                    balanceChanges.set(finalAccountId, (balanceChanges.get(finalAccountId) || 0) + change);
-                });
-    
-                balanceChanges.forEach((change, accId) => {
-                    const accountRef = firestoreDoc(firestore, `users/${user.uid}/accounts`, accId);
-                    batch.update(accountRef, { balance: increment(change) });
+                    if (categoryId) {
+                        expenseDocData.categoryId = categoryId;
+                    } else {
+                         delete expenseDocData.categoryId;
+                    }
+                    
+                    batch.set(expenseRef, expenseDocData);
+                    docsImportedInLoop++;
                 });
     
                 await batch.commit();
-                setImportedCount(prev => prev + chunk.length);
+                 // Simulating smooth progress
+                for (let j = 0; j < chunk.length; j++) {
+                    await new Promise(res => setTimeout(res, 1)); // small delay
+                    setImportedCount(prev => prev + 1);
+                }
             }
     
             toast({
@@ -418,7 +536,7 @@ export function ExcelImporter() {
         setTemplate('');
         setNewCategories([]);
         setNewTags([]);
-        setNewAccounts([]);
+        setAllAccountsFromFile([]);
         setAccountMappings({});
         setImportAccountId('');
         setImportedCount(0);
@@ -433,9 +551,9 @@ export function ExcelImporter() {
     
     const handleAccountMappingChange = (accountName: string, value: string) => {
         if(value === 'create_new') {
-            setAccountMappings(prev => ({ ...prev, [accountName]: { ...prev[accountName], action: 'create' } }));
+            setAccountMappings(prev => ({ ...prev, [accountName]: { action: 'create', type: detectAccountType(accountName) } }));
         } else {
-             setAccountMappings(prev => ({ ...prev, [accountName]: { ...prev[accountName], action: 'map', targetId: value } }));
+             setAccountMappings(prev => ({ ...prev, [accountName]: { action: 'map', targetId: value } }));
         }
     }
 
@@ -457,6 +575,16 @@ export function ExcelImporter() {
                 : [...prev, accountName]
         );
     }
+    
+     const handleSelectAllAccounts = (checked: boolean | string) => {
+        if (checked) {
+            setSelectedAccountsToImport(allAccountsFromFile);
+        } else {
+            setSelectedAccountsToImport([]);
+        }
+    };
+
+    const existingAccountNamesLower = useMemo(() => new Set(accounts?.map(a => a.name.toLowerCase())), [accounts]);
 
 
     return (
@@ -487,6 +615,12 @@ export function ExcelImporter() {
                                 <Link href="/expenses">
                                     <Send className="mr-2 h-4 w-4" />
                                     Go to Transactions
+                                </Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href="/accounts">
+                                    <Wallet className="mr-2 h-4 w-4" />
+                                    Go to Accounts
                                 </Link>
                             </Button>
                         </div>
@@ -565,44 +699,55 @@ export function ExcelImporter() {
                                     ) : <p className="text-sm text-muted-foreground">No new tags found. Existing tags will be used.</p>}
                                     <p className="text-xs text-muted-foreground pt-1">New tags will be created automatically.</p>
                                 </div>
-                                {newAccounts.length > 0 && (
+                                {allAccountsFromFile.length > 0 && (
                                     <div className="rounded-lg border p-4 space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> New Accounts ({newAccounts.length})</h4>
-                                            <div className="flex gap-2">
-                                                <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport(newAccounts)}>Select All</Button>
-                                                <Button variant="link" size="sm" onClick={() => setSelectedAccountsToImport([])}>Deselect All</Button>
-                                            </div>
-                                        </div>
+                                        <h4 className="font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-yellow-500"/> Accounts in File ({allAccountsFromFile.length})</h4>
                                         <p className="text-sm text-muted-foreground">Select accounts to import and map them to existing accounts, or create new ones.</p>
-                                        {newAccounts.map(accName => (
+                                        
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="select-all-accounts"
+                                                checked={selectedAccountsToImport.length === allAccountsFromFile.length}
+                                                onCheckedChange={handleSelectAllAccounts}
+                                            />
+                                            <Label htmlFor="select-all-accounts" className="font-medium">
+                                                Select all
+                                            </Label>
+                                        </div>
+                                        
+                                        {allAccountsFromFile.map(accName => (
                                             <div key={accName} className="grid grid-cols-[auto_1fr_auto_1fr] items-center gap-x-4 gap-y-2">
                                                 <Checkbox
                                                     id={`select-acc-${accName}`}
                                                     checked={selectedAccountsToImport.includes(accName)}
                                                     onCheckedChange={() => handleAccountSelectionChange(accName)}
                                                 />
-                                                <Label htmlFor={`select-acc-${accName}`} className="truncate font-medium">{accName}</Label>
+                                                <Label htmlFor={`select-acc-${accName}`} className="truncate font-medium">
+                                                    {accName}
+                                                </Label>
                                                 <ArrowRight className="h-4 w-4 text-muted-foreground" />
                                                 <div className="flex gap-2">
                                                     <Select 
                                                         onValueChange={(value) => handleAccountMappingChange(accName, value)}
-                                                        defaultValue="create_new"
+                                                        value={accountMappings[accName]?.action === 'map' ? accountMappings[accName].targetId : 'create_new'}
                                                     >
                                                         <SelectTrigger>
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="create_new">Create New Account</SelectItem>
-                                                            {accounts?.filter(a => a.status === 'active').map(existingAcc => (
-                                                                <SelectItem key={existingAcc.id} value={existingAcc.id}>Merge with "{existingAcc.name}"</SelectItem>
+                                                            {accounts?.map(existingAcc => (
+                                                                <SelectItem key={existingAcc.id} value={existingAcc.id}>
+                                                                    {`Merge with "${existingAcc.name}"`}
+                                                                    {existingAcc.status === 'inactive' && ' (Inactive)'}
+                                                                </SelectItem>
                                                             ))}
                                                         </SelectContent>
                                                     </Select>
                                                     {accountMappings[accName]?.action === 'create' && (
                                                         <Select
                                                             onValueChange={(value) => handleAccountTypeChange(accName, value as Account['type'])}
-                                                            defaultValue="bank"
+                                                            defaultValue={accountMappings[accName]?.type}
                                                         >
                                                             <SelectTrigger>
                                                                 <SelectValue />
@@ -682,7 +827,7 @@ export function ExcelImporter() {
             <CardFooter className="flex justify-between">
                  <Button 
                     variant="outline" 
-                    onClick={() => step > 1 ? setStep(step - 1) : resetState()} 
+                    onClick={() => step > 1 ? setStep(s => (s - 1) as 1 | 2 | 3) : resetState()} 
                     disabled={isProcessing || isImporting}
                     className={cn(importComplete && "hidden")}
                 >
@@ -719,5 +864,3 @@ export function ExcelImporter() {
         </Card>
     );
 }
-
-    

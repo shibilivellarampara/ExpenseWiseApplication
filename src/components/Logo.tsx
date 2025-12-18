@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser } from '@/firebase';
@@ -10,7 +9,7 @@ export function Logo() {
   const { user } = useUser();
   const pathname = usePathname();
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
-  const isAppPage = pathname.startsWith('/dashboard') || pathname.startsWith('/expenses') || pathname.startsWith('/contributions') || pathname.startsWith('/import') || pathname.startsWith('/profile');
+  const isAppPage = !isAuthPage;
 
   // If user is logged in (and not on an auth page), link to dashboard.
   // Otherwise, link to the homepage.

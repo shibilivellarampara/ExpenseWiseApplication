@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,19 @@ import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "fir
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
+import { Checkbox } from "../ui/checkbox";
+
+type DeletableCollection = 'expenses' | 'accounts' | 'categories' | 'tags' | 'contributions' | 'debts';
+
+const collectionLabels: Record<DeletableCollection, string> = {
+    expenses: 'Transactions',
+    accounts: 'Accounts',
+    categories: 'Categories',
+    tags: 'Tags',
+    contributions: 'Shared Contributions',
+    debts: 'Debts & Dues'
+};
+
 
 export function DataManagementSettings() {
     const { user } = useUser();
@@ -42,6 +56,8 @@ export function DataManagementSettings() {
     const [isOpen, setIsOpen] = useState(false);
     const [showReauthDialog, setShowReauthDialog] = useState(false);
     const [password, setPassword] = useState('');
+    const [showSelectiveResetDialog, setShowSelectiveResetDialog] = useState(false);
+    const [collectionsToReset, setCollectionsToReset] = useState<DeletableCollection[]>([]);
 
 
     const accountsQuery = useMemoFirebase(() =>
@@ -52,40 +68,41 @@ export function DataManagementSettings() {
     const renderIcon = (iconName: string | undefined, className?: string) => {
         if (!iconName) return <LucideIcons.Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
         const IconComponent = (LucideIcons as any)[iconName];
-        return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <LucideIcons.Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
+        return IconComponent ? <IconComponent className={cn("h-4 w-4", className)} /> : <LucideIcons.Pilcrow className={cn("h-4 w-4", className)} />;
     };
 
-    const handleClearAllData = async () => {
-        if (!user || !firestore) return;
+    const handleSelectiveReset = async () => {
+        if (!user || !firestore || collectionsToReset.length === 0) return;
         setIsClearing(true);
         setProgress(0);
         try {
-            const expensesQuery = collection(firestore, `users/${user.uid}/expenses`);
-            const expensesSnapshot = await getDocs(expensesQuery);
-            const totalDocs = expensesSnapshot.size;
-            let processedDocs = 0;
-            
             const batch = writeBatch(firestore);
-            expensesSnapshot.forEach(doc => {
-                batch.delete(doc.ref);
-                processedDocs++;
-                setProgress((processedDocs / totalDocs) * 50);
-            });
             
-            if (accounts) {
-                accounts.forEach(account => {
-                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
-                    batch.update(accountRef, { balance: 0 });
+            const snapshots = await Promise.all(collectionsToReset.map(c => getDocs(collection(firestore, `users/${user.uid}/${c}`))));
+            
+            snapshots.forEach(snapshot => {
+                snapshot.forEach(doc => {
+                    batch.delete(doc.ref);
                 });
-            }
-            
+            });
+
+            const progressInterval = setInterval(() => {
+                setProgress(p => Math.min(p + 10, 90));
+            }, 200);
+
             await commitBatchNonBlocking(batch, `users/${user.uid}`);
+            
+            clearInterval(progressInterval);
             setProgress(100);
-            toast({ title: 'All data cleared', description: 'All your transactions have been deleted and balances reset.' });
+
+            toast({ title: 'Data Cleared', description: 'Selected data has been deleted.' });
+            setShowSelectiveResetDialog(false);
+            setCollectionsToReset([]);
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
             setIsClearing(false);
+            setProgress(0);
         }
     };
     
@@ -94,34 +111,42 @@ export function DataManagementSettings() {
             toast({ variant: 'destructive', title: 'Error', description: 'Please select an account to clear.' });
             return;
         }
+
         setIsClearing(true);
         setProgress(0);
+        
         try {
-            const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), where('accountId', '==', selectedAccount));
-            const expensesSnapshot = await getDocs(expensesQuery);
-            const totalDocs = expensesSnapshot.size;
-            let processedDocs = 0;
-            
             const batch = writeBatch(firestore);
+            let q;
+            let actionText = '';
+
+            if (selectedAccount === 'all') {
+                q = query(collection(firestore, `users/${user.uid}/expenses`));
+                actionText = 'All transactions have been deleted from all accounts.';
+            } else {
+                const accountToClear = accounts?.find(a => a.id === selectedAccount);
+                if (!accountToClear) throw new Error('Selected account not found.');
+                q = query(collection(firestore, `users/${user.uid}/expenses`), where('accountId', '==', selectedAccount));
+                
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, selectedAccount);
+                batch.delete(accountRef);
+                actionText = `All transactions for ${accountToClear.name} have been deleted, and the account has been removed.`;
+            }
+
+            const expensesSnapshot = await getDocs(q);
             expensesSnapshot.forEach(expenseDoc => {
                 batch.delete(expenseDoc.ref);
-                processedDocs++;
-                setProgress((processedDocs / totalDocs) * 50);
             });
-
-            const accountRef = doc(firestore, `users/${user.uid}/accounts`, selectedAccount);
-            batch.update(accountRef, { balance: 0 });
             
             await commitBatchNonBlocking(batch, `users/${user.uid}`);
-            setProgress(100);
-
-            const accountName = accounts?.find(a => a.id === selectedAccount)?.name || "the account";
-            toast({ title: 'Account Data Cleared', description: `Transactions for ${accountName} have been deleted and its balance reset.` });
+            
+            toast({ title: 'Data Cleared', description: actionText });
             setSelectedAccount(null);
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
             setIsClearing(false);
+            setProgress(0);
         }
     }
     
@@ -130,7 +155,7 @@ export function DataManagementSettings() {
         setIsDeleting(true);
         setProgress(0);
 
-        const collectionsToDelete = ['expenses', 'accounts', 'categories', 'tags', 'contributions'];
+        const collectionsToDelete = ['expenses', 'accounts', 'categories', 'tags', 'contributions', 'debts'];
         
         try {
             let docsProcessed = 0;
@@ -155,7 +180,7 @@ export function DataManagementSettings() {
             await commitBatchNonBlocking(batch, `/users/${user.uid}`);
             setProgress(100);
             
-            await deleteUser(user);
+            await deleteUser(auth.currentUser);
             
             toast({ title: "Account Closed", description: "Your account and all data have been permanently deleted." });
         } catch (error: any) {
@@ -215,50 +240,89 @@ export function DataManagementSettings() {
                 <CollapsibleContent>
                     <CardContent className="p-4 pt-0 space-y-4">
                         <div className="rounded-lg border border-destructive/50 p-4">
-                            <h4 className="font-semibold">Clear All Transaction Data</h4>
-                            <p className="text-sm text-muted-foreground mt-1 mb-3">This will permanently delete all your transactions and reset every account balance to zero.</p>
-                            {isClearing && (
-                                <div className="space-y-2 mt-2">
-                                    <Progress value={progress} />
-                                    <p className="text-xs text-muted-foreground text-center">Processing...</p>
-                                </div>
-                            )}
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="sm" disabled={isClearing}>Clear All Data</Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. All transactions will be deleted and account balances will be set to 0.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleClearAllData} className="bg-destructive hover:bg-destructive/90">
-                                            {isClearing ? <Loader2 className="animate-spin" /> : "Yes, clear everything"}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            <h4 className="font-semibold">Reset Data</h4>
+                            <p className="text-sm text-muted-foreground mt-1 mb-3">Permanently delete specific types of data from your account.</p>
+                            
+                            <Dialog open={showSelectiveResetDialog} onOpenChange={setShowSelectiveResetDialog}>
+                                <DialogTrigger asChild>
+                                    <Button variant="destructive" size="sm">Reset Data</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Select Data to Reset</DialogTitle>
+                                        <DialogDescription>
+                                            Choose which items to permanently delete. This action cannot be undone.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-2 py-4">
+                                        {Object.entries(collectionLabels).map(([key, label]) => (
+                                            <div key={key} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={`reset-${key}`}
+                                                    checked={collectionsToReset.includes(key as DeletableCollection)}
+                                                    onCheckedChange={(checked) => {
+                                                        const collectionKey = key as DeletableCollection;
+                                                        setCollectionsToReset(prev => 
+                                                            checked ? [...prev, collectionKey] : prev.filter(c => c !== collectionKey)
+                                                        );
+                                                    }}
+                                                />
+                                                <Label htmlFor={`reset-${key}`} className="font-normal">{label}</Label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {isClearing && (
+                                        <div className="space-y-2 mt-2">
+                                            <Progress value={progress} className="[&>div]:bg-destructive" />
+                                            <p className="text-xs text-muted-foreground text-center">Deleting...</p>
+                                        </div>
+                                    )}
+                                    <DialogFooter>
+                                        <Button variant="outline" onClick={() => setShowSelectiveResetDialog(false)}>Cancel</Button>
+                                         <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" disabled={collectionsToReset.length === 0 || isClearing}>
+                                                    {isClearing ? <Loader2 className="animate-spin" /> : "Confirm & Delete"}
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete all selected data. This action is irreversible.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={handleSelectiveReset} className="bg-destructive hover:bg-destructive/90">
+                                                        {isClearing ? <Loader2 className="animate-spin" /> : "Yes, delete selected data"}
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
                         </div>
 
                         <div className="rounded-lg border border-destructive/50 p-4">
-                            <h4 className="font-semibold">Clear Specific Account Data</h4>
-                            <p className="text-sm text-muted-foreground mt-1 mb-3">Select an account to delete all its associated transactions and reset its balance to zero.</p>
+                            <h4 className="font-semibold">Clear Account Data</h4>
+                            <p className="text-sm text-muted-foreground mt-1 mb-3">Select an account to clear its transactions. Or, select 'All Accounts' to clear all transactions while keeping your accounts.</p>
                              {isClearing && selectedAccount && (
                                 <div className="space-y-2 my-2">
-                                    <Progress value={progress} />
+                                    <Progress value={progress} className="[&>div]:bg-destructive" />
                                     <p className="text-xs text-muted-foreground text-center">Processing...</p>
                                 </div>
                             )}
                             <div className="flex gap-2">
                                 <Select onValueChange={setSelectedAccount} value={selectedAccount || ''}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select an account" />
+                                        <SelectValue placeholder="Select an account..." />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="all">
+                                            <div className="font-semibold">All Accounts (Transactions Only)</div>
+                                        </SelectItem>
                                         {accounts?.map(acc => (
                                             <SelectItem key={acc.id} value={acc.id}>
                                                 <div className="flex items-center">
@@ -272,19 +336,22 @@ export function DataManagementSettings() {
 
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="sm" disabled={!selectedAccount || isClearing}>Clear Account</Button>
+                                        <Button variant="destructive" size="sm" disabled={!selectedAccount || isClearing}>Clear Data</Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
-                                            <AlertDialogTitle>Clear data for "{accounts?.find(a => a.id === selectedAccount)?.name}"?</AlertDialogTitle>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This will permanently delete all transactions for this account and reset its balance. This action cannot be undone.
+                                                {selectedAccount === 'all'
+                                                    ? 'This will permanently delete ALL transactions from every account. Your accounts, categories, and tags will remain. This action cannot be undone.'
+                                                    : `This will permanently delete the account "${accounts?.find(a => a.id === selectedAccount)?.name}" and all transactions associated with it. This action cannot be undone.`
+                                                }
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                                             <AlertDialogAction onClick={handleClearAccountData} className="bg-destructive hover:bg-destructive/90">
-                                                {isClearing ? <Loader2 className="animate-spin" /> : "Yes, clear account data"}
+                                                {isClearing ? <Loader2 className="animate-spin" /> : "Yes, clear data"}
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
@@ -357,3 +424,4 @@ export function DataManagementSettings() {
         </Card>
     );
 }
+

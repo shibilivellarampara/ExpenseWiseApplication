@@ -11,22 +11,34 @@ import {
   ArrowRightLeft,
   Briefcase,
   FileText,
+  Info,
+  BarChartHorizontal,
+  HandCoins,
+  ArrowRight,
+  ArrowLeft,
 } from 'lucide-react';
 import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { useSidebar } from '../ui/sidebar';
-import packageJson from '../../../package.json';
+import pkg from '../../../package.json';
+import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { UserProfile } from '@/lib/types';
+import { doc } from 'firebase/firestore';
+const appVersion = pkg.version;
 
-const navItems = [
+
+const baseNavItems = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
-  { href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
+  { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
-  { href: '/reports', icon: <FileText className="h-5 w-5" />, label: 'Reports' },
+  { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
+  { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
+  { href: '/data', icon: <FileUp className="h-5 w-5" />, label: 'Import / Export' },
   { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
-  { href: '/import', icon: <FileUp className="h-5 w-5" />, label: 'Import' },
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
+  { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
 ];
 
 export const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { href: string, icon: React.ReactNode, label: string, isActive: boolean, disabled?: boolean, onClick?: () => void }) => {
@@ -76,7 +88,29 @@ export const NavLink = ({ href, icon, label, isActive, disabled, onClick }: { hr
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const appVersion = packageJson.version;
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, `users/${user.uid}`);
+  }, [user, firestore]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+  
+  const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
+
+  const navItems = baseNavItems.map(item => {
+    if (item.label === 'Transactions') {
+      const href = transactionGrouping === 'monthly' ? item.href : item.special_href;
+      const isActive = transactionGrouping === 'monthly' ? pathname.startsWith(item.href) : pathname.startsWith(item.special_href!);
+      return { ...item, href: href!, isActive: isActive };
+    }
+    if (item.label === 'Import / Export') {
+        const isActive = pathname.startsWith('/import') || pathname.startsWith('/reports') || pathname.startsWith('/data');
+        return { ...item, isActive: isActive, href: '/data' };
+    }
+    return { ...item, isActive: pathname.startsWith(item.href) };
+  });
 
   return (
     <aside className="w-56 flex-shrink-0 hidden md:block">
@@ -91,7 +125,7 @@ export function AppSidebar() {
                     href={item.href}
                     icon={item.icon}
                     label={item.label}
-                    isActive={pathname.startsWith(item.href)}
+                    isActive={item.isActive}
                     disabled={(item as any).disabled}
                 />
                 ))}
@@ -104,3 +138,5 @@ export function AppSidebar() {
     </aside>
   );
 }
+
+    

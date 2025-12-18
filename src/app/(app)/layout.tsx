@@ -1,4 +1,3 @@
-
 'use client';
 
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -19,9 +18,9 @@ export default function AppLayout({
         <SidebarProvider>
           <div className="flex h-screen w-full bg-background">
             <AppSidebar />
-            <div className="flex flex-1 flex-col">
+            <div className="flex flex-1 flex-col overflow-hidden">
               <AppHeader />
-              <main className="flex-1 overflow-y-auto">
+              <main id="main-content" className="flex-1 overflow-y-auto">
                 <div className="container mx-auto p-4 md:p-6 lg:p-8">
                   <Suspense fallback={<PageLoader />}>
                     {children}

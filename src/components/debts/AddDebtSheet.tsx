@@ -87,36 +87,6 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
 FloatingLabelInput.displayName = 'FloatingLabelInput';
 
 
-const FloatingLabelTextarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'textarea'> & { label: string }>(
-    ({ className, label, id, ...props }, ref) => {
-        const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
-        return (
-            <div className="relative">
-                <Textarea
-                    ref={ref}
-                    id={id}
-                    placeholder=" "
-                    className={cn("peer min-h-[90px] pt-5 text-base floating-input", className)}
-                     data-has-value={hasValue}
-                    {...props}
-                />
-                <Label
-                    htmlFor={id}
-                     className={cn(
-                        "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
-                         "top-5 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
-                         "peer-data-[has-value=true]:top-0 peer-data-[has-value=true]:-translate-y-1/2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium"
-                    )}
-                >
-                    {label}
-                </Label>
-            </div>
-        );
-    }
-);
-FloatingLabelTextarea.displayName = 'FloatingLabelTextarea';
-
-
 function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubmit: (values: DebtFormData) => void, isLoading: boolean, personName?: string }) {
      const transactionType = form.watch('type');
      
@@ -209,7 +179,7 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                           <FloatingLabelTextarea
+                           <FloatingLabelInput
                                 label="Description"
                                 id="description"
                                 {...field}
@@ -343,3 +313,4 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
         </Drawer>
     );
 }
+

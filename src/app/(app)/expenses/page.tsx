@@ -219,7 +219,7 @@ export default function ExpensesPage() {
                  isScrolled && "pb-3 shadow-sm rounded-b-lg"
             )}>
                 <div className="space-y-4">
-                     <ExpensesSummary 
+                    <ExpensesSummary 
                         expenses={filteredAndEnrichedExpenses}
                         currency={userProfile?.defaultCurrency} 
                         isLoading={isLoading} 

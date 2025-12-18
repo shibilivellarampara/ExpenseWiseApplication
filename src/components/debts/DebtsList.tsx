@@ -225,7 +225,7 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 title: "Transaction Deleted",
                 description: `The record has been removed.`,
             });
-        } catch (error: any) => {
+        } catch (error: any) {
             toast({ variant: 'destructive', title: "Error", description: error.message });
         } finally {
             setIsDeleting(false);
@@ -421,6 +421,3 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         </div>
     );
 }
-
-    
-

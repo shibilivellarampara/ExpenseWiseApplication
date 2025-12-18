@@ -161,7 +161,6 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                     name="date"
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
-                            <FormLabel>Date</FormLabel>
                             <DateTimePicker field={field} />
                             <FormMessage />
                         </FormItem>
@@ -344,4 +343,3 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
         </Drawer>
     );
 }
-

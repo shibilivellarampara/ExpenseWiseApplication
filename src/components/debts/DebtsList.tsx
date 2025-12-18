@@ -226,7 +226,7 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 description: `The record has been removed.`,
             });
         } catch (error) {
-            toast({ variant: 'destructive', title: "Error", description: (error as Error).message });
+             toast({ variant: 'destructive', title: "Error", description: (error as Error).message });
         } finally {
             setIsDeleting(false);
         }
@@ -338,12 +338,12 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     return (
         <div className="space-y-4">
             {groupedDebts.map((group) => (
-                 <Collapsible key={group.personName} className="border rounded-lg">
+                 <Collapsible key={group.personName} className="border rounded-lg bg-card">
                     <div className="flex items-center justify-between p-4">
                         <CollapsibleTrigger asChild>
                             <div className="flex-grow cursor-pointer">
                                 <h3 className="text-lg font-semibold">{group.personName}</h3>
-                                <p className={cn("font-semibold",
+                                <p className={cn("font-semibold text-lg",
                                     group.netAmount > 0 && "text-green-600",
                                     group.netAmount < 0 && "text-red-500",
                                     group.netAmount === 0 && "text-muted-foreground"
@@ -403,7 +403,3 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         </div>
     );
 }
-
-    
-
-    

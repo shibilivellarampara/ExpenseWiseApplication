@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Drawer,
@@ -219,10 +220,16 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                         </FormItem>
                     )}
                 />
-                 <DialogFooter className="pt-4 px-0">
+                 <DrawerFooter className="pt-4 px-0 flex-row justify-end gap-2 sm:hidden">
                     <DrawerClose asChild>
                         <Button type="button" variant="outline">Cancel</Button>
                     </DrawerClose>
+                    <Button type="submit" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
+                    </Button>
+                </DrawerFooter>
+                 <DialogFooter className="pt-4 hidden sm:flex">
+                    <Button type="button" variant="outline" onClick={() => form.handleCancel()}>Cancel</Button>
                     <Button type="submit" disabled={isLoading}>
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
                     </Button>
@@ -258,6 +265,8 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
             date: new Date(),
         },
     });
+
+    (form as any).handleCancel = () => onOpenChange(false);
     
     useEffect(() => {
         if(open) {

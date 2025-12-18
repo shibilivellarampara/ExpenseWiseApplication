@@ -38,9 +38,10 @@ type DebtFormData = z.infer<typeof debtSchema>;
 interface AddDebtSheetProps {
     children: React.ReactNode;
     personName?: string;
+    onOpenChange?: (open: boolean) => void;
 }
 
-export function AddDebtSheet({ children, personName }: AddDebtSheetProps) {
+export function AddDebtSheet({ children, personName, onOpenChange }: AddDebtSheetProps) {
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
@@ -51,18 +52,25 @@ export function AddDebtSheet({ children, personName }: AddDebtSheetProps) {
         resolver: zodResolver(debtSchema),
         defaultValues: {
             personName: personName || '',
-            amount: '' as any, // Fix: Initialize with empty string
+            amount: '' as any,
             type: 'lent',
             description: '',
             date: new Date(),
         },
     });
+    
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen(newOpen);
+        if (onOpenChange) {
+            onOpenChange(newOpen);
+        }
+    }
 
     useEffect(() => {
         if(open) {
             form.reset({
                 personName: personName || '',
-                amount: '' as any, // Fix: Initialize with empty string
+                amount: '' as any,
                 type: 'lent',
                 description: '',
                 date: new Date(),
@@ -91,7 +99,7 @@ export function AddDebtSheet({ children, personName }: AddDebtSheetProps) {
                 title: 'Record Added!',
                 description: 'Your debt/due has been recorded.',
             });
-            setOpen(false);
+            handleOpenChange(false);
 
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Error', description: error.message });
@@ -101,7 +109,7 @@ export function AddDebtSheet({ children, personName }: AddDebtSheetProps) {
     }
     
     return (
-        <Sheet open={open} onOpenChange={setOpen}>
+        <Sheet open={open} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>{children}</SheetTrigger>
             <SheetContent className="overflow-y-auto">
                 <SheetHeader>

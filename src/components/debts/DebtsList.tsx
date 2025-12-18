@@ -11,7 +11,7 @@ import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking,
 import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import { Handshake, Loader2, ChevronDown, User, ArrowRight, ArrowLeft, PlusCircle, Trash2, History } from "lucide-react";
+import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
 import {
@@ -88,7 +88,6 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
             });
 
             await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
-            // No toast for success, as per user feedback
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
@@ -339,10 +338,10 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     return (
         <div className="space-y-3">
             {groupedDebts.map((group) => (
-                 <Collapsible key={group.personName} className="border rounded-lg bg-card p-4">
-                    <div className="flex items-center justify-between">
-                        <CollapsibleTrigger asChild>
-                            <div className="flex-grow cursor-pointer">
+                 <Collapsible key={group.personName} className="border rounded-lg bg-card overflow-hidden">
+                     <CollapsibleTrigger asChild>
+                        <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50">
+                            <div className="flex-grow">
                                 <h3 className="text-lg font-semibold">{group.personName}</h3>
                                 <p className={cn("font-semibold text-base",
                                     group.netAmount > 0 && "text-green-600",
@@ -352,28 +351,28 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                                     {group.netAmount > 0 ? `Owes you ${currencySymbol}${group.netAmount.toFixed(2)}` : group.netAmount < 0 ? `You owe ${currencySymbol}${Math.abs(group.netAmount).toFixed(2)}` : `All Settled`}
                                 </p>
                             </div>
-                        </CollapsibleTrigger>
-                         <div className="flex items-center gap-1">
-                            <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                             <AddDebtSheet personName={group.personName}>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
-                                                <PlusCircle className="h-4 w-4" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Add transaction for {group.personName}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </AddDebtSheet>
-                            <DeletePersonButton personName={group.personName} />
+                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                <SettleUpButton group={group} currencySymbol={currencySymbol} />
+                                <AddDebtSheet personName={group.personName}>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8">
+                                                    <PlusCircle className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Add transaction for {group.personName}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </AddDebtSheet>
+                                <DeletePersonButton personName={group.personName} />
+                            </div>
                         </div>
-                    </div>
+                    </CollapsibleTrigger>
                     <CollapsibleContent>
-                        <div className="px-4 pb-4 pt-2 mt-2 border-t">
+                        <div className="px-4 pb-4 pt-2">
                             {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
                                 <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
                                     <div>

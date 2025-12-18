@@ -2,7 +2,7 @@
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
-import { AddDebtSheet } from "@/components/debts/AddDebtSheet";
+import { AddDebtDialog } from "@/components/debts/AddDebtSheet";
 import { DebtsList } from "@/components/debts/DebtsList";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
@@ -29,12 +29,12 @@ export default function DebtsPage() {
     return (
         <div className="w-full space-y-8">
             <PageHeader title="Debts & Dues" description="Track money you've borrowed or lent to others.">
-                <AddDebtSheet>
+                <AddDebtDialog>
                      <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Debt/Due
                     </Button>
-                </AddDebtSheet>
+                </AddDebtDialog>
             </PageHeader>
             
             <DebtsList debts={enrichedDebts} isLoading={isLoading} />

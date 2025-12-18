@@ -156,7 +156,7 @@ export default function ExpensesPage() {
         const handleScroll = () => {
             if (mainContentRef.current) {
                 const { scrollTop, scrollHeight, clientHeight } = mainContentRef.current;
-                setIsScrolled(scrollTop > 1);
+                setIsScrolled(scrollTop > 10); // Adjust threshold as needed
                 setShowScrollTop(scrollTop > 200);
                 setShowScrollBottom(scrollHeight - scrollTop - clientHeight > 200);
             }
@@ -214,24 +214,23 @@ export default function ExpensesPage() {
 
     return (
         <div className="w-full space-y-4 pb-24">
+            <ExpensesSummary 
+                expenses={filteredAndEnrichedExpenses}
+                currency={userProfile?.defaultCurrency} 
+                isLoading={isLoading} 
+            />
+
             <div className={cn(
-                "sticky top-0 z-20 bg-background/95 backdrop-blur-sm -mx-4 -mt-4 px-4 pt-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8",
-                 isScrolled && "pb-3 shadow-sm rounded-b-lg"
+                "sticky top-0 z-20 bg-background/95 backdrop-blur-sm -mx-4 px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 pt-2",
+                 isScrolled ? "pb-2 shadow-sm rounded-b-lg" : "pb-0"
             )}>
-                <div className="space-y-4">
-                    <ExpensesSummary 
-                        expenses={filteredAndEnrichedExpenses}
-                        currency={userProfile?.defaultCurrency} 
-                        isLoading={isLoading} 
-                    />
-                    <ExpensesFilters 
-                        filters={filters}
-                        onFiltersChange={handleFiltersChange}
-                        accounts={accounts || []}
-                        categories={categories || []}
-                        tags={tags || []}
-                    />
-                </div>
+                 <ExpensesFilters 
+                    filters={filters}
+                    onFiltersChange={handleFiltersChange}
+                    accounts={accounts || []}
+                    categories={categories || []}
+                    tags={tags || []}
+                />
             </div>
             
             <ExpensesTable 

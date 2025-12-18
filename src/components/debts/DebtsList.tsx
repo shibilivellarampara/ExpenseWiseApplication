@@ -99,8 +99,8 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
     if(group.netAmount === 0) return null;
 
     const settlementActionText = group.netAmount > 0 
-        ? `This will create a new settled record of you borrowing ${currencySymbol}${group.netAmount.toFixed(2)} from ${group.personName} and mark all other pending transactions with them as settled.`
-        : `This will create a new settled record of you lending ${currencySymbol}${Math.abs(group.netAmount).toFixed(2)} to ${group.personName} and mark all other pending transactions with them as settled.`;
+        ? `This will create a new settled record of you receiving ${currencySymbol}${group.netAmount.toFixed(2)} from ${group.personName} and mark all other pending transactions with them as settled.`
+        : `This will create a new settled record of you giving ${currencySymbol}${Math.abs(group.netAmount).toFixed(2)} to ${group.personName} and mark all other pending transactions with them as settled.`;
 
     return (
         <AlertDialog>
@@ -293,7 +293,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8"
-                                            onClick={() => setIsAddSheetOpen(true)}
+                                            onClick={(e) => { e.stopPropagation(); setIsAddSheetOpen(true); }}
                                         >
                                             <PlusCircle className="h-4 w-4" />
                                         </Button>
@@ -319,7 +319,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                             </div>
                             <div className="flex-grow">
                                 <p className="font-medium">
-                                    {record.description || (record.type === 'lent' ? 'Lent' : 'Borrowed')}
+                                    {record.description || (record.type === 'lent' ? 'Money Given' : 'Money Received')}
                                 </p>
                                 <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
                             </div>

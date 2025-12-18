@@ -156,6 +156,17 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                         </FormItem>
                     )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Date</FormLabel>
+                            <DateTimePicker field={field} />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 {!personName && (
                     <FormField
@@ -205,17 +216,6 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                                 {...field}
                                 value={field.value || ''}
                             />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                    <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                            <FormLabel>Date</FormLabel>
-                            <DateTimePicker field={field} />
                             <FormMessage />
                         </FormItem>
                     )}

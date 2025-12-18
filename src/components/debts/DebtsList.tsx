@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -292,6 +293,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8"
+                                            onClick={() => setIsAddSheetOpen(true)}
                                         >
                                             <PlusCircle className="h-4 w-4" />
                                         </Button>

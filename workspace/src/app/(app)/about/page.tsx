@@ -5,10 +5,29 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.6.0";
+const appVersion = "1.6.2";
 
 
 const changelog = [
+    {
+        version: "1.6.2",
+        date: "2025-12-18",
+        changes: [
+            { type: 'UI', description: "Adjusted transaction filter controls to prevent wrapping on mobile for a cleaner single-line layout." },
+            { type: 'UI', description: "Increased the size and added a border to the 'Clear Filters' button for better visibility and easier tapping on mobile." },
+            { type: 'Fix', description: "Corrected an issue where the 'Scroll to Top/Bottom' buttons were not visible on mobile devices in the transaction list." },
+        ]
+    },
+    {
+        version: "1.6.1",
+        date: "2025-12-17",
+        changes: [
+            { type: 'UI', description: "Made the 'Add Debt' form consistent with the transaction form by using floating labels and moving the date field to the top." },
+            { type: 'UI', description: "Clarified labels in the debt form to 'You are giving money'/'You are receiving money' and in the list to 'Given'/'Received' for better clarity." },
+            { type: 'Feature', description: "Consolidated transaction list and form settings into a single, convenient 'Transaction Settings' section in the user profile menu." },
+            { type: 'UI', description: "Disabled text selection on mobile devices to provide a cleaner, more app-like feel." },
+        ]
+    },
     {
         version: "1.6.0",
         date: "2025-12-11",

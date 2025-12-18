@@ -37,14 +37,14 @@ const debtSchema = z.object({
 
 type DebtFormData = z.infer<typeof debtSchema>;
 
-interface AddDebtSheetProps {
+interface AddDebtDialogProps {
     children: React.ReactNode;
     personName?: string;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
 }
 
-export function AddDebtSheet({ children, personName, open, onOpenChange }: AddDebtSheetProps) {
+export function AddDebtDialog({ children, personName, open, onOpenChange }: AddDebtDialogProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();

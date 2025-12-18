@@ -108,7 +108,7 @@ export function AddDebtDialog({ children, personName, open, onOpenChange }: AddD
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="font-headline">Add Debt or Due</DialogTitle>
                     <DialogDescription>
@@ -205,7 +205,7 @@ export function AddDebtDialog({ children, personName, open, onOpenChange }: AddD
                         />
                          <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => onOpenChange?.(false)}>Cancel</Button>
-                            <Button type="submit" className="w-full" disabled={isLoading}>
+                            <Button type="submit" disabled={isLoading}>
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
                             </Button>
                         </DialogFooter>

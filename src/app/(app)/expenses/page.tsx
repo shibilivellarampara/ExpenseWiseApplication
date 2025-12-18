@@ -275,12 +275,6 @@ export default function ExpensesPage() {
             </div>
 
              <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">
-                 {showScrollTop && (
-                    <Button onClick={scrollToTop} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
-                        <ArrowUp className="h-6 w-6" />
-                        <span className="sr-only">Scroll to top</span>
-                    </Button>
-                )}
                 <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
                         <Plus className="h-6 w-6" />
@@ -293,12 +287,6 @@ export default function ExpensesPage() {
                         <span className="sr-only">Add Expense</span>
                     </Button>
                 </AddExpenseDialog>
-                 {showScrollBottom && (
-                    <Button onClick={scrollToBottom} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
-                        <ArrowDown className="h-6 w-6" />
-                        <span className="sr-only">Scroll to bottom</span>
-                    </Button>
-                )}
             </div>
         </div>
     );

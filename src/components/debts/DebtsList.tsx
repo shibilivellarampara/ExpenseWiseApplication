@@ -50,7 +50,8 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
     const [isSettling, setIsSettling] = useState(false);
     const { toast } = useToast();
 
-    const handleSettle = async () => {
+    const handleSettle = async (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent collapsible from toggling
         if (!user || !firestore || group.netAmount === 0) return;
         setIsSettling(true);
 
@@ -86,7 +87,7 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
             });
 
             await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
-            toast({ title: "Balance Settled", description: `The balance with ${group.personName} is now cleared.` });
+            // No toast for success, as per user feedback
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
@@ -104,7 +105,7 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
         <AlertDialog>
             <TooltipProvider>
                 <Tooltip>
-                    <TooltipTrigger asChild>
+                    <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <AlertDialogTrigger asChild>
                             <Button size="icon" variant="outline" className="h-8 w-8">
                                 <Handshake className="h-4 w-4" />
@@ -276,28 +277,27 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         <div className="space-y-4">
             {groupedDebts.map(group => (
                 <Card key={group.personName}>
-                    <Collapsible defaultOpen={true}>
-                         <div className="flex items-center p-4">
-                             <h3 className="text-lg font-semibold flex items-center gap-2 flex-1">
-                                <User className="h-5 w-5" />
-                                {group.personName}
-                            </h3>
-                             <div className="text-sm text-right">
-                                {group.netAmount > 0 ? (
-                                    <span className="text-green-600 font-medium">Owes you {currencySymbol}{group.netAmount.toFixed(2)}</span>
-                                ) : group.netAmount < 0 ? (
-                                    <span className="text-red-500 font-medium">You owe {currencySymbol}{Math.abs(group.netAmount).toFixed(2)}</span>
-                                ) : (
-                                    <span className="text-muted-foreground">All settled up</span>
-                                )}
+                    <Collapsible>
+                         <CollapsibleTrigger asChild>
+                            <div className="flex items-center p-4 cursor-pointer hover:bg-muted/50 rounded-t-lg">
+                                <h3 className="text-lg font-semibold flex items-center gap-2 flex-1">
+                                    <User className="h-5 w-5" />
+                                    {group.personName}
+                                </h3>
+                                <div className="text-sm text-right">
+                                    {group.netAmount > 0 ? (
+                                        <span className="text-green-600 font-medium">Owes you {currencySymbol}{group.netAmount.toFixed(2)}</span>
+                                    ) : group.netAmount < 0 ? (
+                                        <span className="text-red-500 font-medium">You owe {currencySymbol}{Math.abs(group.netAmount).toFixed(2)}</span>
+                                    ) : (
+                                        <span className="text-muted-foreground">All settled up</span>
+                                    )}
+                                </div>
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <SettleUpButton group={group} currencySymbol={currencySymbol} />
+                                </div>
                             </div>
-                            <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                             <CollapsibleTrigger asChild>
-                                 <Button variant="ghost" size="icon" className="ml-1 h-8 w-8">
-                                    <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
-                                 </Button>
-                            </CollapsibleTrigger>
-                        </div>
+                        </CollapsibleTrigger>
                         <CollapsibleContent>
                             <div className="border-t">
                                 {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
@@ -315,7 +315,6 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                                              <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
                                                  {currencySymbol}{record.amount.toFixed(2)}
                                              </p>
-                                             <Badge variant={record.status === 'pending' ? 'destructive' : 'secondary'}>{record.status}</Badge>
                                         </div>
                                     </div>
                                 ))}

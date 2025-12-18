@@ -27,6 +27,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Separator } from "../ui/separator";
 import { AddDebtSheet } from "./AddDebtSheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface DebtsListProps {
     debts: EnrichedDebt[];
@@ -101,12 +102,20 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
 
     return (
         <AlertDialog>
-            <AlertDialogTrigger asChild>
-                 <Button size="sm" variant="outline" className="h-8">
-                    <Handshake className="mr-2 h-4 w-4" />
-                    Settle Up
-                </Button>
-            </AlertDialogTrigger>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <AlertDialogTrigger asChild>
+                            <Button size="icon" variant="outline" className="h-8 w-8">
+                                <Handshake className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Settle Up</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Settle balance with {group.personName}?</AlertDialogTitle>

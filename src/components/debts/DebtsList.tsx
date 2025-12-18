@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +41,7 @@ interface GroupedDebt {
     borrowedTotal: number;
     pendingCount: number;
     records: EnrichedDebt[];
+    lastTransactionDate: Date;
 }
 
 
@@ -226,7 +226,7 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 description: `The record has been removed.`,
             });
         } catch (error: any) {
-             toast({ variant: 'destructive', title: "Error", description: error.message });
+            toast({ variant: 'destructive', title: "Error", description: error.message });
         } finally {
             setIsDeleting(false);
         }
@@ -285,7 +285,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <SettleUpButton group={group} currencySymbol={currencySymbol} />
                         <AddDebtSheet personName={group.personName} open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
-                            <TooltipProvider>
+                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button
@@ -329,6 +329,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                                 <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
                                     {currencySymbol}{record.amount.toFixed(2)}
                                 </p>
+                                {record.status === 'settled' && <Badge variant="secondary" className="mt-1">Settled</Badge>}
                             </div>
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <DeleteTransactionButton debt={record} currencySymbol={currencySymbol} />
@@ -363,11 +364,16 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                     borrowedTotal: 0,
                     pendingCount: 0,
                     records: [],
+                    lastTransactionDate: new Date(0),
                 };
             }
 
             const group = groups[personName];
             group.records.push(debt);
+            
+            if (debt.date > group.lastTransactionDate) {
+                group.lastTransactionDate = debt.date;
+            }
             
             if (debt.status === 'pending') {
                 if (debt.type === 'lent') {
@@ -385,7 +391,7 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
             }
         });
         
-        return Object.values(groups).sort((a, b) => Math.abs(b.netAmount) - Math.abs(a.netAmount));
+        return Object.values(groups).sort((a, b) => b.lastTransactionDate.getTime() - a.lastTransactionDate.getTime());
     }, [debts]);
 
     if (isLoading) {
@@ -418,3 +424,5 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         </div>
     );
 }
+
+    

@@ -149,3 +149,9 @@ export type EnrichedDebt = Omit<Debt, 'date' | 'settledAt'> & {
   date: Date;
   settledAt?: Date;
 };
+
+
+export type EnrichedDebtWithBalance = EnrichedDebt & {
+  runningBalance?: number;
+};
+

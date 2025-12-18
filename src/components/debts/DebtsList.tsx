@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { EnrichedDebt, UserProfile } from "@/lib/types";
+import { EnrichedDebt, UserProfile, EnrichedDebtWithBalance } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Separator } from "../ui/separator";
-import { AddDebtSheet } from "./AddDebtSheet";
+import { AddDebtDialog } from "./AddDebtSheet";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 
 interface DebtsListProps {
@@ -40,7 +40,7 @@ interface GroupedDebt {
     lentTotal: number;
     borrowedTotal: number;
     pendingCount: number;
-    records: EnrichedDebt[];
+    records: EnrichedDebtWithBalance[];
     lastTransactionDate: Date;
 }
 
@@ -225,7 +225,7 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 title: "Transaction Deleted",
                 description: `The record has been removed.`,
             });
-        } catch (error) {
+        } catch (error: any) {
             toast({ variant: 'destructive', title: "Error", description: error.message });
         } finally {
             setIsDeleting(false);
@@ -284,7 +284,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                     </div>
                     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                         <AddDebtSheet personName={group.personName} open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
+                         <AddDebtDialog personName={group.personName} open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
                              <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -292,10 +292,6 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setIsAddSheetOpen(true);
-                                            }}
                                         >
                                             <PlusCircle className="h-4 w-4" />
                                         </Button>
@@ -305,7 +301,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                        </AddDebtSheet>
+                        </AddDebtDialog>
                         <DeletePersonButton personName={group.personName} />
                     </div>
                 </div>
@@ -329,6 +325,9 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                                 <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
                                     {currencySymbol}{record.amount.toFixed(2)}
                                 </p>
+                                {typeof record.runningBalance === 'number' && (
+                                    <p className="text-xs text-muted-foreground">Bal: {currencySymbol}{record.runningBalance.toFixed(2)}</p>
+                                )}
                             </div>
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <DeleteTransactionButton debt={record} currencySymbol={currencySymbol} />
@@ -351,45 +350,61 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     const groupedDebts = useMemo((): GroupedDebt[] => {
         if (!debts) return [];
 
-        const groups: { [key: string]: GroupedDebt } = {};
+        const groups: { [key: string]: Omit<GroupedDebt, 'records' | 'netAmount'> & { records: EnrichedDebt[], netAmount: number } } = {};
 
         debts.forEach(debt => {
             const personName = debt.personName;
             if (!groups[personName]) {
                 groups[personName] = {
                     personName,
-                    netAmount: 0,
                     lentTotal: 0,
                     borrowedTotal: 0,
                     pendingCount: 0,
                     records: [],
                     lastTransactionDate: new Date(0),
+                    netAmount: 0
                 };
             }
 
             const group = groups[personName];
             group.records.push(debt);
-            
-            if (debt.date > group.lastTransactionDate) {
-                group.lastTransactionDate = debt.date;
-            }
-            
-            if (debt.status === 'pending') {
-                if (debt.type === 'lent') {
-                    group.netAmount += debt.amount;
-                } else {
-                    group.netAmount -= debt.amount;
-                }
-                group.pendingCount++;
-            }
-
-            if (debt.type === 'lent') {
-                group.lentTotal += debt.amount;
-            } else {
-                group.borrowedTotal += debt.amount;
-            }
         });
         
+        // Calculate running balance and other stats for each group
+        Object.values(groups).forEach(group => {
+            let runningBalance = 0;
+            const recordsWithBalance = group.records
+                .sort((a, b) => a.date.getTime() - b.date.getTime())
+                .map(record => {
+                    const amountChange = record.type === 'lent' ? record.amount : -record.amount;
+                    runningBalance += amountChange;
+                    return { ...record, runningBalance };
+                });
+
+            group.records = recordsWithBalance;
+            
+            group.records.forEach(debt => {
+                 if (debt.date > group.lastTransactionDate) {
+                    group.lastTransactionDate = debt.date;
+                }
+                
+                if (debt.status === 'pending') {
+                    if (debt.type === 'lent') {
+                        group.netAmount += debt.amount;
+                    } else {
+                        group.netAmount -= debt.amount;
+                    }
+                    group.pendingCount++;
+                }
+
+                if (debt.type === 'lent') {
+                    group.lentTotal += debt.amount;
+                } else {
+                    group.borrowedTotal += debt.amount;
+                }
+            });
+        });
+
         return Object.values(groups).sort((a, b) => b.lastTransactionDate.getTime() - a.lastTransactionDate.getTime());
     }, [debts]);
 
@@ -423,6 +438,3 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         </div>
     );
 }
-
-    
-    

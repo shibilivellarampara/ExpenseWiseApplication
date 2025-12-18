@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -319,7 +318,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                             </div>
                             <div className="flex-grow">
                                 <p className="font-medium">
-                                    {record.description || (record.type === 'lent' ? 'Money Given' : 'Money Received')}
+                                    {record.description || (record.type === 'lent' ? 'Given' : 'Received')}
                                 </p>
                                 <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
                             </div>

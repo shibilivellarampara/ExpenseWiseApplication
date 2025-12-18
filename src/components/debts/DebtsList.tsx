@@ -27,7 +27,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Separator } from "../ui/separator";
 import { AddDebtSheet } from "./AddDebtSheet";
-import { Tooltip, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 
 interface DebtsListProps {
     debts: EnrichedDebt[];
@@ -401,3 +401,5 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         </div>
     );
 }
+
+    

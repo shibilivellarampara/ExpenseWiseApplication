@@ -301,15 +301,15 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
     }, [showBillingCycleOptions, dateRangePreset, onFiltersChange, filters]);
 
     return (
-        <div className="flex flex-wrap gap-2 items-center">
-            <div className="relative flex-grow md:flex-grow-0">
+        <div className="flex flex-nowrap gap-2 items-center">
+            <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                     type="search"
                     placeholder="Search..."
                     value={filters.searchQuery}
                     onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
-                    className="pl-8 pr-8 sm:w-[200px] md:w-[250px] lg:w-[300px]"
+                    className="pl-8 pr-8 w-full"
                 />
                  {filters.searchQuery && (
                     <Button
@@ -325,7 +325,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
             
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
-                     <Button variant="outline" className="relative">
+                     <Button variant="outline" className="relative shrink-0">
                         <ListFilter className="mr-2 h-4 w-4" />
                         Filters
                         {activeFilterCount > 0 && 
@@ -364,7 +364,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                         return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, tags: filters.tags.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
                     })}
                 </div>
-                 <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground h-auto p-1 md:hidden">
+                 <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground h-auto p-1 shrink-0">
                     <FilterX className="h-4 w-4" />
                     <span className="sr-only">Clear all filters</span>
                 </Button>

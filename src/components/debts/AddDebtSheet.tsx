@@ -8,7 +8,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
@@ -26,7 +25,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { Input } from '../ui/input';
+import { Input, InputProps } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -38,6 +37,7 @@ import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 import { DateTimePicker } from '../DateTimePicker';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import React from 'react';
 
 const debtSchema = z.object({
   personName: z.string().min(1, 'Person\'s name is required.'),
@@ -56,7 +56,69 @@ interface AddDebtDialogProps {
     onOpenChange?: (open: boolean) => void;
 }
 
-function DebtForm({ form, onSubmit, isLoading }: { form: any, onSubmit: (values: DebtFormData) => void, isLoading: boolean }) {
+const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string }>(
+    ({ className, label, id, ...props }, ref) => {
+        const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
+        return (
+            <div className="relative">
+                <Input
+                    ref={ref}
+                    id={id}
+                    placeholder=" "
+                    className={cn("peer h-14 pt-5 text-base floating-input", className)}
+                    data-has-value={hasValue}
+                    {...props}
+                />
+                <Label
+                    htmlFor={id}
+                    className={cn(
+                        "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
+                         "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
+                         "peer-data-[has-value=true]:top-0 peer-data-[has-value=true]:-translate-y-1/2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium"
+                    )}
+                >
+                    {label}
+                </Label>
+            </div>
+        );
+    }
+);
+FloatingLabelInput.displayName = 'FloatingLabelInput';
+
+
+const FloatingLabelTextarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'textarea'> & { label: string }>(
+    ({ className, label, id, ...props }, ref) => {
+        const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
+        return (
+            <div className="relative">
+                <Textarea
+                    ref={ref}
+                    id={id}
+                    placeholder=" "
+                    className={cn("peer min-h-[90px] pt-5 text-base floating-input", className)}
+                     data-has-value={hasValue}
+                    {...props}
+                />
+                <Label
+                    htmlFor={id}
+                     className={cn(
+                        "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
+                         "top-5 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
+                         "peer-data-[has-value=true]:top-0 peer-data-[has-value=true]:-translate-y-1/2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium"
+                    )}
+                >
+                    {label}
+                </Label>
+            </div>
+        );
+    }
+);
+FloatingLabelTextarea.displayName = 'FloatingLabelTextarea';
+
+
+function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubmit: (values: DebtFormData) => void, isLoading: boolean, personName?: string }) {
+     const transactionType = form.watch('type');
+     
      return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-2">
@@ -94,30 +156,39 @@ function DebtForm({ form, onSubmit, isLoading }: { form: any, onSubmit: (values:
                     )}
                 />
 
-                {!form.getValues('personName') && (
+                {!personName && (
                     <FormField
                         control={form.control}
                         name="personName"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Person's Name</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="e.g., John Doe" {...field} />
-                                </FormControl>
+                                <FloatingLabelInput
+                                    label="Person's Name *"
+                                    id="personName"
+                                    {...field}
+                                    value={field.value || ''}
+                                />
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
                 )}
-                    <FormField
+                <FormField
                     control={form.control}
                     name="amount"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Amount</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="0.00" {...field} value={field.value || ''} />
-                            </FormControl>
+                             <FloatingLabelInput
+                                label="Amount *"
+                                id="amount"
+                                type="number"
+                                {...field}
+                                value={field.value ?? ''}
+                                className={cn(
+                                    transactionType === 'lent' && 'text-green-600',
+                                    transactionType === 'borrowed' && 'text-red-500'
+                                )}
+                            />
                             <FormMessage />
                         </FormItem>
                     )}
@@ -127,10 +198,12 @@ function DebtForm({ form, onSubmit, isLoading }: { form: any, onSubmit: (values:
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                                <Textarea placeholder="e.g., For lunch" {...field} />
-                            </FormControl>
+                           <FloatingLabelTextarea
+                                label="Description"
+                                id="description"
+                                {...field}
+                                value={field.value || ''}
+                            />
                             <FormMessage />
                         </FormItem>
                     )}
@@ -159,12 +232,21 @@ function DebtForm({ form, onSubmit, isLoading }: { form: any, onSubmit: (values:
      );
 }
 
-export function AddDebtDialog({ children, personName, open, onOpenChange }: AddDebtDialogProps) {
+export function AddDebtDialog({ children, personName, open: externalOpen, onOpenChange: externalOnOpenChange }: AddDebtDialogProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
     const isDesktop = useMediaQuery("(min-width: 768px)");
+    
+    // Internal state for uncontrolled component
+    const [internalOpen, setInternalOpen] = useState(false);
+
+    // Determine if the component is controlled or uncontrolled
+    const isControlled = externalOpen !== undefined && externalOnOpenChange !== undefined;
+    const open = isControlled ? externalOpen : internalOpen;
+    const onOpenChange = isControlled ? externalOnOpenChange : setInternalOpen;
+
 
     const form = useForm<DebtFormData>({
         resolver: zodResolver(debtSchema),
@@ -210,9 +292,7 @@ export function AddDebtDialog({ children, personName, open, onOpenChange }: AddD
                 title: 'Record Added!',
                 description: 'Your debt/due has been recorded.',
             });
-            if (onOpenChange) {
-                onOpenChange(false);
-            }
+            onOpenChange(false);
 
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Error', description: error.message });
@@ -227,12 +307,12 @@ export function AddDebtDialog({ children, personName, open, onOpenChange }: AddD
                 <DialogTrigger asChild>{children}</DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle className="font-headline">Add Debt or Due</DialogTitle>
+                        <DialogTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt or Due'}</DialogTitle>
                         <DialogDescription>
                             Track money you've lent to others or borrowed from them.
                         </DialogDescription>
                     </DialogHeader>
-                    <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} />
+                    <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} personName={personName} />
                 </DialogContent>
             </Dialog>
         );
@@ -243,15 +323,16 @@ export function AddDebtDialog({ children, personName, open, onOpenChange }: AddD
             <DrawerTrigger asChild>{children}</DrawerTrigger>
             <DrawerContent>
                  <DrawerHeader className="text-left">
-                    <DrawerTitle className="font-headline">Add Debt or Due</DrawerTitle>
+                    <DrawerTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt or Due'}</DrawerTitle>
                     <DrawerDescription>
                         Track money you've lent to others or borrowed from them.
                     </DrawerDescription>
                 </DrawerHeader>
                  <div className="px-4">
-                    <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} />
+                    <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} personName={personName}/>
                 </div>
             </DrawerContent>
         </Drawer>
     );
 }
+

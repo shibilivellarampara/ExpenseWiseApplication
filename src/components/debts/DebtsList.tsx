@@ -225,8 +225,8 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 title: "Transaction Deleted",
                 description: `The record has been removed.`,
             });
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: "Error", description: error.message });
+        } catch (error) {
+            toast({ variant: 'destructive', title: "Error", description: (error as Error).message });
         } finally {
             setIsDeleting(false);
         }
@@ -338,12 +338,12 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     return (
         <div className="space-y-4">
             {groupedDebts.map((group) => (
-                <Collapsible key={group.personName} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                         <CollapsibleTrigger asChild>
+                 <Collapsible key={group.personName} className="border rounded-lg">
+                    <div className="flex items-center justify-between p-4">
+                        <CollapsibleTrigger asChild>
                             <div className="flex-grow cursor-pointer">
                                 <h3 className="text-lg font-semibold">{group.personName}</h3>
-                                <p className={cn("font-bold",
+                                <p className={cn("font-semibold",
                                     group.netAmount > 0 && "text-green-600",
                                     group.netAmount < 0 && "text-red-500",
                                     group.netAmount === 0 && "text-muted-foreground"
@@ -354,7 +354,7 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                         </CollapsibleTrigger>
                          <div className="flex items-center gap-1">
                             <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                            <AddDebtSheet personName={group.personName}>
+                             <AddDebtSheet personName={group.personName}>
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
@@ -362,7 +362,9 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                                                 <PlusCircle className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent>Add transaction for {group.personName}</TooltipContent>
+                                        <TooltipContent>
+                                            <p>Add transaction for {group.personName}</p>
+                                        </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             </AddDebtSheet>
@@ -370,9 +372,9 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                         </div>
                     </div>
                     <CollapsibleContent>
-                        <div className="mt-4 pt-4 border-t">
+                        <div className="px-4 pb-4">
                             {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
-                                <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
+                                <div key={record.id} className="flex items-center gap-4 py-3 border-t last:border-b-0 text-sm group">
                                     <div>
                                         {record.type === 'lent' ? 
                                             <ArrowRight className="h-5 w-5 text-green-500" /> : 
@@ -401,5 +403,7 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         </div>
     );
 }
+
+    
 
     

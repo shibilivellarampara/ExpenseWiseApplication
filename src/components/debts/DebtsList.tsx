@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { EnrichedDebt, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from "@/firebase";
-import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
+import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs, addDoc } from 'firebase/firestore';
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
 import { Handshake, Loader2, ChevronDown, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from "lucide-react";
@@ -44,44 +43,81 @@ interface GroupedDebt {
 }
 
 
-function SettleDebtButton({ debt }: { debt: EnrichedDebt }) {
+function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currencySymbol: string }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const [isSettling, setIsSettling] = useState(false);
     const { toast } = useToast();
 
     const handleSettle = async () => {
-        if (!user || !firestore) return;
+        if (!user || !firestore || group.netAmount === 0) return;
         setIsSettling(true);
-        const debtRef = doc(firestore, `users/${user.uid}/debts`, debt.id);
-        
+
         try {
-            await setDocumentNonBlocking(debtRef, { status: 'settled', settledAt: serverTimestamp() }, { merge: true });
+            const batch = writeBatch(firestore);
+
+            // Mark all pending records for this person as settled
+            group.records.forEach(debt => {
+                if (debt.status === 'pending') {
+                    const debtRef = doc(firestore, `users/${user.uid}/debts`, debt.id);
+                    batch.update(debtRef, { status: 'settled', settledAt: serverTimestamp() });
+                }
+            });
+
+            // Create the balancing transaction
+            const settlementAmount = Math.abs(group.netAmount);
+            const settlementType = group.netAmount > 0 ? 'borrowed' : 'lent'; // If they owe you, it's like you are "borrowing" the settlement from them.
+
+            const debtsCol = collection(firestore, `users/${user.uid}/debts`);
+            const newDebtRef = doc(debtsCol);
+
+            batch.set(newDebtRef, {
+                id: newDebtRef.id,
+                userId: user.uid,
+                personName: group.personName,
+                amount: settlementAmount,
+                type: settlementType,
+                description: 'Settlement',
+                date: new Date(),
+                status: 'settled',
+                settledAt: serverTimestamp(),
+                createdAt: serverTimestamp(),
+            });
+
+            await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
+            toast({ title: "Balance Settled", description: `The balance with ${group.personName} is now cleared.` });
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
             setIsSettling(false);
         }
-    }
+    };
+    
+    if(group.netAmount === 0) return null;
+
+    const settlementActionText = group.netAmount > 0 
+        ? `This will create a new settled record of you borrowing ${currencySymbol}${group.netAmount.toFixed(2)} from ${group.personName} and mark all other pending transactions with them as settled.`
+        : `This will create a new settled record of you lending ${currencySymbol}${Math.abs(group.netAmount).toFixed(2)} to ${group.personName} and mark all other pending transactions with them as settled.`;
 
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" disabled={isSettling}>
-                    {isSettling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Handshake className="h-4 w-4" />}
+                 <Button size="sm" variant="outline" className="h-8">
+                    <Handshake className="mr-2 h-4 w-4" />
+                    Settle Up
                 </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Settle balance with {group.personName}?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will mark this debt as settled. This action can be undone later.
+                       {settlementActionText} This will clear their outstanding balance.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={handleSettle}>
-                         {isSettling ? <Loader2 className="animate-spin" /> : "Yes, settle it"}
+                         {isSettling ? <Loader2 className="animate-spin" /> : "Yes, Settle Up"}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -231,32 +267,27 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         <div className="space-y-4">
             {groupedDebts.map(group => (
                 <Card key={group.personName}>
-                    <Collapsible>
+                    <Collapsible defaultOpen={true}>
                          <div className="flex items-center p-4">
-                            <CollapsibleTrigger asChild>
-                                 <div className="flex-1 flex items-center gap-4 cursor-pointer hover:bg-muted/50 rounded-md -m-2 p-2">
-                                     <h3 className="text-lg font-semibold flex items-center gap-2">
-                                        <User className="h-5 w-5" />
-                                        {group.personName}
-                                    </h3>
-                                    <div className="text-sm">
-                                        {group.netAmount > 0 ? (
-                                            <span className="text-green-600">Owes you {currencySymbol}{group.netAmount.toFixed(2)}</span>
-                                        ) : group.netAmount < 0 ? (
-                                            <span className="text-red-500">You owe {currencySymbol}{Math.abs(group.netAmount).toFixed(2)}</span>
-                                        ) : (
-                                            <span className="text-muted-foreground">All settled up</span>
-                                        )}
-                                    </div>
-                                    <ChevronDown className="h-5 w-5 ml-auto transition-transform [&[data-state=open]]:-rotate-180" />
-                                </div>
+                             <h3 className="text-lg font-semibold flex items-center gap-2 flex-1">
+                                <User className="h-5 w-5" />
+                                {group.personName}
+                            </h3>
+                             <div className="text-sm text-right">
+                                {group.netAmount > 0 ? (
+                                    <span className="text-green-600 font-medium">Owes you {currencySymbol}{group.netAmount.toFixed(2)}</span>
+                                ) : group.netAmount < 0 ? (
+                                    <span className="text-red-500 font-medium">You owe {currencySymbol}{Math.abs(group.netAmount).toFixed(2)}</span>
+                                ) : (
+                                    <span className="text-muted-foreground">All settled up</span>
+                                )}
+                            </div>
+                            <SettleUpButton group={group} currencySymbol={currencySymbol} />
+                             <CollapsibleTrigger asChild>
+                                 <Button variant="ghost" size="icon" className="ml-1 h-8 w-8">
+                                    <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
+                                 </Button>
                             </CollapsibleTrigger>
-                             <AddDebtSheet personName={group.personName}>
-                                <Button variant="ghost" size="icon" className="ml-2 h-8 w-8">
-                                    <PlusCircle className="h-5 w-5" />
-                                </Button>
-                            </AddDebtSheet>
-                            <DeletePersonButton personName={group.personName} />
                         </div>
                         <CollapsibleContent>
                             <div className="border-t">
@@ -277,9 +308,6 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
                                              </p>
                                              <Badge variant={record.status === 'pending' ? 'destructive' : 'secondary'}>{record.status}</Badge>
                                         </div>
-                                        <div className="w-8">
-                                            {record.status === 'pending' && <SettleDebtButton debt={record} />}
-                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -290,3 +318,4 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         </div>
     );
 }
+    

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useForm, SubmitHandler } from 'react-hook-form';
@@ -61,6 +60,21 @@ export function LoginForm() {
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+
+  // Set initial login method from localStorage
+    useEffect(() => {
+        const lastUsedMethod = localStorage.getItem('loginMethod') as 'email' | 'phone';
+        if (lastUsedMethod) {
+            setLoginMethod(lastUsedMethod);
+        }
+    }, []);
+
+    const handleLoginMethodChange = (value: string) => {
+        const method = value as 'email' | 'phone';
+        setLoginMethod(method);
+        localStorage.setItem('loginMethod', method);
+        form.reset();
+    }
 
 
   const formResolver = useCallback((data: any, context: any, options: any) => {
@@ -222,10 +236,7 @@ export function LoginForm() {
   return (
     <div className="space-y-4">
       <div ref={recaptchaContainerRef}></div>
-      <Tabs defaultValue="email" className="w-full" onValueChange={(value) => {
-          setLoginMethod(value as 'email' | 'phone');
-          form.reset();
-        }}>
+      <Tabs defaultValue="email" value={loginMethod} className="w-full" onValueChange={handleLoginMethodChange}>
         <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="phone">Phone</TabsTrigger>
@@ -259,14 +270,7 @@ export function LoginForm() {
                         <FormItem>
                             <div className="flex justify-between items-center">
                                 <FormLabel>Password</FormLabel>
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    className="h-auto p-0 text-sm"
-                                    onClick={() => setShowForgotPassword(true)}
-                                >
-                                    Forgot Password?
-                                </Button>
+                                
                             </div>
                                 <FormControl>
                                 <div className="relative">
@@ -286,6 +290,16 @@ export function LoginForm() {
                                     </Button>
                                 </div>
                             </FormControl>
+                            <div className="text-right">
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    className="h-auto p-0 text-sm text-muted-foreground"
+                                    onClick={() => setShowForgotPassword(true)}
+                                >
+                                    Forgot Password?
+                                </Button>
+                            </div>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -319,7 +333,7 @@ export function LoginForm() {
                     />
                 </TabsContent>
                 
-                <Button type="submit" className="w-full" disabled={isLoading || !auth}>
+                <Button type="submit" className="w-full" disabled={isLoading || !auth || !form.formState.isValid}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {loginMethod === 'email' ? 'Sign In' : 'Send Verification Code'}
                 </Button>
@@ -336,9 +350,9 @@ export function LoginForm() {
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2">
-       <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || !auth}>
+       <Button variant="outline" className="w-full h-9" onClick={handleGoogleSignIn} disabled={isGoogleLoading || !auth}>
           {isGoogleLoading || isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 74.8C307.7 99.8 280.7 86 248 86c-84.3 0-152.3 67.8-152.3 151.4s68 151.4 152.3 151.4c99.2 0 129.1-81.5 133.7-118.8H248v-94.2h239.1c2.3 12.7 3.9 26.1 3.9 40.2z"></path></svg>}
-          Google
+          Continue with Google
         </Button>
         </div>
         
@@ -398,4 +412,3 @@ export function LoginForm() {
     </div>
   );
 }
-

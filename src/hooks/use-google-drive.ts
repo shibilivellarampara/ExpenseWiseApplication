@@ -1,7 +1,8 @@
 
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import useDrivePicker, { PickerResponse } from 'react-google-drive-picker';
+import useDrivePicker from 'react-google-drive-picker';
+import type { PickerResponse } from 'react-google-drive-picker';
 
 type OpenPickerParams = {
   developerKey: string;
@@ -34,7 +35,7 @@ export function useGoogleDrive() {
             openPicker({
                 clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
                 developerKey: params.developerKey,
-                viewId: params.viewId || "DOCS",
+                viewId: params.viewId || "DOCS_FOLDERS",
                 token: authResult.access_token,
                 showUploadView: true,
                 showUploadFolders: true,
@@ -46,35 +47,35 @@ export function useGoogleDrive() {
                 },
             });
         } else {
-             console.error("Google Authentication error:", authResult.error);
+             console.error("Google Authentication error:", authResult?.error);
         }
     }
     
     // Initialize the Google Auth client
-    const client = gapi.client.init({
-        apiKey: params.developerKey,
-        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-        discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-        scope: "https://www.googleapis.com/auth/drive.file",
-    });
-
-    client.then(() => {
-        const tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+    gapi.load('client:auth2', () => {
+       gapi.client.init({
+            apiKey: params.developerKey,
+            clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
             scope: "https://www.googleapis.com/auth/drive.file",
-            callback: handleAuthResult,
-        });
+        }).then(() => {
+            const tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+                scope: "https://www.googleapis.com/auth/drive.file",
+                callback: handleAuthResult,
+            });
 
-        const token = gapi.auth.getToken();
-        if (token) {
-            // If token exists, use it directly
-            handleAuthResult(token);
-        } else {
-            // Otherwise, request a new token
-            tokenClient.requestAccessToken();
-        }
-    }).catch((error: any) => {
-        console.error("Error initializing GAPI client", error);
+            const token = gapi.auth2.getAuthInstance().currentUser.get()?.getAuthResponse();
+            if (token && token.expires_in > 0) {
+                // If token exists and is not expired, use it directly
+                handleAuthResult(token);
+            } else {
+                // Otherwise, request a new token
+                tokenClient.requestAccessToken({ prompt: 'consent' });
+            }
+        }).catch((error: any) => {
+            console.error("Error initializing GAPI client", error);
+        });
     });
 
   }, [openPicker]);

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { generateColorStyle } from '@/lib/utils';
 import {
@@ -179,20 +179,13 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                 <div className="text-xs text-muted-foreground flex items-center gap-3">
                                                     <div className="flex items-center gap-1">
                                                         {isShared && row.expense.user ? (
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger className="flex items-center gap-1">
-                                                                        <Avatar className="h-4 w-4">
-                                                                            <AvatarImage src={row.expense.user.photoURL || ''} alt={row.expense.user.name || 'user'}/>
-                                                                            <AvatarFallback>{getInitials(row.expense.user.name)}</AvatarFallback>
-                                                                        </Avatar>
-                                                                        <span>{row.expense.user.name}</span>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>
-                                                                        <p>Transaction added by {row.expense.user.name}</p>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
+                                                                <div className="flex items-center gap-1">
+                                                                    <Avatar className="h-4 w-4">
+                                                                        <AvatarImage src={row.expense.user.photoURL || ''} alt={row.expense.user.name || 'user'}/>
+                                                                        <AvatarFallback>{getInitials(row.expense.user.name)}</AvatarFallback>
+                                                                    </Avatar>
+                                                                    <span>{row.expense.user.name}</span>
+                                                                </div>
                                                         ) : (
                                                             <button className="flex items-center gap-1 cursor-pointer hover:underline" onClick={(e) => {e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}>
                                                                 {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
@@ -229,22 +222,22 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                         </Badge>
                                                     )})}
                                                     {row.expense.tags && row.expense.tags.length > 2 && (
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                     <Badge variant="secondary" className="text-xs px-1.5 py-0 cursor-pointer">
-                                                                        +{row.expense.tags.length - 2} more
-                                                                    </Badge>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    <div className="flex flex-col gap-1 items-start">
-                                                                        {row.expense.tags.slice(2).map(tag => (
-                                                                            <span key={tag.id}>{tag.name}</span>
-                                                                        ))}
-                                                                    </div>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <Badge variant="secondary" className="text-xs px-1.5 py-0 cursor-pointer">
+                                                                    +{row.expense.tags.length - 2} more
+                                                                </Badge>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-auto p-2">
+                                                                <div className="flex flex-col gap-1 items-start">
+                                                                    {row.expense.tags.slice(2).map(tag => (
+                                                                        <Badge key={tag.id} style={generateColorStyle(tag.name)} className="badge-colorful">
+                                                                            {tag.name}
+                                                                        </Badge>
+                                                                    ))}
+                                                                </div>
+                                                            </PopoverContent>
+                                                        </Popover>
                                                     )}
                                                 </div>}
                                             </div>

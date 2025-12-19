@@ -390,6 +390,3 @@ export default function AboutPage() {
     );
 
 }
-
-    
-    

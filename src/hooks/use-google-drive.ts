@@ -5,7 +5,7 @@ import useDrivePicker from 'react-google-drive-picker';
 
 type OpenPickerParams = {
   developerKey: string;
-  viewId?: any; // Changed from google.picker.ViewId to any
+  viewId?: any; 
   supportDrives?: boolean;
   callbackFunction: (data: any) => void;
 };

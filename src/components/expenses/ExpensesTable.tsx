@@ -56,6 +56,19 @@ type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense:
 function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, viewMode, onBadgeClick }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; }) {
     
     const [openEditDialog, setOpenEditDialog] = useState<string | null>(null);
+    const [expandedTags, setExpandedTags] = useState<Set<string>>(new Set());
+
+    const toggleTags = (expenseId: string) => {
+        setExpandedTags(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(expenseId)) {
+                newSet.delete(expenseId);
+            } else {
+                newSet.add(expenseId);
+            }
+            return newSet;
+        });
+    };
 
     const allRows = useMemo(() => {
         const rows: VirtualRow[] = [];
@@ -99,11 +112,11 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
             : undefined,
     });
     
-     const trailingActions = (expense: EnrichedExpense) => (
+     const trailingActions = (expenseId: string) => (
         <TrailingActions>
             <SwipeAction
                 destructive={false}
-                onClick={() => setOpenEditDialog(expense.id)}
+                onClick={() => setOpenEditDialog(expenseId)}
             >
                 <div className="flex items-center justify-center bg-blue-500 text-white h-full px-4">
                     <Edit className="h-5 w-5" />
@@ -140,7 +153,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                         >
                             {isExpenseRow ? (
                                 <>
-                                    <SwipeableListItem trailingActions={trailingActions(row.expense)} blockSwipe={false}>
+                                    <SwipeableListItem trailingActions={trailingActions(row.expense.id)} blockSwipe={false}>
                                         <div className={cn(
                                             "flex items-center gap-3 group border-b w-full bg-card",
                                             viewMode === 'compact' ? 'p-2' : 'p-3'
@@ -197,29 +210,62 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                     </div>
                                                 </div>
                                                 
-                                                {viewMode === 'normal' && <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
-                                                    {row.expense.category && (
-                                                        <Badge
-                                                            style={generateColorStyle(row.expense.category.name)}
-                                                            className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
-                                                            onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
-                                                        >
-                                                            {RenderIcon(row.expense.category.icon, "h-3 w-3")}
-                                                            {row.expense.category.name}
-                                                        </Badge>
-                                                    )}
-                                                    {row.expense.tags?.map(tag => (
-                                                        <Badge
-                                                            key={tag.id}
-                                                            style={generateColorStyle(tag.name)}
-                                                            className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
-                                                            onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
-                                                        >
-                                                            {RenderIcon(tag.icon, "h-3 w-3")}
-                                                            {tag.name}
-                                                        </Badge>
-                                                    ))}
-                                                </div>}
+                                                {viewMode === 'normal' && (
+                                                    <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
+                                                        {row.expense.category && (
+                                                            <Badge
+                                                                style={generateColorStyle(row.expense.category.name)}
+                                                                className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                                onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
+                                                            >
+                                                                {RenderIcon(row.expense.category.icon, "h-3 w-3")}
+                                                                {row.expense.category.name}
+                                                            </Badge>
+                                                        )}
+                                                        
+                                                        {(() => {
+                                                            const isExpanded = expandedTags.has(row.expense.id);
+                                                            const tags = row.expense.tags || [];
+                                                            const tagsToShow = 3;
+                                                            const displayedTags = isExpanded ? tags : tags.slice(0, tagsToShow);
+                                                            const hiddenCount = tags.length - displayedTags.length;
+
+                                                            return (
+                                                                <>
+                                                                    {displayedTags.map(tag => (
+                                                                        <Badge
+                                                                            key={tag.id}
+                                                                            style={generateColorStyle(tag.name)}
+                                                                            className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                                            onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
+                                                                        >
+                                                                            {RenderIcon(tag.icon, "h-3 w-3")}
+                                                                            {tag.name}
+                                                                        </Badge>
+                                                                    ))}
+                                                                    {hiddenCount > 0 && !isExpanded && (
+                                                                         <Badge
+                                                                            variant="secondary"
+                                                                            className="text-xs px-1.5 py-0 cursor-pointer"
+                                                                            onClick={(e) => { e.stopPropagation(); toggleTags(row.expense.id); }}
+                                                                        >
+                                                                            +{hiddenCount} more
+                                                                        </Badge>
+                                                                    )}
+                                                                    {isExpanded && (
+                                                                        <Badge
+                                                                            variant="secondary"
+                                                                            className="text-xs px-1.5 py-0 cursor-pointer"
+                                                                            onClick={(e) => { e.stopPropagation(); toggleTags(row.expense.id); }}
+                                                                        >
+                                                                            Show less
+                                                                        </Badge>
+                                                                    )}
+                                                                </>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </SwipeableListItem>

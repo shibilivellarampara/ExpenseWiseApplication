@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import useDrivePicker, { PickerResponse } from 'react-google-drive-picker';
 
 type OpenPickerParams = {
-  clientId: string;
   developerKey: string;
   viewId?: "DOCS" | "DOCS_IMAGES" | "DOCS_IMAGES_AND_VIDEOS" | "DOCS_VIDEOS" | "DOCS_FILES" | "DOCS_FOLDERS" | "FOLDERS";
   supportDrives?: boolean;
@@ -24,7 +23,7 @@ export function useGoogleDrive() {
   const handleOpenPicker = (params: OpenPickerParams) => {
     // The picker is designed to be called with all parameters at once.
     openPicker({
-      clientId: params.clientId,
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
       developerKey: params.developerKey,
       viewId: params.viewId || "DOCS",
       token: (window as any).gapi?.auth?.getToken()?.access_token,

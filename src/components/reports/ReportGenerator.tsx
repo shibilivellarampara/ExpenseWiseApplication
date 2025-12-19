@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState } from 'react';
@@ -38,7 +36,6 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
 
         try {
             openPicker({
-                clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
                 developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY!,
                 viewId: "DOCS_FOLDERS",
                 supportDrives: true,

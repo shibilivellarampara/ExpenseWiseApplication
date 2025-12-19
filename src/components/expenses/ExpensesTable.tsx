@@ -142,7 +142,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                             {isExpenseRow ? (
                                 <>
                                     <SwipeableListItem trailingActions={trailingActions(row.expense)} blockSwipe={false}>
-                                         <div className={cn(
+                                        <div className={cn(
                                             "flex items-center gap-3 group border-b w-full bg-card",
                                             viewMode === 'compact' ? 'p-2' : 'p-3'
                                         )}>
@@ -231,7 +231,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                     {row.expense.tags && row.expense.tags.length > 2 && (
                                                         <TooltipProvider>
                                                             <Tooltip>
-                                                                <TooltipTrigger>
+                                                                <TooltipTrigger asChild>
                                                                      <Badge variant="secondary" className="text-xs px-1.5 py-0 cursor-pointer">
                                                                         +{row.expense.tags.length - 2} more
                                                                     </Badge>
@@ -250,12 +250,12 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                             </div>
                                         </div>
                                     </SwipeableListItem>
-                                    <AddExpenseDialog
+                                     <AddExpenseDialog
+                                        open={openEditDialog === row.expense.id}
+                                        onOpenChange={(isOpen) => !isOpen && setOpenEditDialog(null)}
                                         expenseToEdit={row.expense}
                                         sharedExpenseId={row.expense.sharedExpenseId}
                                         onSaveSuccess={onDataChange}
-                                        open={openEditDialog === row.expense.id}
-                                        onOpenChange={(isOpen) => !isOpen && setOpenEditDialog(null)}
                                     >
                                         <div />
                                     </AddExpenseDialog>

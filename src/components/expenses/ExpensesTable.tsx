@@ -148,8 +148,8 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                     open={openEditDialog === row.expense.id}
                                     onOpenChange={(isOpen) => !isOpen && setOpenEditDialog(null)}
                                 >
-                                    <SwipeableListItem trailingActions={trailingActions(row.expense)} blockSwipe={false}>
-                                        <DialogTrigger asChild>
+                                    <DialogTrigger asChild>
+                                        <SwipeableListItem trailingActions={trailingActions(row.expense)} blockSwipe={false}>
                                              <div className={cn(
                                                 "flex items-center gap-3 group border-b w-full bg-card cursor-pointer",
                                                 viewMode === 'compact' ? 'p-2' : 'p-3'
@@ -239,8 +239,8 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                     </div>}
                                                 </div>
                                             </div>
-                                        </DialogTrigger>
-                                    </SwipeableListItem>
+                                        </SwipeableListItem>
+                                    </DialogTrigger>
                                 </AddExpenseDialog>
                             ) : (
                                 <div className={cn(

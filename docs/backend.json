@@ -226,7 +226,7 @@
     }
   },
   "auth": {
-    "providers": ["password", "anonymous", "phone", "google.com"]
+    "providers": ["password", "anonymous", "phone"]
   },
   "firestore": {
     "/users/{userId}": {

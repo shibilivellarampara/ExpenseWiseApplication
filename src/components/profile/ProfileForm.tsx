@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useUser, useFirestore, useStorage, useAuth, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
@@ -12,7 +13,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Loader2, Upload, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { updateProfile, RecaptchaVerifier, updatePhoneNumber, PhoneAuthProvider, updateEmail, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
+import { updateProfile, RecaptchaVerifier, updatePhoneNumber, PhoneAuthProvider, updateEmail, EmailAuthProvider, reauthenticateWithCredential, updatePassword, linkWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { doc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { cn } from "@/lib/utils";
@@ -54,6 +55,8 @@ export function ProfileForm() {
     const [nameInput, setNameInput] = useState('');
     const [selectedCurrency, setSelectedCurrency] = useState<string>('');
     const [tempDisplayPhotoUrl, setTempDisplayPhotoUrl] = useState<string | null>(null);
+
+    const isGoogleLinked = user?.providerData.some(p => p.providerId === 'google.com') ?? false;
 
 
     useEffect(() => {
@@ -287,6 +290,24 @@ export function ProfileForm() {
             setIsLoading(false);
         }
     }
+    
+    const handleGoogleConnect = async () => {
+        if (!auth?.currentUser) return;
+        setIsLoading(true);
+        try {
+            const provider = new GoogleAuthProvider();
+            await linkWithPopup(auth.currentUser, provider);
+            toast({ title: "Google Account Connected!", description: "You can now sign in using your Google account." });
+        } catch (error: any) {
+            let description = error.message;
+            if (error.code === 'auth/credential-already-in-use') {
+                description = "This Google account is already linked to another user.";
+            }
+            toast({ variant: 'destructive', title: "Connection Failed", description });
+        } finally {
+            setIsLoading(false);
+        }
+    }
 
 
     const currentPhoto = tempDisplayPhotoUrl ?? userProfile?.photoURL;
@@ -466,6 +487,18 @@ export function ProfileForm() {
                             </Dialog>
                         </div>
                     </div>
+
+                     {!isGoogleLinked && (
+                        <div className="space-y-2">
+                             <Label>Linked Accounts</Label>
+                             <Button variant="outline" className="w-full" onClick={handleGoogleConnect} disabled={isLoading}>
+                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
+                                 <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 74.8C307.7 99.8 280.7 86 248 86c-84.3 0-152.3 67.8-152.3 151.4s68 151.4 152.3 151.4c99.2 0 129.1-81.5 133.7-118.8H248v-94.2h239.1c2.3 12.7 3.9 26.1 3.9 40.2z"></path></svg>}
+                                 Connect with Google
+                             </Button>
+                        </div>
+                     )}
+
                      <div className="space-y-2">
                         <Label>Password</Label>
                         <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
@@ -558,3 +591,4 @@ export function ProfileForm() {
         </Card>
     );
 }
+

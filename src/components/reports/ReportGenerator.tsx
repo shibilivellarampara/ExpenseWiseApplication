@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -34,47 +35,43 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
             return;
         }
 
-        try {
-            openPicker({
-                developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY!,
-                viewId: "DOCS_FOLDERS",
-                supportDrives: true,
-                callbackFunction: async (data) => {
-                    if (data.action === 'picked') {
-                        setIsUploading(true);
-                        const folder = data.docs[0];
-                        const accessToken = (window as any).gapi.auth.getToken().access_token;
-                        
-                        const ws = XLSX.utils.json_to_sheet(dataToExport);
-                        const csvContent = XLSX.utils.sheet_to_csv(ws);
+        openPicker({
+            developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY!,
+            viewId: "DOCS_FOLDERS",
+            supportDrives: true,
+            callbackFunction: async (data) => {
+                if (data.action === 'picked') {
+                    setIsUploading(true);
+                    const folder = data.docs[0];
+                    const accessToken = (window as any).gapi.auth.getToken().access_token;
+                    
+                    const ws = XLSX.utils.json_to_sheet(dataToExport);
+                    const csvContent = XLSX.utils.sheet_to_csv(ws);
 
-                        try {
-                            const result = await uploadToGoogleDrive({
-                                accessToken,
-                                fileContent: csvContent,
-                                fileName: `ExpenseWise_Report_${new Date().toISOString().split('T')[0]}.csv`,
-                                folderId: folder.id,
-                            });
-                             toast({
-                                title: "Upload Successful!",
-                                description: "Your report has been saved to Google Drive.",
-                                action: <a href={result.webViewLink} target="_blank" rel="noopener noreferrer"><Button variant="outline">View File</Button></a>,
-                            });
-                        } catch (error: any) {
-                             toast({
-                                variant: 'destructive',
-                                title: "Upload Failed",
-                                description: error.message || 'Could not upload to Google Drive.'
-                            });
-                        } finally {
-                            setIsUploading(false);
-                        }
+                    try {
+                        const result = await uploadToGoogleDrive({
+                            accessToken,
+                            fileContent: csvContent,
+                            fileName: `ExpenseWise_Report_${new Date().toISOString().split('T')[0]}.csv`,
+                            folderId: folder.id,
+                        });
+                         toast({
+                            title: "Upload Successful!",
+                            description: "Your report has been saved to Google Drive.",
+                            action: <a href={result.webViewLink} target="_blank" rel="noopener noreferrer"><Button variant="outline">View File</Button></a>,
+                        });
+                    } catch (error: any) {
+                         toast({
+                            variant: 'destructive',
+                            title: "Upload Failed",
+                            description: error.message || 'Could not upload to Google Drive.'
+                        });
+                    } finally {
+                        setIsUploading(false);
                     }
-                },
-            });
-        } catch (e) {
-            console.error("Error opening Google Drive picker", e);
-        }
+                }
+            },
+        });
     };
     
     return (

@@ -11,46 +11,53 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    
-    function isMember(sharedExpenseId) {
-      return isSignedIn() && get(/databases/$(database)/documents/shared_expenses/$(sharedExpenseId)).data.memberIds.has(request.auth.uid);
+
+    // This function checks for a document with the user's UID in the 'members' subcollection.
+    // This is efficient for rules and works for both `get` and `list` operations.
+    function isSharedMember(sharedId) {
+      return exists(/databases/$(database)/documents/shared_expenses/$(sharedId)/members/$(request.auth.uid));
     }
 
     // --- Private User Data ---
-    // Users can only access their own user document and its subcollections.
+    // Users can only access their own user document and all its subcollections.
     match /users/{userId}/{allSubcollections=**} {
       allow read, write: if isOwner(userId);
     }
-
+    
     // --- Collection Group Rules ---
-    // This allows for app-wide queries (e.g., across all expenses),
-    // but still restricts access to only the documents owned by the user.
+    // Rule for querying the 'expenses' collection group.
+    // Ensures that users can only query expenses they own.
     match /expenses/{expenseId} {
-       allow read, write: if request.auth.uid == resource.data.userId;
+       allow read, write: if isOwner(resource.data.userId);
     }
 
     // --- Shared Data ---
-    match /shared_expenses/{sharedExpenseId} {
-      allow read: if isMember(sharedExpenseId);
+    match /shared_expenses/{sharedId} {
+      // Any signed-in user can attempt to read a shared space document to check its details (e.g., when joining).
+      allow get: if isSignedIn();
+      // Only members can list all shared spaces they belong to.
+      allow list: if isSharedMember(sharedId);
+      // Any signed-in user can create a new shared space.
       allow create: if isSignedIn();
-      // Only members can update or delete a shared space
-      allow update, delete: if isMember(sharedExpenseId);
+      // Only members can update the top-level details of a shared space (e.g., name).
+      allow update: if isSharedMember(sharedId);
+      // By disallowing delete, we protect the space from accidental removal.
+      // Deletion should be handled by a Cloud Function or admin process.
+      allow delete: if false;
+      
+      // --- Members Subcollection ---
+      match /members/{userId} {
+        // Members can see who else is in the group.
+        allow read: if isSharedMember(sharedId);
+        // Only the user themselves can add/remove their own membership document.
+        // This is controlled by the client logic when joining/leaving.
+        allow write: if isOwner(userId);
+      }
 
       // --- Shared Subcollections ---
-      match /expenses/{expenseId} {
-         // Members can read all expenses, but only create/edit/delete their own.
-         allow read: if isMember(sharedExpenseId);
-         allow create, update, delete: if isMember(sharedExpenseId) && request.resource.data.userId == request.auth.uid;
-      }
-      
-      // Allow members to read and create categories and tags within the shared space.
-      match /categories/{categoryId} {
-        allow get, list: if isMember(sharedExpenseId);
-        allow create, update, delete: if isMember(sharedExpenseId);
-      }
-      match /tags/{tagId} {
-        allow get, list: if isMember(sharedExpenseId);
-        allow create, update, delete: if isMember(sharedExpenseId);
+      // Apply the isSharedMember check to all subcollections within a shared space.
+      match /{subcollection}/{docId} {
+        allow read, write: if isSharedMember(sharedId);
       }
     }
     
@@ -61,3 +68,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

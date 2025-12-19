@@ -38,6 +38,7 @@ export type UserProfile = {
   transactionFieldOrder?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
   createdAt?: Timestamp;
   isAdmin?: boolean;
+  sharedExpenseIds?: string[];
 };
 
 export type Category = {
@@ -86,7 +87,7 @@ export type Expense = {
   description?: string;
   date: Timestamp;
   createdAt: Timestamp;
-  accountId: string;
+  accountId?: string;
   categoryId?: string;
   tagIds?: string[];
   sharedExpenseId?: string;
@@ -106,10 +107,8 @@ export type SharedExpense = {
   id: string;
   name: string;
   ownerId: string;
-  memberIds: string[];
   joinId?: string; // 6-character unique code for joining
   createdAt: Timestamp;
-  members?: UserProfile[]; // populated on the client
 }
 
 export type Contribution = {
@@ -155,3 +154,4 @@ export type EnrichedDebtWithBalance = EnrichedDebt & {
   runningBalance?: number;
 };
 
+    

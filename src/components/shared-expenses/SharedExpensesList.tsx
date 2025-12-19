@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { SharedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useFirestore } from "@/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { useFirestore, useCollection } from "@/firebase";
+import { doc, getDoc, collection, getDocs, query } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { Copy, Users } from "lucide-react";
@@ -20,19 +20,29 @@ const getInitials = (name?: string | null) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 };
 
-const MemberList = ({ memberIds }: { memberIds: string[] }) => {
+const MemberList = ({ sharedExpenseId }: { sharedExpenseId: string }) => {
     const firestore = useFirestore();
     const [members, setMembers] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchMembers = async () => {
-            if (!firestore || !memberIds) {
+            if (!firestore || !sharedExpenseId) {
                 setIsLoading(false);
                 return;
-            };
+            }
             setIsLoading(true);
             try {
+                const membersColRef = collection(firestore, `shared_expenses/${sharedExpenseId}/members`);
+                const membersSnapshot = await getDocs(membersColRef);
+                const memberIds = membersSnapshot.docs.map(d => d.id);
+                
+                if(memberIds.length === 0) {
+                    setMembers([]);
+                    setIsLoading(false);
+                    return;
+                }
+
                 const memberProfiles = await Promise.all(
                     memberIds.map(async (id) => {
                         const userDoc = await getDoc(doc(firestore, 'users', id));
@@ -48,14 +58,15 @@ const MemberList = ({ memberIds }: { memberIds: string[] }) => {
             }
         };
         fetchMembers();
-    }, [firestore, memberIds]);
+    }, [firestore, sharedExpenseId]);
 
     if (isLoading) {
         return (
              <div className="space-y-2">
-                <Skeleton className="h-8 w-24" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
+                <div className="flex -space-x-2">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
             </div>
         )
     }
@@ -79,11 +90,6 @@ const MemberList = ({ memberIds }: { memberIds: string[] }) => {
                     ))}
                 </div>
             </TooltipProvider>
-            <div className="flex flex-wrap gap-1">
-                {members.map(member => (
-                    <Badge key={member.id} variant="secondary">{member.name}</Badge>
-                ))}
-            </div>
         </div>
     );
 }
@@ -140,7 +146,7 @@ export function SharedExpensesList({ sharedExpenses, isLoading }: { sharedExpens
                     <CardContent className="space-y-4 flex-grow">
                         <div>
                             <p className="text-sm font-medium mb-2">Members</p>
-                            <MemberList memberIds={item.memberIds} />
+                            <MemberList sharedExpenseId={item.id} />
                         </div>
                          {item.joinId && (
                             <div>
@@ -173,3 +179,5 @@ export function SharedExpensesList({ sharedExpenses, isLoading }: { sharedExpens
         </div>
     )
 }
+
+    

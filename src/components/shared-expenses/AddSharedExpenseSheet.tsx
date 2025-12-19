@@ -17,8 +17,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { useFirestore, useUser, addDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useUser, commitBatchNonBlocking } from '@/firebase';
+import { collection, serverTimestamp, writeBatch, doc, arrayUnion } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
 const sharedExpenseSchema = z.object({
@@ -69,15 +69,31 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
         }
 
         try {
+            const batch = writeBatch(firestore);
             const sharedExpensesCol = collection(firestore, `shared_expenses`);
-            
-            await addDocumentNonBlocking(sharedExpensesCol, {
+            const newSpaceRef = doc(sharedExpensesCol);
+
+            // Create the main shared space document
+            batch.set(newSpaceRef, {
                 name: values.name,
                 ownerId: user.uid,
-                memberIds: [user.uid],
                 joinId: generateJoinId(),
                 createdAt: serverTimestamp(),
             });
+
+            // Add the owner as the first member in the 'members' subcollection
+            const memberRef = doc(firestore, `shared_expenses/${newSpaceRef.id}/members/${user.uid}`);
+            batch.set(memberRef, {
+                joinedAt: serverTimestamp(),
+            });
+
+            // Add the shared expense ID to the user's profile
+            const userProfileRef = doc(firestore, `users/${user.uid}`);
+            batch.update(userProfileRef, {
+                sharedExpenseIds: arrayUnion(newSpaceRef.id)
+            });
+            
+            await commitBatchNonBlocking(batch);
             
             toast({
                 title: 'Shared Space Created!',
@@ -127,3 +143,5 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
         </Sheet>
     );
 }
+
+    

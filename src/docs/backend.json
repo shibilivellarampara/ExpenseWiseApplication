@@ -130,7 +130,7 @@
         "tagIds": { "type": "array", "items": { "type": "string" }, "description": "Reference to the Tag document IDs." },
         "sharedExpenseId": { "type": "string", "description": "Reference to the SharedExpense this transaction belongs to." }
       },
-      "required": ["id", "userId", "type", "amount", "date", "accountId"]
+      "required": ["id", "userId", "type", "amount", "date"]
     },
      "CardDetails": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -202,14 +202,19 @@
         "id": { "type": "string" },
         "name": { "type": "string" },
         "ownerId": { "type": "string" },
-        "memberIds": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
         "joinId": { "type": "string", "description": "6-character unique code for joining." },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "name", "ownerId", "memberIds", "joinId"]
+      "required": ["id", "name", "ownerId", "joinId"]
+    },
+    "SharedExpenseMember": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SharedExpenseMember",
+      "type": "object",
+      "description": "A lightweight record indicating a user's membership in a shared expense space. The document ID is the user's UID.",
+      "properties": {
+        "joinedAt": { "type": "string", "format": "date-time" }
+      }
     },
     "Contribution": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -283,7 +288,11 @@
       "schema": { "$ref": "#/entities/SharedExpense" },
       "description": "Stores shared expense spaces, accessible by multiple users."
     },
-    "/shared_expenses/{sharedExpenseId}/expenses/{expenseId}": {
+    "/shared_expenses/{sharedExpenseId}/members/{userId}": {
+      "schema": { "$ref": "#/entities/SharedExpenseMember" },
+      "description": "Stores a list of members for a shared space. The document ID is the user UID."
+    },
+    "/shared_expenses/{sharedExpenseId}/transactions/{transactionId}": {
       "schema": { "$ref": "#/entities/Expense"},
       "description": "Stores expense records for a specific shared space."
     },
@@ -309,3 +318,5 @@
     }
   }
 }
+
+    

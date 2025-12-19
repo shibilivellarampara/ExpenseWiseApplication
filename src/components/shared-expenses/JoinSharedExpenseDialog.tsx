@@ -11,9 +11,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, errorEmitter, FirestorePermissionError, commitBatchNonBlocking } from '@/firebase';
-import { collection, query, where, getDocs, writeBatch, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch, arrayUnion, doc, serverTimestamp } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import { SharedExpense } from '@/lib/types';
+import { SharedExpense, UserProfile } from '@/lib/types';
 
 const joinSchema = z.object({
     joinId: z.string().length(6, 'The join code must be 6 characters long.'),
@@ -47,7 +47,7 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
         const joinIdUpper = values.joinId.toUpperCase();
         const q = query(spacesRef, where('joinId', '==', joinIdUpper));
         
-        getDocs(q).then(querySnapshot => {
+        getDocs(q).then(async (querySnapshot) => {
             if (querySnapshot.empty) {
                 toast({ variant: 'destructive', title: 'Failed to Join', description: 'No shared space found with this Join ID. Please check the code and try again.' });
                 setIsLoading(false);
@@ -57,7 +57,11 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
             const spaceDoc = querySnapshot.docs[0];
             const spaceData = spaceDoc.data() as SharedExpense;
 
-            if (spaceData.memberIds.includes(user.uid)) {
+            // Check membership using the new subcollection model
+            const memberRef = doc(firestore, `shared_expenses/${spaceDoc.id}/members/${user.uid}`);
+            const memberDoc = await getDoc(memberRef);
+
+            if (memberDoc.exists()) {
                 toast({ title: "Already a member", description: `You are already a member of "${spaceData.name}".` });
                 setOpen(false);
                 form.reset();
@@ -66,8 +70,14 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
             }
 
             const batch = writeBatch(firestore);
-            batch.update(spaceDoc.ref, {
-                memberIds: arrayUnion(user.uid),
+            
+            // Add user to the 'members' subcollection
+            batch.set(memberRef, { joinedAt: serverTimestamp() });
+            
+            // Also add to user's profile for easy listing of their spaces
+            const userRef = doc(firestore, `users/${user.uid}`);
+            batch.update(userRef, {
+                sharedExpenseIds: arrayUnion(spaceDoc.id)
             });
 
             commitBatchNonBlocking(batch, `shared_expenses/${spaceDoc.id}`).then(() => {
@@ -131,3 +141,5 @@ export function JoinSharedExpenseDialog({ children }: JoinSharedExpenseDialogPro
         </Dialog>
     );
 }
+
+    

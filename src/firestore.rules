@@ -3,61 +3,70 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // This function checks for a document with the user's UID in the 'members' subcollection.
+    // This is efficient for rules and works for both `get` and `list` operations.
+    function isSharedMember(sharedId) {
+      return exists(/databases/$(database)/documents/shared_expenses/$(sharedId)/members/$(request.auth.uid));
+    }
+
     // --- Private User Data ---
-    match /users/{userId} {
+    // Users can only access their own user document and all its subcollections.
+    match /users/{userId}/{allSubcollections=**} {
       allow read, write: if isOwner(userId);
-      
-      match /accounts/{accountId} {
-        allow list, read, write: if isOwner(userId);
-      }
-      match /categories/{categoryId} {
-        allow list, read, write: if isOwner(userId);
-      }
-      match /tags/{tagId} {
-        allow list, read, write: if isOwner(userId);
-      }
-      match /contributions/{contributionId} {
-        allow list, read, write: if isOwner(userId);
-      }
-      match /expenses/{expenseId} {
-        allow list, read, write: if isOwner(userId);
-      }
-      match /debts/{debtId} {
-        allow list, read, write: if isOwner(userId);
-      }
     }
     
     // --- Collection Group Rules ---
-    // This rule is crucial for allowing cross-user queries like "get all my expenses"
-    // that are used on the dashboard and analysis pages.
+    // Rule for querying the 'expenses' collection group.
+    // Ensures that users can only query expenses they own.
     match /expenses/{expenseId} {
-       allow read, write: if request.auth.uid == resource.data.userId;
+       allow read, write: if isOwner(resource.data.userId);
     }
-    
 
     // --- Shared Data ---
-    match /shared_expenses/{sharedExpenseId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isSignedIn(); // Further rules could restrict this to members
+    match /shared_expenses/{sharedId} {
+      // Any signed-in user can attempt to read a shared space document to check its details (e.g., when joining).
+      allow get: if isSignedIn();
+      // Only members can list all shared spaces they belong to.
+      allow list: if isSharedMember(sharedId);
+      // Any signed-in user can create a new shared space.
+      allow create: if isSignedIn();
+      // Only members can update the top-level details of a shared space (e.g., name).
+      allow update: if isSharedMember(sharedId);
+      // By disallowing delete, we protect the space from accidental removal.
+      // Deletion should be handled by a Cloud Function or admin process.
+      allow delete: if false;
+      
+      // --- Members Subcollection ---
+      match /members/{userId} {
+        // Members can see who else is in the group.
+        allow read: if isSharedMember(sharedId);
+        // Only the user themselves can add/remove their own membership document.
+        // This is controlled by the client logic when joining/leaving.
+        allow write: if isOwner(userId);
+      }
 
-      match /expenses/{expenseId} {
-         allow read: if isSignedIn();
-         allow create, update, delete: if isSignedIn();
+      // --- Shared Subcollections ---
+      // Apply the isSharedMember check to all subcollections within a shared space.
+      match /{subcollection}/{docId} {
+        allow read, write: if isSharedMember(sharedId);
       }
     }
     
     // --- Admin Data ---
+    // Only users with the 'isAdmin' custom claim can access the admin collection.
     match /admin/{docId} {
         allow read, write: if request.auth.token.isAdmin == true;
     }
   }
-
-  // --- Helper Functions ---
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  function isOwner(userId) {
-    return request.auth != null && request.auth.uid == userId;
-  }
 }
+
+    

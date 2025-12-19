@@ -148,99 +148,102 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                     open={openEditDialog === row.expense.id}
                                     onOpenChange={(isOpen) => !isOpen && setOpenEditDialog(null)}
                                 >
-                                    <DialogTrigger asChild>
-                                        <SwipeableListItem trailingActions={trailingActions(row.expense)} blockSwipe={false}>
-                                             <div className={cn(
-                                                "flex items-center gap-3 group border-b w-full bg-card cursor-pointer",
-                                                viewMode === 'compact' ? 'p-2' : 'p-3'
+                                    <SwipeableListItem trailingActions={trailingActions(row.expense)} blockSwipe={false}>
+                                        <div className={cn(
+                                            "flex items-center gap-3 group border-b w-full bg-card",
+                                            viewMode === 'compact' ? 'p-2' : 'p-3'
+                                        )}>
+                                            <div className={cn(
+                                                "flex-shrink-0 rounded-full bg-muted flex items-center justify-center",
+                                                viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8'
                                             )}>
-                                                <div className={cn(
-                                                    "flex-shrink-0 rounded-full bg-muted flex items-center justify-center",
-                                                    viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8'
-                                                )}>
-                                                    {row.expense.type === 'income' ?
-                                                        <Wallet className={cn("text-green-500", viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4')} /> :
-                                                        RenderIcon(row.expense.category?.icon, cn('text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))
-                                                    }
-                                                </div>
-                                                <div className="flex-grow space-y-0.5 w-full min-w-0">
-                                                    <div className="flex justify-between items-start">
-                                                        <div className="font-medium text-sm break-words flex-1 pr-4">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
-                                                        <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
-                                                            <div className="flex items-center">
-                                                                <div className={cn(
-                                                                    'font-bold',
-                                                                    viewMode === 'compact' ? 'text-sm' : 'text-base',
-                                                                    row.expense.type === 'income' ? 'text-green-600' : 'text-red-500'
-                                                                )}>
-                                                                    {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
-                                                                </div>
-                                                            </div>
-                                                             {typeof row.expense.runningBalance === 'number' && (
-                                                                <div className={cn("text-muted-foreground", viewMode === 'compact' ? 'text-xs' : 'text-xs mt-0.5')}>
-                                                                    Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="text-xs text-muted-foreground flex items-center gap-3">
-                                                        <div className="flex items-center gap-1">
-                                                            {isShared && row.expense.user ? (
-                                                                <TooltipProvider>
-                                                                    <Tooltip>
-                                                                        <TooltipTrigger className="flex items-center gap-1">
-                                                                            <Avatar className="h-4 w-4">
-                                                                                <AvatarImage src={row.expense.user.photoURL || ''} alt={row.expense.user.name || 'user'}/>
-                                                                                <AvatarFallback>{getInitials(row.expense.user.name)}</AvatarFallback>
-                                                                            </Avatar>
-                                                                            <span>{row.expense.user.name}</span>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p>Transaction added by {row.expense.user.name}</p>
-                                                                        </TooltipContent>
-                                                                    </Tooltip>
-                                                                </TooltipProvider>
-                                                            ) : (
-                                                                <button className="flex items-center gap-1 cursor-pointer hover:underline" onClick={(e) => {e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}>
-                                                                    {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
-                                                                    <span>{row.expense.account?.name}</span>
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {viewMode === 'normal' && <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
-                                                        {row.expense.category && (
-                                                            <Badge
-                                                                style={generateColorStyle(row.expense.category.name)}
-                                                                className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
-                                                                onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
-                                                            >
-                                                                {RenderIcon(row.expense.category.icon, "h-3 w-3")}
-                                                                {row.expense.category.name}
-                                                            </Badge>
-                                                        )}
-                                                        {row.expense.tags?.map(tag => {
-                                                            return (
-                                                            <Badge
-                                                                key={tag.id}
-                                                                style={generateColorStyle(tag.name)}
-                                                                className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
-                                                                onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
-                                                            >
-                                                                {RenderIcon(tag.icon, "h-3 w-3")}
-                                                                {tag.name}
-                                                            </Badge>
-                                                        )})}
-                                                    </div>}
-                                                </div>
+                                                {row.expense.type === 'income' ?
+                                                    <Wallet className={cn("text-green-500", viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4')} /> :
+                                                    RenderIcon(row.expense.category?.icon, cn('text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))
+                                                }
                                             </div>
-                                        </SwipeableListItem>
-                                    </DialogTrigger>
+                                            <div className="flex-grow space-y-0.5 w-full min-w-0">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="font-medium text-sm break-words flex-1 pr-4">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
+                                                    <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
+                                                        <div className="flex items-center">
+                                                            <div className={cn(
+                                                                'font-bold',
+                                                                viewMode === 'compact' ? 'text-sm' : 'text-base',
+                                                                row.expense.type === 'income' ? 'text-green-600' : 'text-red-500'
+                                                            )}>
+                                                                {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
+                                                            </div>
+                                                        </div>
+                                                         {typeof row.expense.runningBalance === 'number' && (
+                                                            <div className={cn("text-muted-foreground", viewMode === 'compact' ? 'text-xs' : 'text-xs mt-0.5')}>
+                                                                Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="text-xs text-muted-foreground flex items-center gap-3">
+                                                    <div className="flex items-center gap-1">
+                                                        {isShared && row.expense.user ? (
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger className="flex items-center gap-1">
+                                                                        <Avatar className="h-4 w-4">
+                                                                            <AvatarImage src={row.expense.user.photoURL || ''} alt={row.expense.user.name || 'user'}/>
+                                                                            <AvatarFallback>{getInitials(row.expense.user.name)}</AvatarFallback>
+                                                                        </Avatar>
+                                                                        <span>{row.expense.user.name}</span>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <p>Transaction added by {row.expense.user.name}</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        ) : (
+                                                            <button className="flex items-center gap-1 cursor-pointer hover:underline" onClick={(e) => {e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}>
+                                                                {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
+                                                                <span>{row.expense.account?.name}</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </div>
+                                                
+                                                {viewMode === 'normal' && <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
+                                                    {row.expense.category && (
+                                                        <Badge
+                                                            style={generateColorStyle(row.expense.category.name)}
+                                                            className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                            onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
+                                                        >
+                                                            {RenderIcon(row.expense.category.icon, "h-3 w-3")}
+                                                            {row.expense.category.name}
+                                                        </Badge>
+                                                    )}
+                                                    {row.expense.tags?.slice(0, 2).map(tag => {
+                                                        return (
+                                                        <Badge
+                                                            key={tag.id}
+                                                            style={generateColorStyle(tag.name)}
+                                                            className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                            onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
+                                                        >
+                                                            {RenderIcon(tag.icon, "h-3 w-3")}
+                                                            {tag.name}
+                                                        </Badge>
+                                                    )})}
+                                                    {row.expense.tags && row.expense.tags.length > 2 && (
+                                                        <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                                                            +{row.expense.tags.length - 2} more
+                                                        </Badge>
+                                                    )}
+                                                </div>}
+                                            </div>
+                                        </div>
+                                    </SwipeableListItem>
                                 </AddExpenseDialog>
                             ) : (
                                 <div className={cn(

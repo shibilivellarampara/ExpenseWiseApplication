@@ -105,7 +105,7 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                             className="grid grid-cols-2 gap-4"
                             >
                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'lent' ? "border-green-600 text-green-600" : "border-muted")}>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'lent' ? "border-destructive text-destructive" : "border-muted")}>
                                         <RadioGroupItem value="lent" className="sr-only" />
                                         <ArrowRight className="h-5 w-5 mb-1" />
                                         <span>Money Out</span>
@@ -113,7 +113,7 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                                     </Label>
                                 </FormItem>
                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'borrowed' ? "border-destructive text-destructive" : "border-muted")}>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'borrowed' ? "border-green-600 text-green-600" : "border-muted")}>
                                         <RadioGroupItem value="borrowed" className="sr-only" />
                                         <ArrowLeft className="h-5 w-5 mb-1" />
                                         <span>Money In</span>
@@ -166,8 +166,8 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                                 {...field}
                                 value={field.value ?? ''}
                                 className={cn(
-                                    transactionType === 'lent' && 'text-green-600',
-                                    transactionType === 'borrowed' && 'text-red-500'
+                                    transactionType === 'lent' && 'text-red-500',
+                                    transactionType === 'borrowed' && 'text-green-600'
                                 )}
                             />
                             <FormMessage />
@@ -313,4 +313,5 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
         </Drawer>
     );
 }
+
 

@@ -2,7 +2,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import useDrivePicker from 'react-google-drive-picker';
-import type { PickerResponse } from 'react-google-drive-picker';
 
 type OpenPickerParams = {
   developerKey: string;

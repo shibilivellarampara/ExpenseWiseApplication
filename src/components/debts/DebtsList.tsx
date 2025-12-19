@@ -275,8 +275,8 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                     <div className="flex-grow">
                         <h3 className="text-lg font-semibold">{group.personName}</h3>
                         <p className={cn("font-semibold text-base",
-                            group.netAmount > 0 && "text-green-600",
-                            group.netAmount < 0 && "text-red-500",
+                            group.netAmount > 0 && "text-red-500",
+                            group.netAmount < 0 && "text-green-600",
                             group.netAmount === 0 && "text-muted-foreground"
                         )}>
                             {group.netAmount > 0 ? `Owes you ${currencySymbol}${group.netAmount.toFixed(2)}` : group.netAmount < 0 ? `You owe ${currencySymbol}${Math.abs(group.netAmount).toFixed(2)}` : `All Settled`}
@@ -313,8 +313,8 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                         <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
                             <div>
                                 {record.type === 'lent' ? 
-                                    <ArrowRight className="h-5 w-5 text-green-500" /> : 
-                                    <ArrowLeft className="h-5 w-5 text-red-500" />}
+                                    <ArrowRight className="h-5 w-5 text-red-500" /> : 
+                                    <ArrowLeft className="h-5 w-5 text-green-600" />}
                             </div>
                             <div className="flex-grow">
                                 <p className="font-medium">
@@ -323,7 +323,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                                 <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
                             </div>
                             <div className="text-right">
-                                <p className={cn("font-semibold", record.type === 'lent' ? 'text-green-600' : 'text-red-500')}>
+                                <p className={cn("font-semibold", record.type === 'lent' ? 'text-red-500' : 'text-green-600')}>
                                     {currencySymbol}{record.amount.toFixed(2)}
                                 </p>
                                 {typeof record.runningBalance === 'number' && (

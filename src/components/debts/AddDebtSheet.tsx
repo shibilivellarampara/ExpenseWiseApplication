@@ -105,7 +105,7 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                             className="grid grid-cols-2 gap-4"
                             >
                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'lent' ? "border-destructive text-destructive" : "border-muted")}>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'lent' ? "border-red-500 text-red-500" : "border-muted")}>
                                         <RadioGroupItem value="lent" className="sr-only" />
                                         <ArrowRight className="h-5 w-5 mb-1" />
                                         <span>Money Out</span>
@@ -313,5 +313,3 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
         </Drawer>
     );
 }
-
-

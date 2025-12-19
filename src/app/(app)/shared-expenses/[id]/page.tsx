@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -22,23 +23,20 @@ export default function SharedExpenseDetailPage() {
     
     // Shared Expense Details
     const sharedExpenseRef = useMemoFirebase(() => 
-        firestore ? doc(firestore, `shared_expenses`, sharedExpenseId) : null
+        firestore && sharedExpenseId ? doc(firestore, `shared_expenses`, sharedExpenseId) : null
     , [firestore, sharedExpenseId]);
     const { data: sharedExpense, isLoading: sharedExpenseLoading, error: sharedExpenseError } = useDoc<SharedExpense>(sharedExpenseRef);
 
     // Expenses for this shared space
     const expensesQuery = useMemoFirebase(() => 
-        firestore ? query(collection(firestore, `shared_expenses/${sharedExpenseId}/expenses`), orderBy('date', 'desc')) : null
+        firestore && sharedExpenseId ? query(collection(firestore, `shared_expenses/${sharedExpenseId}/expenses`), orderBy('date', 'desc')) : null
     , [firestore, sharedExpenseId]);
     const { data: expenses, isLoading: expensesLoading, error: expensesError } = useCollection<Expense>(expensesQuery);
 
-    // All necessary user data (categories, tags, accounts of the current user)
-    const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [firestore, user]);
-    const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [firestore, user]);
-    const tagsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [firestore, user]);
+    const categoriesQuery = useMemoFirebase(() => sharedExpenseId ? collection(firestore, `shared_expenses/${sharedExpenseId}/categories`) : null, [firestore, sharedExpenseId]);
+    const tagsQuery = useMemoFirebase(() => sharedExpenseId ? collection(firestore, `shared_expenses/${sharedExpenseId}/tags`) : null, [firestore, sharedExpenseId]);
 
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
-    const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     
     // State to hold member profile data
@@ -56,18 +54,29 @@ export default function SharedExpenseDetailPage() {
             const profiles = new Map<string, UserProfile>();
             const memberIds = sharedExpense.memberIds;
             
-            // To fetch multiple documents efficiently, we can use a `where` clause with `in` operator
-            const usersRef = collection(firestore, 'users');
-            const q = query(usersRef, where('id', 'in', memberIds));
-            
-            try {
-                 const querySnapshot = await getDocs(q);
-                
-                querySnapshot.forEach(doc => {
-                    profiles.set(doc.id, doc.data() as UserProfile);
-                });
+            const usersToFetch = memberIds.filter(id => !memberProfiles.has(id));
+            if (usersToFetch.length === 0) {
+                setMembersLoading(false);
+                return;
+            }
 
-                setMemberProfiles(profiles);
+            try {
+                 const usersRef = collection(firestore, 'users');
+                 // Firestore 'in' query is limited to 30 items. If more members, we need to batch.
+                 const batches = [];
+                 for(let i = 0; i < usersToFetch.length; i += 30) {
+                     batches.push(usersToFetch.slice(i, i + 30));
+                 }
+                 
+                 const snapshots = await Promise.all(batches.map(batch => getDocs(query(usersRef, where('id', 'in', batch)))));
+
+                 const newProfiles = new Map(memberProfiles);
+                 snapshots.forEach(snapshot => {
+                     snapshot.forEach(doc => {
+                         newProfiles.set(doc.id, doc.data() as UserProfile);
+                     });
+                 });
+                setMemberProfiles(newProfiles);
             } catch (error) {
                 console.error("Failed to fetch member profiles:", error)
             } finally {
@@ -76,7 +85,7 @@ export default function SharedExpenseDetailPage() {
         };
 
         fetchMemberProfiles();
-    }, [firestore, sharedExpense]);
+    }, [firestore, sharedExpense, memberProfiles]);
 
     const handleDataChange = useCallback(() => {
         // This function is a placeholder to satisfy the prop requirement.
@@ -84,12 +93,11 @@ export default function SharedExpenseDetailPage() {
     }, []);
 
 
-    const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || sharedExpenseLoading || membersLoading;
+    const isLoading = expensesLoading || categoriesLoading || tagsLoading || sharedExpenseLoading || membersLoading;
 
     // --- Data Enrichment ---
     
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
-    const accountMap = useMemo(() => new Map(accounts?.map(p => [p.id, p])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
     const enrichedExpenses = useMemo((): EnrichedExpense[] => {
@@ -100,13 +108,12 @@ export default function SharedExpenseDetailPage() {
                 ...expense,
                 date: (expense.date as Timestamp).toDate(),
                 category: categoryMap.get(expense.categoryId ?? ''),
-                account: accountMap.get(expense.accountId),
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
                 user: memberProfiles.get(expense.userId), // Attach user profile who created it
             };
         }).sort((a, b) => b.date.getTime() - a.date.getTime()); // Ensure final sort
     
-    }, [expenses, categoryMap, accountMap, tagMap, memberProfiles]);
+    }, [expenses, categoryMap, tagMap, memberProfiles]);
     
     const error = sharedExpenseError || expensesError;
 

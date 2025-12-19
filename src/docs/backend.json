@@ -287,6 +287,14 @@
       "schema": { "$ref": "#/entities/Expense"},
       "description": "Stores expense records for a specific shared space."
     },
+    "/shared_expenses/{sharedExpenseId}/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category"},
+      "description": "Stores categories specific to a shared space."
+    },
+    "/shared_expenses/{sharedExpenseId}/tags/{tagId}": {
+      "schema": { "$ref": "#/entities/Tag"},
+      "description": "Stores tags specific to a shared space."
+    },
     "/users/{userId}/contributions/{contributionId}": {
         "schema": { "$ref": "#/entities/Contribution" },
         "description": "Stores contribution records for shared expenses."
@@ -301,4 +309,3 @@
     }
   }
 }
-

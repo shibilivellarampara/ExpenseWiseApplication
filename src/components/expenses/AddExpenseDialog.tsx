@@ -55,12 +55,12 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/compon
 import { DateTimePicker } from '../DateTimePicker';
 
 // Function to create a dynamic schema
-const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
+const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings'], isShared = false) => {
   let schema = z.object({
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
-    accountId: z.string().min(1, 'Please select an account.'),
+    accountId: isShared ? z.string().optional() : z.string().min(1, 'Please select an account.'),
     
     categoryId: z.string().optional(),
     
@@ -454,11 +454,22 @@ function ExpenseForm({
     const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string): Promise<string | undefined> => {
         if (!user || !firestore) return;
         const collectionName = type === 'Category' ? 'categories' : 'tags';
-        const ref = collection(firestore, `users/${user.uid}/${collectionName}`);
+        
+        let basePath = `users/${user.uid}`;
+        if (isShared) {
+            const sharedExpenseId = form.getValues('sharedExpenseId');
+            if(sharedExpenseId) {
+                basePath = `shared_expenses/${sharedExpenseId}`;
+            }
+        }
+        
+        const ref = collection(firestore, `${basePath}/${collectionName}`);
         try {
             const newDocRef = doc(ref);
             const docId = newDocRef.id;
-            await setDocumentNonBlocking(newDocRef, { id: docId, name, icon, userId: user.uid });
+            const data = { id: docId, name, icon, userId: user.uid };
+            
+            await setDocumentNonBlocking(newDocRef, data);
             
             toast({ title: `${type} Added`, description: `"${name}" has been created.` });
 
@@ -480,7 +491,11 @@ function ExpenseForm({
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
     
     const fieldOrder = userProfile?.transactionFieldOrder || ['description', 'accountId', 'categoryId', 'tagIds'];
-    const visibleFields = userProfile?.expenseFieldSettings?.visibleFields || ['description', 'accountId', 'categoryId', 'tagIds'];
+    let visibleFields = userProfile?.expenseFieldSettings?.visibleFields || ['description', 'accountId', 'categoryId', 'tagIds'];
+
+    if (isShared) {
+        visibleFields = visibleFields.filter(f => f !== 'accountId');
+    }
 
     const formFields: Record<string, React.ReactNode> = {
         description: (
@@ -769,19 +784,31 @@ function useExpenseForm({
     const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
     const isEditMode = !!expenseToEdit;
 
-    // Fetch all necessary data here
+    // Fetch user-specific data
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     
-    const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [user, firestore]);
-    const accountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [user, firestore]);
-    const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [user, firestore]);
+    const userCategoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [user, firestore]);
+    const userAccountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [user, firestore]);
+    const userTagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [user, firestore]);
 
-    const { data: categories } = useCollection<Category>(categoriesQuery);
-    const { data: accounts } = useCollection<Account>(accountsQuery);
-    const { data: tags } = useCollection<Tag>(tagsQuery);
+    const { data: userCategories } = useCollection<Category>(userCategoriesQuery);
+    const { data: userAccounts } = useCollection<Account>(userAccountsQuery);
+    const { data: userTags } = useCollection<Tag>(userTagsQuery);
+
+    // Fetch shared-space-specific data if applicable
+    const sharedCategoriesQuery = useMemoFirebase(() => sharedExpenseId ? query(collection(firestore, `shared_expenses/${sharedExpenseId}/categories`), orderBy('name', 'asc')) : null, [sharedExpenseId, firestore]);
+    const sharedTagsQuery = useMemoFirebase(() => sharedExpenseId ? query(collection(firestore, `shared_expenses/${sharedExpenseId}/tags`), orderBy('name', 'asc')) : null, [sharedExpenseId, firestore]);
+
+    const { data: sharedCategories } = useCollection<Category>(sharedCategoriesQuery);
+    const { data: sharedTags } = useCollection<Tag>(sharedTagsQuery);
     
-    const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
+    // Combine data based on context
+    const accounts = isShared ? [] : (userAccounts || []);
+    const categories = isShared ? (sharedCategories || []) : (userCategories || []);
+    const tags = isShared ? (sharedTags || []) : (userTags || []);
+
+    const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings, !!sharedExpenseId), [userProfile?.expenseFieldSettings, sharedExpenseId]);
     
     // Function to get clean default values
     const getNewFormValues = useCallback((keepDate?: Date, keepAccount?: string) => {
@@ -800,6 +827,7 @@ function useExpenseForm({
             categoryId: '',
             description: '',
             tagIds: [],
+            sharedExpenseId: sharedExpenseId,
         }
     }, [initialType, sharedExpenseId, userProfile]);
     
@@ -820,16 +848,17 @@ function useExpenseForm({
                     categoryId: expenseToEdit.category?.id || '',
                     description: expenseToEdit.description || '',
                     tagIds: expenseToEdit.tags?.map(t => t.id) || [],
+                    sharedExpenseId: sharedExpenseId,
                 });
             } else {
                  form.reset(getNewFormValues());
             }
         }
-    }, [open, isEditMode, expenseToEdit, form, getNewFormValues]);
+    }, [open, isEditMode, expenseToEdit, form, getNewFormValues, sharedExpenseId]);
 
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
-        if (!firestore || !user || !categories || !accounts) {
+        if (!firestore || !user || !userCategories) {
             toast({ variant: 'destructive', title: 'Error', description: 'Required data is not loaded.' });
             return false;
         }
@@ -838,16 +867,18 @@ function useExpenseForm({
         try {
             const batch = writeBatch(firestore);
             const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
+            const allCategories = isShared ? (sharedCategories || []) : (userCategories || []);
+            const allAccounts = userAccounts || [];
 
             const finalCategoryId = values.categoryId === '__none__' ? undefined : values.categoryId;
-            const selectedCategory = categories.find(c => c.id === finalCategoryId);
-            const selectedAccount = accounts.find(a => a.id === values.accountId);
+            const selectedCategory = allCategories.find(c => c.id === finalCategoryId);
+            const selectedAccount = allAccounts.find(a => a.id === values.accountId);
 
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
             const isCreditLimitDowngrade = selectedCategory?.name === 'Credit Limit Downgrade';
             const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
             
-            if (isCreditCardPayment) {
+            if (!isShared && isCreditCardPayment) {
                 // It's a payment TO a credit card, so it's income for the card.
                 if (selectedAccount?.type === 'credit_card' && values.type !== 'income') {
                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments to a credit card must be an "income" transaction for that card.' });
@@ -878,106 +909,107 @@ function useExpenseForm({
                 amount: values.amount,
                 description: finalDescription,
                 date: values.date,
-                accountId: values.accountId,
                 createdAt: isAddOperation ? serverTimestamp() : expenseToEdit!.createdAt,
                 updatedAt: serverTimestamp(),
                 tagIds: values.tagIds || [],
                 categoryId: finalCategoryId,
             };
             
+            if(!isShared) {
+                expenseData.accountId = values.accountId;
+            }
+            
             if (!expenseData.categoryId) {
                 delete expenseData.categoryId;
             }
             
-            // This was the bug fix for shared expenses
             if (sharedExpenseId) {
                 expenseData.sharedExpenseId = sharedExpenseId;
             }
            
-            // Handle special category logic for limit changes
-            const handleLimitChange = (
-                operation: 'upgrade' | 'downgrade',
-                currentValues: typeof values,
-                previousExpense?: EnrichedExpense
-            ) => {
-                const amount = currentValues.amount;
-                const type = currentValues.type;
-                const expectedType = operation === 'upgrade' ? 'income' : 'expense';
-                const increment_or_decrement = operation === 'upgrade' ? amount : -amount;
+            if (!isShared) {
+                const handleLimitChange = (
+                    operation: 'upgrade' | 'downgrade',
+                    currentValues: typeof values,
+                    previousExpense?: EnrichedExpense
+                ) => {
+                    const amount = currentValues.amount;
+                    const type = currentValues.type;
+                    const expectedType = operation === 'upgrade' ? 'income' : 'expense';
+                    const increment_or_decrement = operation === 'upgrade' ? amount : -amount;
 
-                if (selectedAccount?.type === 'credit_card' && type === expectedType) {
-                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, currentValues.accountId);
-                    const updatePayload = { 
-                        limit: increment(increment_or_decrement),
-                        balance: increment(increment_or_decrement) // Also update available balance
-                    };
+                    if (selectedAccount?.type === 'credit_card' && type === expectedType) {
+                        const accountRef = doc(firestore, `users/${user.uid}/accounts`, currentValues.accountId!);
+                        const updatePayload = { 
+                            limit: increment(increment_or_decrement),
+                            balance: increment(increment_or_decrement) // Also update available balance
+                        };
 
-                    if (!previousExpense) { // New transaction
-                        batch.update(accountRef, updatePayload);
-                    } else { // Editing transaction
-                         const oldCategoryName = categories.find(c => c.id === previousExpense.category?.id)?.name;
-                         const oldType = previousExpense.type;
-                         const oldAmount = previousExpense.amount;
-                         
-                         if (oldCategoryName === selectedCategory?.name && oldType === type) {
-                            // same category, same type -> adjust by difference
-                            const difference = increment_or_decrement - (operation === 'upgrade' ? oldAmount : -oldAmount);
-                            batch.update(accountRef, { limit: increment(difference), balance: increment(difference) });
-                         } else {
-                            // different category or type -> revert old (if applicable), apply new
-                            if (oldCategoryName === 'Credit Limit Upgrade' || oldCategoryName === 'Credit Limit Downgrade') {
-                                const oldIncrement = oldCategoryName === 'Credit Limit Upgrade' ? oldAmount : -oldAmount;
-                                batch.update(accountRef, { limit: increment(-oldIncrement), balance: increment(-oldIncrement) });
+                        if (!previousExpense) { // New transaction
+                            batch.update(accountRef, updatePayload);
+                        } else { // Editing transaction
+                            const oldCategoryName = userCategories.find(c => c.id === previousExpense.category?.id)?.name;
+                            const oldType = previousExpense.type;
+                            const oldAmount = previousExpense.amount;
+                            
+                            if (oldCategoryName === selectedCategory?.name && oldType === type) {
+                                // same category, same type -> adjust by difference
+                                const difference = increment_or_decrement - (operation === 'upgrade' ? oldAmount : -oldAmount);
+                                batch.update(accountRef, { limit: increment(difference), balance: increment(difference) });
+                            } else {
+                                // different category or type -> revert old (if applicable), apply new
+                                if (oldCategoryName === 'Credit Limit Upgrade' || oldCategoryName === 'Credit Limit Downgrade') {
+                                    const oldIncrement = oldCategoryName === 'Credit Limit Upgrade' ? oldAmount : -oldAmount;
+                                    batch.update(accountRef, { limit: increment(-oldIncrement), balance: increment(-oldIncrement) });
+                                }
+                                batch.update(accountRef, updatePayload);
                             }
-                             batch.update(accountRef, updatePayload);
-                         }
+                        }
+                        return true;
                     }
-                    return true;
-                }
-                toast({ variant: 'destructive', title: 'Invalid Operation', description: `"${selectedCategory?.name}" must be an "${expectedType}" transaction for a credit card account.`});
-                return false;
-            }
-            
-            if (isCreditLimitUpgrade) {
-                if (!handleLimitChange('upgrade', values, expenseToEdit)) {
-                     setIsLoading(false);
-                     return false;
-                }
-            }
-            if (isCreditLimitDowngrade) {
-                if (!handleLimitChange('downgrade', values, expenseToEdit)) {
-                    setIsLoading(false);
+                    toast({ variant: 'destructive', title: 'Invalid Operation', description: `"${selectedCategory?.name}" must be an "${expectedType}" transaction for a credit card account.`});
                     return false;
                 }
-            }
-
-            // Handle regular balance changes if it's NOT a credit limit change
-            if (!sharedExpenseId && !isCreditLimitUpgrade && !isCreditLimitDowngrade) {
-                const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
-                     // For credit card, balance is available credit. Expenses DECREASE it, payments INCREASE it.
-                     if (accountType === 'credit_card') {
-                        return type === 'income' ? amount : -amount;
-                     }
-                     // For other accounts, balance is cash. Income INCREASES it, expenses DECREASE it.
-                     return type === 'income' ? amount : -amount;
-                };
-
-                if (isAddOperation) {
-                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                     const amountToUpdate = getAmountChange(values.type, values.amount, selectedAccount!.type);
-                     batch.update(accountRef, { balance: increment(amountToUpdate) });
-                } else if (expenseToEdit) {
-                    const oldAccount = accounts.find(a => a.id === expenseToEdit.account?.id);
-                    if (oldAccount) {
-                        const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account!.id);
-                        const oldAmountReversal = -getAmountChange(expenseToEdit.type, expenseToEdit.amount, oldAccount.type);
-                        batch.update(oldAccountRef, { balance: increment(oldAmountReversal) });
+                
+                if (isCreditLimitUpgrade) {
+                    if (!handleLimitChange('upgrade', values, expenseToEdit)) {
+                        setIsLoading(false);
+                        return false;
                     }
+                }
+                if (isCreditLimitDowngrade) {
+                    if (!handleLimitChange('downgrade', values, expenseToEdit)) {
+                        setIsLoading(false);
+                        return false;
+                    }
+                }
 
-                    if (selectedAccount) {
-                         const newAccountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
-                         const newAmount = getAmountChange(values.type, values.amount, selectedAccount.type);
-                         batch.update(newAccountRef, { balance: increment(newAmount) });
+                // Handle regular balance changes if it's NOT a credit limit change
+                if (!sharedExpenseId && !isCreditLimitUpgrade && !isCreditLimitDowngrade) {
+                    const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
+                        if (accountType === 'credit_card') {
+                            return type === 'income' ? amount : -amount;
+                        }
+                        return type === 'income' ? amount : -amount;
+                    };
+
+                    if (isAddOperation) {
+                        const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId!);
+                        const amountToUpdate = getAmountChange(values.type, values.amount, selectedAccount!.type);
+                        batch.update(accountRef, { balance: increment(amountToUpdate) });
+                    } else if (expenseToEdit) {
+                        const oldAccount = allAccounts.find(a => a.id === expenseToEdit.account?.id);
+                        if (oldAccount) {
+                            const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account!.id);
+                            const oldAmountReversal = -getAmountChange(expenseToEdit.type, expenseToEdit.amount, oldAccount.type);
+                            batch.update(oldAccountRef, { balance: increment(oldAmountReversal) });
+                        }
+
+                        if (selectedAccount) {
+                            const newAccountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId!);
+                            const newAmount = getAmountChange(values.type, values.amount, selectedAccount.type);
+                            batch.update(newAccountRef, { balance: increment(newAmount) });
+                        }
                     }
                 }
             }
@@ -991,7 +1023,7 @@ function useExpenseForm({
 
             commitBatchNonBlocking(batch, collectionPath);
 
-            if (isCreditLimitUpgrade || isCreditLimitDowngrade) {
+            if (!isShared && (isCreditLimitUpgrade || isCreditLimitDowngrade)) {
                 toast({ title: `Credit Limit Updated!`, description: `The limit for ${selectedAccount?.name} has been changed.`});
             } else {
                  toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
@@ -1027,7 +1059,7 @@ function useExpenseForm({
     });
 
     const handleDelete = async () => {
-        if (!firestore || !user || !isEditMode || !expenseToEdit || !accounts || !categories) {
+        if (!firestore || !user || !isEditMode || !expenseToEdit || !userAccounts || !userCategories) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction.' });
             return;
         }
@@ -1037,7 +1069,7 @@ function useExpenseForm({
             const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
             const expenseRef = doc(firestore, collectionPath, expenseToEdit.id);
 
-            const selectedCategory = categories.find(c => c.id === expenseToEdit.category?.id);
+            const selectedCategory = userCategories.find(c => c.id === expenseToEdit.category?.id);
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
             const isCreditLimitDowngrade = selectedCategory?.name === 'Credit Limit Downgrade';
             
@@ -1046,7 +1078,7 @@ function useExpenseForm({
             if (!sharedExpenseId) {
                 if (expenseToEdit.account?.id) {
                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account.id);
-                    const selectedAccount = accounts.find(acc => acc.id === expenseToEdit.account!.id);
+                    const selectedAccount = userAccounts.find(acc => acc.id === expenseToEdit.account!.id);
     
                     if ((isCreditLimitUpgrade || isCreditLimitDowngrade) && selectedAccount?.type === 'credit_card') {
                          const amountToRevert = isCreditLimitUpgrade ? -expenseToEdit.amount : expenseToEdit.amount;
@@ -1055,12 +1087,8 @@ function useExpenseForm({
                         if (selectedAccount) {
                             let amountToRevert: number;
                              if (selectedAccount.type === 'credit_card') {
-                                // Reverting a transaction on a CC means doing the opposite of the original
-                                // Deleting an expense (purchase) INCREASES available credit
-                                // Deleting an income (payment) DECREASES available credit
                                 amountToRevert = expenseToEdit.type === 'expense' ? expenseToEdit.amount : -expenseToEdit.amount;
                             } else {
-                                 // For regular accounts, it's the standard reversal
                                 amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
                             }
                             batch.update(accountRef, { balance: increment(amountToRevert) });

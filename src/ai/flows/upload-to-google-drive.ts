@@ -42,7 +42,7 @@ const uploadToGoogleDriveFlow = ai.defineFlow(
     };
 
     let data = `--${boundary}\r\n`;
-    data += 'Content-Type: application/json; charset=UTF-t\r\n\r\n';
+    data += 'Content-Type: application/json; charset=UTF-8\r\n\r\n';
     data += `${JSON.stringify(metadata)}\r\n`;
     data += `--${boundary}\r\n`;
     data += `Content-Type: text/csv\r\n\r\n`;

@@ -1,4 +1,3 @@
-// hooks/use-google-drive.ts
 'use client';
 import { useEffect, useState } from 'react';
 import useDrivePicker, { PickerResponse } from 'react-google-drive-picker';

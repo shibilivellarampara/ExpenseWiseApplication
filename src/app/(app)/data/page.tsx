@@ -50,7 +50,7 @@ export default function DataPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
 
-    const handleReportAction = async (accountId: string, format: 'excel' | 'share', template: string) => {
+    const handleReportAction = async (accountId: string, format: 'excel' | 'share' | 'gdrive', template: string) => {
         if (!user || !firestore) return;
         setIsLoading(true);
         setProgress(0);
@@ -138,6 +138,8 @@ export default function DataPage() {
                         toast({ variant: 'destructive', title: "Error Sharing", description: shareError.message });
                     }
                 }
+            } else if (format === 'gdrive') {
+                return dataToExport;
             }
             
             setProgress(100);

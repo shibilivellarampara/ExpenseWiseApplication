@@ -17,7 +17,7 @@ import * as XLSX from 'xlsx';
 
 interface ReportGeneratorProps {
     accounts: Account[];
-    onAction: (accountId: string, format: 'excel' | 'share', template: string) => void;
+    onAction: (accountId: string, format: 'excel' | 'share' | 'gdrive', template: string) => Promise<any>;
     isLoading: boolean;
     progress: number;
 }
@@ -30,8 +30,8 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
     const [isUploading, setIsUploading] = useState(false);
 
     const handleGoogleDriveBackup = async () => {
-        const dataToExport = await onAction(selectedAccount, 'excel', selectedTemplate);
-        if (!dataToExport) {
+        const dataToExport = await onAction(selectedAccount, 'gdrive', selectedTemplate);
+        if (!dataToExport || dataToExport.length === 0) {
             toast({ variant: 'destructive', title: 'No data to export' });
             return;
         }
@@ -49,18 +49,6 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
                         const accessToken = (window as any).gapi.auth.getToken().access_token;
                         
                         const ws = XLSX.utils.json_to_sheet(dataToExport);
-                        const wb = XLSX.utils.book_new();
-                        XLSX.utils.book_append_sheet(wb, ws, "Transactions");
-                        const wbout = XLSX.write(wb, {bookType:'xlsx', type:'binary'});
-                        
-                        // Convert string to a format suitable for upload
-                        const s2ab = (s:any) => {
-                            var buf = new ArrayBuffer(s.length);
-                            var view = new Uint8Array(buf);
-                            for (var i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-                            return buf;
-                        }
-
                         const csvContent = XLSX.utils.sheet_to_csv(ws);
 
                         try {

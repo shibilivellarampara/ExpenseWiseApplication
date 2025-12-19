@@ -1,13 +1,13 @@
+
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import useDrivePicker from 'react-google-drive-picker';
-import type { PickerResponse } from 'react-google-drive-picker';
 
 type OpenPickerParams = {
   developerKey: string;
   viewId?: "DOCS" | "DOCS_IMAGES" | "DOCS_IMAGES_AND_VIDEOS" | "DOCS_VIDEOS" | "DOCS_FILES" | "DOCS_FOLDERS" | "FOLDERS";
   supportDrives?: boolean;
-  callbackFunction: (data: PickerResponse) => void;
+  callbackFunction: (data: any) => void;
 };
 
 export function useGoogleDrive() {

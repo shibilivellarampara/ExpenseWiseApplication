@@ -275,7 +275,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                 <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50">
                     <div className="flex-grow">
                         <h3 className="font-semibold text-[15px]">{group.personName}</h3>
-                        <p className={cn("font-semibold text-base",
+                        <p className={cn("font-semibold text-sm",
                             group.netAmount > 0 && "text-green-600",
                             group.netAmount < 0 && "text-red-500",
                             group.netAmount === 0 && "text-muted-foreground"
@@ -314,8 +314,8 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                         <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
                             <div>
                                 {record.type === 'lent' ? 
-                                    <ArrowLeft className="h-5 w-5 text-red-500" /> : 
-                                    <ArrowRight className="h-5 w-5 text-green-600" />}
+                                    <ArrowRight className="h-5 w-5 text-red-500" /> : 
+                                    <ArrowLeft className="h-5 w-5 text-green-600" />}
                             </div>
                             <div className="flex-grow">
                                 <p className="font-medium">

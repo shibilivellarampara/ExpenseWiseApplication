@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -467,7 +465,7 @@ function ExpenseForm({
         try {
             const newDocRef = doc(ref);
             const docId = newDocRef.id;
-            const data = { id: docId, name, icon, userId: user.uid };
+            const data = { id: docId, name, icon, userId: user.uid, status: 'active' };
             
             await setDocumentNonBlocking(newDocRef, data);
             
@@ -783,6 +781,7 @@ function useExpenseForm({
     const firestore = useFirestore();
     const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
     const isEditMode = !!expenseToEdit;
+    const isShared = !!sharedExpenseId;
 
     // Fetch user-specific data
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);

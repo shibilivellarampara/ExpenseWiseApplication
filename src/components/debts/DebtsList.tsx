@@ -274,7 +274,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
             <CollapsibleTrigger asChild>
                 <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50">
                     <div className="flex-grow">
-                        <h3 className="text-lg font-semibold">{group.personName}</h3>
+                        <h3 className="font-semibold text-[15px]">{group.personName}</h3>
                         <p className={cn("font-semibold text-base",
                             group.netAmount > 0 && "text-green-600",
                             group.netAmount < 0 && "text-red-500",
@@ -440,3 +440,4 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         </div>
     );
 }
+

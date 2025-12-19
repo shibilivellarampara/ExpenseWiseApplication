@@ -51,11 +51,11 @@ export default function SharedExpenseDetailPage() {
                  return;
             }
             setMembersLoading(true);
-            const profiles = new Map<string, UserProfile>();
-            const memberIds = sharedExpense.memberIds;
             
-            const usersToFetch = memberIds.filter(id => !memberProfiles.has(id));
-            if (usersToFetch.length === 0) {
+            const memberIds = sharedExpense.memberIds;
+            const profilesToFetch = memberIds.filter(id => !memberProfiles.has(id));
+
+            if (profilesToFetch.length === 0) {
                 setMembersLoading(false);
                 return;
             }
@@ -64,17 +64,19 @@ export default function SharedExpenseDetailPage() {
                  const usersRef = collection(firestore, 'users');
                  // Firestore 'in' query is limited to 30 items. If more members, we need to batch.
                  const batches = [];
-                 for(let i = 0; i < usersToFetch.length; i += 30) {
-                     batches.push(usersToFetch.slice(i, i + 30));
+                 for(let i = 0; i < profilesToFetch.length; i += 30) {
+                     batches.push(profilesToFetch.slice(i, i + 30));
                  }
                  
-                 const snapshots = await Promise.all(batches.map(batch => getDocs(query(usersRef, where('id', 'in', batch)))));
+                 const userDocs = await Promise.all(
+                    profilesToFetch.map(id => getDoc(doc(usersRef, id)))
+                 );
 
                  const newProfiles = new Map(memberProfiles);
-                 snapshots.forEach(snapshot => {
-                     snapshot.forEach(doc => {
-                         newProfiles.set(doc.id, doc.data() as UserProfile);
-                     });
+                 userDocs.forEach(docSnap => {
+                     if (docSnap.exists()) {
+                         newProfiles.set(docSnap.id, docSnap.data() as UserProfile);
+                     }
                  });
                 setMemberProfiles(newProfiles);
             } catch (error) {

@@ -17,14 +17,9 @@ service cloud.firestore {
     }
 
     // --- Private User Data ---
-    // Users can only access their own user document.
-    match /users/{userId} {
+    // Users can only access their own user document and its subcollections.
+    match /users/{userId}/{allSubcollections=**} {
       allow read, write: if isOwner(userId);
-      
-      // This rule allows a user to perform all actions on their own subcollections.
-      match /{collection}/{docId} {
-        allow list, read, write: if isOwner(userId);
-      }
     }
 
     // --- Collection Group Rules ---
@@ -40,6 +35,7 @@ service cloud.firestore {
       // Only members can update or delete a shared space
       allow update, delete: if isMember(sharedExpenseId);
 
+      // --- Shared Subcollections ---
       match /expenses/{expenseId} {
          // Members can read all expenses, but only create/edit/delete their own.
          allow read: if isMember(sharedExpenseId);
@@ -48,10 +44,10 @@ service cloud.firestore {
       
       // Allow members to read and create categories and tags within the shared space.
       match /categories/{categoryId} {
-        allow read, create: if isMember(sharedExpenseId);
+        allow read, create, update, delete: if isMember(sharedExpenseId);
       }
       match /tags/{tagId} {
-        allow read, create: if isMember(sharedExpenseId);
+        allow read, create, update, delete: if isMember(sharedExpenseId);
       }
     }
     

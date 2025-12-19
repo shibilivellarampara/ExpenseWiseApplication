@@ -5,10 +5,19 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.6.2";
+const appVersion = "1.6.3";
 
 
 const changelog = [
+    {
+        version: "1.6.3",
+        date: "2025-12-19",
+        changes: [
+            { type: 'Feature', description: "Enabled Google Drive backup for exporting expense reports." },
+            { type: 'Fix', description: "Resolved a persistent build error related to the 'react-google-drive-picker' library." },
+            { type: 'Fix', description: "Removed a non-functional 'Connect with Google' button from the settings page to prevent authorization errors." },
+        ]
+    },
     {
         version: "1.6.2",
         date: "2025-12-18",
@@ -382,4 +391,5 @@ export default function AboutPage() {
 
 }
 
+    
     

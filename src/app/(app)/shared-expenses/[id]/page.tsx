@@ -8,7 +8,7 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile, SharedExpense } from "@/lib/types";
-import { collection, orderBy, query, doc, getDocs, where, Timestamp } from "firebase/firestore";
+import { collection, orderBy, query, doc, getDocs, where, Timestamp, getDoc } from "firebase/firestore";
 import { PlusCircle } from "lucide-react";
 import { useMemo, useEffect, useState, useCallback } from "react";
 import { useParams } from 'next/navigation';
@@ -29,7 +29,7 @@ export default function SharedExpenseDetailPage() {
 
     // Expenses for this shared space
     const expensesQuery = useMemoFirebase(() => 
-        firestore && sharedExpenseId ? query(collection(firestore, `shared_expenses/${sharedExpenseId}/expenses`), orderBy('date', 'desc')) : null
+        firestore && sharedExpenseId ? query(collection(firestore, `shared_expenses/${sharedExpenseId}/transactions`), orderBy('date', 'desc')) : null
     , [firestore, sharedExpenseId]);
     const { data: expenses, isLoading: expensesLoading, error: expensesError } = useCollection<Expense>(expensesQuery);
 
@@ -46,27 +46,31 @@ export default function SharedExpenseDetailPage() {
     // Fetch member profiles when sharedExpense details are available
     useEffect(() => {
         const fetchMemberProfiles = async () => {
-            if (!firestore || !sharedExpense || sharedExpense.memberIds.length === 0) {
-                 if (sharedExpense) setMembersLoading(false);
+            if (!firestore || !sharedExpenseId) {
+                 setMembersLoading(false);
                  return;
             }
             setMembersLoading(true);
             
-            const memberIds = sharedExpense.memberIds;
-            const profilesToFetch = memberIds.filter(id => !memberProfiles.has(id));
-
-            if (profilesToFetch.length === 0) {
-                setMembersLoading(false);
-                return;
-            }
-
             try {
+                const membersColRef = collection(firestore, `shared_expenses/${sharedExpenseId}/members`);
+                const membersSnapshot = await getDocs(membersColRef);
+                const memberIds = membersSnapshot.docs.map(d => d.id);
+                
+                if(memberIds.length === 0) {
+                    setMemberProfiles(new Map());
+                    setMembersLoading(false);
+                    return;
+                }
+                
+                const profilesToFetch = memberIds.filter(id => !memberProfiles.has(id));
+
+                if (profilesToFetch.length === 0) {
+                    setMembersLoading(false);
+                    return;
+                }
+
                  const usersRef = collection(firestore, 'users');
-                 // Firestore 'in' query is limited to 30 items. If more members, we need to batch.
-                 const batches = [];
-                 for(let i = 0; i < profilesToFetch.length; i += 30) {
-                     batches.push(profilesToFetch.slice(i, i + 30));
-                 }
                  
                  const userDocs = await Promise.all(
                     profilesToFetch.map(id => getDoc(doc(usersRef, id)))
@@ -87,7 +91,7 @@ export default function SharedExpenseDetailPage() {
         };
 
         fetchMemberProfiles();
-    }, [firestore, sharedExpense, memberProfiles]);
+    }, [firestore, sharedExpenseId, memberProfiles]);
 
     const handleDataChange = useCallback(() => {
         // This function is a placeholder to satisfy the prop requirement.

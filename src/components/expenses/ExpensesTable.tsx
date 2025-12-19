@@ -56,6 +56,7 @@ type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense:
 function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, viewMode, onBadgeClick }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; }) {
     
     const [openEditDialog, setOpenEditDialog] = useState<string | null>(null);
+    const [expandedTags, setExpandedTags] = useState<Record<string, boolean>>({});
 
     const allRows = useMemo(() => {
         const rows: VirtualRow[] = [];
@@ -205,7 +206,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                         </Badge>
                                                     )}
                                                     
-                                                    {(row.expense.tags || []).map(tag => (
+                                                     {(expandedTags[row.expense.id] ? row.expense.tags : (row.expense.tags || []).slice(0, 3)).map(tag => (
                                                         <Badge
                                                             key={tag.id}
                                                             style={generateColorStyle(tag.name)}
@@ -216,6 +217,18 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                             {tag.name}
                                                         </Badge>
                                                     ))}
+                                                    {(row.expense.tags?.length || 0) > 3 && (
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="text-xs px-1.5 py-0 cursor-pointer"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setExpandedTags(prev => ({...prev, [row.expense.id]: !prev[row.expense.id]}));
+                                                            }}
+                                                        >
+                                                            {expandedTags[row.expense.id] ? 'Show Less' : `+${(row.expense.tags?.length || 0) - 3} more`}
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

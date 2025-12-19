@@ -5,7 +5,7 @@ import useDrivePicker from 'react-google-drive-picker';
 
 type OpenPickerParams = {
   developerKey: string;
-  viewId?: any;
+  viewId?: any; // Changed from google.picker.ViewId to any
   supportDrives?: boolean;
   callbackFunction: (data: any) => void;
 };
@@ -67,7 +67,7 @@ export function useGoogleDrive() {
             const token = gapi.auth2.getAuthInstance().currentUser.get()?.getAuthResponse();
             if (token && token.expires_in > 0) {
                 // If token exists and is not expired, use it directly
-                handleAuthResult(token);
+                handleAuthResult(token as google.accounts.oauth2.TokenResponse);
             } else {
                 // Otherwise, request a new token
                 tokenClient.requestAccessToken({ prompt: 'consent' });

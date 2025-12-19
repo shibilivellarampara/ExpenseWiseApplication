@@ -209,7 +209,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                             {row.expense.category.name}
                                                         </Badge>
                                                     )}
-                                                    {row.expense.tags?.slice(0, 2).map(tag => {
+                                                    {row.expense.tags?.slice(0, 3).map(tag => {
                                                         return (
                                                         <Badge
                                                             key={tag.id}
@@ -221,16 +221,16 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                             {tag.name}
                                                         </Badge>
                                                     )})}
-                                                    {row.expense.tags && row.expense.tags.length > 2 && (
+                                                    {row.expense.tags && row.expense.tags.length > 3 && (
                                                         <Popover>
                                                             <PopoverTrigger asChild>
-                                                                <Badge variant="secondary" className="text-xs px-1.5 py-0 cursor-pointer">
-                                                                    +{row.expense.tags.length - 2} more
+                                                                <Badge variant="secondary" className="text-xs px-1.5 py-0 cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                                                                    +{row.expense.tags.length - 3} more
                                                                 </Badge>
                                                             </PopoverTrigger>
                                                             <PopoverContent className="w-auto p-2">
                                                                 <div className="flex flex-col gap-1 items-start">
-                                                                    {row.expense.tags.slice(2).map(tag => (
+                                                                    {row.expense.tags.slice(3).map(tag => (
                                                                         <Badge key={tag.id} style={generateColorStyle(tag.name)} className="badge-colorful">
                                                                             {tag.name}
                                                                         </Badge>

@@ -226,7 +226,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                                 setExpandedTags(prev => ({...prev, [row.expense.id]: !prev[row.expense.id]}));
                                                             }}
                                                         >
-                                                            {expandedTags[row.expense.id] ? 'Show Less' : `+${(row.expense.tags?.length || 0) - 3} more`}
+                                                            {expandedTags[row.expense.id] ? 'Less' : `+${(row.expense.tags?.length || 0) - 3} more`}
                                                         </Badge>
                                                     )}
                                                 </div>

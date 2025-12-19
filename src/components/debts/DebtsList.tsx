@@ -314,8 +314,8 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                         <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
                             <div>
                                 {record.type === 'lent' ? 
-                                    <ArrowRight className="h-5 w-5 text-red-500" /> : 
-                                    <ArrowLeft className="h-5 w-5 text-green-600" />}
+                                    <ArrowLeft className="h-5 w-5 text-red-500" /> : 
+                                    <ArrowRight className="h-5 w-5 text-green-600" />}
                             </div>
                             <div className="flex-grow">
                                 <p className="font-medium">

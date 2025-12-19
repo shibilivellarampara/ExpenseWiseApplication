@@ -643,6 +643,7 @@ function ExpenseForm({
                                 {...field}
                                 value={field.value ?? ''}
                                 className={cn(
+                                    'font-bold',
                                     transactionType === 'expense' && 'text-red-500',
                                     transactionType === 'income' && 'text-green-600'
                                 )}

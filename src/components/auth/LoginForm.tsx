@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
@@ -18,6 +18,7 @@ import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React from 'react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '../ui/input-otp';
+import { doc, setDoc } from 'firebase/firestore';
 
 
 const emailSchema = z.object({
@@ -47,6 +48,7 @@ export function LoginForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const auth = useAuth();
+  const firestore = useFirestore();
   const [showPassword, setShowPassword] = useState(false);
   
   // Forgot Password state
@@ -189,11 +191,35 @@ export function LoginForm() {
 
 
     async function handleGoogleSignIn() {
-        toast({
-            variant: "default",
-            title: "Feature in progress",
-            description: "Google Sign-In is currently under development. Please use another sign-in method.",
-        });
+        if (!auth || !firestore) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured correctly.' });
+            return;
+        }
+        setIsGoogleLoading(true);
+        try {
+            const provider = new GoogleAuthProvider();
+            provider.addScope('https://www.googleapis.com/auth/drive.file');
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+            
+            // This will create a user profile document if it's a new user.
+            // On subsequent logins, it will just merge the data (no-op if no changes).
+            const userDocRef = doc(firestore, 'users', user.uid);
+            await setDoc(userDocRef, {
+                id: user.uid,
+                name: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+            }, { merge: true });
+            
+            toast({ title: 'Success!', description: 'You are now signed in with Google.', duration: 1000 });
+            router.push('/dashboard');
+
+        } catch (error: any) {
+            handleLoginError(error);
+        } finally {
+            setIsGoogleLoading(false);
+        }
     }
 
   async function handleForgotPassword() {
@@ -339,7 +365,7 @@ export function LoginForm() {
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2">
-       <Button variant="outline" className="w-full h-9" onClick={handleGoogleSignIn} disabled={isLoading || !auth}>
+       <Button variant="outline" className="w-full h-9" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading || !auth}>
           {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 74.8C307.7 99.8 280.7 86 248 86c-84.3 0-152.3 67.8-152.3 151.4s68 151.4 152.3 151.4c99.2 0 129.1-81.5 133.7-118.8H248v-94.2h239.1c2.3 12.7 3.9 26.1 3.9 40.2z"></path></svg>}
           Continue with Google
         </Button>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Account } from '@/lib/types';
-import { FileDown, Loader2, Share2, ClipboardCopy } from 'lucide-react';
+import { FileDown, Loader2, Share2, ClipboardCopy, UploadCloud } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Progress } from '../ui/progress';
 import { useToast } from '@/hooks/use-toast';
@@ -22,39 +22,15 @@ interface ReportGeneratorProps {
 export function ReportGenerator({ accounts, onAction, isLoading, progress }: ReportGeneratorProps) {
     const [selectedAccount, setSelectedAccount] = useState<string>('all');
     const [selectedTemplate, setSelectedTemplate] = useState<string>('enhanced');
-    const [shareText, setShareText] = useState<string | null>(null);
     const { toast } = useToast();
 
-    const handleShare = async () => {
-        if (!shareText) return;
-        try {
-            if (navigator.share) {
-                await navigator.share({
-                    title: 'ExpenseWise Report',
-                    text: shareText,
-                });
-                toast({ title: "Shared Successfully" });
-            } else {
-                toast({ variant: 'destructive', title: "Share Not Supported", description: "Your browser does not support this feature." });
-            }
-        } catch (error: any) {
-            if (error.name !== 'AbortError') {
-                toast({ variant: 'destructive', title: "Error Sharing", description: error.message });
-            }
-        } finally {
-            setShareText(null); // Clear after sharing attempt
-        }
+    const handleGoogleDriveBackup = () => {
+        toast({
+            variant: 'default',
+            title: 'Feature in progress',
+            description: 'Google Drive backup is currently under development.',
+        });
     };
-    
-    const copyToClipboard = () => {
-        if (!shareText) return;
-        navigator.clipboard.writeText(shareText);
-        toast({ title: "Copied!", description: "Report data copied to clipboard." });
-    }
-
-    const handleGenerateForShare = () => {
-        onAction(selectedAccount, 'share', selectedTemplate);
-    }
     
     return (
         <Card className="max-w-2xl mx-auto">
@@ -101,6 +77,10 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
                     <Button onClick={() => onAction(selectedAccount, 'excel', selectedTemplate)} disabled={isLoading}>
                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
                         Download Excel
+                    </Button>
+                    <Button onClick={handleGoogleDriveBackup} variant="outline" disabled={isLoading}>
+                        <UploadCloud className="mr-2 h-4 w-4" />
+                        Backup to Google Drive
                     </Button>
                 </div>
             </CardFooter>

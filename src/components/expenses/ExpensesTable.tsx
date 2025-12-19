@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { generateColorStyle } from '@/lib/utils';
 import {
@@ -209,8 +208,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                             {row.expense.category.name}
                                                         </Badge>
                                                     )}
-                                                    {row.expense.tags?.slice(0, 3).map(tag => {
-                                                        return (
+                                                    {row.expense.tags?.map(tag => (
                                                         <Badge
                                                             key={tag.id}
                                                             style={generateColorStyle(tag.name)}
@@ -220,25 +218,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                             {RenderIcon(tag.icon, "h-3 w-3")}
                                                             {tag.name}
                                                         </Badge>
-                                                    )})}
-                                                    {row.expense.tags && row.expense.tags.length > 3 && (
-                                                        <Popover>
-                                                            <PopoverTrigger asChild>
-                                                                <Badge variant="secondary" className="text-xs px-1.5 py-0 cursor-pointer" onClick={(e) => e.stopPropagation()}>
-                                                                    +{row.expense.tags.length - 3} more
-                                                                </Badge>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-auto p-2">
-                                                                <div className="flex flex-col gap-1 items-start">
-                                                                    {row.expense.tags.slice(3).map(tag => (
-                                                                        <Badge key={tag.id} style={generateColorStyle(tag.name)} className="badge-colorful">
-                                                                            {tag.name}
-                                                                        </Badge>
-                                                                    ))}
-                                                                </div>
-                                                            </PopoverContent>
-                                                        </Popover>
-                                                    )}
+                                                    ))}
                                                 </div>}
                                             </div>
                                         </div>

@@ -31,7 +31,8 @@ service cloud.firestore {
 
     // --- Shared Data ---
     match /shared_expenses/{sharedExpenseId} {
-      allow read, create: if isSignedIn();
+      allow read: if isMember(sharedExpenseId);
+      allow create: if isSignedIn();
       // Only members can update or delete a shared space
       allow update, delete: if isMember(sharedExpenseId);
 
@@ -44,10 +45,12 @@ service cloud.firestore {
       
       // Allow members to read and create categories and tags within the shared space.
       match /categories/{categoryId} {
-        allow read, create, update, delete: if isMember(sharedExpenseId);
+        allow get, list: if isMember(sharedExpenseId);
+        allow create, update, delete: if isMember(sharedExpenseId);
       }
       match /tags/{tagId} {
-        allow read, create, update, delete: if isMember(sharedExpenseId);
+        allow get, list: if isMember(sharedExpenseId);
+        allow create, update, delete: if isMember(sharedExpenseId);
       }
     }
     

@@ -42,6 +42,14 @@ service cloud.firestore {
          allow read: if isSignedIn();
          allow create, update, delete: if isSignedIn();
       }
+      
+      // Allow members to read categories and tags within the shared space.
+      match /categories/{categoryId} {
+        allow read: if isSignedIn();
+      }
+      match /tags/{tagId} {
+        allow read: if isSignedIn();
+      }
     }
     
     // --- Admin Data ---
@@ -51,5 +59,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

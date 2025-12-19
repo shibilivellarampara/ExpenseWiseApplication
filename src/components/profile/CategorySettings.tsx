@@ -133,13 +133,6 @@ export function CategorySettings() {
 
     const handleSaveEdit = async () => {
         if (!editingItem || !user || !firestore) return;
-
-        const originalItem = categories?.find(i => i.id === editingItem.id);
-        if (SYSTEM_CATEGORIES.includes(originalItem?.name || '')) {
-            toast({ variant: 'destructive', title: 'Action Not Allowed', description: `"${originalItem?.name}" is a system category and cannot be edited.` });
-            setEditingItem(null);
-            return;
-        }
         
         if (categories?.some(c => c.id !== editingItem.id && c.name.toLowerCase() === editingItem.name.toLowerCase())) {
             toast({
@@ -299,7 +292,6 @@ export function CategorySettings() {
                                                         value={editingItem.name}
                                                         onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
                                                         className="flex-1"
-                                                        disabled={SYSTEM_CATEGORIES.includes(item.name)}
                                                     />
                                                     <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
                                                         <Check className="h-4 w-4" />
@@ -314,7 +306,7 @@ export function CategorySettings() {
                                                         {renderIcon(item.icon)}
                                                         <span>{item.name}</span>
                                                     </div>
-                                                    <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
+                                                    <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
                                                         <Edit className="h-4 w-4" />
                                                     </Button>
                                                      <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')} disabled={SYSTEM_CATEGORIES.includes(item.name)}>

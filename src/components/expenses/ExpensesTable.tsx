@@ -24,7 +24,6 @@ import {
   TrailingActions,
 } from 'react-swipeable-list';
 import 'react-swipeable-list/dist/styles.css';
-import { DialogTrigger } from "../ui/dialog";
 
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];
@@ -141,13 +140,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                             }}
                         >
                             {isExpenseRow ? (
-                                 <AddExpenseDialog
-                                    expenseToEdit={row.expense}
-                                    sharedExpenseId={row.expense.sharedExpenseId}
-                                    onSaveSuccess={onDataChange}
-                                    open={openEditDialog === row.expense.id}
-                                    onOpenChange={(isOpen) => !isOpen && setOpenEditDialog(null)}
-                                >
+                                <>
                                     <SwipeableListItem trailingActions={trailingActions(row.expense)} blockSwipe={false}>
                                         <div className={cn(
                                             "flex items-center gap-3 group border-b w-full bg-card",
@@ -244,7 +237,16 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                             </div>
                                         </div>
                                     </SwipeableListItem>
-                                </AddExpenseDialog>
+                                     <AddExpenseDialog
+                                        expenseToEdit={row.expense}
+                                        sharedExpenseId={row.expense.sharedExpenseId}
+                                        onSaveSuccess={onDataChange}
+                                        open={openEditDialog === row.expense.id}
+                                        onOpenChange={(isOpen) => !isOpen && setOpenEditDialog(null)}
+                                    >
+                                        <div />
+                                    </AddExpenseDialog>
+                                </>
                             ) : (
                                 <div className={cn(
                                     "px-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b",

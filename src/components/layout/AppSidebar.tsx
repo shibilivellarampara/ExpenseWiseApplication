@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -36,7 +37,6 @@ const baseNavItems = [
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
   { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
   { href: '/data', icon: <FileUp className="h-5 w-5" />, label: 'Import / Export' },
-  { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
   { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
 ];

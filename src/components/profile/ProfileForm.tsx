@@ -56,8 +56,6 @@ export function ProfileForm() {
     const [selectedCurrency, setSelectedCurrency] = useState<string>('');
     const [tempDisplayPhotoUrl, setTempDisplayPhotoUrl] = useState<string | null>(null);
 
-    const isGoogleLinked = user?.providerData.some(p => p.providerId === 'google.com') ?? false;
-
 
     useEffect(() => {
         if (userProfile) {
@@ -291,27 +289,6 @@ export function ProfileForm() {
         }
     }
     
-    const handleGoogleConnect = async () => {
-        if (!auth?.currentUser) return;
-        setIsLoading(true);
-        try {
-            const provider = new GoogleAuthProvider();
-            await linkWithPopup(auth.currentUser, provider);
-            toast({ title: "Google Account Connected!", description: "You can now sign in using your Google account." });
-        } catch (error: any) {
-            let description = "Could not connect to Google account. Please try again.";
-            if (error.code === 'auth/credential-already-in-use') {
-                description = "This Google account is already linked to another user.";
-            } else if (error.code === 'auth/operation-not-allowed') {
-                description = "Account linking with Google is not enabled. Please contact support.";
-            }
-            toast({ variant: 'destructive', title: "Connection Failed", description });
-        } finally {
-            setIsLoading(false);
-        }
-    }
-
-
     const currentPhoto = tempDisplayPhotoUrl ?? userProfile?.photoURL;
     
     const displayCurrency = selectedCurrency || userProfile?.defaultCurrency;

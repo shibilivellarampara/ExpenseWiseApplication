@@ -38,7 +38,6 @@ export type UserProfile = {
   transactionFieldOrder?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
   createdAt?: Timestamp;
   isAdmin?: boolean;
-  sharedExpenseIds?: string[];
 };
 
 export type Category = {
@@ -87,10 +86,9 @@ export type Expense = {
   description?: string;
   date: Timestamp;
   createdAt: Timestamp;
-  accountId?: string;
+  accountId: string;
   categoryId?: string;
   tagIds?: string[];
-  sharedExpenseId?: string;
   runningBalance?: number;
 };
 
@@ -101,35 +99,6 @@ export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds
   user?: UserProfile;
   date: Date; // Ensure date is always a Date object
 };
-
-
-export type SharedExpense = {
-  id: string;
-  name: string;
-  ownerId: string;
-  joinId?: string; // 6-character unique code for joining
-  createdAt: Timestamp;
-}
-
-export type Contribution = {
-    id: string;
-    totalAmount: number;
-    description: string;
-    userId: string;
-    date: Timestamp;
-    paidById: string;
-    contributorShares: {
-        userId: string;
-        share: number;
-    }[];
-};
-
-
-export type EnrichedContribution = Omit<Contribution, 'date' | 'paidById' | 'contributorShares'> & {
-    date: Date;
-    paidBy?: UserProfile;
-    contributors?: (Partial<UserProfile> & { share: number })[];
-}
 
 
 export type Debt = {

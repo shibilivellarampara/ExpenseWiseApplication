@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -54,19 +55,18 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/compon
 import { DateTimePicker } from '../DateTimePicker';
 
 // Function to create a dynamic schema
-const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings'], isShared = false) => {
+const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
   let schema = z.object({
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
-    accountId: isShared ? z.string().optional() : z.string().min(1, 'Please select an account.'),
+    accountId: z.string().min(1, 'Please select an account.'),
     
     categoryId: z.string().optional(),
     
     description: z.string().optional(),
     
     tagIds: z.array(z.string()).optional(),
-    sharedExpenseId: z.string().optional(),
   });
 
   if (settings?.isDescriptionRequired) {
@@ -373,7 +373,6 @@ function ExpenseForm({
   accounts,
   categories,
   tags,
-  isShared,
 }: {
   form: UseFormReturn<any>;
   onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
@@ -381,7 +380,6 @@ function ExpenseForm({
   accounts: Account[];
   categories: Category[];
   tags: Tag[];
-  isShared?: boolean;
 }) {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -416,7 +414,7 @@ function ExpenseForm({
 
     useEffect(() => {
         const hasInput = debouncedDescription || debouncedCategoryId || (debouncedTagIds && debouncedTagIds.length > 0);
-        if (!hasInput || isShared || !isAiSuggestionEnabled || !userProfile?.dashboardSettings?.isAiSuggestionEnabled || activeCategories.length === 0 || activeAccounts.length === 0) {
+        if (!hasInput || !isAiSuggestionEnabled || !userProfile?.dashboardSettings?.isAiSuggestionEnabled || activeCategories.length === 0 || activeAccounts.length === 0) {
             return;
         }
 
@@ -448,7 +446,7 @@ function ExpenseForm({
             }
         });
 
-    }, [debouncedDescription, debouncedCategoryId, debouncedTagIds, form, activeCategories, activeTags, activeAccounts, isShared, isAiSuggestionEnabled, userProfile, toast]);
+    }, [debouncedDescription, debouncedCategoryId, debouncedTagIds, form, activeCategories, activeTags, activeAccounts, isAiSuggestionEnabled, userProfile, toast]);
 
 
     const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string): Promise<string | undefined> => {
@@ -456,12 +454,6 @@ function ExpenseForm({
         const collectionName = type === 'Category' ? 'categories' : 'tags';
         
         let basePath = `users/${user.uid}`;
-        if (isShared) {
-            const sharedExpenseId = form.getValues('sharedExpenseId');
-            if(sharedExpenseId) {
-                basePath = `shared_expenses/${sharedExpenseId}`;
-            }
-        }
         
         const ref = collection(firestore, `${basePath}/${collectionName}`);
         try {
@@ -492,10 +484,6 @@ function ExpenseForm({
     
     const fieldOrder = userProfile?.transactionFieldOrder || ['description', 'accountId', 'categoryId', 'tagIds'];
     let visibleFields = userProfile?.expenseFieldSettings?.visibleFields || ['description', 'accountId', 'categoryId', 'tagIds'];
-
-    if (isShared) {
-        visibleFields = visibleFields.filter(f => f !== 'accountId');
-    }
 
     const formFields: Record<string, React.ReactNode> = {
         description: (
@@ -602,37 +590,35 @@ function ExpenseForm({
     return (
         <Form {...form}>
             <form id={id} onSubmit={onSubmit} className="space-y-4">
-                {!isShared && (
-                    <FormField
-                        control={form.control}
-                        name="type"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormControl>
-                                <RadioGroup
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                                className="grid grid-cols-2 gap-4"
-                                >
-                                    <FormItem>
-                                        <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'expense' ? "border-destructive text-destructive" : "border-muted")}>
-                                            <RadioGroupItem value="expense" className="sr-only" />
-                                            <span>Cash Out</span>
-                                        </Label>
-                                    </FormItem>
-                                     <FormItem>
-                                        <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'income' ? "border-green-600 text-green-600" : "border-muted")}>
-                                            <RadioGroupItem value="income" className="sr-only" />
-                                            <span>Cash In</span>
-                                        </Label>
-                                    </FormItem>
-                                </RadioGroup>
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
+                <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormControl>
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-4"
+                            >
+                                <FormItem>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'expense' ? "border-destructive text-destructive" : "border-muted")}>
+                                        <RadioGroupItem value="expense" className="sr-only" />
+                                        <span>Cash Out</span>
+                                    </Label>
+                                </FormItem>
+                                 <FormItem>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'income' ? "border-green-600 text-green-600" : "border-muted")}>
+                                        <RadioGroupItem value="income" className="sr-only" />
+                                        <span>Cash In</span>
+                                    </Label>
+                                </FormItem>
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
                  
                  <FormField
                     control={form.control}
@@ -677,13 +663,11 @@ function ExpenseForm({
 export function AddExpenseDialog({ 
     children, 
     expenseToEdit,
-    sharedExpenseId,
     initialType,
     onSaveSuccess,
 }: { 
     children: React.ReactNode, 
     expenseToEdit?: EnrichedExpense,
-    sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
     onSaveSuccess?: () => void;
 }) {
@@ -692,7 +676,6 @@ export function AddExpenseDialog({
     const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen, 
         expenseToEdit, 
-        sharedExpenseId, 
         initialType,
         open,
         onSaveSuccess,
@@ -706,7 +689,7 @@ export function AddExpenseDialog({
                     <DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} isShared={!!sharedExpenseId} />
+                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} />
                 </div>
                  <DialogFooter className="flex-row justify-between w-full">
                     <div className="flex items-center">
@@ -762,7 +745,6 @@ export function AddExpenseDialog({
 interface UseExpenseFormProps {
     setOpen: (open: boolean) => void;
     expenseToEdit?: EnrichedExpense; 
-    sharedExpenseId?: string;
     initialType?: 'income' | 'expense';
     open: boolean;
     onSaveSuccess?: () => void;
@@ -772,7 +754,6 @@ interface UseExpenseFormProps {
 function useExpenseForm({
     setOpen,
     expenseToEdit,
-    sharedExpenseId,
     initialType,
     open,
     onSaveSuccess,
@@ -783,7 +764,6 @@ function useExpenseForm({
     const firestore = useFirestore();
     const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
     const isEditMode = !!expenseToEdit;
-    const isShared = !!sharedExpenseId;
 
     // Fetch user-specific data
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -797,26 +777,16 @@ function useExpenseForm({
     const { data: userAccounts } = useCollection<Account>(userAccountsQuery);
     const { data: userTags } = useCollection<Tag>(userTagsQuery);
 
-    // Fetch shared-space-specific data if applicable
-    const sharedCategoriesQuery = useMemoFirebase(() => sharedExpenseId ? query(collection(firestore, `shared_expenses/${sharedExpenseId}/categories`), orderBy('name', 'asc')) : null, [sharedExpenseId, firestore]);
-    const sharedTagsQuery = useMemoFirebase(() => sharedExpenseId ? query(collection(firestore, `shared_expenses/${sharedExpenseId}/tags`), orderBy('name', 'asc')) : null, [sharedExpenseId, firestore]);
+    const accounts = userAccounts || [];
+    const categories = userCategories || [];
+    const tags = userTags || [];
 
-    const { data: sharedCategories } = useCollection<Category>(sharedCategoriesQuery);
-    const { data: sharedTags } = useCollection<Tag>(sharedTagsQuery);
-    
-    // Combine data based on context
-    const accounts = isShared ? [] : (userAccounts || []);
-    const categories = isShared ? (sharedCategories || []) : (userCategories || []);
-    const tags = isShared ? (sharedTags || []) : (userTags || []);
-
-    const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings, !!sharedExpenseId), [userProfile?.expenseFieldSettings, sharedExpenseId]);
+    const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
     
     // Function to get clean default values
     const getNewFormValues = useCallback((keepDate?: Date, keepAccount?: string) => {
         let type: 'income' | 'expense' = 'expense';
-        if (sharedExpenseId) {
-            type = 'expense'; // Shared expenses are always expenses
-        } else if (initialType) {
+        if (initialType) {
             type = initialType;
         }
 
@@ -828,9 +798,8 @@ function useExpenseForm({
             categoryId: '',
             description: '',
             tagIds: [],
-            sharedExpenseId: sharedExpenseId,
         }
-    }, [initialType, sharedExpenseId, userProfile]);
+    }, [initialType, userProfile]);
     
     const form = useForm<z.infer<typeof expenseSchema>>({
         resolver: zodResolver(expenseSchema),
@@ -849,13 +818,12 @@ function useExpenseForm({
                     categoryId: expenseToEdit.category?.id || '',
                     description: expenseToEdit.description || '',
                     tagIds: expenseToEdit.tags?.map(t => t.id) || [],
-                    sharedExpenseId: sharedExpenseId || expenseToEdit.sharedExpenseId,
                 });
             } else {
                  form.reset(getNewFormValues());
             }
         }
-    }, [open, isEditMode, expenseToEdit, form, getNewFormValues, sharedExpenseId]);
+    }, [open, isEditMode, expenseToEdit, form, getNewFormValues]);
 
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
@@ -863,7 +831,7 @@ function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Authentication not ready.' });
             return false;
         }
-        if (!userCategories && !isShared) {
+        if (!userCategories) {
             toast({ variant: 'destructive', title: 'Error', description: 'Required data (categories) is not loaded.' });
             return false;
         }
@@ -871,8 +839,8 @@ function useExpenseForm({
 
         try {
             const batch = writeBatch(firestore);
-            const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
-            const allCategories = isShared ? (sharedCategories || []) : (userCategories || []);
+            const collectionPath = `users/${user.uid}/expenses`;
+            const allCategories = userCategories || [];
             const allAccounts = userAccounts || [];
 
             const finalCategoryId = values.categoryId === '__none__' ? undefined : values.categoryId;
@@ -883,7 +851,7 @@ function useExpenseForm({
             const isCreditLimitDowngrade = selectedCategory?.name === 'Credit Limit Downgrade';
             const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
             
-            if (!isShared && isCreditCardPayment) {
+            if (isCreditCardPayment) {
                 if (selectedAccount?.type === 'credit_card' && values.type !== 'income') {
                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments to a credit card must be an "income" transaction for that card.' });
                     setIsLoading(false);
@@ -916,109 +884,100 @@ function useExpenseForm({
                 updatedAt: serverTimestamp(),
                 tagIds: values.tagIds || [],
                 categoryId: finalCategoryId,
+                accountId: values.accountId,
             };
-            
-            if(!isShared) {
-                expenseData.accountId = values.accountId;
-            }
             
             if (!expenseData.categoryId) {
                 delete expenseData.categoryId;
             }
             
-            if (sharedExpenseId) {
-                expenseData.sharedExpenseId = sharedExpenseId;
-            }
-           
-            if (!isShared) {
-                const handleLimitChange = (
-                    operation: 'upgrade' | 'downgrade',
-                    currentValues: typeof values,
-                    previousExpense?: EnrichedExpense
-                ) => {
-                    if (!currentValues.accountId) {
-                        toast({ variant: 'destructive', title: 'Invalid Operation', description: `An account must be selected for a "${selectedCategory?.name}" transaction.`});
-                        return false;
-                    }
-
-                    const amount = currentValues.amount;
-                    const type = currentValues.type;
-                    const expectedType = operation === 'upgrade' ? 'income' : 'expense';
-                    const increment_or_decrement = operation === 'upgrade' ? amount : -amount;
-
-                    if (selectedAccount?.type === 'credit_card' && type === expectedType) {
-                        const accountRef = doc(firestore, `users/${user.uid}/accounts`, currentValues.accountId);
-                        const updatePayload = { 
-                            limit: increment(increment_or_decrement),
-                            balance: increment(increment_or_decrement) // Also update available balance
-                        };
-
-                        if (!previousExpense) { // New transaction
-                            batch.update(accountRef, updatePayload);
-                        } else { // Editing transaction
-                            const oldCategoryName = userCategories?.find(c => c.id === previousExpense.category?.id)?.name;
-                            const oldType = previousExpense.type;
-                            const oldAmount = previousExpense.amount;
-                            
-                            if (oldCategoryName === selectedCategory?.name && oldType === type) {
-                                // same category, same type -> adjust by difference
-                                const difference = increment_or_decrement - (operation === 'upgrade' ? oldAmount : -oldAmount);
-                                batch.update(accountRef, { limit: increment(difference), balance: increment(difference) });
-                            } else {
-                                // different category or type -> revert old (if applicable), apply new
-                                if ((oldCategoryName === 'Credit Limit Upgrade' || oldCategoryName === 'Credit Limit Downgrade') && previousExpense.account?.id) {
-                                    const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, previousExpense.account.id);
-                                    const oldIncrement = oldCategoryName === 'Credit Limit Upgrade' ? oldAmount : -oldAmount;
-                                    batch.update(oldAccountRef, { limit: increment(-oldIncrement), balance: increment(-oldIncrement) });
-                                }
-                                batch.update(accountRef, updatePayload);
-                            }
-                        }
-                        return true;
-                    }
-                    toast({ variant: 'destructive', title: 'Invalid Operation', description: `"${selectedCategory?.name}" must be an "${expectedType}" transaction for a credit card account.`});
+            const handleLimitChange = (
+                operation: 'upgrade' | 'downgrade',
+                currentValues: typeof values,
+                previousExpense?: EnrichedExpense
+            ) => {
+                if (!currentValues.accountId) {
+                    toast({ variant: 'destructive', title: 'Invalid Operation', description: `An account must be selected for a "${selectedCategory?.name}" transaction.`});
                     return false;
                 }
-                
-                if (isCreditLimitUpgrade) {
-                    if (!handleLimitChange('upgrade', values, expenseToEdit)) {
-                        setIsLoading(false);
-                        return false;
-                    }
-                }
-                if (isCreditLimitDowngrade) {
-                    if (!handleLimitChange('downgrade', values, expenseToEdit)) {
-                        setIsLoading(false);
-                        return false;
-                    }
-                }
 
-                // Handle regular balance changes if it's NOT a credit limit change
-                if (!sharedExpenseId && !isCreditLimitUpgrade && !isCreditLimitDowngrade) {
-                    const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
-                        if (accountType === 'credit_card') {
-                            return type === 'income' ? amount : -amount;
-                        }
-                        return type === 'income' ? amount : -amount;
+                const amount = currentValues.amount;
+                const type = currentValues.type;
+                const expectedType = operation === 'upgrade' ? 'income' : 'expense';
+                const increment_or_decrement = operation === 'upgrade' ? amount : -amount;
+
+                if (selectedAccount?.type === 'credit_card' && type === expectedType) {
+                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, currentValues.accountId);
+                    const updatePayload = { 
+                        limit: increment(increment_or_decrement),
+                        balance: increment(increment_or_decrement) // Also update available balance
                     };
 
-                    if (isAddOperation) {
-                        const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId!);
-                        const amountToUpdate = getAmountChange(values.type, values.amount, selectedAccount!.type);
-                        batch.update(accountRef, { balance: increment(amountToUpdate) });
-                    } else if (expenseToEdit) {
-                        const oldAccount = allAccounts.find(a => a.id === expenseToEdit.account?.id);
-                        if (oldAccount) {
-                            const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account!.id);
-                            const oldAmountReversal = -getAmountChange(expenseToEdit.type, expenseToEdit.amount, oldAccount.type);
-                            batch.update(oldAccountRef, { balance: increment(oldAmountReversal) });
+                    if (!previousExpense) { // New transaction
+                        batch.update(accountRef, updatePayload);
+                    } else { // Editing transaction
+                        const oldCategoryName = userCategories?.find(c => c.id === previousExpense.category?.id)?.name;
+                        const oldType = previousExpense.type;
+                        const oldAmount = previousExpense.amount;
+                        
+                        if (oldCategoryName === selectedCategory?.name && oldType === type) {
+                            // same category, same type -> adjust by difference
+                            const difference = increment_or_decrement - (operation === 'upgrade' ? oldAmount : -oldAmount);
+                            batch.update(accountRef, { limit: increment(difference), balance: increment(difference) });
+                        } else {
+                            // different category or type -> revert old (if applicable), apply new
+                            if ((oldCategoryName === 'Credit Limit Upgrade' || oldCategoryName === 'Credit Limit Downgrade') && previousExpense.account?.id) {
+                                const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, previousExpense.account.id);
+                                const oldIncrement = oldCategoryName === 'Credit Limit Upgrade' ? oldAmount : -oldAmount;
+                                batch.update(oldAccountRef, { limit: increment(-oldIncrement), balance: increment(-oldIncrement) });
+                            }
+                            batch.update(accountRef, updatePayload);
                         }
+                    }
+                    return true;
+                }
+                toast({ variant: 'destructive', title: 'Invalid Operation', description: `"${selectedCategory?.name}" must be an "${expectedType}" transaction for a credit card account.`});
+                return false;
+            }
+            
+            if (isCreditLimitUpgrade) {
+                if (!handleLimitChange('upgrade', values, expenseToEdit)) {
+                    setIsLoading(false);
+                    return false;
+                }
+            }
+            if (isCreditLimitDowngrade) {
+                if (!handleLimitChange('downgrade', values, expenseToEdit)) {
+                    setIsLoading(false);
+                    return false;
+                }
+            }
 
-                        if (selectedAccount) {
-                            const newAccountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId!);
-                            const newAmount = getAmountChange(values.type, values.amount, selectedAccount.type);
-                            batch.update(newAccountRef, { balance: increment(newAmount) });
-                        }
+            // Handle regular balance changes if it's NOT a credit limit change
+            if (!isCreditLimitUpgrade && !isCreditLimitDowngrade) {
+                const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
+                    if (accountType === 'credit_card') {
+                        return type === 'income' ? amount : -amount;
+                    }
+                    return type === 'income' ? amount : -amount;
+                };
+
+                if (isAddOperation) {
+                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId!);
+                    const amountToUpdate = getAmountChange(values.type, values.amount, selectedAccount!.type);
+                    batch.update(accountRef, { balance: increment(amountToUpdate) });
+                } else if (expenseToEdit) {
+                    const oldAccount = allAccounts.find(a => a.id === expenseToEdit.account?.id);
+                    if (oldAccount) {
+                        const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account!.id);
+                        const oldAmountReversal = -getAmountChange(expenseToEdit.type, expenseToEdit.amount, oldAccount.type);
+                        batch.update(oldAccountRef, { balance: increment(oldAmountReversal) });
+                    }
+
+                    if (selectedAccount) {
+                        const newAccountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId!);
+                        const newAmount = getAmountChange(values.type, values.amount, selectedAccount.type);
+                        batch.update(newAccountRef, { balance: increment(newAmount) });
                     }
                 }
             }
@@ -1032,7 +991,7 @@ function useExpenseForm({
 
             await commitBatchNonBlocking(batch, collectionPath);
 
-            if (!isShared && (isCreditLimitUpgrade || isCreditLimitDowngrade)) {
+            if (isCreditLimitUpgrade || isCreditLimitDowngrade) {
                 toast({ title: `Credit Limit Updated!`, description: `The limit for ${selectedAccount?.name} has been changed.`});
             } else {
                  toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
@@ -1068,17 +1027,17 @@ function useExpenseForm({
     });
 
     const handleDelete = async () => {
-        if (!firestore || !user || !isEditMode || !expenseToEdit || (!userAccounts && !isShared) || (!userCategories && !isShared)) {
+        if (!firestore || !user || !isEditMode || !expenseToEdit || !userAccounts || !userCategories) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction. Required data missing.' });
             return;
         }
         setIsLoading(true);
         try {
             const batch = writeBatch(firestore);
-            const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
+            const collectionPath = `users/${user.uid}/expenses`;
             const expenseRef = doc(firestore, collectionPath, expenseToEdit.id);
 
-            const allCategories = isShared ? (sharedCategories || []) : (userCategories || []);
+            const allCategories = userCategories || [];
             const allAccounts = userAccounts || [];
 
             const selectedCategory = allCategories.find(c => c.id === expenseToEdit.category?.id);
@@ -1087,24 +1046,22 @@ function useExpenseForm({
             
             batch.delete(expenseRef);
 
-            if (!sharedExpenseId) {
-                if (expenseToEdit.account?.id) {
-                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account.id);
-                    const selectedAccount = allAccounts.find(acc => acc.id === expenseToEdit.account!.id);
-    
-                    if ((isCreditLimitUpgrade || isCreditLimitDowngrade) && selectedAccount?.type === 'credit_card') {
-                         const amountToRevert = isCreditLimitUpgrade ? -expenseToEdit.amount : expenseToEdit.amount;
-                         batch.update(accountRef, { limit: increment(amountToRevert), balance: increment(amountToRevert) });
-                    } else {
-                        if (selectedAccount) {
-                            let amountToRevert: number;
-                             if (selectedAccount.type === 'credit_card') {
-                                amountToRevert = expenseToEdit.type === 'expense' ? expenseToEdit.amount : -expenseToEdit.amount;
-                            } else {
-                                amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
-                            }
-                            batch.update(accountRef, { balance: increment(amountToRevert) });
+            if (expenseToEdit.account?.id) {
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account.id);
+                const selectedAccount = allAccounts.find(acc => acc.id === expenseToEdit.account!.id);
+
+                if ((isCreditLimitUpgrade || isCreditLimitDowngrade) && selectedAccount?.type === 'credit_card') {
+                     const amountToRevert = isCreditLimitUpgrade ? -expenseToEdit.amount : expenseToEdit.amount;
+                     batch.update(accountRef, { limit: increment(amountToRevert), balance: increment(amountToRevert) });
+                } else {
+                    if (selectedAccount) {
+                        let amountToRevert: number;
+                         if (selectedAccount.type === 'credit_card') {
+                            amountToRevert = expenseToEdit.type === 'expense' ? expenseToEdit.amount : -expenseToEdit.amount;
+                        } else {
+                            amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
                         }
+                        batch.update(accountRef, { balance: increment(amountToRevert) });
                     }
                 }
             }

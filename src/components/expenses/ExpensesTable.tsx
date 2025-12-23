@@ -1,4 +1,5 @@
 
+
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +28,6 @@ import 'react-swipeable-list/dist/styles.css';
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];
   isLoading?: boolean;
-  isShared?: boolean;
   onDataChange: () => void;
   error?: string | null;
   onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void;
@@ -53,7 +53,7 @@ const formatAmount = (amount: number) => {
 
 type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense: EnrichedExpense };
 
-function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, viewMode, onBadgeClick }: { expenses: EnrichedExpense[], isShared?: boolean, currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; }) {
+function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; }) {
     
     const [openEditDialog, setOpenEditDialog] = useState<string | null>(null);
     const [expandedTags, setExpandedTags] = useState<Record<string, boolean>>({});
@@ -145,12 +145,15 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-1 pr-4">
                                                     <div className="font-medium text-sm break-words">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
+                                                     <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                                        {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
+                                                        <span>{row.expense.account?.name}</span>
+                                                    </div>
                                                 </div>
                                                 <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
                                                     <div className="flex items-center">
                                                         <AddExpenseDialog
                                                             expenseToEdit={row.expense}
-                                                            sharedExpenseId={isShared ? row.expense.sharedExpenseId : undefined}
                                                             onSaveSuccess={onDataChange}
                                                         >
                                                             <Button variant="ghost" size="icon" className="h-7 w-7 mr-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -170,21 +173,6 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
 
                                             <div className="text-xs text-muted-foreground flex items-center justify-between">
                                                 <div className="flex items-center gap-1">
-                                                     {isShared && row.expense.user ? (
-                                                        <div className="flex items-center gap-1">
-                                                            <Avatar className="h-4 w-4">
-                                                                <AvatarImage src={row.expense.user.photoURL || ''} alt={row.expense.user.name || 'user'}/>
-                                                                <AvatarFallback>{getInitials(row.expense.user.name)}</AvatarFallback>
-                                                            </Avatar>
-                                                            <span>{row.expense.user.name}</span>
-                                                        </div>
-                                                     ) : (
-                                                         <button className="flex items-center gap-1 cursor-pointer hover:underline" onClick={(e) => {e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}>
-                                                            {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
-                                                            <span>{row.expense.account?.name}</span>
-                                                        </button>
-                                                     )}
-                                                     <span className="mx-1">•</span>
                                                      <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
                                                 {typeof row.expense.runningBalance === 'number' && (
@@ -253,7 +241,7 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
     );
 }
 
-export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, error, onBadgeClick }: ExpensesTableProps) {
+export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadgeClick }: ExpensesTableProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -303,5 +291,5 @@ export function ExpensesTable({ expenses, isLoading, isShared, onDataChange, err
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} isShared={isShared} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick}/>;
+  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick}/>;
 }

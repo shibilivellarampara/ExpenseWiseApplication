@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
@@ -32,7 +33,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Account, SharedExpense, UserProfile } from '@/lib/types';
+import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
 
 
@@ -46,7 +47,6 @@ const baseNavItems = [
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
   { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
   { href: '/data', icon: <FileUp className="h-5 w-5" />, label: 'Import / Export' },
-  { href: '/shared-expenses', icon: <Briefcase className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
   { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
 ];
@@ -55,9 +55,7 @@ const getPageTitle = (path: string): string => {
     if (path.startsWith('/admin/users')) return 'User Management';
     if (path.startsWith('/admin')) return 'Admin Dashboard';
     if (path.startsWith('/profile')) return 'Settings';
-    if (path.startsWith('/shared-expenses/') && path.split('/').length > 2) {
-        return "Shared Space";
-    }
+    
     const navItem = baseNavItems.find(item => {
         if(item.label === 'Import / Export') {
             return path.startsWith('/data') || path.startsWith('/import') || path.startsWith('/reports');

@@ -166,7 +166,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
 
                                             <div className="text-xs text-muted-foreground flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
+                                                    {RenderIcon(row.expense.account?.icon, "h-3 w-3 mr-0")}
                                                     <span>{row.expense.account?.name}</span>
                                                     <span className="text-muted-foreground/50">&bull;</span>
                                                     <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -186,7 +186,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                             className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
                                                             onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
                                                         >
-                                                            {RenderIcon(row.expense.category.icon, "h-3 w-3")}
+                                                            {RenderIcon(row.expense.category.icon, "h-3 w-3 mr-1")}
                                                             {row.expense.category.name}
                                                         </Badge>
                                                     )}
@@ -198,7 +198,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                             className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
                                                             onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
                                                         >
-                                                            {RenderIcon(tag.icon, "h-3 w-3")}
+                                                            {RenderIcon(tag.icon, "h-3 w-3 mr-1")}
                                                             {tag.name}
                                                         </Badge>
                                                     ))}

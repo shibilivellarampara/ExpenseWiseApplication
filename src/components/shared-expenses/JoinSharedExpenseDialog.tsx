@@ -23,7 +23,7 @@ import { collection, query, where, getDocs, writeBatch, arrayUnion, doc, serverT
 import { Loader2 } from 'lucide-react';
 import { SharedExpense, UserProfile, Tag } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { renderIcon } from '@/lib/render-icon';
+import { renderIcon } from '@/lib/render-icon.tsx';
 
 const joinSchema = z.object({
     joinId: z.string().length(6, 'The join code must be 6 characters long.'),

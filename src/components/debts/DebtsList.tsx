@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,6 +71,7 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
             // Create the balancing transaction
             const settlementAmount = Math.abs(group.netAmount);
             const settlementType = group.netAmount > 0 ? 'income' : 'expense';
+            const settlementDescription = group.netAmount > 0 ? `Received from ${group.personName}` : `Paid to ${group.personName}`;
 
             const debtsCol = collection(firestore, `users/${user.uid}/debts`);
             const newDebtRef = doc(debtsCol);
@@ -80,7 +82,7 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
                 personName: group.personName,
                 amount: settlementAmount,
                 type: settlementType === 'income' ? 'borrowed' : 'lent',
-                description: 'Settlement',
+                description: settlementDescription,
                 date: new Date(),
                 status: 'settled',
                 settledAt: serverTimestamp(),

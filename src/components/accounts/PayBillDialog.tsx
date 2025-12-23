@@ -48,7 +48,7 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
         date: new Date(),
         createdAt: serverTimestamp(),
         accountId: selectedPaymentAccountId,
-        categoryId: 'credit_card_payment', // You might want a specific category ID
+        categoryId: 'Credit Card Payment', 
       });
 
       // 2. Create income for the credit card
@@ -58,11 +58,11 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
         userId: user.uid,
         type: 'income',
         amount: outstandingAmount,
-        description: 'Bill Payment Received',
+        description: `Bill payment for ${creditCard.name}`,
         date: new Date(),
         createdAt: serverTimestamp(),
         accountId: creditCard.id,
-        categoryId: 'credit_card_payment',
+        categoryId: 'Credit Card Payment',
       });
 
       // 3. Update account balances
@@ -78,7 +78,11 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
       setOpen(false);
       setSelectedPaymentAccountId('');
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Payment Failed', description: error.message });
+       toast({
+          variant: "destructive",
+          title: "Payment Failed",
+          description: "There was an unexpected error. Please try again.",
+      });
     } finally {
       setIsProcessing(false);
     }

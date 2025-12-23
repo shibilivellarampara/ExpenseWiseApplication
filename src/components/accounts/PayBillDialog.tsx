@@ -6,11 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFirestore, useUser, commitBatchNonBlocking } from '@/firebase';
+import { useFirestore, useUser, commitBatchNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Account } from '@/lib/types';
+import { Account, Category } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
-import { writeBatch, collection, doc, serverTimestamp, increment } from 'firebase/firestore';
+import { writeBatch, collection, doc, serverTimestamp, increment, query } from 'firebase/firestore';
 
 interface PayBillDialogProps {
   children: React.ReactNode;
@@ -27,12 +27,25 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
   const firestore = useFirestore();
   const { toast } = useToast();
 
+  const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`)) : null, [firestore, user]);
+  const { data: categories } = useCollection<Category>(categoriesQuery);
+
+
   const handlePayBill = async () => {
     if (!user || !firestore || !selectedPaymentAccountId) {
       toast({ variant: 'destructive', title: 'Error', description: 'Please select a payment account.' });
       return;
     }
     setIsProcessing(true);
+
+    const paymentCategory = categories?.find(c => c.name === 'Credit Card Payment');
+    const categoryId = paymentCategory?.id;
+
+    if (!categoryId) {
+        toast({ variant: 'destructive', title: 'Setup Required', description: 'The "Credit Card Payment" category was not found. Please ensure it exists in your category settings.' });
+        setIsProcessing(false);
+        return;
+    }
 
     try {
       const batch = writeBatch(firestore);
@@ -48,7 +61,7 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
         date: new Date(),
         createdAt: serverTimestamp(),
         accountId: selectedPaymentAccountId,
-        categoryId: 'Credit Card Payment', 
+        categoryId: categoryId,
       });
 
       // 2. Create income for the credit card
@@ -62,7 +75,7 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
         date: new Date(),
         createdAt: serverTimestamp(),
         accountId: creditCard.id,
-        categoryId: 'Credit Card Payment',
+        categoryId: categoryId,
       });
 
       // 3. Update account balances

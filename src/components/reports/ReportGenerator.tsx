@@ -10,7 +10,6 @@ import { FileDown, Loader2, Share2, ClipboardCopy, UploadCloud } from 'lucide-re
 import { Label } from '../ui/label';
 import { Progress } from '../ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useGoogleDrive } from '@/hooks/use-google-drive';
 import { uploadToGoogleDrive } from '@/ai/flows/upload-to-google-drive';
 import * as XLSX from 'xlsx';
 
@@ -25,54 +24,8 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
     const [selectedAccount, setSelectedAccount] = useState<string>('all');
     const [selectedTemplate, setSelectedTemplate] = useState<string>('enhanced');
     const { toast } = useToast();
-    const { openPicker, isPickerOpen } = useGoogleDrive();
     const [isUploading, setIsUploading] = useState(false);
 
-    const handleGoogleDriveBackup = async () => {
-        const dataToExport = await onAction(selectedAccount, 'gdrive', selectedTemplate);
-        if (!dataToExport || dataToExport.length === 0) {
-            toast({ variant: 'destructive', title: 'No data to export' });
-            return;
-        }
-
-        openPicker({
-            developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY!,
-            viewId: "DOCS_FOLDERS",
-            supportDrives: true,
-            callbackFunction: async (data) => {
-                if (data.action === 'picked') {
-                    setIsUploading(true);
-                    const folder = data.docs[0];
-                    const accessToken = (window as any).gapi.auth.getToken().access_token;
-                    
-                    const ws = XLSX.utils.json_to_sheet(dataToExport);
-                    const csvContent = XLSX.utils.sheet_to_csv(ws);
-
-                    try {
-                        const result = await uploadToGoogleDrive({
-                            accessToken,
-                            fileContent: csvContent,
-                            fileName: `ExpenseWise_Report_${new Date().toISOString().split('T')[0]}.csv`,
-                            folderId: folder.id,
-                        });
-                         toast({
-                            title: "Upload Successful!",
-                            description: "Your report has been saved to Google Drive.",
-                            action: <a href={result.webViewLink} target="_blank" rel="noopener noreferrer"><Button variant="outline">View File</Button></a>,
-                        });
-                    } catch (error: any) {
-                         toast({
-                            variant: 'destructive',
-                            title: "Upload Failed",
-                            description: "Could not upload to Google Drive. Please ensure you have the correct permissions."
-                        });
-                    } finally {
-                        setIsUploading(false);
-                    }
-                }
-            },
-        });
-    };
     
     return (
         <Card className="max-w-2xl mx-auto">
@@ -121,10 +74,6 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
                     <Button onClick={() => onAction(selectedAccount, 'excel', selectedTemplate)} disabled={isLoading || isUploading}>
                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
                         Download Excel
-                    </Button>
-                    <Button onClick={handleGoogleDriveBackup} variant="outline" disabled={isLoading || isUploading || isPickerOpen}>
-                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                        Backup to Google Drive
                     </Button>
                 </div>
             </CardFooter>

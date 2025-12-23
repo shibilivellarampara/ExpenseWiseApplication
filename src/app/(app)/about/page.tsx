@@ -5,10 +5,20 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.6.3";
+const appVersion = "1.6.4";
 
 
 const changelog = [
+    {
+        version: "1.6.4",
+        date: "2025-12-23",
+        changes: [
+            { type: 'Feature', description: "Added a 'Pay Bill' option to credit card menus to easily settle outstanding balances from a bank account." },
+            { type: 'Fix', description: "Resolved multiple Firestore errors, including a bug when updating only a credit card's billing date." },
+            { type: 'UI/UX', description: "Improved error messages throughout the app to be more user-friendly instead of showing technical details." },
+            { type: 'UI/UX', description: "Corrected icons and descriptions on the 'Debts & Dues' page for better clarity on lent vs. borrowed money." },
+        ]
+    },
     {
         version: "1.6.3",
         date: "2025-12-19",
@@ -375,7 +385,7 @@ export default function AboutPage() {
                             <ul className="space-y-2">
                                 {entry.changes.map((change, index) => (
                                     <li key={index} className="flex items-start gap-3">
-                                        <Badge variant={change.type === 'Feature' || change.type === 'UI' || change.type === 'Security' ? 'default' : 'secondary'}>
+                                        <Badge variant={change.type === 'Feature' || change.type === 'UI' || change.type === 'UI/UX' || change.type === 'Security' ? 'default' : 'secondary'}>
                                             {change.type}
                                         </Badge>
                                         <p className="text-sm text-foreground">{change.description}</p>
@@ -391,4 +401,5 @@ export default function AboutPage() {
 
 }
 
+    
     

@@ -857,8 +857,12 @@ function useExpenseForm({
 
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
-        if (!firestore || !user || !userCategories) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Required data is not loaded.' });
+        if (!firestore || !user) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Authentication not ready.' });
+            return false;
+        }
+        if ( !userCategories) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Required data (categories) is not loaded.' });
             return false;
         }
         setIsLoading(true);
@@ -878,13 +882,11 @@ function useExpenseForm({
             const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
             
             if (!isShared && isCreditCardPayment) {
-                // It's a payment TO a credit card, so it's income for the card.
                 if (selectedAccount?.type === 'credit_card' && values.type !== 'income') {
                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments to a credit card must be an "income" transaction for that card.' });
                     setIsLoading(false);
                     return false;
                 }
-                // It's a payment FROM another account, so it's an expense for that account.
                 if (selectedAccount?.type !== 'credit_card' && values.type !== 'expense') {
                      toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments from a bank account for a credit card must be an "expense" transaction.' });
                      setIsLoading(false);
@@ -1030,7 +1032,7 @@ function useExpenseForm({
             onSaveSuccess?.();
             return true;
         } catch (error: any) {
-             toast({ variant: 'destructive', title: 'Uh oh! Something went wrong.', description: error.message || 'Could not save transaction.' });
+             toast({ variant: 'destructive', title: 'Could Not Save Transaction', description: 'An unexpected error occurred. Please check your inputs and try again.' });
              return false;
         } finally {
             setIsLoading(false);

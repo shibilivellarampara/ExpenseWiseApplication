@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +7,7 @@ import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from "@/firebase";
 import { doc, setDoc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 import { Progress } from "../ui/progress";
-import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle, Merge, CreditCardIcon, BarChartHorizontal } from "lucide-react";
+import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle, Merge, CreditCardIcon, BarChartHorizontal, Handshake } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
@@ -24,6 +22,7 @@ import Link from "next/link";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogTrigger, DialogHeader, DialogTitle, DialogContent, DialogDescription } from "../ui/dialog";
 import Image from "next/image";
+import { PayBillDialog } from "./PayBillDialog";
 
 interface AccountsListProps {
     accounts: Account[];
@@ -404,6 +403,20 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                         Edit
                                                     </DropdownMenuItem>
                                                 </AddAccountSheet>
+                                                 <PayBillDialog
+                                                    creditCard={item}
+                                                    paymentAccounts={otherAccounts.filter(a => a.type === 'bank')}
+                                                    outstandingAmount={outstandingAmount}
+                                                >
+                                                    <DropdownMenuItem
+                                                        onSelect={(e) => e.preventDefault()}
+                                                        disabled={outstandingAmount <= 0}
+                                                        className={outstandingAmount > 0 ? 'text-primary' : ''}
+                                                    >
+                                                        <Handshake className="mr-2 h-4 w-4" />
+                                                        Pay Bill
+                                                    </DropdownMenuItem>
+                                                </PayBillDialog>
                                                 <DropdownMenuItem asChild>
                                                     <Link href={`/analysis?accounts=${item.id}`}>
                                                         <BarChartHorizontal className="mr-2 h-4 w-4" />

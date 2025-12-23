@@ -74,7 +74,7 @@ export default function DataPage() {
                 ...expense,
                 date: expense.date.toDate(),
                 category: categoryMap.get(expense.categoryId || ''),
-                account: accountMap.get(expense.accountId),
+                account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             })).sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -145,7 +145,7 @@ export default function DataPage() {
             setProgress(100);
 
         } catch (error: any) {
-            toast({ variant: 'destructive', title: "Error Generating Report", description: error.message });
+            toast({ variant: 'destructive', title: "Error Generating Report", description: "There was an unexpected error. Please try again." });
         } finally {
             setTimeout(() => {
                 setIsLoading(false);

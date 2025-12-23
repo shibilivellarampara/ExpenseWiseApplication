@@ -143,7 +143,25 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                         </div>
                                         <div className="flex-grow space-y-0.5 w-full min-w-0">
                                             <div className="flex justify-between items-start">
-                                                <div className="font-medium text-sm break-words flex-1 pr-4">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
+                                                <div className="flex-1 pr-4">
+                                                    <div className="font-medium text-sm break-words">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
+                                                    <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                                        {isShared && row.expense.user ? (
+                                                                <div className="flex items-center gap-1">
+                                                                    <Avatar className="h-4 w-4">
+                                                                        <AvatarImage src={row.expense.user.photoURL || ''} alt={row.expense.user.name || 'user'}/>
+                                                                        <AvatarFallback>{getInitials(row.expense.user.name)}</AvatarFallback>
+                                                                    </Avatar>
+                                                                    <span>{row.expense.user.name}</span>
+                                                                </div>
+                                                        ) : (
+                                                            <button className="flex items-center gap-1 cursor-pointer hover:underline" onClick={(e) => {e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}>
+                                                                {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
+                                                                <span>{row.expense.account?.name}</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
                                                 <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
                                                     <div className="flex items-center">
                                                         <AddExpenseDialog
@@ -172,22 +190,6 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                             </div>
 
                                             <div className="text-xs text-muted-foreground flex items-center gap-3">
-                                                <div className="flex items-center gap-1">
-                                                    {isShared && row.expense.user ? (
-                                                            <div className="flex items-center gap-1">
-                                                                <Avatar className="h-4 w-4">
-                                                                    <AvatarImage src={row.expense.user.photoURL || ''} alt={row.expense.user.name || 'user'}/>
-                                                                    <AvatarFallback>{getInitials(row.expense.user.name)}</AvatarFallback>
-                                                                </Avatar>
-                                                                <span>{row.expense.user.name}</span>
-                                                            </div>
-                                                    ) : (
-                                                        <button className="flex items-center gap-1 cursor-pointer hover:underline" onClick={(e) => {e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}>
-                                                            {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
-                                                            <span>{row.expense.account?.name}</span>
-                                                        </button>
-                                                    )}
-                                                </div>
                                                 <div>
                                                     {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </div>

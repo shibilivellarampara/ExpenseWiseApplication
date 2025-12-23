@@ -19,17 +19,19 @@ interface ExpensesBarChartProps {
 
 const CustomTooltip = ({ active, payload, label, currencySymbol }: any) => {
     if (active && payload && payload.length) {
-        // Filter out items with a value of 0
-        const filteredPayload = payload.filter((p: any) => p.value > 0);
+        // Filter out items with a value of 0 and sort by value descending
+        const sortedPayload = payload
+            .filter((p: any) => p.value > 0)
+            .sort((a: any, b: any) => b.value - a.value);
         
         // Calculate total for the visible items
-        const total = filteredPayload.reduce((sum: number, p: any) => sum + p.value, 0);
+        const total = sortedPayload.reduce((sum: number, p: any) => sum + p.value, 0);
 
         return (
-            <div className="rounded-lg border bg-background p-2 shadow-sm text-xs">
+            <div className="rounded-lg border bg-background p-2.5 shadow-sm text-sm">
                 <div className="mb-2 font-bold">{label}</div>
-                <div className="grid grid-cols-1 gap-1">
-                    {filteredPayload.map((p: any, index: number) => (
+                <div className="grid grid-cols-1 gap-1.5">
+                    {sortedPayload.map((p: any, index: number) => (
                         <div key={index} className="flex justify-between items-center gap-2">
                              <div className="flex items-center gap-1.5">
                                 <div className="h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
@@ -39,9 +41,9 @@ const CustomTooltip = ({ active, payload, label, currencySymbol }: any) => {
                         </div>
                     ))}
                 </div>
-                 {filteredPayload.length > 1 && (
+                 {sortedPayload.length > 1 && (
                     <>
-                        <div className="my-1 h-px bg-border" />
+                        <div className="my-1.5 h-px bg-border" />
                         <div className="flex justify-between font-bold">
                             <span>Total:</span>
                             <span>{currencySymbol}{total.toFixed(2)}</span>

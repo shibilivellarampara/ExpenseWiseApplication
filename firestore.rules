@@ -30,7 +30,7 @@ service cloud.firestore {
       // Any member can read the main ledger document.
       allow get: if isSignedIn() && request.auth.uid in resource.data.memberIds;
       // Let any authenticated user list ledgers they are a member of.
-      allow list: if isSignedIn() && request.auth.uid in resource.data.memberIds;
+      allow list: if isSignedIn() && resource.data.memberIds_size > 0 && request.auth.uid in resource.data.memberIds;
       
       // Any authenticated user can create a new shared ledger.
       allow create: if isSignedIn();
@@ -42,23 +42,10 @@ service cloud.firestore {
       allow delete: if false;
 
       // --- Shared Subcollections ---
-      match /transactions/{transactionId} {
-        // Members can read all transactions in the ledger.
-        allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/shared_expenses/$(ledgerId)).data.memberIds;
-        // Members can create new transactions.
-        allow create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/shared_expenses/$(ledgerId)).data.memberIds;
-        // A user can only update or delete transactions they created.
-        allow update, delete: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
-      }
-      
-      match /categories/{categoryId} {
-        // Any member can read, create, update, or delete categories within the shared ledger.
-        allow read, write: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/shared_expenses/$(ledgerId)).data.memberIds;
-      }
-      
-      match /tags/{tagId} {
-         // Any member can read, create, update, or delete tags within the shared ledger.
-        allow read, write: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/shared_expenses/$(ledgerId)).data.memberIds;
+      // This single rule covers all subcollections like 'transactions', 'categories', and 'tags'.
+      // It allows any member of the ledger to read and write to these subcollections.
+      match /{subcollection}/{docId} {
+        allow read, write: if isSignedIn() && get(/databases/$(database)/documents/shared_expenses/$(ledgerId)).data.memberIds_size > 0 && request.auth.uid in get(/databases/$(database)/documents/shared_expenses/$(ledgerId)).data.memberIds;
       }
     }
     

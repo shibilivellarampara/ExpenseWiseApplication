@@ -9,7 +9,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="items-center text-center">
           <Logo />
-          <CardTitle className="text-2xl font-headline pt-4">Sign in to ExpenseWise</CardTitle>
+          <CardTitle className="text-2xl font-headline pt-4">Welcome Back!</CardTitle>
         </CardHeader>
         <CardContent>
           <LoginForm />

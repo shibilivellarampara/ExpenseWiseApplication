@@ -1,100 +1,75 @@
-
-'use client';
-
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { EnrichedContribution, UserProfile } from "@/lib/types";
-import { Skeleton } from "../ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { getCurrencySymbol } from "@/lib/currencies";
-import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { doc } from 'firebase/firestore';
-import Link from "next/link";
-
-interface ContributionsListProps {
-    contributions: EnrichedContribution[];
-    isLoading?: boolean;
-}
-
-const getInitials = (name?: string | null) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-};
-
-export function ContributionsList({ contributions, isLoading }: ContributionsListProps) {
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-    const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-    const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
-
-
-    if (isLoading) {
-        return (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                     <Card key={i}>
-                        <CardHeader>
-                            <Skeleton className="h-6 w-3/4" />
-                            <Skeleton className="h-4 w-1/2" />
-                        </CardHeader>
-                        <CardContent>
-                           <Skeleton className="h-8 w-1/4 mb-2" />
-                           <Skeleton className="h-4 w-1/3" />
-                        </CardContent>
-                        <CardFooter>
-                            <Skeleton className="h-10 w-full" />
-                        </CardFooter>
-                    </Card>
-                ))}
-            </div>
-        )
-    }
-
-    if (contributions.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg">
-                <h3 className="text-xl font-semibold">No Shared Expenses Yet</h3>
-                <p className="text-muted-foreground mt-2">Click "Add Shared Expense" to get started.</p>
-            </div>
-        );
-    }
-    return (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {contributions.map(item => (
-                <Card key={item.id}>
-                    <CardHeader>
-                        <CardTitle>{item.description}</CardTitle>
-                        <CardDescription>{item.date.toLocaleDateString()}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <p className="text-3xl font-bold">{currencySymbol}{item.totalAmount.toFixed(2)}</p>
-                            <p className="text-sm text-muted-foreground">Total Amount</p>
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium">Paid by {item.paidBy?.name || 'Unknown'}</p>
-                            <p className="text-sm font-medium mt-2">Contributors:</p>
-                            <div className="flex items-center space-x-2 mt-1">
-                                {item.contributors?.map(c => (
-                                    <div key={c.id} className="flex flex-col items-center">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src={c.photoURL || ''} alt={c.name || 'user'}/>
-                                            <AvatarFallback>{getInitials(c.name)}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="text-xs text-muted-foreground mt-1">{currencySymbol}{c.share.toFixed(2)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                         <Button asChild variant="outline" className="w-full">
-                            <Link href={`/shared-expenses/${item.id}`}>View Details</Link>
-                        </Button>
-                    </CardFooter>
-                </Card>
-            ))}
-        </div>
-    )
+{
+  "name": "nextn",
+  "version": "1.6.4",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack -p 9002",
+    "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
+    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
+    "build": "next build"
+  },
+  "dependencies": {
+    "@genkit-ai/google-genai": "^1.20.0",
+    "@genkit-ai/next": "^1.20.0",
+    "@hookform/resolvers": "^4.1.3",
+    "@radix-ui/react-accordion": "^1.2.3",
+    "@radix-ui/react-alert-dialog": "^1.1.6",
+    "@radix-ui/react-avatar": "^1.1.3",
+    "@radix-ui/react-checkbox": "^1.1.4",
+    "@radix-ui/react-collapsible": "^1.1.11",
+    "@radix-ui/react-dialog": "^1.1.6",
+    "@radix-ui/react-dropdown-menu": "^2.1.6",
+    "@radix-ui/react-label": "^2.1.2",
+    "@radix-ui/react-menubar": "^1.1.6",
+    "@radix-ui/react-popover": "^1.1.6",
+    "@radix-ui/react-progress": "^1.1.2",
+    "@radix-ui/react-radio-group": "^1.2.3",
+    "@radix-ui/react-scroll-area": "^1.2.3",
+    "@radix-ui/react-select": "^2.1.6",
+    "@radix-ui/react-separator": "^1.1.2",
+    "@radix-ui/react-slider": "^1.2.3",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-switch": "^1.1.3",
+    "@radix-ui/react-tabs": "^1.1.3",
+    "@radix-ui/react-toast": "^1.2.6",
+    "@radix-ui/react-tooltip": "^1.1.8",
+    "@tanstack/react-virtual": "^3.10.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.0.0",
+    "cookies-next": "^4.2.1",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.5.0",
+    "embla-carousel-react": "^8.6.0",
+    "firebase": "^11.9.1",
+    "genkit": "^1.20.0",
+    "input-otp": "^1.2.4",
+    "lucide-react": "^0.475.0",
+    "next": "15.5.9",
+    "next-themes": "^0.3.0",
+    "react": "^18.3.1",
+    "react-day-picker": "^8.10.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.54.2",
+    "react-phone-number-input": "^3.4.4",
+    "react-select": "^5.8.0",
+    "react-swipeable-list": "^1.9.3",
+    "recharts": "^2.15.1",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss-animate": "^1.0.7",
+    "use-debounce": "^10.0.1",
+    "vaul": "^0.9.1",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/google.accounts": "^0.0.14",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "genkit-cli": "^1.20.0",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
 }

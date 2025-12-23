@@ -1,266 +1,75 @@
-'use client';
-
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
-import { Button } from '../ui/button';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { CalendarIcon, Loader2 } from 'lucide-react';
-import { Calendar } from '../ui/calendar';
-import { cn } from '@/lib/utils';
-import { format, setHours, setMinutes, getHours, getMinutes } from 'date-fns';
-import { Checkbox } from '../ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
-import { useFirestore, useUser, addDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
-import { UserProfile } from '@/lib/types';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { DateTimePicker } from '../DateTimePicker';
-
-
-const contributionSchema = z.object({
-  description: z.string().min(1, 'Description is required.'),
-  totalAmount: z.coerce.number().positive('Total amount must be positive.'),
-  date: z.date({ required_error: 'A date is required.' }),
-  paidById: z.string().min(1, 'You must select who paid.'),
-  contributorIds: z.array(z.string()).min(1, 'At least one contributor must be selected.'),
-});
-
-
-interface AddContributionSheetProps {
-    children: React.ReactNode;
-    users: UserProfile[];
-}
-
-export function AddContributionSheet({ children, users }: AddContributionSheetProps) {
-    const [open, setOpen] = useState(false);
-    const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
-    const { user } = useUser();
-    const firestore = useFirestore();
-
-    const form = useForm<z.infer<typeof contributionSchema>>({
-        resolver: zodResolver(contributionSchema),
-        defaultValues: {
-            description: '',
-            totalAmount: undefined,
-            date: new Date(),
-            paidById: user?.uid || '',
-            contributorIds: user ? [user.uid] : [],
-        },
-    });
-
-    // Reset form when sheet opens
-    useEffect(() => {
-        if(open) {
-            form.reset({
-                description: '',
-                totalAmount: undefined,
-                date: new Date(),
-                paidById: user?.uid || '',
-                contributorIds: user ? [user.uid] : [],
-            });
-        }
-    }, [open, user, form]);
-
-    async function onSubmit(values: z.infer<typeof contributionSchema>) {
-        setIsLoading(true);
-        if (!firestore || !user) {
-             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
-             setIsLoading(false);
-             return;
-        }
-
-        const numContributors = values.contributorIds.length;
-        const share = values.totalAmount / numContributors;
-
-        const contributionData = {
-            userId: user.uid,
-            description: values.description,
-            totalAmount: values.totalAmount,
-            date: values.date,
-            paidById: values.paidById,
-            contributorShares: values.contributorIds.map(id => ({ userId: id, share })),
-            createdAt: serverTimestamp(),
-        };
-
-        try {
-            const contributionsCol = collection(firestore, `users/${user.uid}/contributions`);
-            addDocumentNonBlocking(contributionsCol, contributionData);
-            
-            toast({
-                title: 'Shared Expense Added!',
-                description: 'The contribution has been recorded.',
-            });
-            setOpen(false);
-
-        } catch (error: any) {
-            let description = "There was an unexpected error. Please try again.";
-            if (error.message.includes("invalid data")) {
-                description = "Some of the data you entered is invalid. Please check all fields and try again.";
-            }
-             toast({ variant: 'destructive', title: 'Could Not Add Expense', description });
-        } finally {
-            setIsLoading(false);
-        }
-    }
-
-
-  return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent className="overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="font-headline">Add Shared Expense</SheetTitle>
-          <SheetDescription>
-            Fill in the details for an expense shared with others. The amount will be split equally.
-          </SheetDescription>
-        </SheetHeader>
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-6">
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                            <Textarea placeholder="e.g., Dinner with friends" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="totalAmount"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Total Amount</FormLabel>
-                        <FormControl>
-                           <Input type="number" placeholder="0.00" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                            <FormLabel>Date</FormLabel>
-                            <DateTimePicker field={field} />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="contributorIds"
-                    render={() => (
-                        <FormItem>
-                            <div className="mb-4">
-                                <FormLabel className="text-base">Contributors</FormLabel>
-                                <FormDescription>Select who is splitting this expense.</FormDescription>
-                            </div>
-                            {users?.map((item) => (
-                                <FormField
-                                key={item.id}
-                                control={form.control}
-                                name="contributorIds"
-                                render={({ field }) => {
-                                    return (
-                                    <FormItem
-                                        key={item.id}
-                                        className="flex flex-row items-start space-x-3 space-y-0"
-                                    >
-                                        <FormControl>
-                                        <Checkbox
-                                            checked={field.value?.includes(item.id)}
-                                            onCheckedChange={(checked) => {
-                                            return checked
-                                                ? field.onChange([...(field.value || []), item.id])
-                                                : field.onChange(
-                                                    field.value?.filter(
-                                                    (value) => value !== item.id
-                                                    )
-                                                )
-                                            }}
-                                        />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">
-                                            {item.name} {item.id === user?.uid && '(You)'}
-                                        </FormLabel>
-                                    </FormItem>
-                                    )
-                                }}
-                                />
-                            ))}
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="paidById"
-                    render={({ field }) => (
-                        <FormItem className="space-y-3">
-                        <FormLabel>Who paid for this?</FormLabel>
-                        <FormControl>
-                            <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex flex-col space-y-1"
-                            >
-                            {users?.map(u => (
-                               <FormItem key={u.id} className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                    <RadioGroupItem value={u.id} />
-                                </FormControl>
-                                <FormLabel className="font-normal">{u.name} {u.id === user?.uid && '(You)'}</FormLabel>
-                                </FormItem>
-                            ))}
-                            </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Contribution"}
-                </Button>
-            </form>
-        </Form>
-      </SheetContent>
-    </Sheet>
-  );
+{
+  "name": "nextn",
+  "version": "1.6.4",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack -p 9002",
+    "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
+    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
+    "build": "next build"
+  },
+  "dependencies": {
+    "@genkit-ai/google-genai": "^1.20.0",
+    "@genkit-ai/next": "^1.20.0",
+    "@hookform/resolvers": "^4.1.3",
+    "@radix-ui/react-accordion": "^1.2.3",
+    "@radix-ui/react-alert-dialog": "^1.1.6",
+    "@radix-ui/react-avatar": "^1.1.3",
+    "@radix-ui/react-checkbox": "^1.1.4",
+    "@radix-ui/react-collapsible": "^1.1.11",
+    "@radix-ui/react-dialog": "^1.1.6",
+    "@radix-ui/react-dropdown-menu": "^2.1.6",
+    "@radix-ui/react-label": "^2.1.2",
+    "@radix-ui/react-menubar": "^1.1.6",
+    "@radix-ui/react-popover": "^1.1.6",
+    "@radix-ui/react-progress": "^1.1.2",
+    "@radix-ui/react-radio-group": "^1.2.3",
+    "@radix-ui/react-scroll-area": "^1.2.3",
+    "@radix-ui/react-select": "^2.1.6",
+    "@radix-ui/react-separator": "^1.1.2",
+    "@radix-ui/react-slider": "^1.2.3",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-switch": "^1.1.3",
+    "@radix-ui/react-tabs": "^1.1.3",
+    "@radix-ui/react-toast": "^1.2.6",
+    "@radix-ui/react-tooltip": "^1.1.8",
+    "@tanstack/react-virtual": "^3.10.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.0.0",
+    "cookies-next": "^4.2.1",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.5.0",
+    "embla-carousel-react": "^8.6.0",
+    "firebase": "^11.9.1",
+    "genkit": "^1.20.0",
+    "input-otp": "^1.2.4",
+    "lucide-react": "^0.475.0",
+    "next": "15.5.9",
+    "next-themes": "^0.3.0",
+    "react": "^18.3.1",
+    "react-day-picker": "^8.10.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.54.2",
+    "react-phone-number-input": "^3.4.4",
+    "react-select": "^5.8.0",
+    "react-swipeable-list": "^1.9.3",
+    "recharts": "^2.15.1",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss-animate": "^1.0.7",
+    "use-debounce": "^10.0.1",
+    "vaul": "^0.9.1",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/google.accounts": "^0.0.14",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "genkit-cli": "^1.20.0",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
 }

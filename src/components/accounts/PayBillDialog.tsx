@@ -72,7 +72,7 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
       const creditCardAccountRef = doc(firestore, `users/${user.uid}/accounts`, creditCard.id);
       batch.update(creditCardAccountRef, { balance: increment(outstandingAmount) });
 
-      await commitBatchNonBlocking(batch);
+      await commitBatchNonBlocking(batch, `users/${user.uid}`);
 
       toast({ title: 'Payment Successful', description: `Your payment for ${creditCard.name} has been recorded.` });
       setOpen(false);

@@ -64,7 +64,7 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
                          toast({
                             variant: 'destructive',
                             title: "Upload Failed",
-                            description: error.message || 'Could not upload to Google Drive.'
+                            description: "Could not upload to Google Drive. Please ensure you have the correct permissions."
                         });
                     } finally {
                         setIsUploading(false);

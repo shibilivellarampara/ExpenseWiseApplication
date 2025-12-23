@@ -140,7 +140,7 @@ export function ProfileForm() {
                     finalPhotoURL = await getDownloadURL(uploadResult.ref);
                     setNewAvatarFile(null); 
                 } catch (error: any) {
-                    toast({ variant: "destructive", title: "Upload Failed", description: error.message });
+                    toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload your new profile picture. Please try again." });
                     setIsLoading(false);
                     setIsUploading(false);
                     return;
@@ -175,7 +175,7 @@ export function ProfileForm() {
             
             toast({ title: "Profile Updated", description: "Your changes have been saved." });
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Error updating profile", description: error.message });
+            toast({ variant: "destructive", title: "Error Updating Profile", description: "Could not save your profile changes. Please try again." });
         } finally {
             setIsLoading(false);
         }
@@ -198,7 +198,7 @@ export function ProfileForm() {
             setShowOtpDialog(true);
             toast({ title: "Verification code sent!" });
         } catch (error: any) {
-             toast({ variant: "destructive", title: "Failed to send code", description: error.message });
+             toast({ variant: "destructive", title: "Failed to Send Code", description: "Could not send verification code. Please check the phone number." });
         } finally {
             setIsLoading(false);
         }
@@ -220,7 +220,7 @@ export function ProfileForm() {
             setOtp('');
 
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Phone Update Failed", description: error.message });
+            toast({ variant: "destructive", title: "Phone Update Failed", description: "The verification code was incorrect. Please try again." });
         } finally {
             setIsLoading(false);
         }
@@ -253,7 +253,7 @@ export function ProfileForm() {
             setCurrentPasswordForEmail('');
 
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Email Update Failed", description: error.message });
+            toast({ variant: "destructive", title: "Email Update Failed", description: "The password you entered was incorrect or the email is invalid. Please try again." });
         } finally {
             setIsLoading(false);
         }
@@ -285,7 +285,7 @@ export function ProfileForm() {
             setNewPassword('');
             setConfirmPassword('');
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Update Failed", description: error.message });
+            toast({ variant: "destructive", title: "Update Failed", description: "The current password you entered was incorrect. Please try again." });
         } finally {
             setIsLoading(false);
         }
@@ -299,7 +299,7 @@ export function ProfileForm() {
             await linkWithPopup(auth.currentUser, provider);
             toast({ title: "Google Account Connected!", description: "You can now sign in using your Google account." });
         } catch (error: any) {
-            let description = error.message;
+            let description = "Could not connect to Google account. Please try again.";
             if (error.code === 'auth/credential-already-in-use') {
                 description = "This Google account is already linked to another user.";
             } else if (error.code === 'auth/operation-not-allowed') {

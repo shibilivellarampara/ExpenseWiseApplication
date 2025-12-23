@@ -91,7 +91,7 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
 
             await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
         } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Error', description: error.message });
+            toast({ variant: 'destructive', title: 'Error Settling Up', description: "Could not settle the balance. Please try again." });
         } finally {
             setIsSettling(false);
         }
@@ -170,7 +170,7 @@ function DeletePersonButton({ personName }: { personName: string }) {
                 description: `All debt records for "${personName}" have been deleted.`,
             });
         } catch (error: any) {
-            toast({ variant: 'destructive', title: "Error", description: error.message });
+            toast({ variant: 'destructive', title: "Error Removing Person", description: "Could not remove person and their records. Please try again." });
         } finally {
             setIsDeleting(false);
         }
@@ -228,7 +228,7 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 description: `The record has been removed.`,
             });
         } catch (error: any) {
-            toast({ variant: 'destructive', title: "Error", description: error.message });
+            toast({ variant: 'destructive', title: "Error Deleting Transaction", description: "Could not delete the transaction. Please try again." });
         } finally {
             setIsDeleting(false);
         }

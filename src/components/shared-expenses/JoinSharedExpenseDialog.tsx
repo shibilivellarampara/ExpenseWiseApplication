@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, errorEmitter, FirestorePermissionError, commitBatchNonBlocking } from '@/firebase';
-import { collection, query, where, getDocs, writeBatch, arrayUnion, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch, arrayUnion, doc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { SharedExpense, UserProfile } from '@/lib/types';
 

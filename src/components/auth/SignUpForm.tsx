@@ -147,6 +147,8 @@ export function SignUpForm() {
         let userMessage = 'There was a problem with your request.';
         if (error.code === 'auth/email-already-in-use') {
             userMessage = 'This email is already in use. Please log in or use a different one.';
+        } else if (error.message.includes('invalid-data')) {
+            userMessage = "The data provided for sign-up is invalid. Please check your inputs.";
         }
         toast({ variant: 'destructive', title: 'Sign-up failed.', description: userMessage });
     } finally {
@@ -165,7 +167,7 @@ export function SignUpForm() {
         setConfirmationResult(result);
         setShowOtpDialog(true);
     } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Failed to send code.', description: error.message });
+        toast({ variant: 'destructive', title: 'Failed to send code.', description: "Could not send verification code. Please check the phone number and try again." });
     } finally {
         setIsLoading(false);
     }
@@ -185,7 +187,7 @@ export function SignUpForm() {
           toast({ title: "Account created!", description: "You're all set and have been logged in.", duration: 1000 });
           router.push('/dashboard');
       } catch (error: any) {
-          toast({ variant: 'destructive', title: 'Verification failed.', description: error.message });
+          toast({ variant: 'destructive', title: 'Verification failed.', description: "The code you entered was incorrect. Please try again." });
       } finally {
           setIsLoading(false);
           setOtp('');

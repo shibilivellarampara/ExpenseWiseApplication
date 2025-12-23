@@ -129,7 +129,7 @@ export function LoginForm() {
                 description = "You closed the sign-in window. Please try again.";
                 break;
             default:
-                description = error.message || description;
+                description = "An unexpected error occurred. Please try again.";
                 break;
         }
         
@@ -241,7 +241,7 @@ export function LoginForm() {
       setShowForgotPassword(false);
       setForgotPasswordEmail('');
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({ variant: 'destructive', title: 'Error', description: "Could not send password reset email. Please check the address and try again." });
     } finally {
       setIsForgotLoading(false);
     }

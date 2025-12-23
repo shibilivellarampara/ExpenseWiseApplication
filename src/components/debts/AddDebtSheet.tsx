@@ -273,7 +273,11 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
             onOpenChange(false);
 
         } catch (error: any) {
-             toast({ variant: 'destructive', title: 'Error', description: error.message });
+            let description = "There was an unexpected error. Please try again.";
+            if (error.message.includes("invalid data")) {
+                description = "Some of the data you entered is invalid. Please check all fields and try again.";
+            }
+             toast({ variant: 'destructive', title: 'Could Not Save Record', description });
         } finally {
             setIsLoading(false);
         }

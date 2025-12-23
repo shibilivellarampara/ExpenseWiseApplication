@@ -68,7 +68,7 @@ export function DataManagementSettings() {
     const renderIcon = (iconName: string | undefined, className?: string) => {
         if (!iconName) return <LucideIcons.Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
         const IconComponent = (LucideIcons as any)[iconName];
-        return IconComponent ? <IconComponent className={cn("h-4 w-4", className)} /> : <LucideIcons.Pilcrow className={cn("h-4 w-4", className)} />;
+        return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <LucideIcons.Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
     };
 
     const handleSelectiveReset = async () => {
@@ -99,7 +99,7 @@ export function DataManagementSettings() {
             setShowSelectiveResetDialog(false);
             setCollectionsToReset([]);
         } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Error', description: error.message });
+            toast({ variant: 'destructive', title: 'Error Clearing Data', description: "Could not delete selected data. Please try again." });
         } finally {
             setIsClearing(false);
             setProgress(0);
@@ -143,7 +143,7 @@ export function DataManagementSettings() {
             toast({ title: 'Data Cleared', description: actionText });
             setSelectedAccount(null);
         } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Error', description: error.message });
+            toast({ variant: 'destructive', title: 'Error Clearing Data', description: "Could not clear account data. Please try again." });
         } finally {
             setIsClearing(false);
             setProgress(0);
@@ -215,7 +215,7 @@ export function DataManagementSettings() {
             }, 100);
 
         } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Authentication Failed', description: error.message });
+            toast({ variant: 'destructive', title: 'Authentication Failed', description: "The password you entered was incorrect. Please try again." });
         } finally {
             setIsDeleting(false);
             setPassword('');

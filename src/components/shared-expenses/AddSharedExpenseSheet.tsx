@@ -75,6 +75,7 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
 
             // Create the main shared space document
             batch.set(newSpaceRef, {
+                id: newSpaceRef.id,
                 name: values.name,
                 ownerId: user.uid,
                 joinId: generateJoinId(),
@@ -102,7 +103,7 @@ export function AddSharedExpenseSheet({ children }: AddSharedExpenseSheetProps) 
             setOpen(false);
 
         } catch (error: any) {
-             toast({ variant: 'destructive', title: 'Error', description: error.message });
+             toast({ variant: 'destructive', title: 'Error Creating Space', description: 'Could not create the shared space. Please try again.' });
         } finally {
             setIsLoading(false);
         }

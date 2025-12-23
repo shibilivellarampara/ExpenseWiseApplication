@@ -150,25 +150,20 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
              return;
         }
 
-        const accountData: any = {
-            ...values,
-            userId: user.uid,
-        };
+        const accountData: any = { ...values, userId: user.uid };
         
         if (values.type === 'credit_card') {
             accountData.balance = (values.limit || 0) - (values.balance || 0);
 
-            // Clean up cardDetails: remove empty/undefined optional fields
             if (accountData.cardDetails) {
                 const cleanedDetails: Partial<CardDetails> = {};
                 for (const key in accountData.cardDetails) {
                     const value = accountData.cardDetails[key as keyof CardDetails];
-                    if (value !== undefined && value !== null && value !== '') {
+                    if (value !== undefined && value !== null && value !== '' && !Number.isNaN(value)) {
                         cleanedDetails[key as keyof CardDetails] = value;
                     }
                 }
                 accountData.cardDetails = cleanedDetails;
-                 // If the object is empty after cleaning, remove it entirely
                 if (Object.keys(accountData.cardDetails).length === 0) {
                     delete accountData.cardDetails;
                 }
@@ -216,7 +211,11 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             setOpen(false);
 
         } catch (error: any) {
-             toast({ variant: 'destructive', title: 'Error', description: error.message });
+             let description = "There was an unexpected error. Please try again.";
+            if (error.message.includes("invalid data")) {
+                description = "Some of the data you entered is invalid. Please check all fields and try again.";
+            }
+             toast({ variant: 'destructive', title: 'Could Not Save Account', description });
         } finally {
             setIsLoading(false);
         }

@@ -179,7 +179,7 @@ export default function AnalysisPage() {
         if (!allExpenses || !categoryMap.size || !accountMap.size) return [];
         return allExpenses
             .filter(expense => {
-                if (selectedAccounts.length > 0 && !selectedAccounts.includes(expense.accountId)) {
+                if (selectedAccounts.length > 0 && expense.accountId && !selectedAccounts.includes(expense.accountId)) {
                     return false;
                 }
                 return true;
@@ -188,7 +188,7 @@ export default function AnalysisPage() {
                 ...expense,
                 date: expense.date instanceof Date ? expense.date : (expense.date as Timestamp).toDate(),
                 category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
-                account: accountMap.get(expense.accountId),
+                account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             }));
     }, [allExpenses, categoryMap, accountMap, tagMap, selectedAccounts]);
@@ -453,5 +453,7 @@ export default function AnalysisPage() {
         </div>
     );
 }
+
+    
 
     

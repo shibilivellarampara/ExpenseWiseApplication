@@ -122,3 +122,47 @@ export type EnrichedDebt = Omit<Debt, 'date' | 'settledAt'> & {
 export type EnrichedDebtWithBalance = EnrichedDebt & {
   runningBalance?: number;
 };
+
+
+// --- V2 Shared Expense Types ---
+
+export type SharedExpense = {
+    id: string;
+    name: string;
+    ownerId: string;
+    memberIds: string[];
+    inviteCode: string;
+    balance: number;
+    memberSharedTags: Record<string, string>; // e.g. { "uid1": "home-expenses-tag", "uid2": "our-home-tag" }
+};
+
+export type SharedCategory = {
+    id: string;
+    name: string;
+    icon: string;
+};
+
+export type SharedTag = {
+    id: string;
+    name: string;
+    icon: string;
+};
+
+export type SharedTransaction = {
+    id: string;
+    createdBy: string; // UID of member who added it
+    type: 'expense' | 'income';
+    amount: number;
+    description: string;
+    date: Timestamp;
+    // References to shared categories/tags within the subcollection
+    categoryId?: string;
+    tagIds?: string[];
+};
+
+export type EnrichedSharedTransaction = Omit<SharedTransaction, 'categoryId' | 'tagIds' | 'date'> & {
+  category?: SharedCategory;
+  tags: SharedTag[];
+  member?: UserProfile; // The user who added the transaction
+  date: Date;
+};

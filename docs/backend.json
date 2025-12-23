@@ -1,5 +1,4 @@
 
-
 {
   "entities": {
     "UserProfile": {
@@ -174,6 +173,43 @@
         "settledAt": { "type": "string", "format": "date-time", "description": "The date when the debt was settled." }
       },
       "required": ["id", "userId", "personName", "amount", "type", "date", "status"]
+    },
+    "SharedExpense": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "SharedExpense",
+        "description": "Represents a shared expense ledger or group.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "ownerId": { "type": "string", "description": "The UID of the user who created the shared expense." },
+            "memberIds": { "type": "array", "items": { "type": "string" }, "description": "An array of UIDs of all members." },
+            "inviteCode": { "type": "string", "description": "A unique, short, human-readable code to join this ledger." },
+            "memberSharedTags": {
+                "type": "object",
+                "description": "A map where keys are user UIDs and values are the personal tags they use to link to this shared expense.",
+                "additionalProperties": { "type": "string" }
+            },
+            "balance": { "type": "number", "default": 0, "description": "The overall balance of the shared ledger." }
+        },
+        "required": ["id", "name", "ownerId", "memberIds", "inviteCode"]
+    },
+    "SharedTransaction": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "SharedTransaction",
+        "description": "A transaction within a shared expense ledger.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "createdBy": { "type": "string", "description": "The UID of the user who added this transaction." },
+            "type": { "type": "string", "enum": ["expense", "income"] },
+            "amount": { "type": "number" },
+            "description": { "type": "string" },
+            "date": { "type": "string", "format": "date-time" },
+            "categoryId": { "type": "string", "description": "Ref to a category in the shared ledger's subcollection." },
+            "tagIds": { "type": "array", "items": { "type": "string" }, "description": "Ref to tags in the shared ledger's subcollection." }
+        },
+        "required": ["id", "createdBy", "type", "amount", "date"]
     }
   },
   "auth": {
@@ -200,13 +236,29 @@
       "schema": { "$ref": "#/entities/Tag" },
       "description": "Stores user-defined expense tags."
     },
+    "/users/{userId}/debts/{debtId}": {
+        "schema": { "$ref": "#/entities/Debt" },
+        "description": "Stores debt and loan records for a user."
+    },
     "/admin/{adminId}": {
         "schema": { "$ref": "#/entities/UserProfile" },
         "description": "Admin access control."
     },
-    "/users/{userId}/debts/{debtId}": {
-        "schema": { "$ref": "#/entities/Debt" },
-        "description": "Stores debt and loan records for a user."
+    "/shared_expenses/{ledgerId}": {
+      "schema": { "$ref": "#/entities/SharedExpense" },
+      "description": "Top-level collection for shared expense ledgers."
+    },
+    "/shared_expenses/{ledgerId}/transactions/{transactionId}": {
+        "schema": { "$ref": "#/entities/SharedTransaction" },
+        "description": "Transactions belonging to a specific shared ledger."
+    },
+    "/shared_expenses/{ledgerId}/categories/{categoryId}": {
+        "schema": { "$ref": "#/entities/Category" },
+        "description": "Categories specific to a shared ledger."
+    },
+    "/shared_expenses/{ledgerId}/tags/{tagId}": {
+        "schema": { "$ref": "#/entities/Tag" },
+        "description": "Tags specific to a shared ledger."
     }
   }
 }

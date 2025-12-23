@@ -4,7 +4,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useDoc, useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, orderBy } from 'firebase/firestore';
+import { doc, collection, query, orderBy, where } from 'firebase/firestore';
 import { SharedExpense, SharedTransaction, UserProfile, EnrichedSharedTransaction } from '@/lib/types';
 import { PageHeader } from '@/components/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -41,7 +41,7 @@ export default function SharedExpenseDetailPage() {
         if (!transactions || !memberProfileMap.size) return [];
         return transactions.map(tx => ({
             ...tx,
-            date: tx.date.toDate(),
+            date: (tx.date as any).toDate(),
             member: memberProfileMap.get(tx.createdBy),
             tags: [], // Placeholder for now
         }));

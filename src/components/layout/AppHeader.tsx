@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
-import { PanelLeft, Bell, Circle, CheckCheck, ArrowRight, ArrowLeft } from 'lucide-react';
+import { PanelLeft, Bell, Circle, CheckCheck, ArrowRight, ArrowLeft, Users } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { NavLink } from './AppSidebar';
 import {
@@ -44,6 +44,7 @@ const baseNavItems = [
   { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
+  { href: '/shared-expenses', icon: <Users className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
   { href: '/data', icon: <FileUp className="h-5 w-5" />, label: 'Import / Export' },
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },

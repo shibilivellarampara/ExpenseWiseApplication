@@ -16,6 +16,7 @@ import {
   HandCoins,
   ArrowRight,
   ArrowLeft,
+  Users,
 } from 'lucide-react';
 import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
@@ -34,6 +35,7 @@ const baseNavItems = [
   { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
+  { href: '/shared-expenses', icon: <Users className="h-5 w-5" />, label: 'Shared Expenses' },
   { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
   { href: '/data', icon: <FileUp className="h-5 w-5" />, label: 'Import / Export' },
   { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },

@@ -101,7 +101,9 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
     const categoriesWithExpenses = useMemo(() => {
         const activeCategories = new Set<string>();
         expenseOnlyData.forEach(e => {
-            activeCategories.add(e.category?.name || 'Uncategorized');
+            if (e.amount > 0) {
+                 activeCategories.add(e.category?.name || 'Uncategorized');
+            }
         });
         // Sort categories to match the legend order with allCategories
         return allCategories

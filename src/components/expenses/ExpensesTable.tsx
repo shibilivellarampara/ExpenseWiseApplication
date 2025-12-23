@@ -145,22 +145,6 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-1 pr-4">
                                                     <div className="font-medium text-sm break-words">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
-                                                    <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                                        {isShared && row.expense.user ? (
-                                                                <div className="flex items-center gap-1">
-                                                                    <Avatar className="h-4 w-4">
-                                                                        <AvatarImage src={row.expense.user.photoURL || ''} alt={row.expense.user.name || 'user'}/>
-                                                                        <AvatarFallback>{getInitials(row.expense.user.name)}</AvatarFallback>
-                                                                    </Avatar>
-                                                                    <span>{row.expense.user.name}</span>
-                                                                </div>
-                                                        ) : (
-                                                            <button className="flex items-center gap-1 cursor-pointer hover:underline" onClick={(e) => {e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}>
-                                                                {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
-                                                                <span>{row.expense.account?.name}</span>
-                                                            </button>
-                                                        )}
-                                                    </div>
                                                 </div>
                                                 <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
                                                     <div className="flex items-center">
@@ -181,18 +165,33 @@ function GroupedExpenseList({ expenses, isShared, currencySymbol, onDataChange, 
                                                             {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
                                                         </div>
                                                     </div>
-                                                     {typeof row.expense.runningBalance === 'number' && (
-                                                        <div className={cn("text-muted-foreground", viewMode === 'compact' ? 'text-xs' : 'text-xs mt-0.5')}>
-                                                            Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </div>
 
-                                            <div className="text-xs text-muted-foreground flex items-center gap-3">
-                                                <div>
-                                                    {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            <div className="text-xs text-muted-foreground flex items-center justify-between">
+                                                <div className="flex items-center gap-1">
+                                                     {isShared && row.expense.user ? (
+                                                        <div className="flex items-center gap-1">
+                                                            <Avatar className="h-4 w-4">
+                                                                <AvatarImage src={row.expense.user.photoURL || ''} alt={row.expense.user.name || 'user'}/>
+                                                                <AvatarFallback>{getInitials(row.expense.user.name)}</AvatarFallback>
+                                                            </Avatar>
+                                                            <span>{row.expense.user.name}</span>
+                                                        </div>
+                                                     ) : (
+                                                         <button className="flex items-center gap-1 cursor-pointer hover:underline" onClick={(e) => {e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}>
+                                                            {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
+                                                            <span>{row.expense.account?.name}</span>
+                                                        </button>
+                                                     )}
+                                                     <span className="mx-1">•</span>
+                                                     <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
+                                                {typeof row.expense.runningBalance === 'number' && (
+                                                    <div className={cn("text-muted-foreground", viewMode === 'compact' ? 'text-xs' : 'text-xs mt-0.5')}>
+                                                        Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
+                                                    </div>
+                                                )}
                                             </div>
                                             
                                             {viewMode === 'normal' && (

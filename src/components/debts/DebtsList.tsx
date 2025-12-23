@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -314,8 +313,8 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                         <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
                             <div>
                                 {record.type === 'lent' ? 
-                                    <ArrowRight className="h-5 w-5 text-red-500" /> : 
-                                    <ArrowLeft className="h-5 w-5 text-green-600" />}
+                                    <ArrowLeft className="h-5 w-5 text-red-500" /> : 
+                                    <ArrowRight className="h-5 w-5 text-green-600" />}
                             </div>
                             <div className="flex-grow">
                                 <p className="font-medium">
@@ -345,6 +344,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
 export function DebtsList({ debts, isLoading }: DebtsListProps) {
     const { user } = useUser();
     const firestore = useFirestore();
+    const { toast } = useToast();
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
@@ -440,7 +440,6 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         </div>
     );
 }
-
-
+    
 
     

@@ -157,15 +157,18 @@ export default function DashboardPage() {
         const expenseOnly = enrichedChartExpenses.filter(e => e.type === 'expense');
         const dataMap = new Map<string, number>();
 
-        expenseOnly.forEach(item => {
-            let keys: string[] = [];
-            if (grouping === 'tag') {
+        if (grouping === 'tag') {
+            expenseOnly.forEach(item => {
                 if (item.tags.length > 0) {
-                     item.tags.forEach(tag => keys.push(tag.name));
+                    item.tags.forEach(tag => {
+                        dataMap.set(tag.name, (dataMap.get(tag.name) || 0) + item.amount);
+                    });
                 } else {
-                    keys.push('Untagged');
+                    dataMap.set('Untagged', (dataMap.get('Untagged') || 0) + item.amount);
                 }
-            } else {
+            });
+        } else { // 'category' or 'account'
+            expenseOnly.forEach(item => {
                 let key: string | undefined;
                 switch(grouping) {
                     case 'category':
@@ -176,15 +179,10 @@ export default function DashboardPage() {
                         break;
                 }
                 if (key) {
-                    keys.push(key);
+                    dataMap.set(key, (dataMap.get(key) || 0) + item.amount);
                 }
-            }
-            
-            const amountPerKey = keys.length > 0 ? item.amount / keys.length : item.amount;
-            keys.forEach(key => {
-                 dataMap.set(key, (dataMap.get(key) || 0) + amountPerKey);
-            })
-        });
+            });
+        }
         
         const allData = Array.from(dataMap, ([name, value]) => ({ name, value, icon: '' })).sort((a,b) => b.value - a.value);
 
@@ -196,18 +194,20 @@ export default function DashboardPage() {
             chartData = [...topData, { name: 'Others', value: otherValue, icon: '' }];
         }
 
-        return { chartData, allData };
+        const totalExpenses = expenseOnly.reduce((sum, item) => sum + item.amount, 0);
+
+        return { chartData, allData, totalAmount: totalExpenses };
     };
     
     const { chartData: pieChartCategoryData, allData: allCategoryData } = useMemo(() => generatePieChartData('category'), [enrichedChartExpenses, categories]);
     const { chartData: pieChartAccountData, allData: allAccountData } = useMemo(() => generatePieChartData('account'), [enrichedChartExpenses, accounts]);
-    const { chartData: pieChartTagData, allData: allTagData } = useMemo(() => generatePieChartData('tag'), [enrichedChartExpenses, tags]);
+    const { chartData: pieChartTagData, allData: allTagData, totalAmount: totalTagExpenses } = useMemo(() => generatePieChartData('tag'), [enrichedChartExpenses, tags]);
 
     const useCategoryColors = userProfile?.dashboardSettings?.useCategoryColorsInChart ?? true;
 
     return (
         <div className="w-full space-y-8">
-            <PageHeader title="Welcome to your Dashboard" description="Here's a summary of your financial activity." />
+            <PageHeader title="Welcome Back!" description="Here's a summary of your financial activity." />
       
              {!isLoading && accounts?.length === 0 && (
                 <WelcomeCard />
@@ -281,7 +281,7 @@ export default function DashboardPage() {
                                                 <CategoryPieChart data={pieChartAccountData} allData={allAccountData} currencySymbol={currencySymbol} />
                                             </TabsContent>
                                             <TabsContent value="tag">
-                                                <CategoryPieChart data={pieChartTagData} allData={allTagData} currencySymbol={currencySymbol} />
+                                                <CategoryPieChart data={pieChartTagData} allData={allTagData} currencySymbol={currencySymbol} totalAmountForPercentage={totalTagExpenses}/>
                                             </TabsContent>
                                         </>
                                     )}

@@ -17,6 +17,7 @@ interface CategoryPieChartProps {
   data: PieChartDataPoint[];
   allData: PieChartDataPoint[];
   currencySymbol: string;
+  totalAmountForPercentage?: number;
 }
 
 interface ActiveShapeProps {
@@ -81,7 +82,7 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
 };
 
 
-export function CategoryPieChart({ data, allData, currencySymbol }: CategoryPieChartProps) {
+export function CategoryPieChart({ data, allData, currencySymbol, totalAmountForPercentage }: CategoryPieChartProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const onPieEnter = (_: any, index: number) => {
@@ -100,7 +101,7 @@ export function CategoryPieChart({ data, allData, currencySymbol }: CategoryPieC
     );
   }
 
-  const totalAmount = allData.reduce((sum, item) => sum + item.value, 0);
+  const totalAmount = totalAmountForPercentage ?? allData.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className="w-full flex flex-col h-[450px]">
@@ -140,9 +141,11 @@ export function CategoryPieChart({ data, allData, currencySymbol }: CategoryPieC
                                 <Badge variant="secondary" className="font-mono">
                                     {currencySymbol}{item.value.toFixed(2)}
                                 </Badge>
-                                <span className="text-xs text-muted-foreground w-12 text-right">
-                                    ({((item.value / totalAmount) * 100).toFixed(1)}%)
-                                </span>
+                                {totalAmount > 0 && (
+                                  <span className="text-xs text-muted-foreground w-12 text-right">
+                                      ({((item.value / totalAmount) * 100).toFixed(1)}%)
+                                  </span>
+                                )}
                             </div>
                         </div>
                     ))}

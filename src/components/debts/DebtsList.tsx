@@ -140,7 +140,7 @@ function DeletePersonButton({ personName }: { personName: string }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const [isDeleting, setIsDeleting] = useState(false);
-    const { toast } = useToast();
+    const { toast } } from useToast();
 
     const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -315,7 +315,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                             <div>
                                 {record.type === 'lent' ? 
                                     <ArrowRight className="h-5 w-5 text-red-500" /> : 
-                                    <ArrowLeft className="h-5 w-5 text-green-600" />}
+                                    <ArrowRight className="h-5 w-5 text-green-600" />}
                             </div>
                             <div className="flex-grow">
                                 <p className="font-medium">
@@ -441,3 +441,6 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     );
 }
 
+
+
+    

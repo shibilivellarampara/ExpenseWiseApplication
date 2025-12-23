@@ -84,7 +84,7 @@ export default function MonthlyExpensesPage() {
             }))
             .filter(expense => {
                 if (filters.type !== 'all' && expense.type !== filters.type) return false;
-                if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId)) return false;
+                if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
                 if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) return false;
                 if (filters.tags.length > 0 && !filters.tags.some(tagId => expense.tagIds?.includes(tagId))) return false;
                 if (debouncedSearchQuery) {
@@ -104,8 +104,10 @@ export default function MonthlyExpensesPage() {
         };
         
         const transactionsByAccount = clientFiltered.reduce((acc, tx) => {
-            if (!acc[tx.accountId]) { acc[tx.accountId] = []; }
-            acc[tx.accountId].push(tx as (Expense & { date: Date}));
+            if(tx.accountId) {
+              if (!acc[tx.accountId]) { acc[tx.accountId] = []; }
+              acc[tx.accountId].push(tx as (Expense & { date: Date}));
+            }
             return acc;
         }, {} as Record<string, (Expense & {date: Date})[]>);
 
@@ -130,7 +132,7 @@ export default function MonthlyExpensesPage() {
         let enriched = finalWithBalance.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
-            account: accountMap.get(expense.accountId),
+            account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
 

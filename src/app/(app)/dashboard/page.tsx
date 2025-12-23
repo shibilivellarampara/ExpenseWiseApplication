@@ -129,6 +129,8 @@ export default function DashboardPage() {
         if (!expenseList || !categoryMap.size || !accountMap.size) return [];
     
         return expenseList.reduce<EnrichedExpense[]>((acc, expense) => {
+            if (!expense.accountId) return acc;
+            
             const account = accountMap.get(expense.accountId);
     
             // Skip if account not found

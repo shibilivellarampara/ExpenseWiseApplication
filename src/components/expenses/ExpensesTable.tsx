@@ -145,10 +145,6 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-1 pr-4">
                                                     <div className="font-medium text-sm break-words">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
-                                                     <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                                        {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
-                                                        <span>{row.expense.account?.name}</span>
-                                                    </div>
                                                 </div>
                                                 <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
                                                     <div className="flex items-center">
@@ -172,11 +168,14 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                             </div>
 
                                             <div className="text-xs text-muted-foreground flex items-center justify-between">
-                                                <div className="flex items-center gap-1">
-                                                     <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <div className="flex items-center gap-2">
+                                                    {RenderIcon(row.expense.account?.icon, "h-3 w-3")}
+                                                    <span>{row.expense.account?.name}</span>
+                                                    <span className="text-muted-foreground/50">&bull;</span>
+                                                    <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
                                                 {typeof row.expense.runningBalance === 'number' && (
-                                                    <div className={cn("text-muted-foreground", viewMode === 'compact' ? 'text-xs' : 'text-xs mt-0.5')}>
+                                                    <div className="text-muted-foreground">
                                                         Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
                                                     </div>
                                                 )}

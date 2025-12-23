@@ -14,6 +14,7 @@ const changelog = [
         date: "2025-12-23",
         changes: [
             { type: 'Feature', description: "Added a 'Pay Bill' option to credit card menus to easily settle outstanding balances from a bank account." },
+            { type: 'Feature', description: "Temporarily removed the 'Shared Expenses' feature to improve application stability and simplify the user experience." },
             { type: 'Fix', description: "Resolved multiple Firestore errors, including a bug when updating only a credit card's billing date." },
             { type: 'UI/UX', description: "Improved error messages throughout the app to be more user-friendly instead of showing technical details." },
             { type: 'UI/UX', description: "Corrected icons and descriptions on the 'Debts & Dues' page for better clarity on lent vs. borrowed money." },
@@ -400,6 +401,3 @@ export default function AboutPage() {
     );
 
 }
-
-    
-    

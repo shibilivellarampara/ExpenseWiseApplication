@@ -157,9 +157,23 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
         
         if (values.type === 'credit_card') {
             accountData.balance = (values.limit || 0) - (values.balance || 0);
-        }
 
-        if (values.type !== 'credit_card') {
+            // Clean up cardDetails: remove empty/undefined optional fields
+            if (accountData.cardDetails) {
+                const cleanedDetails: Partial<CardDetails> = {};
+                for (const key in accountData.cardDetails) {
+                    const value = accountData.cardDetails[key as keyof CardDetails];
+                    if (value !== undefined && value !== null && value !== '') {
+                        cleanedDetails[key as keyof CardDetails] = value;
+                    }
+                }
+                accountData.cardDetails = cleanedDetails;
+                 // If the object is empty after cleaning, remove it entirely
+                if (Object.keys(accountData.cardDetails).length === 0) {
+                    delete accountData.cardDetails;
+                }
+            }
+        } else {
             delete accountData.limit;
             delete accountData.billingDate;
             delete accountData.cardDetails;

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -65,6 +66,7 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings'], isS
     description: z.string().optional(),
     
     tagIds: z.array(z.string()).optional(),
+    sharedExpenseId: z.string().optional(),
   });
 
   if (settings?.isDescriptionRequired) {
@@ -479,7 +481,7 @@ function ExpenseForm({
             }
             return docId;
         } catch (error: any) {
-            toast({ variant: 'destructive', title: `Error Adding ${type}`, description: error.message });
+            toast({ variant: 'destructive', title: `Error Adding ${type}`, description: "There was an unexpected error. Please try again." });
             return undefined;
         }
     };
@@ -847,7 +849,7 @@ function useExpenseForm({
                     categoryId: expenseToEdit.category?.id || '',
                     description: expenseToEdit.description || '',
                     tagIds: expenseToEdit.tags?.map(t => t.id) || [],
-                    sharedExpenseId: sharedExpenseId,
+                    sharedExpenseId: sharedExpenseId || expenseToEdit.sharedExpenseId,
                 });
             } else {
                  form.reset(getNewFormValues());
@@ -861,7 +863,7 @@ function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Authentication not ready.' });
             return false;
         }
-        if ( !userCategories) {
+        if (!userCategories && !isShared) {
             toast({ variant: 'destructive', title: 'Error', description: 'Required data (categories) is not loaded.' });
             return false;
         }
@@ -934,13 +936,18 @@ function useExpenseForm({
                     currentValues: typeof values,
                     previousExpense?: EnrichedExpense
                 ) => {
+                    if (!currentValues.accountId) {
+                        toast({ variant: 'destructive', title: 'Invalid Operation', description: `An account must be selected for a "${selectedCategory?.name}" transaction.`});
+                        return false;
+                    }
+
                     const amount = currentValues.amount;
                     const type = currentValues.type;
                     const expectedType = operation === 'upgrade' ? 'income' : 'expense';
                     const increment_or_decrement = operation === 'upgrade' ? amount : -amount;
 
                     if (selectedAccount?.type === 'credit_card' && type === expectedType) {
-                        const accountRef = doc(firestore, `users/${user.uid}/accounts`, currentValues.accountId!);
+                        const accountRef = doc(firestore, `users/${user.uid}/accounts`, currentValues.accountId);
                         const updatePayload = { 
                             limit: increment(increment_or_decrement),
                             balance: increment(increment_or_decrement) // Also update available balance
@@ -949,7 +956,7 @@ function useExpenseForm({
                         if (!previousExpense) { // New transaction
                             batch.update(accountRef, updatePayload);
                         } else { // Editing transaction
-                            const oldCategoryName = userCategories.find(c => c.id === previousExpense.category?.id)?.name;
+                            const oldCategoryName = userCategories?.find(c => c.id === previousExpense.category?.id)?.name;
                             const oldType = previousExpense.type;
                             const oldAmount = previousExpense.amount;
                             
@@ -959,9 +966,10 @@ function useExpenseForm({
                                 batch.update(accountRef, { limit: increment(difference), balance: increment(difference) });
                             } else {
                                 // different category or type -> revert old (if applicable), apply new
-                                if (oldCategoryName === 'Credit Limit Upgrade' || oldCategoryName === 'Credit Limit Downgrade') {
+                                if ((oldCategoryName === 'Credit Limit Upgrade' || oldCategoryName === 'Credit Limit Downgrade') && previousExpense.account?.id) {
+                                    const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, previousExpense.account.id);
                                     const oldIncrement = oldCategoryName === 'Credit Limit Upgrade' ? oldAmount : -oldAmount;
-                                    batch.update(accountRef, { limit: increment(-oldIncrement), balance: increment(-oldIncrement) });
+                                    batch.update(oldAccountRef, { limit: increment(-oldIncrement), balance: increment(-oldIncrement) });
                                 }
                                 batch.update(accountRef, updatePayload);
                             }
@@ -1022,7 +1030,7 @@ function useExpenseForm({
                 batch.update(expenseRef, expenseData);
             }
 
-            commitBatchNonBlocking(batch, collectionPath);
+            await commitBatchNonBlocking(batch, collectionPath);
 
             if (!isShared && (isCreditLimitUpgrade || isCreditLimitDowngrade)) {
                 toast({ title: `Credit Limit Updated!`, description: `The limit for ${selectedAccount?.name} has been changed.`});
@@ -1060,8 +1068,8 @@ function useExpenseForm({
     });
 
     const handleDelete = async () => {
-        if (!firestore || !user || !isEditMode || !expenseToEdit || !userAccounts || !userCategories) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction.' });
+        if (!firestore || !user || !isEditMode || !expenseToEdit || (!userAccounts && !isShared) || (!userCategories && !isShared)) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction. Required data missing.' });
             return;
         }
         setIsLoading(true);
@@ -1070,7 +1078,10 @@ function useExpenseForm({
             const collectionPath = sharedExpenseId ? `shared_expenses/${sharedExpenseId}/expenses` : `users/${user.uid}/expenses`;
             const expenseRef = doc(firestore, collectionPath, expenseToEdit.id);
 
-            const selectedCategory = userCategories.find(c => c.id === expenseToEdit.category?.id);
+            const allCategories = isShared ? (sharedCategories || []) : (userCategories || []);
+            const allAccounts = userAccounts || [];
+
+            const selectedCategory = allCategories.find(c => c.id === expenseToEdit.category?.id);
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
             const isCreditLimitDowngrade = selectedCategory?.name === 'Credit Limit Downgrade';
             
@@ -1079,7 +1090,7 @@ function useExpenseForm({
             if (!sharedExpenseId) {
                 if (expenseToEdit.account?.id) {
                     const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account.id);
-                    const selectedAccount = userAccounts.find(acc => acc.id === expenseToEdit.account!.id);
+                    const selectedAccount = allAccounts.find(acc => acc.id === expenseToEdit.account!.id);
     
                     if ((isCreditLimitUpgrade || isCreditLimitDowngrade) && selectedAccount?.type === 'credit_card') {
                          const amountToRevert = isCreditLimitUpgrade ? -expenseToEdit.amount : expenseToEdit.amount;
@@ -1099,12 +1110,12 @@ function useExpenseForm({
             }
 
 
-            commitBatchNonBlocking(batch, collectionPath);
+            await commitBatchNonBlocking(batch, collectionPath);
             toast({ title: 'Transaction Deleted', description: 'The transaction has been permanently removed.' });
             onSaveSuccess?.();
             setOpen(false);
         } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Delete Failed', description: error.message });
+            toast({ variant: 'destructive', title: 'Delete Failed', description: "There was an unexpected error. Please try again." });
         } finally {
             setIsLoading(false);
         }

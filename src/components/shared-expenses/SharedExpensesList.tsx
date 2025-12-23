@@ -62,7 +62,7 @@ export function SharedExpensesList({ sharedExpenses, isLoading }: SharedExpenses
                         </CardHeader>
                         <CardFooter className="flex justify-between items-center">
                             <div className="font-semibold text-lg">
-                                {currencySymbol}{item.balance.toFixed(2)}
+                                {currencySymbol}{(item.balance || 0).toFixed(2)}
                             </div>
                             <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </CardFooter>

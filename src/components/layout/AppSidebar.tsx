@@ -10,7 +10,6 @@ import {
   FileUp,
   Settings,
   ArrowRightLeft,
-  Briefcase,
   FileText,
   Info,
   BarChartHorizontal,

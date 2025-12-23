@@ -32,14 +32,13 @@ import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
 import { Checkbox } from "../ui/checkbox";
 
-type DeletableCollection = 'expenses' | 'accounts' | 'categories' | 'tags' | 'contributions' | 'debts';
+type DeletableCollection = 'expenses' | 'accounts' | 'categories' | 'tags' | 'debts';
 
 const collectionLabels: Record<DeletableCollection, string> = {
     expenses: 'Transactions',
     accounts: 'Accounts',
     categories: 'Categories',
     tags: 'Tags',
-    contributions: 'Shared Contributions',
     debts: 'Debts & Dues'
 };
 
@@ -155,7 +154,7 @@ export function DataManagementSettings() {
         setIsDeleting(true);
         setProgress(0);
 
-        const collectionsToDelete = ['expenses', 'accounts', 'categories', 'tags', 'contributions', 'debts'];
+        const collectionsToDelete = ['expenses', 'accounts', 'categories', 'tags', 'debts'];
         
         try {
             let docsProcessed = 0;
@@ -424,4 +423,3 @@ export function DataManagementSettings() {
         </Card>
     );
 }
-

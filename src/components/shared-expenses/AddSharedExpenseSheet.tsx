@@ -22,7 +22,7 @@ import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { SharedExpense, Tag } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { renderIcon } from '@/lib/render-icon';
+import { renderIcon } from '@/lib/render-icon.tsx';
 
 const addSharedExpenseSchema = z.object({
   name: z.string().min(3, 'Ledger name must be at least 3 characters long.'),

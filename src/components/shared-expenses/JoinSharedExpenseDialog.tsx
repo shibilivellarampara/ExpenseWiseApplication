@@ -1,163 +1,261 @@
-
 'use client';
 
-import { useState, useMemo } from 'react';
+import { UserNav } from '@/components/auth/UserNav';
+import { usePathname, useRouter } from 'next/navigation';
+import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
+import { useSidebar } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
+import { PanelLeft, Bell, Circle, CheckCheck, ArrowRight, ArrowLeft, Users } from 'lucide-react';
+import { Logo } from '@/components/Logo';
+import { NavLink } from './AppSidebar';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from '../ui/button';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { Input } from '../ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, query, where, getDocs, writeBatch, arrayUnion, doc, serverTimestamp, getDoc } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
-import { SharedExpense, UserProfile, Tag } from '@/lib/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { renderIcon } from '@/lib/render-icon.tsx';
+  LayoutDashboard,
+  Wallet,
+  FileUp,
+  Settings,
+  ArrowRightLeft,
+  FileText,
+  Info,
+  BarChartHorizontal,
+  HandCoins,
+} from 'lucide-react';
+import pkg from '../../../package.json';
+import { Separator } from '@/components/ui/separator';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Account, UserProfile } from '@/lib/types';
+import { collection, query, where, doc } from 'firebase/firestore';
 
-const joinSchema = z.object({
-    joinId: z.string().length(6, 'The join code must be 6 characters long.'),
-    sharedTagId: z.string().min(1, 'Please select a tag to link your personal expenses.'),
-});
 
-type JoinFormData = z.infer<typeof joinSchema>;
+const appVersion = pkg.version;
 
-export function JoinSharedExpenseDialog({ children }: { children: React.ReactNode }) {
-    const [open, setOpen] = useState(false);
-    const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
+
+const baseNavItems = [
+  { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
+  { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
+  { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
+  { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
+  // { href: '/shared-expenses', icon: <Users className="h-5 w-5" />, label: 'Shared Expenses' },
+  { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
+  { href: '/data', icon: <FileUp className="h-5 w-5" />, label: 'Import / Export' },
+  { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
+  { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
+];
+
+const getPageTitle = (path: string): string => {
+    if (path.startsWith('/admin/users')) return 'User Management';
+    if (path.startsWith('/admin')) return 'Admin Dashboard';
+    if (path.startsWith('/profile')) return 'Settings';
+    
+    const navItem = baseNavItems.find(item => {
+        if(item.label === 'Import / Export') {
+            return path.startsWith('/data') || path.startsWith('/import') || path.startsWith('/reports');
+        }
+        return path.startsWith(item.href) || (item.special_href && path.startsWith(item.special_href))
+    });
+    return navItem ? navItem.label : 'Dashboard';
+}
+
+function Notifications() {
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const router = useRouter();
     const { user } = useUser();
     const firestore = useFirestore();
 
-    const tagsQuery = useMemo(() => user ? collection(firestore, `users/${user.uid}/tags`) : null, [user, firestore]);
-    const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
-    const activeTags = useMemo(() => tags?.filter(t => t.status !== 'inactive'), [tags]);
+    const accountsQuery = useMemoFirebase(() => {
+        if (!user) return null;
+        return query(collection(firestore, `users/${user.uid}/accounts`), where('type', '==', 'credit_card'));
+    }, [user, firestore]);
 
-    const form = useForm<JoinFormData>({
-        resolver: zodResolver(joinSchema),
-        defaultValues: { joinId: '', sharedTagId: '' },
-    });
+    const { data: creditCards } = useCollection<Account>(accountsQuery);
 
-    async function onSubmit(values: JoinFormData) {
-        if (!firestore || !user) return;
-        setIsLoading(true);
+    useEffect(() => {
+        const generatedNotifications: any[] = [];
+        const today = new Date();
+        const currentDay = today.getDate();
 
-        try {
-            const ledgersRef = collection(firestore, 'shared_expenses');
-            const q = query(ledgersRef, where('inviteCode', '==', values.joinId.toUpperCase()));
-            const querySnapshot = await getDocs(q);
+        creditCards?.forEach(card => {
+            const outstandingAmount = (card.limit || 0) - card.balance;
 
-            if (querySnapshot.empty) {
-                form.setError('joinId', { type: 'manual', message: 'No ledger found with this code.' });
-                setIsLoading(false);
-                return;
+            if (card.billingDate && outstandingAmount > 0) {
+                const daysUntilBilling = (card.billingDate - currentDay + 30) % 30; // simple days diff
+                if (daysUntilBilling <= 5 && daysUntilBilling >= 0) {
+                     generatedNotifications.push({
+                        id: `cc-due-${card.id}`,
+                        text: `Your payment for ${card.name} is due soon (Billing Date: ${card.billingDate}th).`,
+                        read: false,
+                        href: '/accounts'
+                    });
+                }
             }
+        });
+        
+        setNotifications(generatedNotifications);
+    }, [creditCards]);
 
-            const ledgerDoc = querySnapshot.docs[0];
-            const ledger = ledgerDoc.data() as SharedExpense;
 
-            if (ledger.memberIds.includes(user.uid)) {
-                 form.setError('joinId', { type: 'manual', message: 'You are already a member of this ledger.' });
-                 setIsLoading(false);
-                 return;
-            }
+    const unreadCount = notifications.filter(n => !n.read).length;
 
-            const batch = writeBatch(firestore);
-            batch.update(ledgerDoc.ref, { 
-                memberIds: arrayUnion(user.uid),
-                [`memberSharedTags.${user.uid}`]: values.sharedTagId
-            });
+    const handleNotificationClick = (id: number | string, href: string) => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+        router.push(href);
+    };
 
-            await batch.commit();
-            
-            toast({
-                title: 'Successfully Joined!',
-                description: `You are now a member of "${ledger.name}".`,
-            });
-            setOpen(false);
-            form.reset();
+    const handleMarkAllAsRead = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        setTimeout(() => {
+            setNotifications([]);
+        }, 500); // Hide after a short delay for animation
+    };
 
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Failed to Join', description: 'An unexpected error occurred. Please try again.' });
-        } finally {
-            setIsLoading(false);
-        }
-    }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Join a Shared Ledger</DialogTitle>
-                    <DialogDescription>
-                        Enter the 6-character invite code to join an existing ledger.
-                    </DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                        <FormField
-                            control={form.control}
-                            name="joinId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Invite Code</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="ABCDEF" {...field} maxLength={6} onChange={(e) => field.onChange(e.target.value.toUpperCase())} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name="sharedTagId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Link with your personal tag</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={tagsLoading}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder={tagsLoading ? "Loading tags..." : "Select a tag..."} />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {activeTags?.map(tag => (
-                                                <SelectItem key={tag.id} value={tag.id}>
-                                                     <div className="flex items-center gap-2">
-                                                        {renderIcon(tag.icon)}
-                                                        {tag.name}
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                    <p className="text-xs text-muted-foreground pt-1">
-                                        When you use this tag in your personal expenses, they will be automatically added to this shared ledger.
-                                    </p>
-                                </FormItem>
-                            )}
-                        />
-                        <DialogFooter>
-                            <Button type="submit" disabled={isLoading}>
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Join Ledger
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
-    );
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="h-[1.2rem] w-[1.2rem]" />
+                    <span className="sr-only">Toggle notifications</span>
+                    {unreadCount > 0 && (
+                        <span className="absolute top-0 right-0 flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                        </span>
+                    )}
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-80">
+                <DropdownMenuLabel className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <span>Notifications</span>
+                        {unreadCount > 0 && <Badge variant="secondary">{unreadCount} New</Badge>}
+                    </div>
+                    {unreadCount > 0 && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={handleMarkAllAsRead}
+                                    >
+                                        <CheckCheck className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Mark all as read</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {notifications.length > 0 ? notifications.map(notification => (
+                     <DropdownMenuItem key={notification.id} onSelect={() => handleNotificationClick(notification.id, notification.href)} className="flex items-center gap-3 cursor-pointer">
+                        {!notification.read && <Circle className="text-primary h-2.5 w-2.5 fill-current" />}
+                        <span className={cn("flex-1 whitespace-normal", notification.read && "pl-5 text-muted-foreground")}>
+                            {notification.text}
+                        </span>
+                    </DropdownMenuItem>
+                )) : (
+                    <div className="text-center text-sm text-muted-foreground p-4">No new notifications.</div>
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}
+
+export function AppHeader() {
+  const pathname = usePathname();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const { openMobile, setOpenMobile } = useSidebar();
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+  const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
+  
+  const navItems = baseNavItems.map(item => {
+    if (item.label === 'Transactions') {
+      const href = transactionGrouping === 'monthly' ? item.href : item.special_href;
+      const isActive = transactionGrouping === 'monthly' ? pathname.startsWith(item.href) : pathname.startsWith(item.special_href!);
+      return { ...item, href: href!, isActive: isActive };
+    }
+     if (item.label === 'Import / Export') {
+        const isActive = pathname.startsWith('/data') || pathname.startsWith('/import') || pathname.startsWith('/reports');
+        return { ...item, isActive: isActive, href: '/data' };
+    }
+    return { ...item, isActive: pathname.startsWith(item.href) };
+  });
+
+  const pageTitle = getPageTitle(pathname);
+    
+  return (
+    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
+        
+         <div className="md:hidden">
+             <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+                <SheetTrigger asChild>
+                    <Button size="icon" variant="ghost">
+                        <PanelLeft />
+                        <span className="sr-only">Toggle Menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-64">
+                    <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
+                        <SheetHeader className="p-4 border-b border-sidebar-border">
+                          <SheetTitle>
+                            <Logo />
+                          </SheetTitle>
+                        </SheetHeader>
+                        <nav className="flex-grow space-y-2 mt-4 px-2">
+                            {navItems.map((item) => (
+                                <NavLink
+                                    key={item.href}
+                                    href={item.href}
+                                    icon={item.icon}
+                                    label={item.label}
+                                    isActive={item.isActive}
+                                />
+                            ))}
+                        </nav>
+                        <div className="mt-auto p-4 text-center text-xs text-sidebar-muted-foreground">
+                            <Separator className='my-2 bg-sidebar-border' />
+                            <span>Version {appVersion}</span>
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </div>
+
+        <div className="flex-1">
+            <h1 className="text-lg font-semibold">{pageTitle}</h1>
+        </div>
+        
+        <div className="flex items-center gap-2">
+            {isUserLoading ? (
+                <Skeleton className="h-10 w-10 rounded-full" />
+            ) : (
+                <>
+                    <Notifications />
+                    <ThemeToggle />
+                    <UserNav />
+                </>
+            )}
+        </div>
+    </header>
+  );
 }

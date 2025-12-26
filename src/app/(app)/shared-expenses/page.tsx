@@ -2,9 +2,9 @@
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { SharedLedger, UserProfile } from "@/lib/types";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, doc } from "firebase/firestore";
 import { useMemo } from "react";
 import { AddSharedLedgerSheet } from "@/components/shared-expenses/AddSharedLedgerSheet";
 import { SharedExpensesList } from "@/components/shared-expenses/SharedExpensesList";
@@ -21,11 +21,6 @@ export default function SharedExpensesPage() {
 
     const { data: ledgers, isLoading } = useCollection<SharedLedger>(ledgersQuery);
 
-    const userProfileQuery = useMemoFirebase(() => user ? collection(firestore, 'users') : null, [user, firestore]);
-    const { data: userProfiles } = useCollection<UserProfile>(userProfileQuery);
-
-    const userProfileMap = useMemo(() => new Map(userProfiles?.map(p => [p.id, p])), [userProfiles]);
-
     return (
         <div className="w-full space-y-8">
             <PageHeader
@@ -36,11 +31,8 @@ export default function SharedExpensesPage() {
             </PageHeader>
             <SharedExpensesList
                 ledgers={ledgers || []}
-                userProfileMap={userProfileMap}
                 isLoading={isLoading}
             />
         </div>
     );
 }
-
-    

@@ -26,11 +26,11 @@ service cloud.firestore {
     }
     
     // --- Shared Data ---
-    match /shared_expenses/{ledgerId} {
+    match /shared_ledgers/{ledgerId} {
       // Any member can read the main ledger document.
       allow get: if isSignedIn() && request.auth.uid in resource.data.memberIds;
-      // Let any authenticated user list ledgers they are a member of.
-      allow list: if isSignedIn() && request.auth.uid in resource.data.memberIds;
+      // Allow a user to list ledgers they are a member of.
+      allow list: if isSignedIn() && request.auth.uid == request.query.filters.memberIds[0];
       
       // Any authenticated user can create a new shared ledger.
       allow create: if isSignedIn();
@@ -40,13 +40,16 @@ service cloud.firestore {
       
       // No one can delete a shared ledger directly to prevent accidental data loss.
       allow delete: if false;
-
-      // --- Shared Subcollections ---
-      // This single rule covers all subcollections like 'transactions', 'categories', and 'tags'.
-      // It allows any member of the ledger to read and write to these subcollections.
-      match /{subcollection}/{docId} {
-        allow read, write: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/shared_expenses/$(ledgerId)).data.memberIds;
-      }
+    }
+    
+    match /shared_transactions/{transactionId} {
+      allow read, write: if isSignedIn();
+    }
+    match /shared_categories/{categoryId} {
+      allow read, write: if isSignedIn();
+    }
+    match /shared_tags/{tagId} {
+      allow read, write: if isSignedIn();
     }
     
     // --- Admin Data ---

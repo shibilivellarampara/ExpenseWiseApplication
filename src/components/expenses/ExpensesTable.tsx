@@ -158,8 +158,14 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
 
                                             <div className="text-xs text-muted-foreground flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    {RenderIcon(row.expense.account?.icon, "h-3 w-3 mr-0")}
-                                                    <span>{row.expense.account?.name}</span>
+                                                    <button 
+                                                        className="flex items-center gap-1 hover:underline focus:outline-none"
+                                                        onClick={(e) => { e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}
+                                                        disabled={!row.expense.account}
+                                                    >
+                                                        {RenderIcon(row.expense.account?.icon, "h-3 w-3 mr-0")}
+                                                        <span>{row.expense.account?.name}</span>
+                                                    </button>
                                                     <span className="text-muted-foreground/50">&bull;</span>
                                                     <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
@@ -281,5 +287,3 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
 
   return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick}/>;
 }
-
-    

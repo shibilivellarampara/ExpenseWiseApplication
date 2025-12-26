@@ -37,6 +37,7 @@ const cardDetailsSchema = z.object({
     expiryMonth: z.coerce.number().min(1).max(12).optional(),
     expiryYear: z.coerce.number().min(new Date().getFullYear()).max(new Date().getFullYear() + 20).optional(),
     network: z.enum(['visa', 'mastercard', 'amex', 'discover', 'rupay', 'other']).optional(),
+    statementDate: z.coerce.number().min(1).max(31).optional(),
 });
 
 
@@ -106,11 +107,21 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             limit: undefined,
             billingDate: undefined,
             status: 'active',
-            cardDetails: { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined }
+            cardDetails: { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined, statementDate: undefined }
         },
     });
 
     const accountType = form.watch('type');
+    const statementDate = form.watch('cardDetails.statementDate');
+
+     useEffect(() => {
+        if (accountType === 'credit_card' && statementDate) {
+            const date = new Date(2000, 0, statementDate); // Use a non-leap year
+            date.setDate(date.getDate() + 15);
+            form.setValue('billingDate', date.getDate());
+        }
+    }, [statementDate, accountType, form]);
+
 
     useEffect(() => {
         if(open) {
@@ -125,7 +136,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     limit: accountToEdit.limit,
                     billingDate: accountToEdit.billingDate,
                     status: accountToEdit.status,
-                    cardDetails: accountToEdit.cardDetails || { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined }
+                    cardDetails: accountToEdit.cardDetails || { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined, statementDate: undefined }
                 });
             } else {
                 form.reset({
@@ -136,7 +147,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                     limit: undefined,
                     billingDate: undefined,
                     status: 'active',
-                    cardDetails: { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined }
+                    cardDetails: { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined, statementDate: undefined }
                 });
             }
         }
@@ -308,19 +319,35 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                             )}
                         />
                         {accountType === 'credit_card' && (
-                            <FormField
-                                control={form.control}
-                                name="billingDate"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Billing Date (Day of Month)</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" min="1" max="31" placeholder="e.g., 15" {...field} value={field.value ?? ''}/>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <>
+                                 <FormField
+                                    control={form.control}
+                                    name="cardDetails.statementDate"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Statement Date (Day of Month)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" min="1" max="31" placeholder="e.g., 10" {...field} value={field.value ?? ''}/>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="billingDate"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Payment Due Date (Day of Month)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" min="1" max="31" placeholder="e.g., 25" {...field} value={field.value ?? ''} disabled />
+                                            </FormControl>
+                                             <FormDescription>Automatically calculated as 15 days after statement date.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </>
                         )}
                          <FormField
                             control={form.control}

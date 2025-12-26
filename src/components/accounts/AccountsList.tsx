@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -372,12 +373,20 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                         </div>
                                         <div className="flex items-center justify-between text-sm text-muted-foreground">
                                             <span>Outstanding Amount</span>
-                                            {item.billingDate && (
-                                                <div className="flex items-center gap-1">
-                                                    <CalendarDays className="h-4 w-4" />
-                                                    <span>Bills on {item.billingDate}{getOrdinalSuffix(item.billingDate)}</span>
-                                                </div>
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                {item.cardDetails?.statementDate && (
+                                                    <div className="flex items-center gap-1">
+                                                        <CalendarDays className="h-4 w-4" />
+                                                        <span>Stmt: {item.cardDetails.statementDate}{getOrdinalSuffix(item.cardDetails.statementDate)}</span>
+                                                    </div>
+                                                )}
+                                                {item.billingDate && (
+                                                    <div className="flex items-center gap-1">
+                                                        <CalendarDays className="h-4 w-4" />
+                                                        <span>Due: {item.billingDate}{getOrdinalSuffix(item.billingDate)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         {limit > 0 && (
                                             <div className="mt-1">

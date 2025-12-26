@@ -58,7 +58,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
         let from: Date | undefined;
         let to: Date | undefined;
         const now = new Date();
-        const billingDate = showBillingCycleOptions ? selectedAccounts[0].billingDate! : now.getDate();
+        const statementDate = showBillingCycleOptions ? selectedAccounts[0].cardDetails?.statementDate! : now.getDate();
         const currentDay = now.getDate();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
@@ -78,21 +78,25 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                 to = endOfYear(now);
                 break;
             case 'current-cycle':
-                if (currentDay <= billingDate) {
-                    to = new Date(currentYear, currentMonth, billingDate);
-                    from = addDays(new Date(currentYear, currentMonth - 1, billingDate), 1);
+                if (currentDay > statementDate) {
+                    // Current cycle started this month
+                    from = addDays(new Date(currentYear, currentMonth, statementDate), 1);
+                    to = new Date(currentYear, currentMonth + 1, statementDate);
                 } else {
-                    to = new Date(currentYear, currentMonth + 1, billingDate);
-                    from = addDays(new Date(currentYear, currentMonth, billingDate), 1);
+                    // Current cycle started last month
+                    from = addDays(new Date(currentYear, currentMonth - 1, statementDate), 1);
+                    to = new Date(currentYear, currentMonth, statementDate);
                 }
                 break;
             case 'last-cycle':
-                 if (currentDay <= billingDate) {
-                    to = new Date(currentYear, currentMonth - 1, billingDate);
-                    from = addDays(new Date(currentYear, currentMonth - 2, billingDate), 1);
+                 if (currentDay > statementDate) {
+                    // Last cycle started last month
+                    from = addDays(new Date(currentYear, currentMonth - 1, statementDate), 1);
+                    to = new Date(currentYear, currentMonth, statementDate);
                 } else {
-                    to = new Date(currentYear, currentMonth, billingDate);
-                    from = addDays(new Date(currentYear, currentMonth - 1, billingDate), 1);
+                    // Last cycle started two months ago
+                    from = addDays(new Date(currentYear, currentMonth - 2, statementDate), 1);
+                    to = new Date(currentYear, currentMonth - 1, statementDate);
                 }
                 break;
             case 'all':
@@ -290,7 +294,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
         accounts.filter(acc => filters.accounts.includes(acc.id)), 
     [accounts, filters.accounts]);
 
-    const showBillingCycleOptions = selectedAccounts.length > 0 && selectedAccounts.every(acc => acc.type === 'credit_card' && acc.billingDate);
+    const showBillingCycleOptions = selectedAccounts.length === 1 && selectedAccounts.every(acc => acc.type === 'credit_card' && acc.cardDetails?.statementDate);
     
     useEffect(() => {
         // If billing cycle filter is not applicable anymore, reset it

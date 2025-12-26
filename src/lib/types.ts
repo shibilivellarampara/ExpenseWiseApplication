@@ -55,6 +55,7 @@ export type CardDetails = {
   expiryMonth?: number;
   expiryYear?: number;
   network?: 'visa' | 'mastercard' | 'amex' | 'discover' | 'rupay' | 'other';
+  statementDate?: number; // Day of month (1-31)
 };
 
 export type Account = {
@@ -63,7 +64,7 @@ export type Account = {
   type: 'bank' | 'credit_card' | 'wallet' | 'cash';
   balance: number;
   limit?: number; // For credit cards
-  billingDate?: number; // Day of the month (1-31) for credit cards
+  billingDate?: number; // Payment Due Date (day of month, 1-31) for credit cards
   icon: string; // lucide-react icon name
   userId: string;
   status: 'active' | 'inactive';

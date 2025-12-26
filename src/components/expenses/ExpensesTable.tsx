@@ -1,5 +1,4 @@
 
-
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,13 +16,6 @@ import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { generateColorStyle } from '@/lib/utils';
-import {
-  SwipeableList,
-  SwipeableListItem,
-  SwipeAction,
-  TrailingActions,
-} from 'react-swipeable-list';
-import 'react-swipeable-list/dist/styles.css';
 
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];
@@ -289,3 +281,5 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
 
   return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick}/>;
 }
+
+    

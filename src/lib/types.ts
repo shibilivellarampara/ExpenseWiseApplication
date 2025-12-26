@@ -127,43 +127,51 @@ export type EnrichedDebtWithBalance = EnrichedDebt & {
 
 // --- V2 Shared Expense Types ---
 
-export type SharedExpense = {
+export type SharedLedger = {
     id: string;
     name: string;
     ownerId: string;
     memberIds: string[];
     inviteCode: string;
-    balance: number;
-    memberSharedTags: Record<string, string>; // e.g. { "uid1": "home-expenses-tag", "uid2": "our-home-tag" }
+    memberSharedTags: Record<string, string>; // e.g. { "uid1": "tagId123" }
 };
 
 export type SharedCategory = {
     id: string;
+    ledgerId: string;
     name: string;
     icon: string;
 };
 
 export type SharedTag = {
     id: string;
+    ledgerId: string;
     name: string;
     icon: string;
 };
 
 export type SharedTransaction = {
     id: string;
+    ledgerId: string;
     createdBy: string; // UID of member who added it
     type: 'expense' | 'income';
     amount: number;
     description: string;
     date: Timestamp;
-    // References to shared categories/tags within the subcollection
+    createdAt: Timestamp;
+    // References to shared categories/tags within the top-level collections
     categoryId?: string;
     tagIds?: string[];
+    source: 'manual' | 'automatic';
+    sourceExpenseId?: string; // ID of the original personal expense if source is 'automatic'
 };
 
-export type EnrichedSharedTransaction = Omit<SharedTransaction, 'categoryId' | 'tagIds' | 'date'> & {
+export type EnrichedSharedTransaction = Omit<SharedTransaction, 'categoryId' | 'tagIds' | 'date' | 'createdAt'> & {
   category?: SharedCategory;
   tags: SharedTag[];
   member?: UserProfile; // The user who added the transaction
   date: Date;
+  createdAt: Date;
 };
+
+    

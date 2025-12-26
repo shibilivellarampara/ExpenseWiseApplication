@@ -24,6 +24,20 @@ service cloud.firestore {
     match /expenses/{expenseId} {
        allow read, write: if isOwner(resource.data.userId);
     }
+
+    // --- Shared Data (Flattened & Low Security) ---
+    match /shared_ledgers/{ledgerId} {
+      allow read, write: if isSignedIn();
+    }
+    match /shared_transactions/{transactionId} {
+      allow read, write: if isSignedIn();
+    }
+    match /shared_categories/{categoryId} {
+      allow read, write: if isSignedIn();
+    }
+    match /shared_tags/{tagId} {
+      allow read, write: if isSignedIn();
+    }
     
     // --- Admin Data ---
     // Only users with the 'isAdmin' custom claim can access the admin collection.
@@ -32,3 +46,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

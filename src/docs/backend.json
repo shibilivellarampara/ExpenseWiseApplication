@@ -72,6 +72,10 @@
             "type": "array",
             "description": "User's preferred order for transaction fields.",
             "items": { "type": "string" }
+        },
+        "createdAt": {
+            "type": "string",
+            "format": "date-time"
         }
       },
       "required": ["id", "name", "email"]
@@ -174,6 +178,72 @@
         "settledAt": { "type": "string", "format": "date-time", "description": "The date when the debt was settled." }
       },
       "required": ["id", "userId", "personName", "amount", "type", "date", "status"]
+    },
+    "SharedLedger": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "SharedLedger",
+        "description": "Represents a shared expense ledger or group.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "ownerId": { "type": "string", "description": "The UID of the user who created the shared expense." },
+            "memberIds": { "type": "array", "items": { "type": "string" }, "description": "An array of UIDs of all members." },
+            "inviteCode": { "type": "string", "description": "A unique, short, human-readable code to join this ledger." },
+            "memberSharedTags": {
+                "type": "object",
+                "description": "A map where keys are user UIDs and values are the personal tags they use to link to this shared expense.",
+                "additionalProperties": { "type": "string" }
+            }
+        },
+        "required": ["id", "name", "ownerId", "memberIds", "inviteCode"]
+    },
+    "SharedTransaction": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "SharedTransaction",
+        "description": "A transaction within a shared expense ledger.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "ledgerId": { "type": "string" },
+            "createdBy": { "type": "string", "description": "The UID of the user who added this transaction." },
+            "type": { "type": "string", "enum": ["expense", "income"] },
+            "amount": { "type": "number" },
+            "description": { "type": "string" },
+            "date": { "type": "string", "format": "date-time" },
+            "createdAt": { "type": "string", "format": "date-time" },
+            "categoryId": { "type": "string", "description": "Ref to a category in the shared_categories collection." },
+            "tagIds": { "type": "array", "items": { "type": "string" }, "description": "Ref to tags in the shared_tags collection." },
+            "source": { "type": "string", "enum": ["manual", "automatic"], "description": "How the transaction was added." },
+            "sourceExpenseId": { "type": "string", "description": "ID of the original personal expense if source is 'automatic'." }
+        },
+        "required": ["id", "ledgerId", "createdBy", "type", "amount", "date"]
+    },
+    "SharedCategory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SharedCategory",
+      "type": "object",
+      "description": "Represents a category for a specific shared ledger.",
+      "properties": {
+        "id": { "type": "string" },
+        "ledgerId": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string", "description": "Name of the lucide-react icon." }
+      },
+      "required": ["id", "ledgerId", "name", "icon"]
+    },
+    "SharedTag": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SharedTag",
+      "type": "object",
+      "description": "Represents a tag for a specific shared ledger.",
+      "properties": {
+        "id": { "type": "string" },
+        "ledgerId": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string", "description": "Name of the lucide-react icon." }
+      },
+      "required": ["id", "ledgerId", "name", "icon"]
     }
   },
   "auth": {
@@ -207,6 +277,24 @@
     "/admin/{adminId}": {
         "schema": { "$ref": "#/entities/UserProfile" },
         "description": "Admin access control."
+    },
+    "/shared_ledgers/{ledgerId}": {
+      "schema": { "$ref": "#/entities/SharedLedger" },
+      "description": "Top-level collection for shared expense ledgers."
+    },
+    "/shared_transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/SharedTransaction" },
+      "description": "Top-level collection for all transactions in all shared ledgers."
+    },
+    "/shared_categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/SharedCategory" },
+      "description": "Top-level collection for all categories in all shared ledgers."
+    },
+    "/shared_tags/{tagId}": {
+      "schema": { "$ref": "#/entities/SharedTag" },
+      "description": "Top-level collection for all tags in all shared ledgers."
     }
   }
 }
+
+    

@@ -30,3 +30,9 @@ export const generateColorStyle = (str: string): React.CSSProperties => {
         '--badge-text-dark': `hsl(${color.dark.text})`,
     } as React.CSSProperties;
 };
+
+
+export const getInitials = (name?: string | null) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+};

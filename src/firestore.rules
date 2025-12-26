@@ -24,11 +24,24 @@ service cloud.firestore {
     match /expenses/{expenseId} {
        allow read, write: if isOwner(resource.data.userId);
     }
-
-    // --- Shared Data (Flattened & Low Security) ---
+    
+    // --- Shared Data ---
     match /shared_ledgers/{ledgerId} {
-      allow read, write: if isSignedIn();
+      // Any member can read the main ledger document.
+      allow get: if isSignedIn() && request.auth.uid in resource.data.memberIds;
+      // Allow a user to list ledgers they are a member of.
+      allow list: if isSignedIn() && request.auth.uid == request.query.where.memberIds[2];
+      
+      // Any authenticated user can create a new shared ledger.
+      allow create: if isSignedIn();
+      
+      // Only the owner can update the ledger name or add/remove members.
+      allow update: if isSignedIn() && request.auth.uid == resource.data.ownerId;
+      
+      // No one can delete a shared ledger directly to prevent accidental data loss.
+      allow delete: if false;
     }
+    
     match /shared_transactions/{transactionId} {
       allow read, write: if isSignedIn();
     }
@@ -46,5 +59,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

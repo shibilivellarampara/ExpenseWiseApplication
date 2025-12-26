@@ -2,9 +2,9 @@
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
-import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
-import { SharedLedger, UserProfile } from "@/lib/types";
-import { collection, query, where, doc } from "firebase/firestore";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { SharedLedger } from "@/lib/types";
+import { collection, query, where } from "firebase/firestore";
 import { useMemo } from "react";
 import { AddSharedLedgerSheet } from "@/components/shared-expenses/AddSharedLedgerSheet";
 import { SharedExpensesList } from "@/components/shared-expenses/SharedExpensesList";

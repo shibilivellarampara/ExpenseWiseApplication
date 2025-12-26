@@ -158,8 +158,8 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
 
                                             <div className="text-xs text-muted-foreground flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <button 
-                                                        className="flex items-center gap-1 hover:underline focus:outline-none"
+                                                    <button
+                                                        className="flex items-center gap-1 rounded-md px-1 -mx-1 transition-colors hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring"
                                                         onClick={(e) => { e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}
                                                         disabled={!row.expense.account}
                                                     >

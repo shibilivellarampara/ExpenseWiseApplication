@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -17,8 +16,6 @@ import { UserProfile } from '@/lib/types';
 import { doc } from 'firebase/firestore';
 import { AddExpenseDialog } from '@/components/expenses/AddExpenseDialog';
 import { Button } from '@/components/ui/button';
-import { MoreOptionsDrawer } from './MoreOptionsDrawer';
-
 
 const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -51,7 +48,7 @@ export function BottomNav() {
   return (
     <div className="fixed bottom-4 left-0 right-0 z-40 flex justify-center md:hidden">
         <div className="relative flex h-16 items-center justify-around rounded-full bg-background/80 shadow-lg ring-1 ring-black/5 backdrop-blur-md">
-            {mainNavItems.map(({ href, icon: Icon, label, special_href }) => {
+            {mainNavItems.map(({ href, icon: Icon, label }) => {
                  if (label === 'Add') {
                     return (
                         <div key="fab" className="relative -top-6">
@@ -83,25 +80,9 @@ export function BottomNav() {
                     );
                 }
                 
-                if (label === 'More') {
-                    return (
-                        <MoreOptionsDrawer key="more-drawer">
-                             <div className={cn(
-                                'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
-                                pathname.startsWith('/more') || pathname.startsWith('/profile') || pathname.startsWith('/about') || pathname.startsWith('/data') || pathname.startsWith('/debts')
-                                    ? 'text-primary'
-                                    : 'text-muted-foreground hover:text-primary'
-                            )}>
-                                <Icon className="h-5 w-5" />
-                                <span>{label}</span>
-                            </div>
-                        </MoreOptionsDrawer>
-                    )
-                }
-
-                const finalHref = label === 'Transactions' ? transactionsHref : href;
-                const isActive = label === 'Transactions' 
-                    ? isTransactionsPage
+                const finalHref = href;
+                const isActive = (href === '/more')
+                    ? pathname.startsWith('/more') || pathname.startsWith('/profile') || pathname.startsWith('/about') || pathname.startsWith('/data') || pathname.startsWith('/debts')
                     : pathname.startsWith(finalHref);
 
 

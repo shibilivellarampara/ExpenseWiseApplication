@@ -365,7 +365,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                  {isPaid && <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">Paid</Badge>}
                                                 <div className={cn(
                                                     "font-bold text-lg",
-                                                    outstandingAmount > 0 ? "text-red-500" : "text-green-600"
+                                                    outstandingAmount > 0 ? "text-destructive" : "text-primary"
                                                 )}>
                                                      {outstandingAmount > 0 ? '-' : ''}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
                                                 </div>
@@ -473,7 +473,10 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                     <div className="flex-grow">
                                          <div className="flex items-center justify-between">
                                             <div className="font-semibold">{item.name}</div>
-                                            <div className={cn("font-bold text-lg", item.balance >= 0 ? 'text-green-600' : 'text-red-500')}>
+                                            <div className={cn(
+                                                "font-bold text-lg",
+                                                item.balance >= 0 ? "text-primary" : "text-destructive"
+                                            )}>
                                                 {currencySymbol}{item.balance.toFixed(2)}
                                             </div>
                                          </div>

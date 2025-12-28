@@ -178,7 +178,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
   const totalAmount = totalAmountForPercentage ?? allData.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="w-full flex flex-col h-[450px]">
+    <div className="w-full flex flex-col h-[500px]">
         <div className="h-[250px] w-full overflow-visible">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart

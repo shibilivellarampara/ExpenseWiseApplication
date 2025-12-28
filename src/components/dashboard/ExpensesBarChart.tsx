@@ -69,7 +69,7 @@ const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpe
     if (!payload || payload.length === 0) return null;
 
     return (
-        <ScrollArea className="h-40 w-full">
+        <ScrollArea className="h-48 w-full">
             <div className="space-y-2 p-2">
             {payload.map((entry, index) => {
                 const categoryName = entry.value as string;

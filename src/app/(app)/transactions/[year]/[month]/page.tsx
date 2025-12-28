@@ -14,7 +14,6 @@ import { endOfMonth, startOfMonth, parse, format } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
-import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
 
@@ -44,11 +43,11 @@ export default function MonthlyExpensesPage({ params }: { params: { year: string
     const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
 
     const expensesQuery = useMemoFirebase(() => {
-        if (!user) return null;
+        if (!user || !filters.dateRange.from || !filters.dateRange.to) return null;
         return query(
             collection(firestore, `users/${user.uid}/expenses`),
-            where('date', '>=', Timestamp.fromDate(filters.dateRange.from!)),
-            where('date', '<=', Timestamp.fromDate(filters.dateRange.to!)),
+            where('date', '>=', Timestamp.fromDate(filters.dateRange.from)),
+            where('date', '<=', Timestamp.fromDate(filters.dateRange.to)),
             orderBy('date', 'desc')
         );
     }, [user, firestore, filters.dateRange]);

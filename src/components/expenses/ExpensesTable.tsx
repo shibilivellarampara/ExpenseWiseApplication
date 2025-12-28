@@ -1,9 +1,10 @@
 
+
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Pilcrow, Edit, User as UserIcon, Wallet, AlertTriangle } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
@@ -12,10 +13,11 @@ import { getCurrencySymbol } from "@/lib/currencies";
 import { useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
-import { Button } from "../ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { generateColorStyle } from '@/lib/utils';
+import { renderIcon } from '@/lib/render-icon';
 
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];
@@ -24,12 +26,6 @@ interface ExpensesTableProps {
   error?: string | null;
   onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void;
 }
-
-const RenderIcon = (iconName: string | undefined, className?: string) => {
-  if (!iconName) return <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
-  const IconComponent = (LucideIcons as any)[iconName];
-  return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
-};
 
 const getInitials = (name?: string | null) => {
     if (!name) return 'U';
@@ -128,7 +124,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                             "flex-shrink-0 rounded-full bg-muted flex items-center justify-center",
                                             viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8'
                                         )}>
-                                            {RenderIcon(row.expense.category?.icon, cn(row.expense.type === 'income' ? 'text-green-500' : 'text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
+                                            {renderIcon(row.expense.category?.icon, cn(row.expense.type === 'income' ? 'text-green-500' : 'text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
                                         </div>
                                         <div className="flex-grow space-y-0.5 w-full min-w-0">
                                             <div className="flex justify-between items-start">
@@ -163,7 +159,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                         onClick={(e) => { e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}
                                                         disabled={!row.expense.account}
                                                     >
-                                                        {RenderIcon(row.expense.account?.icon, "h-3 w-3 mr-0")}
+                                                        {renderIcon(row.expense.account?.icon, "h-3 w-3 mr-0")}
                                                         <span>{row.expense.account?.name}</span>
                                                     </button>
                                                     <span className="text-muted-foreground/50">&bull;</span>
@@ -184,7 +180,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                             className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
                                                             onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
                                                         >
-                                                            {RenderIcon(row.expense.category.icon, "h-3 w-3 mr-1")}
+                                                            {renderIcon(row.expense.category.icon, "h-3 w-3 mr-1")}
                                                             {row.expense.category.name}
                                                         </Badge>
                                                     )}
@@ -196,7 +192,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                             className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
                                                             onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
                                                         >
-                                                            {RenderIcon(tag.icon, "h-3 w-3 mr-1")}
+                                                            {renderIcon(tag.icon, "h-3 w-3 mr-1")}
                                                             {tag.name}
                                                         </Badge>
                                                     ))}

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -1070,8 +1071,8 @@ function useExpenseForm({
             toast({ title: 'Transaction Deleted', description: 'The transaction has been permanently removed.' });
             onSaveSuccess?.();
             setOpen(false);
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Delete Failed', description: "There was an unexpected error. Please try again." });
+        } catch (error) {
+             toast({ variant: 'destructive', title: 'Delete Failed', description: "There was an unexpected error. Please try again." });
         } finally {
             setIsLoading(false);
         }
@@ -1091,4 +1092,5 @@ function useExpenseForm({
       tags: tags || []
     };
 }
+
 

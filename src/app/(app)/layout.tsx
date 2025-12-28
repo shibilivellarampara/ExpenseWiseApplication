@@ -26,7 +26,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
     const navigationStyle = userProfile?.dashboardSettings?.navigationStyle || (isMobile ? 'bottom' : 'sidebar');
     
+    // The sidebar should only be shown if the style is 'sidebar', and never on mobile.
     const showSidebar = navigationStyle === 'sidebar' && !isMobile;
+    // The bottom nav is only for mobile layouts when the style is 'bottom'.
     const showBottomNav = navigationStyle === 'bottom' && isMobile;
     
     return (

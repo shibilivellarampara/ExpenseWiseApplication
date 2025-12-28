@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -80,24 +81,7 @@ export default function TransactionsByMonthPage() {
                 </div>
             )}
             
-            <div className="fixed bottom-16 left-0 right-0 p-4 z-10 md:hidden">
-                 <div className="container mx-auto flex justify-around gap-2">
-                    <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
-                        <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg text-base font-semibold py-6">
-                            <Plus className="mr-2 h-5 w-5" />
-                            CASH IN
-                        </Button>
-                    </AddExpenseDialog>
-                    <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
-                        <Button className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg text-base font-semibold py-6">
-                            <Minus className="mr-2 h-5 w-5" />
-                            CASH OUT
-                        </Button>
-                    </AddExpenseDialog>
-                </div>
-            </div>
-
-             <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">
+            <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">
                 <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
                         <Plus className="h-6 w-6" />

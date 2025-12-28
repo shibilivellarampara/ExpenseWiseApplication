@@ -82,16 +82,18 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
     const renderCreditCardSummary = () => {
         if (!creditCardSummary) return null;
         
-        const isPaid = creditCardSummary.outstanding <= 0;
+        const outstanding = creditCardSummary.outstanding;
+        const isPositive = outstanding > 0;
+        const isNegative = outstanding < 0;
 
         return (
             <div>
                 <p className="text-muted-foreground">Outstanding Amount</p>
                 <p className={cn(
                     "text-lg font-bold",
-                    !isPaid ? "text-red-500" : "text-green-600"
+                    isPositive ? "text-red-500" : "text-green-600"
                 )}>
-                    {!isPaid ? '' : ''}{currencySymbol}{Math.abs(creditCardSummary.outstanding).toFixed(2)}
+                    {isNegative ? '-' : ''}{currencySymbol}{Math.abs(outstanding).toFixed(2)}
                 </p>
             </div>
         )

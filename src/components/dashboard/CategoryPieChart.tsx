@@ -47,9 +47,36 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
   const ex = mx + (cos >= 0 ? 1 : -1) * 12;
   const ey = my;
   const textAnchor = cos >= 0 ? 'start' : 'end';
+  const name = payload.name || '';
+  const words = name.split(' ');
+  const maxCharsPerLine = 12;
+
+  let lines: string[] = [];
+  let currentLine = '';
+
+  words.forEach(word => {
+    if ((currentLine + word).length > maxCharsPerLine) {
+      lines.push(currentLine.trim());
+      currentLine = word + ' ';
+    } else {
+      currentLine += word + ' ';
+    }
+  });
+  lines.push(currentLine.trim());
+  
+  const labelFontSize = lines.length > 2 ? '0.8rem' : lines.length > 1 ? '0.9rem' : '1.1rem';
+  const lineHeight = lines.length > 1 ? 1.2 : 1;
+  const totalLabelHeight = lines.length * parseFloat(labelFontSize) * lineHeight;
+  const startY = (cy || 0) - (totalLabelHeight / 2) + (parseFloat(labelFontSize) / 2);
+
 
   return (
     <g>
+       <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill={fill} style={{ fontSize: labelFontSize, fontWeight: 'bold' }}>
+          {lines.map((line, index) => (
+            <tspan key={index} x={cx} dy={index === 0 ? -(lines.length - 1) * 0.6 + 'em' : '1.2em'}>{line}</tspan>
+          ))}
+      </text>
       <Sector
         cx={cx}
         cy={cy}
@@ -68,7 +95,7 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
         outerRadius={(outerRadius || 0) + 8}
         fill={fill}
       />
-      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
+       <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
       <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
       <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} textAnchor={textAnchor} className="text-sm fill-foreground">{`${currencySymbol}${value?.toFixed(2)}`}</text>
       <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} dy={18} textAnchor={textAnchor} className="text-xs fill-muted-foreground">

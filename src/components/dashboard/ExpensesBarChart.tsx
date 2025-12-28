@@ -1,12 +1,15 @@
 
 'use client';
 
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, LegendProps } from 'recharts';
 import { useMemo } from 'react';
 import { EnrichedExpense, Category } from '@/lib/types';
-import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, startOfYear, endOfYear, getYear, subYears } from 'date-fns';
+import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, startOfYear, endOfYear, getYear } from 'date-fns';
 import { BarChart as BarChartIcon } from 'lucide-react';
 import { CHART_COLORS } from '@/lib/colors';
+import { ScrollArea, ScrollBar } from '../ui/scroll-area';
+import { cn } from '@/lib/utils';
+
 
 interface ExpensesBarChartProps {
   expenses: EnrichedExpense[];
@@ -19,12 +22,10 @@ interface ExpensesBarChartProps {
 
 const CustomTooltip = ({ active, payload, label, currencySymbol }: any) => {
     if (active && payload && payload.length) {
-        // Filter out items with a value of 0 and sort by value descending
         const sortedPayload = payload
             .filter((p: any) => p.value > 0)
             .sort((a: any, b: any) => b.value - a.value);
         
-        // Calculate total for the visible items
         const total = sortedPayload.reduce((sum: number, p: any) => sum + p.value, 0);
 
         return (
@@ -57,18 +58,57 @@ const CustomTooltip = ({ active, payload, label, currencySymbol }: any) => {
     return null;
 };
 
+const CustomLegend = ({ payload, onLegendClick, categoryColors }: LegendProps & { onLegendClick: (dataKey: string) => void, categoryColors: Map<string, string>}) => {
+    if (!payload || payload.length === 0) return null;
+
+    return (
+      <ScrollArea className="w-full whitespace-nowrap">
+        <div className="flex justify-center items-center gap-4 text-xs pt-4">
+          {payload.map((entry, index) => (
+            <div
+              key={`item-${index}`}
+              className="flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground"
+              onClick={() => onLegendClick(entry.value as string)}
+            >
+              <div className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: categoryColors.get(entry.value as string) }} />
+              <span>{entry.value}</span>
+            </div>
+          ))}
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    );
+};
+
 
 export function ExpensesBarChart({ expenses, allCategories, timeRange, currencySymbol, useCategoryColors }: ExpensesBarChartProps) {
     const expenseOnlyData = useMemo(() => expenses.filter(e => e.type === 'expense'), [expenses]);
-
-    const categoryColors = useMemo(() => {
-        const colors = new Map<string, string>();
-        allCategories.forEach((cat, index) => {
-            colors.set(cat.name, CHART_COLORS[index % CHART_COLORS.length]);
+    
+    // Determine top 6 categories + "Others"
+    const { topCategories, categoryColors } = useMemo(() => {
+        const categoryTotals = new Map<string, number>();
+        expenseOnlyData.forEach(e => {
+            const categoryName = e.category?.name || 'Uncategorized';
+            categoryTotals.set(categoryName, (categoryTotals.get(categoryName) || 0) + e.amount);
         });
-        colors.set('Uncategorized', '#B0BEC5'); // A neutral color for uncategorized
-        return colors;
-    }, [allCategories]);
+
+        const sortedCategories = Array.from(categoryTotals.entries()).sort((a, b) => b[1] - a[1]);
+        const topCategoryNames = sortedCategories.slice(0, 6).map(([name]) => name);
+        if (sortedCategories.length > 6) {
+            topCategoryNames.push('Others');
+        }
+
+        const colors = new Map<string, string>();
+        topCategoryNames.forEach((catName, index) => {
+            if (catName === 'Others') {
+                colors.set(catName, '#B0BEC5'); // Neutral gray for 'Others'
+            } else {
+                 colors.set(catName, CHART_COLORS[index % CHART_COLORS.length]);
+            }
+        });
+        
+        return { topCategories: topCategoryNames, categoryColors: colors };
+    }, [expenseOnlyData]);
 
     const chartData = useMemo(() => {
         if (!expenseOnlyData.length) return [];
@@ -109,10 +149,9 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
 
         intervals.forEach(interval => {
             const initialData: { name: string; total: number; [key: string]: any } = { name: interval.name, total: 0 };
-            allCategories.forEach(cat => {
-                initialData[cat.name] = 0;
+            topCategories.forEach(cat => {
+                initialData[cat] = 0;
             });
-            initialData['Uncategorized'] = 0;
             dataMap.set(interval.key, initialData);
         });
         
@@ -129,7 +168,11 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                 key = String(getYear(expense.date));
             }
 
-            const categoryName = expense.category?.name || 'Uncategorized';
+            let categoryName = expense.category?.name || 'Uncategorized';
+            if (!topCategories.includes(categoryName)) {
+                categoryName = 'Others';
+            }
+
             const dayData = dataMap.get(key);
             if (dayData) {
                 dayData[categoryName] = (dayData[categoryName] || 0) + expense.amount;
@@ -138,22 +181,9 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
         });
 
         return Array.from(dataMap.values());
-    }, [expenseOnlyData, allCategories, timeRange]);
+    }, [expenseOnlyData, topCategories, timeRange]);
 
-    const categoriesWithExpenses = useMemo(() => {
-        const activeCategories = new Set<string>();
-        expenseOnlyData.forEach(e => {
-            if (e.amount > 0) {
-                 activeCategories.add(e.category?.name || 'Uncategorized');
-            }
-        });
-        // Sort categories to match the legend order with allCategories
-        return allCategories
-            .map(c => c.name)
-            .filter(name => activeCategories.has(name))
-            .concat(activeCategories.has('Uncategorized') ? ['Uncategorized'] : []);
-    }, [expenseOnlyData, allCategories]);
-
+    
     if (!expenseOnlyData.length) {
         return (
             <div className="flex h-[350px] w-full items-center justify-center rounded-lg border-2 border-dashed">
@@ -187,17 +217,17 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                     content={<CustomTooltip currencySymbol={currencySymbol} />}
                     cursor={{ fill: 'hsl(var(--muted))' }}
                 />
-                {useCategoryColors && <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} />}
+                {useCategoryColors && <Legend content={<CustomLegend onLegendClick={()=>{}} categoryColors={categoryColors} />} />}
                 
                 {useCategoryColors ? (
-                    categoriesWithExpenses.map(categoryName => (
+                    topCategories.map(categoryName => (
                         <Bar
                             key={categoryName}
                             dataKey={categoryName}
                             stackId="a"
                             fill={categoryColors.get(categoryName) || '#8884d8'}
                             name={categoryName}
-                            radius={0}
+                            radius={[4, 4, 0, 0]}
                         />
                     ))
                 ) : (
@@ -206,7 +236,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                         stackId="a"
                         fill="hsl(var(--primary))"
                         name="Total Expenses"
-                        radius={0}
+                        radius={[4, 4, 0, 0]}
                     />
                 )}
             </BarChart>

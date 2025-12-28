@@ -13,7 +13,7 @@ import { AddSharedTransactionSheet } from '@/components/shared-expenses/AddShare
 import { SharedTransactionsList } from '@/components/shared-expenses/SharedTransactionsList';
 
 export default function SharedExpenseDetailPage({ params }: { params: { id: string } }) {
-    const id = params.id;
+    const { id } = params;
     const { user } = useUser();
     const firestore = useFirestore();
 

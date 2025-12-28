@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun, MessageSquare } from "lucide-react"
+import { Moon, Sun, MessageSquare, Bot } from "lucide-react"
 import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
@@ -37,6 +37,10 @@ export function ThemeToggle() {
         <DropdownMenuItem onClick={() => setTheme("chat")}>
           <MessageSquare className="mr-2 h-4 w-4" />
           <span>Chat</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("fintech")}>
+          <Bot className="mr-2 h-4 w-4" />
+          <span>Fintech</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

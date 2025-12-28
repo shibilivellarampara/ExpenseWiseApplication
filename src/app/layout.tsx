@@ -53,7 +53,12 @@ export default function RootLayout({
         <Script src="https://apis.google.com/js/api.js" async defer />
       </head>
       <body className={cn('font-body antialiased min-h-screen')}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          themes={['light', 'dark', 'chat', 'fintech', 'dark-fintech']}
+        >
             <FirebaseClientProvider>
               {children}
             </FirebaseClientProvider>

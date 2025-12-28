@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react"
@@ -21,7 +20,7 @@ import {
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, Settings, Moon, Sun, MessageSquare, Cog } from 'lucide-react';
+import { LogOut, Settings, Moon, Sun, MessageSquare, Cog, Bot } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { PageSettingsDialog } from "./PageSettingsDialog";
@@ -121,6 +120,10 @@ export function UserNav() {
                 <DropdownMenuItem onClick={() => setTheme("chat")}>
                   <MessageSquare className="mr-2 h-4 w-4" />
                   <span>Chat</span>
+                </DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => setTheme("fintech")}>
+                  <Bot className="mr-2 h-4 w-4" />
+                  <span>Fintech</span>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>

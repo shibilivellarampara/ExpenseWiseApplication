@@ -38,15 +38,28 @@ interface ActiveShapeProps {
 const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
   const RADIAN = Math.PI / 180;
   const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
-  const sin = Math.sin(-RADIAN * (midAngle || 0));
-  const cos = Math.cos(-RADIAN * (midAngle || 0));
-  const sx = (cx || 0) + ((outerRadius || 0) + 6) * cos;
-  const sy = (cy || 0) + ((outerRadius || 0) + 6) * sin;
-  const mx = (cx || 0) + ((outerRadius || 0) + 15) * cos;
-  const my = (cy || 0) + ((outerRadius || 0) + 15) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
-  const ey = my;
-  const textAnchor = cos >= 0 ? 'start' : 'end';
+  
+  // Default positioning
+  let sin = Math.sin(-RADIAN * (midAngle || 0));
+  let cos = Math.cos(-RADIAN * (midAngle || 0));
+  let sx = (cx || 0) + ((outerRadius || 0) + 6) * cos;
+  let sy = (cy || 0) + ((outerRadius || 0) + 6) * sin;
+  let mx = (cx || 0) + ((outerRadius || 0) + 15) * cos;
+  let my = (cy || 0) + ((outerRadius || 0) + 15) * sin;
+  let ex = mx + (cos >= 0 ? 1 : -1) * 12;
+  let ey = my;
+  let textAnchor = cos >= 0 ? 'start' : 'end';
+  
+  // If the slice is on the left side of the chart (90 to 270 degrees)
+  if (midAngle && midAngle > 90 && midAngle < 270) {
+      // Reposition the label to the top-left area to avoid clipping
+      ex = (cx || 0) - (outerRadius || 0) - 10;
+      ey = (cy || 0) - (outerRadius || 0) - 10;
+      mx = ex;
+      my = ey;
+      textAnchor = 'end';
+  }
+  
   const name = payload.name || '';
   const words = name.split(' ');
   const maxCharsPerLine = 12;

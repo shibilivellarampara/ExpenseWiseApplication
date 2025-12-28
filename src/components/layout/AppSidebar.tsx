@@ -26,7 +26,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { UserProfile } from '@/lib/types';
 import { doc } from 'firebase/firestore';
-const appVersion = "1.6.7";
+const appVersion = "1.6.8";
 
 
 const baseNavItems = [

@@ -5,10 +5,20 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.6.7";
+const appVersion = "1.6.8";
 
 
 const changelog = [
+     {
+        version: "1.6.8",
+        date: "2025-12-30",
+        changes: [
+            { type: 'Feature', description: "Redesigned the 'More' menu on mobile with a cleaner, more modern sheet-style layout for easier navigation." },
+            { type: 'UI/UX', description: "Streamlined the mobile bottom navigation by focusing on primary actions and moving secondary links to the 'More' sheet." },
+            { type: 'Fix', description: "Ensured PWA app icons update correctly on users' home screens after an app update by versioning the manifest file." },
+            { type: 'Fix', description: "Resolved a critical build error caused by an invalid import path in the main app layout." },
+        ]
+    },
     {
         version: "1.6.7",
         date: "2025-12-29",

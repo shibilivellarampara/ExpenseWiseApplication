@@ -35,7 +35,7 @@ import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
 
 
-const appVersion = "1.6.7";
+const appVersion = "1.6.8";
 
 
 const baseNavItems = [

@@ -7,7 +7,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from 'next-themes';
 import Script from 'next/script';
 
-const appVersion = "1.6.7";
+const appVersion = "1.6.8";
 
 export const metadata: Metadata = {
   title: 'ExpenseWise',

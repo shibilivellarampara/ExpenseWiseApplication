@@ -84,8 +84,11 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
         return (
             <div>
                 <p className="text-muted-foreground">Outstanding Amount</p>
-                <p className="text-lg font-bold text-red-500">
-                    {currencySymbol}{creditCardSummary.outstanding.toFixed(2)}
+                <p className={cn(
+                    "text-lg font-bold",
+                    creditCardSummary.outstanding > 0 ? "text-red-500" : "text-green-600"
+                )}>
+                    {creditCardSummary.outstanding > 0 ? '' : creditCardSummary.outstanding < 0 ? '-' : ''}{currencySymbol}{Math.abs(creditCardSummary.outstanding).toFixed(2)}
                 </p>
             </div>
         )

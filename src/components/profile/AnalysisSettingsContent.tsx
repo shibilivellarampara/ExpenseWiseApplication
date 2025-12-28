@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "../ui/separator";
+import { Separator } from "@/components/ui/separator";
 
 const renderIcon = (iconName: string) => {
     const IconComponent = (LucideIcons as any)[iconName];

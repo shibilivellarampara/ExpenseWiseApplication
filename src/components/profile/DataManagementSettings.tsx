@@ -22,15 +22,15 @@ import { collection, doc, writeBatch, getDocs, query, where } from "firebase/fir
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertTriangle, ChevronDown } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as LucideIcons from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Progress } from "../ui/progress";
-import { Checkbox } from "../ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type DeletableCollection = 'expenses' | 'accounts' | 'categories' | 'tags' | 'debts';
 

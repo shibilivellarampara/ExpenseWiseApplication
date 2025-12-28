@@ -8,14 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "../ui/button";
-import { Switch } from "../ui/switch";
-import { Label } from "../ui/label";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import * as LucideIcons from 'lucide-react';
 import { useDebounce } from 'use-debounce';
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { Separator } from "../ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
 
 
 const allPossibleFields: FieldKey[] = ['description', 'accountId', 'categoryId', 'tagIds'];

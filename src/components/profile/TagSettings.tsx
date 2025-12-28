@@ -6,20 +6,20 @@ import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, Fi
 import { Tag, Expense } from '@/lib/types';
 import { collection, doc, writeBatch, query, where, getDocs, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown, Merge, Archive, Eye, EyeOff, RotateCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { Checkbox } from '../ui/checkbox';
-import { MergeItemsDialog } from './MergeItemsDialog';
-import { Separator } from '../ui/separator';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { MergeItemsDialog } from '@/components/profile/MergeItemsDialog';
+import { Separator } from '@/components/ui/separator';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export function TagSettings() {
     const { user } = useUser();

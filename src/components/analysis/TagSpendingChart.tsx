@@ -7,8 +7,8 @@ import { Cell, Pie, PieChart as RechartsPieChart, ResponsiveContainer, Tooltip, 
 import { EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { CHART_COLORS } from '@/lib/colors';
-import { ScrollArea } from '../ui/scroll-area';
-import { Badge } from '../ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 interface PieChartDataPoint {
   name: string;

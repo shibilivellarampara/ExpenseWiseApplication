@@ -123,6 +123,3 @@ export type EnrichedDebt = Omit<Debt, 'date' | 'settledAt'> & {
 export type EnrichedDebtWithBalance = EnrichedDebt & {
   runningBalance?: number;
 };
-    
-
-    

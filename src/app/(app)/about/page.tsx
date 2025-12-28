@@ -5,10 +5,20 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.6.6";
+const appVersion = "1.6.7";
 
 
 const changelog = [
+    {
+        version: "1.6.7",
+        date: "2025-12-29",
+        changes: [
+            { type: 'Fix', description: "Resolved numerous critical build failures by completely removing all code, types, and routes related to the deprecated 'Shared Expenses' feature." },
+            { type: 'Fix', description: "Corrected invalid component import paths across multiple files to ensure module resolution." },
+            { type: 'Fix', description: "Fixed a syntax error in a try/catch block that was causing the build to fail." },
+            { type: 'Fix', description: "Resolved a TypeScript type error in chart components by ensuring functions always return a valid JSX element." },
+        ]
+    },
     {
         version: "1.6.6",
         date: "2025-12-28",
@@ -424,3 +434,5 @@ export default function AboutPage() {
     );
 
 }
+
+    

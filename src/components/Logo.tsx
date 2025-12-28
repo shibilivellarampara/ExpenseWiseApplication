@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@/firebase';
-import { Wallet } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -20,7 +20,7 @@ export function Logo() {
 
   return (
     <Link href={finalHref} className="flex items-center gap-2" prefetch={false}>
-      <Wallet className="h-7 w-7 text-primary" />
+      <Image src="/logo.png" alt="ExpenseWise Logo" width={28} height={28} className="h-7 w-7" />
       <span className="text-xl font-headline font-semibold text-foreground">ExpenseWise</span>
     </Link>
   );

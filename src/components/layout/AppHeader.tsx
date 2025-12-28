@@ -188,6 +188,7 @@ export function AppHeader() {
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
+  const navigationStyle = userProfile?.dashboardSettings?.navigationStyle || 'sidebar';
   
   const navItems = baseNavItems.map(item => {
     if (item.label === 'Transactions') {
@@ -208,38 +209,40 @@ export function AppHeader() {
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
         
          <div className="md:hidden">
-             <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-                <SheetTrigger asChild>
-                    <Button size="icon" variant="ghost">
-                        <PanelLeft />
-                        <span className="sr-only">Toggle Menu</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64">
-                    <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
-                        <SheetHeader className="p-4 border-b border-sidebar-border">
-                          <SheetTitle>
-                            <Logo />
-                          </SheetTitle>
-                        </SheetHeader>
-                        <nav className="flex-grow space-y-2 mt-4 px-2">
-                            {navItems.map((item) => (
-                                <NavLink
-                                    key={item.href}
-                                    href={item.href}
-                                    icon={item.icon}
-                                    label={item.label}
-                                    isActive={item.isActive}
-                                />
-                            ))}
-                        </nav>
-                        <div className="mt-auto p-4 text-center text-xs text-sidebar-muted-foreground">
-                            <Separator className='my-2 bg-sidebar-border' />
-                            <span>Version {appVersion}</span>
+            {navigationStyle === 'sidebar' && (
+                 <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+                    <SheetTrigger asChild>
+                        <Button size="icon" variant="ghost">
+                            <PanelLeft />
+                            <span className="sr-only">Toggle Menu</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 w-64">
+                        <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
+                            <SheetHeader className="p-4 border-b border-sidebar-border">
+                              <SheetTitle>
+                                <Logo />
+                              </SheetTitle>
+                            </SheetHeader>
+                            <nav className="flex-grow space-y-2 mt-4 px-2">
+                                {navItems.map((item) => (
+                                    <NavLink
+                                        key={item.href}
+                                        href={item.href}
+                                        icon={item.icon}
+                                        label={item.label}
+                                        isActive={item.isActive}
+                                    />
+                                ))}
+                            </nav>
+                            <div className="mt-auto p-4 text-center text-xs text-sidebar-muted-foreground">
+                                <Separator className='my-2 bg-sidebar-border' />
+                                <span>Version {appVersion}</span>
+                            </div>
                         </div>
-                    </div>
-                </SheetContent>
-            </Sheet>
+                    </SheetContent>
+                </Sheet>
+            )}
         </div>
 
         <div className="flex-1">

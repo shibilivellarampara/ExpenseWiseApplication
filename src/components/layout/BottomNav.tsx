@@ -9,6 +9,7 @@ import {
   Wallet,
   BarChartHorizontal,
   Plus,
+  MoreHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -16,12 +17,14 @@ import { UserProfile } from '@/lib/types';
 import { doc } from 'firebase/firestore';
 import { AddExpenseDialog } from '@/components/expenses/AddExpenseDialog';
 import { Button } from '@/components/ui/button';
+import { MoreSheet } from './MoreSheet';
 
 const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/analysis', icon: BarChartHorizontal, label: 'Analysis' },
   { href: 'FAB', icon: Plus, label: 'Add' }, 
   { href: '/accounts', icon: Wallet, label: 'Accounts' },
+  { href: '/more', icon: MoreHorizontal, label: 'More' },
 ];
 
 export function BottomNav() {
@@ -76,6 +79,17 @@ export function BottomNav() {
                                 </Link>
                             )}
                         </div>
+                    );
+                }
+
+                if (label === 'More') {
+                    return (
+                        <MoreSheet key="more-sheet">
+                            <div className="flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full text-muted-foreground">
+                                <Icon className="h-5 w-5" />
+                                <span>{label}</span>
+                            </div>
+                        </MoreSheet>
                     );
                 }
                 

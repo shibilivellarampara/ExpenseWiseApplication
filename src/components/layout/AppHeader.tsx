@@ -34,7 +34,6 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
-import { MoreSheet } from './MoreSheet';
 
 
 const appVersion = pkg.version;
@@ -45,6 +44,10 @@ const baseNavItems = [
   { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
+  { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
+  { href: '/data', icon: <FileUp className="h-5 w-5" />, label: 'Import / Export' },
+  { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
+  { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
 ];
 
 const getPageTitle = (path: string): string => {
@@ -260,13 +263,6 @@ export function AppHeader() {
                 <Skeleton className="h-10 w-10 rounded-full" />
             ) : (
                 <>
-                    <div className="md:hidden">
-                        <MoreSheet>
-                            <Button variant="ghost" size="icon">
-                                <MoreHorizontal />
-                            </Button>
-                        </MoreSheet>
-                    </div>
                     <Notifications />
                     <ThemeToggle />
                     <UserNav />

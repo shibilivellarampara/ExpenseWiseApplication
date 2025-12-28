@@ -9,6 +9,7 @@ import { BarChart as BarChartIcon } from 'lucide-react';
 import { CHART_COLORS } from '@/lib/colors';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { Badge } from '../ui/badge';
 
 
 interface ExpensesBarChartProps {
@@ -58,23 +59,44 @@ const CustomTooltip = ({ active, payload, label, currencySymbol }: any) => {
     return null;
 };
 
-const CustomLegend = ({ payload, onLegendClick, categoryColors }: LegendProps & { onLegendClick: (dataKey: string) => void, categoryColors: Map<string, string>}) => {
+const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpense, currencySymbol }: LegendProps & { onLegendClick: (dataKey: string) => void, categoryColors: Map<string, string>, categoryTotals: Map<string, number>, totalExpense: number, currencySymbol: string}) => {
+    const payload = Array.from(categoryTotals.keys()).map(name => ({
+        value: name,
+        color: categoryColors.get(name) || '#8884d8'
+    }));
+
     if (!payload || payload.length === 0) return null;
 
     return (
-      <ScrollArea className="h-24 w-full">
-        <div className="grid grid-cols-1 gap-y-1 text-xs p-1">
-          {payload.map((entry, index) => (
-            <div
-              key={`item-${index}`}
-              className="flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground truncate p-1 rounded-md"
-              onClick={() => onLegendClick(entry.value as string)}
-            >
-              <div className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: categoryColors.get(entry.value as string) }} />
-              <span className="truncate">{entry.value}</span>
+        <ScrollArea className="h-40 w-full">
+            <div className="space-y-2 p-2">
+            {payload.map((entry, index) => {
+                const categoryName = entry.value as string;
+                const value = categoryTotals.get(categoryName) || 0;
+                const percentage = totalExpense > 0 ? (value / totalExpense) * 100 : 0;
+                
+                return (
+                    <div
+                        key={`item-${index}`}
+                        className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-accent cursor-pointer"
+                        onClick={() => onLegendClick(categoryName)}
+                    >
+                        <div className="flex items-center gap-2">
+                            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                            <span className="truncate">{categoryName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="font-mono">
+                                {currencySymbol}{value.toFixed(2)}
+                            </Badge>
+                             <span className="text-xs text-muted-foreground w-12 text-right">
+                                ({percentage.toFixed(1)}%)
+                            </span>
+                        </div>
+                    </div>
+                );
+            })}
             </div>
-          ))}
-        </div>
       </ScrollArea>
     );
 };
@@ -84,17 +106,30 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
     const expenseOnlyData = useMemo(() => expenses.filter(e => e.type === 'expense'), [expenses]);
     
     // Determine top 7 categories + "Others"
-    const { topCategories, categoryColors } = useMemo(() => {
-        const categoryTotals = new Map<string, number>();
+    const { topCategories, categoryColors, categoryTotals, totalExpense } = useMemo(() => {
+        const totals = new Map<string, number>();
         expenseOnlyData.forEach(e => {
             const categoryName = e.category?.name || 'Uncategorized';
-            categoryTotals.set(categoryName, (categoryTotals.get(categoryName) || 0) + e.amount);
+            totals.set(categoryName, (totals.get(categoryName) || 0) + e.amount);
         });
 
-        const sortedCategories = Array.from(categoryTotals.entries()).sort((a, b) => b[1] - a[1]);
+        const sortedCategories = Array.from(totals.entries()).sort((a, b) => b[1] - a[1]);
         const topCategoryNames = sortedCategories.slice(0, 7).map(([name]) => name);
+
+        const finalCategoryTotals = new Map<string, number>();
+        let othersTotal = 0;
+
+        sortedCategories.forEach(([name, total]) => {
+            if (topCategoryNames.includes(name)) {
+                finalCategoryTotals.set(name, total);
+            } else {
+                othersTotal += total;
+            }
+        });
+
         if (sortedCategories.length > 7) {
             topCategoryNames.push('Others');
+            finalCategoryTotals.set('Others', othersTotal);
         }
 
         const colors = new Map<string, string>();
@@ -105,8 +140,10 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                  colors.set(catName, CHART_COLORS[index % CHART_COLORS.length]);
             }
         });
+
+        const totalOverallExpense = Array.from(totals.values()).reduce((sum, val) => sum + val, 0);
         
-        return { topCategories: topCategoryNames, categoryColors: colors };
+        return { topCategories: topCategoryNames, categoryColors: colors, categoryTotals: finalCategoryTotals, totalExpense: totalOverallExpense };
     }, [expenseOnlyData]);
 
     const chartData = useMemo(() => {
@@ -242,7 +279,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
             </ResponsiveContainer>
             {useCategoryColors && (
                  <div className="mt-4">
-                    <Legend content={<CustomLegend onLegendClick={()=>{}} categoryColors={categoryColors} />} />
+                    <Legend content={<CustomLegend onLegendClick={()=>{}} categoryColors={categoryColors} categoryTotals={categoryTotals} totalExpense={totalExpense} currencySymbol={currencySymbol} />} />
                 </div>
             )}
         </div>

@@ -12,11 +12,7 @@ import { PlusCircle, Settings } from 'lucide-react';
 import { AddSharedTransactionSheet } from '@/components/shared-expenses/AddSharedTransactionSheet';
 import { SharedTransactionsList } from '@/components/shared-expenses/SharedTransactionsList';
 
-interface SharedExpenseDetailPageProps {
-    params: { id: string };
-}
-
-export default function SharedExpenseDetailPage({ params }: SharedExpenseDetailPageProps) {
+export default function SharedExpenseDetailPage({ params }: { params: { id: string } }) {
     const { id } = params;
     const { user } = useUser();
     const firestore = useFirestore();

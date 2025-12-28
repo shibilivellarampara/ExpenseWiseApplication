@@ -34,6 +34,13 @@
     --sidebar-active: 262.1 83.3% 57.8%;
     --sidebar-active-foreground: 210 40% 98%;
     --sidebar-border: 214.3 31.8% 91.4%;
+    
+    /* Chart colors */
+    --chart-1: 262.1 83.3% 57.8%;
+    --chart-2: 210 40% 50%;
+    --chart-3: 10 80% 50%;
+    --chart-4: 150 50% 50%;
+    --chart-5: 300 70% 50%;
   }
 
   .dark {
@@ -64,6 +71,13 @@
     --sidebar-active: 263.4 95.2% 66.3%;
     --sidebar-active-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
+    
+    /* Chart colors */
+    --chart-1: 263.4 95.2% 66.3%;
+    --chart-2: 210 40% 70%;
+    --chart-3: 10 80% 70%;
+    --chart-4: 150 50% 70%;
+    --chart-5: 300 70% 70%;
   }
 
   .chat {
@@ -95,6 +109,21 @@
     --sidebar-active: 142.1 76.2% 36.3%;
     --sidebar-active-foreground: 210 40% 98%;
     --sidebar-border: 214.3 31.8% 91.4%;
+  }
+
+  .fintech, .dark-fintech {
+    --chart-1: 210 80% 55%;
+    --chart-2: 180 45% 55%;
+    --chart-3: 30 90% 60%;
+    --chart-4: 220 25% 65%;
+    --chart-5: 210 80% 75%;
+    --chart-6: 180 45% 75%;
+    --chart-7: 30 90% 75%;
+    --chart-8: 220 25% 45%;
+    --chart-9: 200 60% 60%;
+    --chart-10: 40 80% 65%;
+    --chart-11: 160 50% 50%;
+    --chart-12: 240 40% 60%;
   }
 
   .fintech {

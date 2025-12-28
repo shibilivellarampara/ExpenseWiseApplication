@@ -23,16 +23,16 @@ export const COLORS: ColorInfo[] = [
 
 // Simplified array of HSL color strings for charts, aligned with Fintech theme
 export const CHART_COLORS: string[] = [
-    "hsl(210, 80%, 55%)",  // Primary Blue
-    "hsl(180, 45%, 55%)",  // Teal/Green
-    "hsl(30, 90%, 60%)",   // Orange/Amber
-    "hsl(220, 25%, 65%)",  // Muted Navy/Slate
-    "hsl(210, 80%, 75%)",  // Lighter Blue
-    "hsl(180, 45%, 75%)",  // Lighter Teal
-    "hsl(30, 90%, 75%)",   // Lighter Orange
-    "hsl(220, 25%, 45%)",  // Darker Slate
-    "hsl(200, 60%, 60%)",  // Sky Blue
-    "hsl(40, 80%, 65%)",   // Gold/Amber
-    "hsl(160, 50%, 50%)",  // Seafoam Green
-    "hsl(240, 40%, 60%)"   // Muted Indigo
+    "hsl(var(--chart-1))",
+    "hsl(var(--chart-2))",
+    "hsl(var(--chart-3))",
+    "hsl(var(--chart-4))",
+    "hsl(var(--chart-5))",
+    "hsl(var(--chart-6))",
+    "hsl(var(--chart-7))",
+    "hsl(var(--chart-8))",
+    "hsl(var(--chart-9))",
+    "hsl(var(--chart-10))",
+    "hsl(var(--chart-11))",
+    "hsl(var(--chart-12))"
 ];

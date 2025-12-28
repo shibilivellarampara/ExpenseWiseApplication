@@ -366,7 +366,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                  {isPaid && <Badge variant="default" className="bg-primary/10 text-primary">Paid</Badge>}
                                                 <div className={cn(
                                                     "font-bold text-lg",
-                                                    "text-destructive"
+                                                    outstandingAmount > 0 ? "text-destructive" : "text-primary"
                                                 )}>
                                                      {outstandingAmount > 0 ? '-' : ''}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
                                                 </div>

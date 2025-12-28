@@ -115,7 +115,7 @@ export function TagSpendingChart({ expenses, currency }: TagSpendingChartProps) 
                     <RechartsPieChart>
                         <Pie
                             activeIndex={activeIndex}
-                            activeShape={(props: any) => renderActiveShape(props, currencySymbol)}
+                            activeShape={(props: ActiveShapeProps) => renderActiveShape(props, currencySymbol)}
                             data={chartData}
                             dataKey="value"
                             nameKey="name"

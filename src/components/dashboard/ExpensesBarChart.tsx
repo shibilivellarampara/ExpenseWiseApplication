@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, LegendProps } from 'recharts';
@@ -59,7 +60,7 @@ const CustomTooltip = ({ active, payload, label, currencySymbol }: any) => {
     return null;
 };
 
-const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpense, currencySymbol }: LegendProps & { onLegendClick: (dataKey: string) => void, categoryColors: Map<string, string>, categoryTotals: Map<string, number>, totalExpense: number, currencySymbol: string}) => {
+const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpense, currencySymbol }: { onLegendClick: (dataKey: string) => void, categoryColors: Map<string, string>, categoryTotals: Map<string, number>, totalExpense: number, currencySymbol: string}) => {
     const payload = Array.from(categoryTotals.keys()).map(name => ({
         value: name,
         color: categoryColors.get(name) || '#8884d8'
@@ -114,7 +115,9 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
         });
 
         const sortedCategories = Array.from(totals.entries()).sort((a, b) => b[1] - a[1]);
-        const topCategoryNames = sortedCategories.slice(0, 7).map(([name]) => name);
+        
+        const topN = 7;
+        const topCategoryNames = sortedCategories.slice(0, topN).map(([name]) => name);
 
         const finalCategoryTotals = new Map<string, number>();
         let othersTotal = 0;
@@ -127,7 +130,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
             }
         });
 
-        if (sortedCategories.length > 7) {
+        if (sortedCategories.length > topN) {
             topCategoryNames.push('Others');
             finalCategoryTotals.set('Others', othersTotal);
         }
@@ -279,7 +282,13 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
             </ResponsiveContainer>
             {useCategoryColors && (
                  <div className="mt-4">
-                    <Legend content={<CustomLegend onLegendClick={()=>{}} categoryColors={categoryColors} categoryTotals={categoryTotals} totalExpense={totalExpense} currencySymbol={currencySymbol} />} />
+                    <CustomLegend 
+                        onLegendClick={()=>{}} 
+                        categoryColors={categoryColors} 
+                        categoryTotals={categoryTotals} 
+                        totalExpense={totalExpense} 
+                        currencySymbol={currencySymbol} 
+                    />
                 </div>
             )}
         </div>

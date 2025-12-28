@@ -17,8 +17,8 @@ import { doc } from 'firebase/firestore';
 
 const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/transactions', special_href: '/expenses', icon: ArrowRightLeft, label: 'Transactions' },
   { href: '/accounts', icon: Wallet, label: 'Accounts' },
+  { href: '/transactions', special_href: '/expenses', icon: ArrowRightLeft, label: 'Transactions' },
   { href: '/analysis', icon: BarChartHorizontal, label: 'Analysis' },
   { href: '/more', icon: MoreHorizontal, label: 'More' },
 ];

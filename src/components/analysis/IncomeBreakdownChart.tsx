@@ -25,6 +25,9 @@ interface ActiveShapeProps {
 const renderActiveShape = (props: any, currencySymbol: string) => {
   const RADIAN = Math.PI / 180;
   const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+  
+  if (!value || !payload) return <g />;
+  
   const sin = Math.sin(-RADIAN * (midAngle || 0));
   const cos = Math.cos(-RADIAN * (midAngle || 0));
   const sx = (cx || 0) + ((outerRadius || 0) + 6) * cos;

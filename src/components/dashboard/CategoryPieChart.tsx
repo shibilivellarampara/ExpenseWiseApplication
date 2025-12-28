@@ -56,7 +56,7 @@ const renderActiveShape = (
     value = 0,
   } = props;
 
-  if (!value || !payload) return null;
+  if (!value || !payload) return <g />;
 
   const sin = Math.sin(-RADIAN * midAngle);
   const cos = Math.cos(-RADIAN * midAngle);

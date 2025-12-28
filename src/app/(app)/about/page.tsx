@@ -12,7 +12,7 @@ const appVersion = pkg.version;
 const changelog = [
     {
         version: "1.6.6",
-        date: "2025-12-30",
+        date: "2025-12-28",
         changes: [
             { type: 'UI/UX', description: "Updated the application logo and Progressive Web App (PWA) icons for a consistent brand identity." },
             { type: 'UI/UX', description: "Set 'Fintech' as the default theme, providing a modern and professional look out-of-the-box." },

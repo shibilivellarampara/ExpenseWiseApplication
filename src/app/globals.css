@@ -250,6 +250,14 @@
     background-color: var(--badge-bg-light);
     color: var(--badge-text-light);
   }
+  .fintech .badge-colorful {
+    background-color: var(--badge-bg-light);
+    color: var(--badge-text-light);
+  }
+  .dark-fintech .badge-colorful {
+    background-color: var(--badge-bg-dark);
+    color: var(--badge-text-dark);
+  }
 }
 
 
@@ -294,3 +302,4 @@
 .PhoneInputCountrySelectArrow {
     display: none;
 }
+

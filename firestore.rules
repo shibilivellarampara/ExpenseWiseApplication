@@ -25,25 +25,6 @@ service cloud.firestore {
        allow read, write: if isOwner(resource.data.userId);
     }
     
-    // --- Shared Data ---
-    match /shared_ledgers/{ledgerId} {
-      // Any authenticated user can create, read, or list ledgers.
-      // The `list` is secured by the query in the app code.
-      allow read, create, update: if isSignedIn();
-      // No one can delete a shared ledger directly to prevent accidental data loss.
-      allow delete: if false;
-    }
-    
-    match /shared_transactions/{transactionId} {
-      allow read, write: if isSignedIn();
-    }
-    match /shared_categories/{categoryId} {
-      allow read, write: if isSignedIn();
-    }
-    match /shared_tags/{tagId} {
-      allow read, write: if isSignedIn();
-    }
-    
     // --- Admin Data ---
     // Only users with the 'isAdmin' custom claim can access the admin collection.
     match /admin/{docId} {

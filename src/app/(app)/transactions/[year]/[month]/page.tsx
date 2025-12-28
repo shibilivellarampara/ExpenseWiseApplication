@@ -14,7 +14,7 @@ import { endOfMonth, startOfMonth, parse, format } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
-import { useSearchParams, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
 
@@ -82,7 +82,7 @@ export default function MonthlyExpensesPage({ params }: { params: { year: string
                 date: (expense.date as Timestamp).toDate(),
             }))
             .filter(expense => {
-                if (filters.type !== 'all' && expense.type !== filters.type) return false;
+                if (filters.type !== 'all' && expense.type !== expense.type) return false;
                 if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
                 if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) return false;
                 if (filters.tags.length > 0 && !filters.tags.some(tagId => expense.tagIds?.includes(tagId))) return false;

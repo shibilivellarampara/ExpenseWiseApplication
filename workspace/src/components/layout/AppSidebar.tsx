@@ -18,11 +18,11 @@ import {
   ArrowLeft,
   Users,
 } from 'lucide-react';
-import { Logo } from '../Logo';
+import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
-import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
-import { useSidebar } from '../ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { useSidebar } from '@/components/ui/sidebar';
 import pkg from '../../../package.json';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { UserProfile } from '@/lib/types';

@@ -11,7 +11,7 @@ const appVersion = "1.6.5";
 const changelog = [
     {
         version: "1.6.5",
-        date: "2025-12-24",
+        date: "2025-12-28",
         changes: [
             { type: 'UI/UX', description: "Redesigned the 'Expenses Overview' chart with a cleaner look, focusing on the top 7 categories and grouping the rest into a new clickable 'Others' category." },
             { type: 'UI/UX', description: "Replaced the chart legend with a detailed, scrollable vertical list showing amounts and percentages." },

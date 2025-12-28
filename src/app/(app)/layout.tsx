@@ -36,7 +36,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             {showSidebar && <AppSidebar />}
             <div className="flex flex-1 flex-col overflow-hidden">
                 <AppHeader />
-                <main id="main-content" className="flex-1 overflow-y-auto" style={{ paddingBottom: showBottomNav ? '5rem' : '0' }}>
+                <main id="main-content" className="flex-1 overflow-y-auto" style={{ paddingBottom: showBottomNav ? '8rem' : '0' }}>
                     <div className="container mx-auto p-4 md:p-6 lg:p-8">
                         <Suspense fallback={<PageLoader />}>
                             {children}

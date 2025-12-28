@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -7,7 +8,6 @@ import {
   ArrowRightLeft,
   Wallet,
   BarChartHorizontal,
-  MoreHorizontal,
   Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -16,13 +16,14 @@ import { UserProfile } from '@/lib/types';
 import { doc } from 'firebase/firestore';
 import { AddExpenseDialog } from '@/components/expenses/AddExpenseDialog';
 import { Button } from '@/components/ui/button';
+import { MoreSheet } from './MoreSheet';
 
 const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/analysis', icon: BarChartHorizontal, label: 'Analysis' },
-  { href: 'FAB', icon: Plus, label: 'Add' }, // Placeholder for the Floating Action Button
+  { href: 'FAB', icon: Plus, label: 'Add' }, 
   { href: '/accounts', icon: Wallet, label: 'Accounts' },
-  { href: '/more', icon: MoreHorizontal, label: 'More' },
+  { href: 'More', icon: MoreSheet, label: 'More' },
 ];
 
 export function BottomNav() {
@@ -79,12 +80,17 @@ export function BottomNav() {
                         </div>
                     );
                 }
+
+                if (label === 'More') {
+                    return (
+                        <div key="more-nav" className="flex flex-col items-center justify-center w-20 h-full">
+                            <Icon />
+                        </div>
+                    );
+                }
                 
                 const finalHref = href;
-                const isActive = (href === '/more')
-                    ? pathname.startsWith('/more') || pathname.startsWith('/profile') || pathname.startsWith('/about') || pathname.startsWith('/data') || pathname.startsWith('/debts')
-                    : pathname.startsWith(finalHref);
-
+                const isActive = pathname.startsWith(finalHref);
 
                 return (
                     <Link

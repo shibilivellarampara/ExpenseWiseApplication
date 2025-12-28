@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
+import { MoreSheet } from './MoreSheet';
 
 
 const appVersion = pkg.version;
@@ -44,18 +45,22 @@ const baseNavItems = [
   { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
   { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
   { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
-  { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
-  { href: '/data', icon: <FileUp className="h-5 w-5" />, label: 'Import / Export' },
-  { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
-  { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
 ];
 
 const getPageTitle = (path: string): string => {
     if (path.startsWith('/admin/users')) return 'User Management';
     if (path.startsWith('/admin')) return 'Admin Dashboard';
     if (path.startsWith('/profile')) return 'Settings';
-    if (path.startsWith('/more')) return 'More';
     
+    const secondaryNavItems = [
+      { href: '/debts', label: 'Debts & Dues' },
+      { href: '/data', label: 'Import / Export' },
+      { href: '/about', label: 'About' },
+    ];
+    
+    const secondaryNavItem = secondaryNavItems.find(item => path.startsWith(item.href));
+    if(secondaryNavItem) return secondaryNavItem.label;
+
     const navItem = baseNavItems.find(item => {
         if(item.label === 'Import / Export') {
             return path.startsWith('/data') || path.startsWith('/import') || path.startsWith('/reports');
@@ -255,6 +260,13 @@ export function AppHeader() {
                 <Skeleton className="h-10 w-10 rounded-full" />
             ) : (
                 <>
+                    <div className="md:hidden">
+                        <MoreSheet>
+                            <Button variant="ghost" size="icon">
+                                <MoreHorizontal />
+                            </Button>
+                        </MoreSheet>
+                    </div>
                     <Notifications />
                     <ThemeToggle />
                     <UserNav />

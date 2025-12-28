@@ -38,7 +38,7 @@ interface ActiveShapeProps {
 
 
 const renderActiveShape = (
-  props: ActiveShapeProps,
+  props: any,
   currencySymbol: string
 ) => {
   const RADIAN = Math.PI / 180;
@@ -201,7 +201,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
               >
                 <Pie
                   activeIndex={activeIndex}
-                  activeShape={(props) => renderActiveShape(props, currencySymbol)}
+                  activeShape={(props: any) => renderActiveShape(props, currencySymbol)}
                   data={data}
                   cx="50%"
                   cy="50%"

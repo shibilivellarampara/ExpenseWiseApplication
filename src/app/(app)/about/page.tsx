@@ -5,10 +5,22 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.6.5";
+const appVersion = "1.6.6";
 
 
 const changelog = [
+    {
+        version: "1.6.6",
+        date: "2025-12-30",
+        changes: [
+            { type: 'UI/UX', description: "Updated the application logo and Progressive Web App (PWA) icons for a consistent brand identity." },
+            { type: 'UI/UX', description: "Set 'Fintech' as the default theme, providing a modern and professional look out-of-the-box." },
+            { type: 'UI/UX', description: "Improved the 'Add Debt' form with clearer 'You Gave'/'You Got' labels and a bolder amount field." },
+            { type: 'Fix', description: "Fixed an issue causing all category and tag badges to appear in the same color when using Fintech themes." },
+            { type: 'Fix', description: "Resolved an issue on mobile devices where users had to log in again after closing the PWA." },
+            { type: 'Fix', description: "Corrected hardcoded colors on the 'Debts & Dues' page to respect the current theme." },
+        ]
+    },
     {
         version: "1.6.5",
         date: "2025-12-28",
@@ -412,3 +424,5 @@ export default function AboutPage() {
     );
 
 }
+
+    

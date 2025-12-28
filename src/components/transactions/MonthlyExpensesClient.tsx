@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -18,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
 import { useSearchParams } from 'next/navigation';
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface MonthlyExpensesClientProps {
     year: string;
@@ -27,6 +26,7 @@ interface MonthlyExpensesClientProps {
 export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProps) {
     const { user } = useUser();
     const firestore = useFirestore();
+    const isMobile = useMediaQuery("(max-width: 768px)");
     
     const pageDate = useMemo(() => {
         if (typeof year === 'string' && typeof month === 'string') {
@@ -173,7 +173,8 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             }));
         }
     };
-
+    
+    const showBottomNav = userProfile?.dashboardSettings?.navigationStyle === 'bottom' && isMobile;
 
     return (
         <div className="w-full space-y-4 pb-24">
@@ -209,7 +210,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                 onBadgeClick={handleBadgeClick}
             />
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 z-10 md:hidden">
+            <div className={cn("fixed left-0 right-0 p-4 z-10 md:hidden", showBottomNav ? 'bottom-16' : 'bottom-0')}>
                  <div className="container mx-auto flex justify-around gap-2">
                     <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
                         <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg text-base font-semibold py-6">

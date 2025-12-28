@@ -1,4 +1,3 @@
-
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -15,6 +14,7 @@ import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 export default function ExpensesPage() {
     const { user } = useUser();
@@ -23,6 +23,7 @@ export default function ExpensesPage() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [showScrollBottom, setShowScrollBottom] = useState(false);
+    const isMobile = useMediaQuery("(max-width: 768px)");
 
     const searchParams = useSearchParams();
 
@@ -228,6 +229,8 @@ export default function ExpensesPage() {
         mainContentRef.current?.scrollTo({ top: mainContentRef.current.scrollHeight, behavior: 'smooth' });
     };
 
+    const showBottomNav = userProfile?.dashboardSettings?.navigationStyle === 'bottom' && isMobile;
+
 
     return (
         <div className="w-full space-y-4 pb-24">
@@ -259,7 +262,7 @@ export default function ExpensesPage() {
                 onBadgeClick={handleBadgeClick}
             />
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 z-10 md:hidden">
+            <div className={cn("fixed left-0 right-0 p-4 z-10 md:hidden", showBottomNav ? 'bottom-16' : 'bottom-0')}>
                 <div className="container mx-auto flex flex-col items-center gap-3">
                     <div className="flex gap-3">
                         {showScrollTop && (

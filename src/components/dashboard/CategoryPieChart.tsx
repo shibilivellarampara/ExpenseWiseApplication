@@ -222,50 +222,76 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
         <div className="flex-grow min-h-0">
             <ScrollArea className="h-full">
                  <div className="space-y-2 p-2">
-                    {topData.map((item, index) => (
-                        <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-accent">
-                            <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.name === 'Others' ? '#B0BEC5' : safeColors[index % safeColors.length] }}/>
-                                <span>{item.name}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="font-mono">
-                                    {currencySymbol}{item.value.toFixed(2)}
-                                </Badge>
-                                {totalAmount > 0 && (
-                                  <span className="text-xs text-muted-foreground w-12 text-right">
-                                      ({((item.value / totalAmount) * 100).toFixed(1)}%)
-                                  </span>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                    {othersData.length > 0 && (
-                      <Dialog>
-                          <DialogTrigger asChild>
-                              <Button variant="ghost" className="w-full justify-start text-sm p-2 rounded-md hover:bg-accent">
-                                  Others
-                              </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                              <DialogHeader>
-                                  <DialogTitle>Other Categories</DialogTitle>
-                              </DialogHeader>
-                              <ScrollArea className="h-72">
-                                  <div className="space-y-2 p-2">
-                                      {othersData.map((item, index) => (
-                                          <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-md">
-                                              <span>{item.name}</span>
-                                              <Badge variant="secondary" className="font-mono">
-                                                  {currencySymbol}{item.value.toFixed(2)}
-                                              </Badge>
-                                          </div>
-                                      ))}
-                                  </div>
-                              </ScrollArea>
-                          </DialogContent>
-                      </Dialog>
-                  )}
+                    {allData.map((item, index) => {
+                        const isOther = topData.length < allData.length && index >= topData.length;
+                        const isAggregatedOther = item.name === 'Others';
+                        const color = isAggregatedOther ? '#B0BEC5' : safeColors[index % safeColors.length];
+
+                        if (isAggregatedOther) {
+                            return (
+                                <Dialog key="others-legend">
+                                    <DialogTrigger asChild>
+                                        <Button variant="ghost" className="w-full justify-between items-center text-sm p-2 rounded-md hover:bg-accent h-auto">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                                                <span className="truncate flex-1 text-left">{item.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="secondary" className="font-mono">
+                                                    {currencySymbol}{item.value.toFixed(2)}
+                                                </Badge>
+                                                {totalAmount > 0 && (
+                                                <span className="text-xs text-muted-foreground w-12 text-right">
+                                                    ({((item.value / totalAmount) * 100).toFixed(1)}%)
+                                                </span>
+                                                )}
+                                            </div>
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Other Categories</DialogTitle>
+                                        </DialogHeader>
+                                        <ScrollArea className="h-72">
+                                            <div className="space-y-2 p-2">
+                                                {othersData.map((otherItem) => (
+                                                    <div key={otherItem.name} className="flex justify-between items-center text-sm p-2 rounded-md">
+                                                        <span>{otherItem.name}</span>
+                                                        <Badge variant="secondary" className="font-mono">
+                                                            {currencySymbol}{otherItem.value.toFixed(2)}
+                                                        </Badge>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </ScrollArea>
+                                    </DialogContent>
+                                </Dialog>
+                            );
+                        }
+
+                        if (!isOther) {
+                             return (
+                                <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-accent">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }}/>
+                                        <span>{item.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary" className="font-mono">
+                                            {currencySymbol}{item.value.toFixed(2)}
+                                        </Badge>
+                                        {totalAmount > 0 && (
+                                        <span className="text-xs text-muted-foreground w-12 text-right">
+                                            ({((item.value / totalAmount) * 100).toFixed(1)}%)
+                                        </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        }
+                        return null;
+
+                    })}
                  </div>
             </ScrollArea>
         </div>

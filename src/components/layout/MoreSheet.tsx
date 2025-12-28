@@ -34,21 +34,6 @@ export function MoreSheet({ children }: { children?: React.ReactNode }) {
                     <DrawerTitle>More Options</DrawerTitle>
                 </DrawerHeader>
                 <div className="py-2 px-2">
-                    <Link href="/profile">
-                        <div className="flex items-center gap-4 rounded-lg p-3 transition-colors hover:bg-accent">
-                            <Avatar className="h-12 w-12">
-                                <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'} />
-                                <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-grow">
-                                <p className="font-semibold">{user?.displayName}</p>
-                                <p className="text-sm text-muted-foreground">{user?.email}</p>
-                            </div>
-                        </div>
-                    </Link>
-                    
-                    <Separator className="my-2" />
-
                     <nav className="space-y-1">
                         {secondaryNavItems.map(item => (
                             <Link href={item.href} key={item.href} passHref>

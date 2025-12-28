@@ -1,38 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
 
-'use client';
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-import { PageHeader } from "@/components/PageHeader";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { SharedLedger } from "@/lib/types";
-import { collection, query, where } from "firebase/firestore";
-import { useMemo } from "react";
-import { AddSharedLedgerSheet } from "@/components/shared-expenses/AddSharedLedgerSheet";
-import { SharedExpensesList } from "@/components/shared-expenses/SharedExpensesList";
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
 
-export default function SharedExpensesPage() {
-    const { user } = useUser();
-    const firestore = useFirestore();
-
-    const ledgersQuery = useMemoFirebase(() => {
-        if (!user) return null;
-        // Query ledgers where the current user is a member
-        return query(collection(firestore, 'shared_ledgers'), where('memberIds', 'array-contains', user.uid));
-    }, [user, firestore]);
-
-    const { data: ledgers, isLoading } = useCollection<SharedLedger>(ledgersQuery);
-
-    return (
-        <div className="w-full space-y-8">
-            <PageHeader
-                title="Shared Expenses"
-                description="Manage your shared ledgers with friends and family."
-            >
-                <AddSharedLedgerSheet />
-            </PageHeader>
-            <SharedExpensesList
-                ledgers={ledgers || []}
-                isLoading={isLoading}
-            />
-        </div>
-    );
+    // --- Private User Data ---
+    // Users can only access their own user document and all its subcollections.
+    match /users/{userId}/{allSubcollections=**} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // --- Collection Group Rules ---
+    // Rule for querying the 'expenses' collection group.
+    // Ensures that users can only query expenses they own.
+    match /expenses/{expenseId} {
+       allow read, write: if isOwner(resource.data.userId);
+    }
+    
+    // --- Admin Data ---
+    // Only users with the 'isAdmin' custom claim can access the admin collection.
+    match /admin/{docId} {
+        allow read, write: if request.auth.token.isAdmin == true;
+    }
+  }
 }

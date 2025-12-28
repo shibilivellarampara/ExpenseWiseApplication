@@ -45,7 +45,7 @@ function WelcomeCard() {
 export default function DashboardPage() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const [timeRange, setTimeRange] = useState<TimeRange>('week');
+    const [timeRange, setTimeRange] = useState<TimeRange>('month');
     const [pieChartGrouping, setPieChartGrouping] = useState<PieChartGrouping>('category');
 
     const { dateRangeStart, dateRangeEnd, timeRangeLabel } = useMemo(() => {

@@ -2,19 +2,18 @@
 'use client';
 
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import Link from 'next/link';
 import { HandCoins, FileUp, Settings, Info, ChevronRight, UserCircle } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/lib/utils';
-import { Button } from '../ui/button';
 
 const secondaryNavItems = [
   { href: '/debts', icon: <HandCoins className="h-6 w-6 text-primary" />, label: 'Debts & Dues' },
@@ -27,13 +26,13 @@ export function MoreSheet({ children }: { children?: React.ReactNode }) {
     const { user } = useUser();
 
     return (
-        <Sheet>
-            {children && <SheetTrigger asChild>{children}</SheetTrigger>}
-            <SheetContent side="left">
-                <SheetHeader>
-                    <SheetTitle>More Options</SheetTitle>
-                </SheetHeader>
-                <div className="py-4 space-y-4">
+        <Drawer>
+            {children && <DrawerTrigger asChild>{children}</DrawerTrigger>}
+            <DrawerContent>
+                <DrawerHeader className="text-left">
+                    <DrawerTitle>More Options</DrawerTitle>
+                </DrawerHeader>
+                <div className="py-4 px-4 space-y-4">
                     <Link href="/profile">
                         <div className="flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-accent">
                             <Avatar className="h-16 w-16">
@@ -60,8 +59,7 @@ export function MoreSheet({ children }: { children?: React.ReactNode }) {
                         ))}
                     </div>
                 </div>
-            </SheetContent>
-        </Sheet>
+            </DrawerContent>
+        </Drawer>
     );
 }
-

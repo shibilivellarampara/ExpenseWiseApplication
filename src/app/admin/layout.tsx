@@ -11,6 +11,7 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import AuthGuard from '@/components/auth/AuthGuard';
+import { AppLoader } from '@/components/AppLoader';
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
@@ -37,10 +38,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   if (isLoading || !userProfile?.isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-muted-foreground">Verifying access...</p>
-        </div>
+        <AppLoader message="Verifying admin access..." />
       </div>
     );
   }

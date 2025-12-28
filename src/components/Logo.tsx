@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser } from '@/firebase';
@@ -13,14 +14,14 @@ export function Logo() {
 
   // If user is logged in (and not on an auth page), link to dashboard.
   // Otherwise, link to the homepage.
-  const href = user && !isAuthPage ? '/dashboard' : '/';
+  const href = user && !isAppPage ? '/dashboard' : '/';
   
   // For the sidebar logo, we always want to go to dashboard.
   const finalHref = isAppPage ? '/dashboard' : href;
 
   return (
     <Link href={finalHref} className="flex items-center gap-2" prefetch={false}>
-      <Image src="/logo.png" alt="ExpenseWise Logo" width={28} height={28} className="h-7 w-7" />
+      <Image src="/NewLogo.png" alt="ExpenseWise Logo" width={28} height={28} className="h-7 w-7" />
       <span className="text-xl font-headline font-semibold text-foreground">ExpenseWise</span>
     </Link>
   );

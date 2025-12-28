@@ -2,12 +2,12 @@
 'use client';
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, LegendProps } from 'recharts';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { EnrichedExpense, Category } from '@/lib/types';
 import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, startOfYear, endOfYear, getYear } from 'date-fns';
 import { BarChart as BarChartIcon } from 'lucide-react';
 import { CHART_COLORS } from '@/lib/colors';
-import { ScrollArea, ScrollBar } from '../ui/scroll-area';
+import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 
@@ -62,20 +62,19 @@ const CustomLegend = ({ payload, onLegendClick, categoryColors }: LegendProps & 
     if (!payload || payload.length === 0) return null;
 
     return (
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex justify-center items-center gap-4 text-xs pt-4">
+      <ScrollArea className="h-20 w-full">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-1 text-xs p-1">
           {payload.map((entry, index) => (
             <div
               key={`item-${index}`}
-              className="flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground"
+              className="flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground truncate"
               onClick={() => onLegendClick(entry.value as string)}
             >
               <div className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: categoryColors.get(entry.value as string) }} />
-              <span>{entry.value}</span>
+              <span className="truncate">{entry.value}</span>
             </div>
           ))}
         </div>
-        <ScrollBar orientation="horizontal" />
       </ScrollArea>
     );
 };
@@ -84,7 +83,7 @@ const CustomLegend = ({ payload, onLegendClick, categoryColors }: LegendProps & 
 export function ExpensesBarChart({ expenses, allCategories, timeRange, currencySymbol, useCategoryColors }: ExpensesBarChartProps) {
     const expenseOnlyData = useMemo(() => expenses.filter(e => e.type === 'expense'), [expenses]);
     
-    // Determine top 6 categories + "Others"
+    // Determine top 7 categories + "Others"
     const { topCategories, categoryColors } = useMemo(() => {
         const categoryTotals = new Map<string, number>();
         expenseOnlyData.forEach(e => {
@@ -93,8 +92,8 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
         });
 
         const sortedCategories = Array.from(categoryTotals.entries()).sort((a, b) => b[1] - a[1]);
-        const topCategoryNames = sortedCategories.slice(0, 6).map(([name]) => name);
-        if (sortedCategories.length > 6) {
+        const topCategoryNames = sortedCategories.slice(0, 7).map(([name]) => name);
+        if (sortedCategories.length > 7) {
             topCategoryNames.push('Others');
         }
 
@@ -197,49 +196,51 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
     }
 
     return (
-        <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={chartData}>
-                <XAxis
-                    dataKey="name"
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                />
-                <YAxis
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${currencySymbol}${value}`}
-                />
-                <Tooltip
-                    content={<CustomTooltip currencySymbol={currencySymbol} />}
-                    cursor={{ fill: 'hsl(var(--muted))' }}
-                />
-                {useCategoryColors && <Legend content={<CustomLegend onLegendClick={()=>{}} categoryColors={categoryColors} />} />}
-                
-                {useCategoryColors ? (
-                    topCategories.map(categoryName => (
+        <div className="w-full">
+            <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={chartData}>
+                    <XAxis
+                        dataKey="name"
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                    />
+                    <YAxis
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value) => `${currencySymbol}${value}`}
+                    />
+                    <Tooltip
+                        content={<CustomTooltip currencySymbol={currencySymbol} />}
+                        cursor={{ fill: 'hsl(var(--muted))' }}
+                    />
+                    
+                    {useCategoryColors ? (
+                        topCategories.map(categoryName => (
+                            <Bar
+                                key={categoryName}
+                                dataKey={categoryName}
+                                stackId="a"
+                                fill={categoryColors.get(categoryName) || '#8884d8'}
+                                name={categoryName}
+                                radius={[4, 4, 0, 0]}
+                            />
+                        ))
+                    ) : (
                         <Bar
-                            key={categoryName}
-                            dataKey={categoryName}
+                            dataKey="total"
                             stackId="a"
-                            fill={categoryColors.get(categoryName) || '#8884d8'}
-                            name={categoryName}
+                            fill="hsl(var(--primary))"
+                            name="Total Expenses"
                             radius={[4, 4, 0, 0]}
                         />
-                    ))
-                ) : (
-                    <Bar
-                        dataKey="total"
-                        stackId="a"
-                        fill="hsl(var(--primary))"
-                        name="Total Expenses"
-                        radius={[4, 4, 0, 0]}
-                    />
-                )}
-            </BarChart>
-        </ResponsiveContainer>
+                    )}
+                </BarChart>
+            </ResponsiveContainer>
+            {useCategoryColors && <div className="mt-4"><Legend content={<CustomLegend onLegendClick={()=>{}} categoryColors={categoryColors} />} /></div>}
+        </div>
     );
 }

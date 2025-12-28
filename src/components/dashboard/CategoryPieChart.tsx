@@ -48,9 +48,13 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
   const ey = my;
   const textAnchor = cos >= 0 ? 'start' : 'end';
 
+  const nameLength = payload.name.length || 10;
+  const fontSize = nameLength > 15 ? 'text-base' : 'text-lg';
+
+
   return (
     <g>
-      <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="font-headline text-lg">
+      <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className={cn("font-headline", fontSize)}>
         {payload.name}
       </text>
       <Sector

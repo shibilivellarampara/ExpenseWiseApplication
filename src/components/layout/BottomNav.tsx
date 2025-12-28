@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -21,7 +22,7 @@ import { MoreOptionsDrawer } from './MoreOptionsDrawer';
 
 const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/expenses', icon: ArrowRightLeft, label: 'Transactions' },
+  { href: '/expenses', special_href: '/transactions', icon: ArrowRightLeft, label: 'Transactions' },
   { href: 'FAB', icon: Plus, label: 'Add' }, // Placeholder for the Floating Action Button
   { href: '/analysis', icon: BarChartHorizontal, label: 'Analysis' },
   { href: '/accounts', icon: Wallet, label: 'Accounts' },
@@ -43,32 +44,49 @@ export function BottomNav() {
   const handleDataChange = () => {
     // Placeholder for AddExpenseDialog onSaveSuccess
   };
+  
+  const transactionsHref = transactionGrouping === 'monthly' ? '/transactions' : '/expenses';
+  const isTransactionsPage = pathname.startsWith('/expenses') || pathname.startsWith('/transactions');
 
   return (
     <div className="fixed bottom-4 left-0 right-0 z-40 flex justify-center md:hidden">
         <div className="relative flex h-16 items-center justify-around rounded-full bg-background/80 shadow-lg ring-1 ring-black/5 backdrop-blur-md">
-            {mainNavItems.map(({ href, icon: Icon, label }) => {
+            {mainNavItems.map(({ href, icon: Icon, label, special_href }) => {
                  if (label === 'Add') {
                     return (
                         <div key="fab" className="relative -top-6">
-                             <AddExpenseDialog onSaveSuccess={handleDataChange}>
-                                <Button
-                                    size="icon"
-                                    className="h-16 w-16 rounded-full bg-primary shadow-lg ring-4 ring-background"
-                                >
-                                    <Plus className="h-7 w-7" />
-                                    <span className="sr-only">Add Transaction</span>
-                                </Button>
-                            </AddExpenseDialog>
+                            {isTransactionsPage ? (
+                                <AddExpenseDialog onSaveSuccess={handleDataChange}>
+                                    <Button
+                                        size="icon"
+                                        className="h-16 w-16 rounded-full bg-primary shadow-lg ring-4 ring-background"
+                                    >
+                                        <Plus className="h-7 w-7" />
+                                        <span className="sr-only">Add Transaction</span>
+                                    </Button>
+                                </AddExpenseDialog>
+                            ) : (
+                                 <Link href={transactionsHref} passHref>
+                                     <Button
+                                        asChild
+                                        size="icon"
+                                        className="h-16 w-16 rounded-full bg-primary shadow-lg ring-4 ring-background"
+                                    >
+                                        <div>
+                                            <ArrowRightLeft className="h-7 w-7" />
+                                            <span className="sr-only">Go to Transactions</span>
+                                        </div>
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     );
                 }
 
-                const finalHref = label === 'Transactions' 
-                    ? (transactionGrouping === 'monthly' ? '/transactions' : '/expenses') 
-                    : href;
-                
-                const finalIsActive = pathname.startsWith(finalHref);
+                const finalHref = label === 'Transactions' ? transactionsHref : href;
+                const isActive = label === 'Transactions' 
+                    ? isTransactionsPage
+                    : pathname.startsWith(finalHref);
 
 
                 return (
@@ -77,7 +95,7 @@ export function BottomNav() {
                         href={finalHref}
                         className={cn(
                             'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
-                            finalIsActive
+                            isActive
                                 ? 'text-primary'
                                 : 'text-muted-foreground hover:text-primary'
                         )}

@@ -62,12 +62,12 @@ const CustomLegend = ({ payload, onLegendClick, categoryColors }: LegendProps & 
     if (!payload || payload.length === 0) return null;
 
     return (
-      <ScrollArea className="h-20 w-full">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-1 text-xs p-1">
+      <ScrollArea className="h-24 w-full">
+        <div className="grid grid-cols-1 gap-y-1 text-xs p-1">
           {payload.map((entry, index) => (
             <div
               key={`item-${index}`}
-              className="flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground truncate"
+              className="flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground truncate p-1 rounded-md"
               onClick={() => onLegendClick(entry.value as string)}
             >
               <div className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: categoryColors.get(entry.value as string) }} />
@@ -240,7 +240,11 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                     )}
                 </BarChart>
             </ResponsiveContainer>
-            {useCategoryColors && <div className="mt-4"><Legend content={<CustomLegend onLegendClick={()=>{}} categoryColors={categoryColors} />} /></div>}
+            {useCategoryColors && (
+                 <div className="mt-4">
+                    <Legend content={<CustomLegend onLegendClick={()=>{}} categoryColors={categoryColors} />} />
+                </div>
+            )}
         </div>
     );
 }

@@ -38,6 +38,89 @@ type StoredFilters = {
     selectedAccounts: string[];
 };
 
+function AnalysisPageSkeleton() {
+    return (
+        <div className="space-y-8">
+            <AnalysisSummary isLoading={true} allExpenses={[]} analysisExpenses={[]} showNormal={true} showAdjusted={true}/>
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">
+                <div className="lg:col-span-3 space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <Skeleton className="h-6 w-1/2" />
+                            <Skeleton className="h-4 w-3/4" />
+                        </CardHeader>
+                        <CardContent>
+                            <Skeleton className="h-64 w-full" />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <Skeleton className="h-6 w-1/2" />
+                             <Skeleton className="h-4 w-3/4" />
+                        </CardHeader>
+                        <CardContent>
+                            <Skeleton className="h-80 w-full" />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <Skeleton className="h-6 w-1/2" />
+                             <Skeleton className="h-4 w-3/4" />
+                        </CardHeader>
+                        <CardContent>
+                            <Skeleton className="h-80 w-full" />
+                        </CardContent>
+                    </Card>
+                     <div className="grid gap-8 md:grid-cols-2">
+                        <Card>
+                            <CardHeader>
+                                <Skeleton className="h-6 w-1/2" />
+                                <Skeleton className="h-4 w-3/4" />
+                            </CardHeader>
+                            <CardContent>
+                                <Skeleton className="h-96 w-full" />
+                            </CardContent>
+                        </Card>
+                        <Card>
+                             <CardHeader>
+                                <Skeleton className="h-6 w-1/2" />
+                                <Skeleton className="h-4 w-3/4" />
+                            </CardHeader>
+                            <CardContent>
+                                <Skeleton className="h-96 w-full" />
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+                <div className="lg:col-span-2">
+                    <Card className="sticky top-24">
+                        <CardHeader>
+                           <Skeleton className="h-6 w-1/2" />
+                            <Skeleton className="h-4 w-3/4" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-6 w-1/3" />
+                                    <Skeleton className="h-16 w-full" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-6 w-1/2" />
+                                    <Skeleton className="h-24 w-full" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-6 w-2/5" />
+                                    <Skeleton className="h-20 w-full" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 
 export default function AnalysisPage() {
     const { user } = useUser();
@@ -353,107 +436,107 @@ export default function AnalysisPage() {
                 </div>
             )}
             
-            <AnalysisSummary 
-                allExpenses={allEnrichedExpenses}
-                analysisExpenses={expensesForAnalysis}
-                isLoading={isLoading}
-                currency={userProfile?.defaultCurrency}
-                showNormal={analysisSettings?.showNormalTotal ?? true}
-                showAdjusted={analysisSettings?.showAdjustedTotal ?? true}
-            />
+            {isLoading ? <AnalysisPageSkeleton /> : (
+                <>
+                    <AnalysisSummary 
+                        allExpenses={allEnrichedExpenses}
+                        analysisExpenses={expensesForAnalysis}
+                        isLoading={isLoading}
+                        currency={userProfile?.defaultCurrency}
+                        showNormal={analysisSettings?.showNormalTotal ?? true}
+                        showAdjusted={analysisSettings?.showAdjustedTotal ?? true}
+                    />
 
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">
-                <div className="lg:col-span-3 space-y-8">
-                    <Collapsible defaultOpen>
-                        <Card>
-                            <CollapsibleTrigger asChild>
-                                <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
-                                    <div className="space-y-1">
-                                        <CardTitle>Spending by Category</CardTitle>
-                                        <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
-                                    </div>
-                                    <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
-                                </CardHeader>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                                <CardContent>
-                                    {isLoading ? <Skeleton className="h-64 w-full" /> : <CategoryAnalysisTable expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
-                                </CardContent>
-                            </CollapsibleContent>
-                        </Card>
-                    </Collapsible>
-                    
-                    {(analysisSettings?.showTrendChart ?? true) && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Income vs. Expense Trend</CardTitle>
-                                <CardDescription>Your cash flow over the selected period.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {isLoading ? <Skeleton className="h-80 w-full" /> : <SpendingTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />}
-                            </CardContent>
-                        </Card>
-                    )}
-                     {(analysisSettings?.showCategoryBarChart ?? true) && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Top Spending Categories</CardTitle>
-                                <CardDescription>A bar chart showing your top spending categories.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {isLoading ? <Skeleton className="h-80 w-full" /> : <CategoryBarChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
-                            </CardContent>
-                        </Card>
-                    )}
-                     <div className="grid gap-8 md:grid-cols-2">
-                        {(analysisSettings?.showTagPieChart ?? true) && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Spending by Tag</CardTitle>
-                                    <CardDescription>A breakdown of your expenses by tags.</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    {isLoading ? <Skeleton className="h-96 w-full" /> : <TagSpendingChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
-                                </CardContent>
-                            </Card>
-                        )}
-                        {(analysisSettings?.showIncomePieChart ?? true) && (
-                            <Card>
-                                 <CardHeader>
-                                    <CardTitle>Income Sources</CardTitle>
-                                    <CardDescription>A breakdown of your income by category.</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    {isLoading ? <Skeleton className="h-96 w-full" /> : <IncomeBreakdownChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />}
-                                </CardContent>
-                            </Card>
+                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">
+                        <div className="lg:col-span-3 space-y-8">
+                            <Collapsible defaultOpen>
+                                <Card>
+                                    <CollapsibleTrigger asChild>
+                                        <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                                            <div className="space-y-1">
+                                                <CardTitle>Spending by Category</CardTitle>
+                                                <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
+                                            </div>
+                                            <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
+                                        </CardHeader>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent>
+                                        <CardContent>
+                                            <CategoryAnalysisTable expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
+                                        </CardContent>
+                                    </CollapsibleContent>
+                                </Card>
+                            </Collapsible>
+                            
+                            {(analysisSettings?.showTrendChart ?? true) && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Income vs. Expense Trend</CardTitle>
+                                        <CardDescription>Your cash flow over the selected period.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <SpendingTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
+                                    </CardContent>
+                                </Card>
+                            )}
+                            {(analysisSettings?.showCategoryBarChart ?? true) && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Top Spending Categories</CardTitle>
+                                        <CardDescription>A bar chart showing your top spending categories.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <CategoryBarChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
+                                    </CardContent>
+                                </Card>
+                            )}
+                            <div className="grid gap-8 md:grid-cols-2">
+                                {(analysisSettings?.showTagPieChart ?? true) && (
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Spending by Tag</CardTitle>
+                                            <CardDescription>A breakdown of your expenses by tags.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <TagSpendingChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
+                                        </CardContent>
+                                    </Card>
+                                )}
+                                {(analysisSettings?.showIncomePieChart ?? true) && (
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Income Sources</CardTitle>
+                                            <CardDescription>A breakdown of your income by category.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <IncomeBreakdownChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
+                                        </CardContent>
+                                    </Card>
+                                )}
+                            </div>
+                        </div>
+                        {(analysisSettings?.showAiInsights ?? true) && (
+                            <div className="lg:col-span-2">
+                                <Card className="sticky top-24">
+                                    <CardHeader>
+                                        <CardTitle>AI-Powered Insights</CardTitle>
+                                        <CardDescription>Let AI analyze your spending and provide personalized advice.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <AiInsights
+                                            onGenerate={handleGenerateInsights}
+                                            analysis={aiAnalysis}
+                                            isLoading={isAiLoading}
+                                            hasData={expensesForAnalysis.length > 0}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </div>
                         )}
                     </div>
-                </div>
-                {(analysisSettings?.showAiInsights ?? true) && (
-                    <div className="lg:col-span-2">
-                        <Card className="sticky top-24">
-                            <CardHeader>
-                                <CardTitle>AI-Powered Insights</CardTitle>
-                                <CardDescription>Let AI analyze your spending and provide personalized advice.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <AiInsights
-                                    onGenerate={handleGenerateInsights}
-                                    analysis={aiAnalysis}
-                                    isLoading={isAiLoading}
-                                    hasData={expensesForAnalysis.length > 0}
-                                />
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
-            </div>
+                </>
+            )}
         </div>
     );
 }
-
-    
-
-    

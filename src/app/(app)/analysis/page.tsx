@@ -42,30 +42,12 @@ function AnalysisPageSkeleton() {
     return (
         <div className="space-y-8">
             <AnalysisSummary isLoading={true} allExpenses={[]} analysisExpenses={[]} showNormal={true} showAdjusted={true}/>
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">
-                <div className="lg:col-span-3 space-y-8">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7 mt-8">
+                <div className="lg:col-span-5 space-y-8">
                     <Card>
                         <CardHeader>
                             <Skeleton className="h-6 w-1/2" />
                             <Skeleton className="h-4 w-3/4" />
-                        </CardHeader>
-                        <CardContent>
-                            <Skeleton className="h-64 w-full" />
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <Skeleton className="h-6 w-1/2" />
-                             <Skeleton className="h-4 w-3/4" />
-                        </CardHeader>
-                        <CardContent>
-                            <Skeleton className="h-80 w-full" />
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <Skeleton className="h-6 w-1/2" />
-                             <Skeleton className="h-4 w-3/4" />
                         </CardHeader>
                         <CardContent>
                             <Skeleton className="h-80 w-full" />
@@ -448,26 +430,28 @@ export default function AnalysisPage() {
                     />
 
 
-                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mt-8">
-                        <div className="lg:col-span-3 space-y-8">
-                            <Collapsible defaultOpen>
-                                <Card>
-                                    <CollapsibleTrigger asChild>
-                                        <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
-                                            <div className="space-y-1">
-                                                <CardTitle>Spending by Category</CardTitle>
-                                                <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
-                                            </div>
-                                            <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
-                                        </CardHeader>
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent>
-                                        <CardContent>
-                                            <CategoryAnalysisTable expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
-                                        </CardContent>
-                                    </CollapsibleContent>
-                                </Card>
-                            </Collapsible>
+                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7 mt-8">
+                        <div className="lg:col-span-5 space-y-8">
+                            {(analysisSettings?.showCategoryTable ?? true) && (
+                                <Collapsible defaultOpen>
+                                    <Card>
+                                        <CollapsibleTrigger asChild>
+                                            <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                                                <div className="space-y-1">
+                                                    <CardTitle>Spending by Category</CardTitle>
+                                                    <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
+                                                </div>
+                                                <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
+                                            </CardHeader>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent>
+                                            <CardContent>
+                                                <CategoryAnalysisTable expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
+                                            </CardContent>
+                                        </CollapsibleContent>
+                                    </Card>
+                                </Collapsible>
+                            )}
                             
                             {(analysisSettings?.showTrendChart ?? true) && (
                                 <Card>

@@ -108,16 +108,14 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                                     <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'lent' ? "border-red-500 text-red-500" : "border-muted")}>
                                         <RadioGroupItem value="lent" className="sr-only" />
                                         <ArrowLeft className="h-5 w-5 mb-1" />
-                                        <span>Money Out</span>
-                                        <span className="text-xs font-normal text-muted-foreground">(You are giving money)</span>
+                                        <span>You Gave</span>
                                     </Label>
                                 </FormItem>
                                 <FormItem>
                                     <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'borrowed' ? "border-green-600 text-green-600" : "border-muted")}>
                                         <RadioGroupItem value="borrowed" className="sr-only" />
                                         <ArrowRight className="h-5 w-5 mb-1" />
-                                        <span>Money In</span>
-                                            <span className="text-xs font-normal text-muted-foreground">(You are receiving money)</span>
+                                        <span>You Got</span>
                                     </Label>
                                 </FormItem>
                             </RadioGroup>

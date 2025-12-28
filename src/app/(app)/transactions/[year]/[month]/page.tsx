@@ -18,10 +18,9 @@ import { useSearchParams, useParams } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
 
-export default function MonthlyExpensesPage() {
+export default function MonthlyExpensesPage({ params }: { params: { year: string, month: string } }) {
     const { user } = useUser();
     const firestore = useFirestore();
-    const params = useParams();
     const { year, month } = params;
     
     const pageDate = useMemo(() => {

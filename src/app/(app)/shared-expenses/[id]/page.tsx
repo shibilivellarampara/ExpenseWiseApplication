@@ -2,7 +2,6 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useParams } from 'next/navigation';
 import { useDoc, useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { SharedLedger, UserProfile, SharedTransaction, SharedCategory, SharedTag } from '@/lib/types';
 import { doc, collection, query, where, orderBy } from 'firebase/firestore';
@@ -13,9 +12,8 @@ import { PlusCircle, Settings } from 'lucide-react';
 import { AddSharedTransactionSheet } from '@/components/shared-expenses/AddSharedTransactionSheet';
 import { SharedTransactionsList } from '@/components/shared-expenses/SharedTransactionsList';
 
-export default function SharedExpenseDetailPage() {
-    const params = useParams();
-    const id = params.id as string;
+export default function SharedExpenseDetailPage({ params }: { params: { id: string } }) {
+    const id = params.id;
     const { user } = useUser();
     const firestore = useFirestore();
 
@@ -101,5 +99,3 @@ export default function SharedExpenseDetailPage() {
         </div>
     );
 }
-
-    

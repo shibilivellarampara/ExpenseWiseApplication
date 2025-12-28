@@ -35,34 +35,72 @@ interface ActiveShapeProps {
 }
 
 
-const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
+const renderActiveShape = (
+  props: ActiveShapeProps,
+  currencySymbol: string
+) => {
   const RADIAN = Math.PI / 180;
-  const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
-  
-  if (!cx || !cy || !midAngle || !innerRadius || !outerRadius || !value || !percent) {
-    return null;
-  }
+  const {
+    cx = 0,
+    cy = 0,
+    midAngle = 0,
+    innerRadius = 0,
+    outerRadius = 0,
+    startAngle,
+    endAngle,
+    fill,
+    payload,
+    percent = 0,
+    value = 0,
+  } = props;
+
+  if (!value || !payload) return null;
 
   const sin = Math.sin(-RADIAN * midAngle);
   const cos = Math.cos(-RADIAN * midAngle);
-  
-  const sx = cx + (outerRadius + 5) * cos;
-  const sy = cy + (outerRadius + 5) * sin;
 
-  const mx = cx + (outerRadius + 15) * cos;
-  const my = cy + (outerRadius + 15) * sin;
+  // Base points
+  const sx = cx + (outerRadius + 6) * cos;
+  const sy = cy + (outerRadius + 6) * sin;
+  const mx = cx + (outerRadius + 16) * cos;
+  const my = cy + (outerRadius + 16) * sin;
 
-  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
-  const ey = my;
-  
+  // Safe bounds
+  const CHART_PADDING = 20;
+  const SVG_WIDTH = cx * 2;
+  const MIN_X = CHART_PADDING;
+  const MAX_X = SVG_WIDTH - CHART_PADDING;
+
+  // Estimated text width (rough but reliable)
+  const labelText = `${currencySymbol}${value.toFixed(2)}`;
+  const estimatedTextWidth = labelText.length * 7;
+
+  let ex = mx + (cos >= 0 ? 12 : -12);
+
+  // Clamp label X
+  if (cos >= 0) {
+    ex = Math.min(ex, MAX_X - estimatedTextWidth);
+  } else {
+    ex = Math.max(ex, MIN_X + estimatedTextWidth);
+  }
+
   const textAnchor = cos >= 0 ? 'start' : 'end';
-  
-  const name = payload.name || '';
-
 
   return (
     <g>
-       <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill={fill} className="text-base font-semibold">{name}</text>
+      {/* Center label */}
+      <text
+        x={cx}
+        y={cy}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill={fill}
+        className="text-base font-semibold"
+      >
+        {payload.name}
+      </text>
+
+      {/* Main slice */}
       <Sector
         cx={cx}
         cy={cy}
@@ -72,24 +110,50 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
         endAngle={endAngle}
         fill={fill}
       />
+
+      {/* Highlight ring */}
       <Sector
         cx={cx}
         cy={cy}
-        startAngle={startAngle}
-        endAngle={endAngle}
         innerRadius={outerRadius + 4}
         outerRadius={outerRadius + 8}
+        startAngle={startAngle}
+        endAngle={endAngle}
         fill={fill}
       />
-       <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
-      <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} textAnchor={textAnchor} className="text-sm fill-foreground">{`${currencySymbol}${value?.toFixed(2)}`}</text>
-      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} dy={18} textAnchor={textAnchor} className="text-xs fill-muted-foreground">
-        {`(${(percent * 100).toFixed(2)}%)`}
+
+      {/* Connector */}
+      <path
+        d={`M${sx},${sy}L${mx},${my}L${ex},${my}`}
+        stroke={fill}
+        fill="none"
+      />
+      <circle cx={ex} cy={my} r={2} fill={fill} />
+
+      {/* Amount */}
+      <text
+        x={ex + (cos >= 0 ? 4 : -4)}
+        y={my}
+        textAnchor={textAnchor}
+        className="text-sm fill-foreground"
+      >
+        {labelText}
+      </text>
+
+      {/* Percentage */}
+      <text
+        x={ex + (cos >= 0 ? 4 : -4)}
+        y={my}
+        dy={16}
+        textAnchor={textAnchor}
+        className="text-xs fill-muted-foreground"
+      >
+        ({(percent * 100).toFixed(2)}%)
       </text>
     </g>
   );
 };
+
 
 
 export function CategoryPieChart({ data, allData, currencySymbol, totalAmountForPercentage }: CategoryPieChartProps) {
@@ -115,9 +179,12 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
 
   return (
     <div className="w-full flex flex-col h-[450px]">
-        <div className="h-[250px] w-full">
+        <div className="h-[250px] w-full overflow-visible">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 20, right: 50, bottom: 20, left: 50 }}>
+              <PieChart
+                margin={{ top: 20, right: 90, bottom: 20, left: 90 }}
+                style={{ overflow: 'visible' }}
+              >
                 <Pie
                   activeIndex={activeIndex}
                   activeShape={(props: ActiveShapeProps) => renderActiveShape(props, currencySymbol)}

@@ -16,7 +16,7 @@ interface SharedExpenseDetailPageProps {
     params: { id: string };
 }
 
-export default function SharedExpenseDetailPage({ params }: { params: { id: string } }) {
+export default function SharedExpenseDetailPage({ params }: SharedExpenseDetailPageProps) {
     const { id } = params;
     const { user } = useUser();
     const firestore = useFirestore();

@@ -38,7 +38,7 @@ interface ActiveShapeProps {
 
 
 const renderActiveShape = (
-  props: any,
+  props: ActiveShapeProps,
   currencySymbol: string
 ) => {
   const RADIAN = Math.PI / 180;

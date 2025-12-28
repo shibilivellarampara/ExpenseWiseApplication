@@ -39,7 +39,8 @@
             "show5YearView": { "type": "boolean", "default": false },
             "isAiSuggestionEnabled": { "type": "boolean", "default": true },
             "transactionViewMode": { "type": "string", "enum": ["normal", "compact"], "default": "normal" },
-            "transactionGrouping": { "type": "string", "enum": ["daily", "monthly"], "default": "daily" }
+            "transactionGrouping": { "type": "string", "enum": ["daily", "monthly"], "default": "daily" },
+            "navigationStyle": { "type": "string", "enum": ["sidebar", "bottom"], "default": "sidebar" }
           }
         },
         "analysisSettings": {

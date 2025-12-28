@@ -1,3 +1,4 @@
+
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -21,6 +22,7 @@ export type UserProfile = {
     isAiSuggestionEnabled?: boolean;
     transactionViewMode?: 'normal' | 'compact';
     transactionGrouping?: 'daily' | 'monthly';
+    navigationStyle?: 'sidebar' | 'bottom';
   };
   analysisSettings?: {
     excludedCategoryIds?: string[];

@@ -68,7 +68,7 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
     
     const renderNormalSummary = () => (
          <div>
-            <p className="text-muted-foreground">Net Balance (for period)</p>
+            <p className="text-muted-foreground">Net Balance</p>
             <p className={cn(
                 "text-lg font-bold",
                 summary.netFlow >= 0 && "text-green-600",
@@ -115,5 +115,3 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
         </Card>
     );
 }
-
-    

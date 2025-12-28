@@ -45,14 +45,32 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
 
   const sin = Math.sin(-RADIAN * midAngle);
   const cos = Math.cos(-RADIAN * midAngle);
-  const sx = cx + (outerRadius + 6) * cos;
-  const sy = cy + (outerRadius + 6) * sin;
+  
+  // Start point of the leader line
+  const sx = cx + (outerRadius + 5) * cos;
+  const sy = cy + (outerRadius + 5) * sin;
+
+  // Middle point of the leader line (the "elbow")
   const mx = cx + (outerRadius + 15) * cos;
   const my = cy + (outerRadius + 15) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
-  const ey = my;
 
+  // End point of the leader line
+  let ex, ey;
   const textAnchor = cos >= 0 ? 'start' : 'end';
+
+  // Quadrant-aware positioning
+  if (cos >= 0) { // Right side
+    ex = mx + 5;
+    ey = my;
+  } else { // Left side
+    if (sin >= 0) { // Top-left quadrant
+      ex = mx - 15;
+      ey = my - 10;
+    } else { // Bottom-left quadrant
+      ex = mx - 15;
+      ey = my + 10;
+    }
+  }
   
   const name = payload.name || '';
   const words = name.split(' ');
@@ -73,7 +91,6 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
   
   const labelFontSize = lines.length > 2 ? '0.7rem' : lines.length > 1 ? '0.8rem' : '1rem';
   const totalLabelHeight = lines.length * parseFloat(labelFontSize) * (lines.length > 1 ? 1.2 : 1);
-  const startY = cy - (totalLabelHeight / 2) + (parseFloat(labelFontSize) / 2);
 
 
   return (
@@ -137,7 +154,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
     <div className="w-full flex flex-col h-[450px]">
         <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <PieChart margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
                 <Pie
                   activeIndex={activeIndex}
                   activeShape={(props: ActiveShapeProps) => renderActiveShape(props, currencySymbol)}

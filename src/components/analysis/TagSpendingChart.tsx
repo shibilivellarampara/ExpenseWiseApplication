@@ -22,7 +22,7 @@ interface ActiveShapeProps {
     cx?: number; cy?: number; midAngle?: number; innerRadius?: number; outerRadius?: number; startAngle?: number; endAngle?: number; fill?: string; payload?: any; percent?: number; value?: number;
 }
 
-const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
+const renderActiveShape = (props: any, currencySymbol: string) => {
   const RADIAN = Math.PI / 180;
   const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
   const sin = Math.sin(-RADIAN * (midAngle || 0));
@@ -115,7 +115,7 @@ export function TagSpendingChart({ expenses, currency }: TagSpendingChartProps) 
                     <RechartsPieChart>
                         <Pie
                             activeIndex={activeIndex}
-                            activeShape={(props: ActiveShapeProps) => renderActiveShape(props, currencySymbol)}
+                            activeShape={(props) => renderActiveShape(props, currencySymbol)}
                             data={chartData}
                             dataKey="value"
                             nameKey="name"

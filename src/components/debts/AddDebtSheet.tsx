@@ -166,6 +166,7 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                                 {...field}
                                 value={field.value ?? ''}
                                 className={cn(
+                                    'font-bold',
                                     transactionType === 'lent' && 'text-red-500',
                                     transactionType === 'borrowed' && 'text-green-600'
                                 )}

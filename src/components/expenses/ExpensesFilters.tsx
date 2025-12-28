@@ -184,6 +184,10 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
 
     return (
         <div className="grid gap-4">
+            {createMultiSelect('Accounts', 'accounts', accounts, 'Select accounts')}
+            <Separator />
+            {createMultiSelect('Categories', 'categories', categories, 'Select categories')}
+            <Separator />
             {!disableDateFilter && (
                 <>
                     <div>
@@ -232,10 +236,6 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                     <Separator />
                 </>
             )}
-            {createMultiSelect('Categories', 'categories', categories, 'Select categories')}
-            <Separator />
-            {createMultiSelect('Accounts', 'accounts', accounts, 'Select accounts')}
-            <Separator />
             {createMultiSelect('Tags', 'tags', tags, 'Select tags')}
             <Separator />
             <div>

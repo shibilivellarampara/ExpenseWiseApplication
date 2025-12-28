@@ -5,10 +5,21 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.6.4";
+const appVersion = "1.6.5";
 
 
 const changelog = [
+    {
+        version: "1.6.5",
+        date: "2025-12-24",
+        changes: [
+            { type: 'UI/UX', description: "Redesigned the 'Expenses Overview' chart with a cleaner look, focusing on the top 7 categories and grouping the rest into a new clickable 'Others' category." },
+            { type: 'UI/UX', description: "Replaced the chart legend with a detailed, scrollable vertical list showing amounts and percentages." },
+            { type: 'Fix', description: "Corrected layout issues where the category list on the dashboard did not fill its available space." },
+            { type: 'UI/UX', description: "Improved the app-wide loading experience with more dynamic graphics and friendlier messages." },
+            { type: 'Fix', description: "Adjusted chart tooltips to prevent them from obscuring the data when hovering." },
+        ]
+    },
     {
         version: "1.6.4",
         date: "2025-12-23",

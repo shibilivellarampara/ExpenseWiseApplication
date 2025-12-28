@@ -34,7 +34,6 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
-import { MoreOptionsDrawer } from './MoreOptionsDrawer';
 
 
 const appVersion = pkg.version;
@@ -211,7 +210,7 @@ export function AppHeader() {
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
         
          <div className="md:hidden">
-            {navigationStyle === 'sidebar' ? (
+            {navigationStyle === 'sidebar' && (
                  <Sheet open={openMobile} onOpenChange={setOpenMobile}>
                     <SheetTrigger asChild>
                         <Button size="icon" variant="ghost">
@@ -244,13 +243,6 @@ export function AppHeader() {
                         </div>
                     </SheetContent>
                 </Sheet>
-            ) : (
-                <MoreOptionsDrawer>
-                     <Button size="icon" variant="ghost">
-                        <MoreHorizontal />
-                        <span className="sr-only">More Options</span>
-                    </Button>
-                </MoreOptionsDrawer>
             )}
         </div>
 

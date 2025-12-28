@@ -55,7 +55,7 @@ export default function RootLayout({
       <body className={cn('font-body antialiased min-h-screen')}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="fintech"
           enableSystem
           themes={['light', 'dark', 'chat', 'fintech', 'dark-fintech']}
         >

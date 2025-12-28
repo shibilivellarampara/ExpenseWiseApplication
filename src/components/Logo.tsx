@@ -21,7 +21,7 @@ export function Logo() {
 
   return (
     <Link href={finalHref} className="flex items-center gap-2" prefetch={false}>
-      <Image src="/NewLogo.png" alt="ExpenseWise Logo" width={28} height={28} className="h-7 w-7" />
+      <Image src="/circlelogo50.png" alt="ExpenseWise Logo" width={28} height={28} className="h-7 w-7" />
       <span className="text-xl font-headline font-semibold text-foreground">ExpenseWise</span>
     </Link>
   );

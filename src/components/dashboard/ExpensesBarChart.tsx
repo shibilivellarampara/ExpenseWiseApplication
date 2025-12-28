@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, LegendProps } from 'recharts';
@@ -71,7 +70,7 @@ const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpe
     if (!payload || payload.length === 0) return null;
 
     return (
-        <ScrollArea className="h-48 w-full">
+        <ScrollArea className="h-full">
             <div className="space-y-2 p-2">
             {payload.map((entry, index) => {
                 const categoryName = entry.value as string;
@@ -82,15 +81,21 @@ const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpe
                   return (
                     <Dialog key="others-legend">
                         <DialogTrigger asChild>
-                            <Button variant="ghost" className="w-full justify-start text-sm p-2 rounded-md hover:bg-accent">
-                                <div className="h-2 w-2 rounded-full mr-2" style={{ backgroundColor: entry.color }} />
-                                <span className="truncate flex-1 text-left">{categoryName}</span>
-                                <Badge variant="secondary" className="font-mono ml-auto mr-2">
-                                    {currencySymbol}{value.toFixed(2)}
-                                </Badge>
-                                 <span className="text-xs text-muted-foreground w-12 text-right">
-                                    ({percentage.toFixed(1)}%)
-                                </span>
+                            <Button variant="ghost" className="w-full justify-start text-sm p-2 rounded-md hover:bg-accent h-auto">
+                                <div className="flex justify-between items-center w-full">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                        <span className="truncate flex-1 text-left">{categoryName}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary" className="font-mono">
+                                            {currencySymbol}{value.toFixed(2)}
+                                        </Badge>
+                                        <span className="text-xs text-muted-foreground w-12 text-right">
+                                            ({percentage.toFixed(1)}%)
+                                        </span>
+                                    </div>
+                                </div>
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
@@ -276,52 +281,54 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
     }
 
     return (
-        <div className="w-full">
-            <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={chartData}>
-                    <XAxis
-                        dataKey="name"
-                        stroke="hsl(var(--muted-foreground))"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                    />
-                    <YAxis
-                        stroke="hsl(var(--muted-foreground))"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(value) => `${currencySymbol}${value}`}
-                    />
-                    <Tooltip
-                        content={<CustomTooltip currencySymbol={currencySymbol} />}
-                        cursor={{ fill: 'hsl(var(--muted))' }}
-                    />
-                    
-                    {useCategoryColors ? (
-                        topCategories.map(categoryName => (
+        <div className="w-full flex flex-col h-[750px]">
+            <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={chartData}>
+                        <XAxis
+                            dataKey="name"
+                            stroke="hsl(var(--muted-foreground))"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                        />
+                        <YAxis
+                            stroke="hsl(var(--muted-foreground))"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                            tickFormatter={(value) => `${currencySymbol}${value}`}
+                        />
+                        <Tooltip
+                            content={<CustomTooltip currencySymbol={currencySymbol} />}
+                            cursor={{ fill: 'hsl(var(--muted))' }}
+                        />
+                        
+                        {useCategoryColors ? (
+                            topCategories.map(categoryName => (
+                                <Bar
+                                    key={categoryName}
+                                    dataKey={categoryName}
+                                    stackId="a"
+                                    fill={categoryColors.get(categoryName) || '#8884d8'}
+                                    name={categoryName}
+                                    radius={[4, 4, 0, 0]}
+                                />
+                            ))
+                        ) : (
                             <Bar
-                                key={categoryName}
-                                dataKey={categoryName}
+                                dataKey="total"
                                 stackId="a"
-                                fill={categoryColors.get(categoryName) || '#8884d8'}
-                                name={categoryName}
+                                fill="hsl(var(--primary))"
+                                name="Total Expenses"
                                 radius={[4, 4, 0, 0]}
                             />
-                        ))
-                    ) : (
-                        <Bar
-                            dataKey="total"
-                            stackId="a"
-                            fill="hsl(var(--primary))"
-                            name="Total Expenses"
-                            radius={[4, 4, 0, 0]}
-                        />
-                    )}
-                </BarChart>
-            </ResponsiveContainer>
+                        )}
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
             {useCategoryColors && (
-                 <div className="mt-4">
+                <div className="mt-4 flex-grow min-h-0">
                     <CustomLegend 
                         onLegendClick={()=>{}} 
                         categoryColors={categoryColors} 

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -362,10 +363,10 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                         <div className="flex items-center justify-between">
                                             <div className="font-semibold">{item.name}</div>
                                             <div className="flex items-center gap-2">
-                                                 {isPaid && <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">Paid</Badge>}
+                                                 {isPaid && <Badge variant="default" className="bg-primary/10 text-primary">Paid</Badge>}
                                                 <div className={cn(
                                                     "font-bold text-lg",
-                                                    outstandingAmount > 0 ? "text-destructive" : "text-primary"
+                                                    "text-destructive"
                                                 )}>
                                                      {outstandingAmount > 0 ? '-' : ''}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
                                                 </div>

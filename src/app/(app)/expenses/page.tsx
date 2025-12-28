@@ -26,19 +26,27 @@ export default function ExpensesPage() {
 
     const searchParams = useSearchParams();
 
-    const [filters, setFilters] = useState<Filters>(() => {
-        const accountId = searchParams.get('accounts');
-        const type = searchParams.get('type') as 'all' | 'income' | 'expense' | null;
-
-        return {
-            dateRange: { from: undefined, to: undefined },
-            type: type || 'all',
-            categories: [],
-            accounts: accountId ? [accountId] : [],
-            tags: [],
-            searchQuery: '',
-        };
+    const [filters, setFilters] = useState<Filters>({
+        dateRange: { from: undefined, to: undefined },
+        type: 'all',
+        categories: [],
+        accounts: [],
+        tags: [],
+        searchQuery: '',
     });
+    
+    // Set initial filters from URL params
+    useEffect(() => {
+        const accountId = searchParams.get('accounts');
+        const type = searchParams.get('type');
+
+        setFilters(prev => ({
+            ...prev,
+            accounts: accountId ? [accountId] : [],
+            type: (type === 'income' || type === 'expense') ? type : 'all',
+        }));
+    }, [searchParams]);
+
     
     const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
 

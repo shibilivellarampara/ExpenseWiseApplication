@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
-import { PanelLeft, Bell, Circle, CheckCheck, ArrowRight, ArrowLeft, Users } from 'lucide-react';
+import { PanelLeft, Bell, Circle, CheckCheck, ArrowRight, ArrowLeft, Users, MoreHorizontal } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { NavLink } from './AppSidebar';
 import {
@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
+import { MoreOptionsDrawer } from './MoreOptionsDrawer';
 
 
 const appVersion = pkg.version;
@@ -54,6 +55,7 @@ const getPageTitle = (path: string): string => {
     if (path.startsWith('/admin/users')) return 'User Management';
     if (path.startsWith('/admin')) return 'Admin Dashboard';
     if (path.startsWith('/profile')) return 'Settings';
+    if (path.startsWith('/more')) return 'More';
     
     const navItem = baseNavItems.find(item => {
         if(item.label === 'Import / Export') {
@@ -209,7 +211,7 @@ export function AppHeader() {
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
         
          <div className="md:hidden">
-            {navigationStyle === 'sidebar' && (
+            {navigationStyle === 'sidebar' ? (
                  <Sheet open={openMobile} onOpenChange={setOpenMobile}>
                     <SheetTrigger asChild>
                         <Button size="icon" variant="ghost">
@@ -242,6 +244,13 @@ export function AppHeader() {
                         </div>
                     </SheetContent>
                 </Sheet>
+            ) : (
+                <MoreOptionsDrawer>
+                     <Button size="icon" variant="ghost">
+                        <MoreHorizontal />
+                        <span className="sr-only">More Options</span>
+                    </Button>
+                </MoreOptionsDrawer>
             )}
         </div>
 

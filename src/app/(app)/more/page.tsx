@@ -37,12 +37,12 @@ export default function MorePage() {
                 </Link>
 
 
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {secondaryNavItems.map(item => (
                         <Link href={item.href} key={item.href} passHref>
-                             <div className="flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-accent">
+                             <div className="flex items-center gap-4 rounded-lg border bg-card p-6 transition-colors hover:bg-accent">
                                 {item.icon}
-                                <span className="flex-grow font-medium">{item.label}</span>
+                                <span className="flex-grow font-semibold text-lg">{item.label}</span>
                                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
                             </div>
                         </Link>

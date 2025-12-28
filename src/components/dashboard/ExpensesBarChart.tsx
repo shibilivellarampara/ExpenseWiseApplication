@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, LegendProps } from 'recharts';
@@ -181,11 +182,12 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
         }
 
         const colors = new Map<string, string>();
+        const safeColors = CHART_COLORS.slice(0, 11);
         topCategoryNames.forEach((catName, index) => {
             if (catName === 'Others') {
                 colors.set(catName, '#B0BEC5'); // Neutral gray for 'Others'
             } else {
-                 colors.set(catName, CHART_COLORS[index % CHART_COLORS.length]);
+                 colors.set(catName, safeColors[index % safeColors.length]);
             }
         });
 

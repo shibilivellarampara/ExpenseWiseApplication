@@ -189,6 +189,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
   }
 
   const totalAmount = totalAmountForPercentage ?? allData.reduce((sum, item) => sum + item.value, 0);
+  const safeColors = CHART_COLORS.slice(0, 11);
 
   return (
     <div className="w-full flex flex-col h-[750px]">
@@ -212,7 +213,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
                   onMouseEnter={onPieEnter}
                 >
                   {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={entry.name === 'Others' ? '#B0BEC5' : safeColors[index % safeColors.length]} />
                   ))}
                 </Pie>
               </PieChart>
@@ -224,7 +225,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
                     {topData.map((item, index) => (
                         <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-accent">
                             <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}/>
+                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.name === 'Others' ? '#B0BEC5' : safeColors[index % safeColors.length] }}/>
                                 <span>{item.name}</span>
                             </div>
                             <div className="flex items-center gap-2">

@@ -1,19 +1,22 @@
+
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EnrichedExpense } from "@/lib/types";
+import { Account, EnrichedExpense } from "@/lib/types";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { cn } from "@/lib/utils";
+import { Separator } from "../ui/separator";
 
 interface ExpensesSummaryProps {
     expenses: EnrichedExpense[];
     currency?: string;
     isLoading?: boolean;
+    selectedAccount?: Account;
 }
 
-export function ExpensesSummary({ isLoading, currency, expenses }: ExpensesSummaryProps) {
+export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount }: ExpensesSummaryProps) {
     const currencySymbol = getCurrencySymbol(currency);
 
     const summary = useMemo(() => {
@@ -33,6 +36,16 @@ export function ExpensesSummary({ isLoading, currency, expenses }: ExpensesSumma
 
         return { totalIn, totalOut, netFlow };
     }, [expenses]);
+    
+    const creditCardSummary = useMemo(() => {
+        if (selectedAccount?.type !== 'credit_card') return null;
+
+        const outstanding = (selectedAccount.limit || 0) - selectedAccount.balance;
+        return {
+            outstanding: outstanding,
+            limit: selectedAccount.limit,
+        }
+    }, [selectedAccount]);
 
     if (isLoading) {
         return (
@@ -52,21 +65,38 @@ export function ExpensesSummary({ isLoading, currency, expenses }: ExpensesSumma
             </Card>
         );
     }
+    
+    const renderNormalSummary = () => (
+         <div>
+            <p className="text-muted-foreground">Net Balance (for period)</p>
+            <p className={cn(
+                "text-lg font-bold",
+                summary.netFlow >= 0 && "text-green-600",
+                summary.netFlow < 0 && "text-red-500"
+            )}>
+                {currencySymbol}{summary.netFlow.toFixed(2)}
+            </p>
+        </div>
+    );
+    
+    const renderCreditCardSummary = () => {
+        if (!creditCardSummary) return null;
+        return (
+            <div>
+                <p className="text-muted-foreground">Outstanding Amount</p>
+                <p className="text-lg font-bold text-red-500">
+                    {currencySymbol}{creditCardSummary.outstanding.toFixed(2)}
+                </p>
+            </div>
+        )
+    };
+
 
     return (
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardContent className="p-4">
                 <div className="flex justify-between items-center text-sm">
-                    <div>
-                        <p className="text-muted-foreground">Net Balance</p>
-                        <p className={cn(
-                            "text-lg font-bold",
-                            summary.netFlow >= 0 && "text-green-600",
-                            summary.netFlow < 0 && "text-red-500"
-                        )}>
-                            {currencySymbol}{summary.netFlow.toFixed(2)}
-                        </p>
-                    </div>
+                   {creditCardSummary ? renderCreditCardSummary() : renderNormalSummary()}
                     <div className="text-right">
                         <p className="text-green-600">
                            <span className="text-muted-foreground">IN:</span> {currencySymbol}{summary.totalIn.toFixed(2)}
@@ -74,9 +104,16 @@ export function ExpensesSummary({ isLoading, currency, expenses }: ExpensesSumma
                          <p className="text-red-500">
                            <span className="text-muted-foreground">OUT:</span> {currencySymbol}{summary.totalOut.toFixed(2)}
                         </p>
+                         {creditCardSummary?.limit && (
+                            <p className="text-muted-foreground text-xs mt-1">
+                                Limit: {currencySymbol}{creditCardSummary.limit.toFixed(2)}
+                            </p>
+                         )}
                     </div>
                 </div>
             </CardContent>
         </Card>
     );
 }
+
+    

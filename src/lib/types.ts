@@ -175,3 +175,5 @@ export type EnrichedSharedTransaction = Omit<SharedTransaction, 'categoryId' | '
 };
 
     
+
+    

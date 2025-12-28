@@ -79,6 +79,13 @@ export default function ExpensesPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
+    const selectedAccount = useMemo(() => {
+        if (filters.accounts.length === 1 && accounts) {
+            return accounts.find(acc => acc.id === filters.accounts[0]);
+        }
+        return undefined;
+    }, [filters.accounts, accounts]);
+
     const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses || !accounts) return [];
 
@@ -219,7 +226,8 @@ export default function ExpensesPage() {
             <ExpensesSummary 
                 expenses={filteredAndEnrichedExpenses}
                 currency={userProfile?.defaultCurrency} 
-                isLoading={isLoading} 
+                isLoading={isLoading}
+                selectedAccount={selectedAccount} 
             />
 
             <div className={cn(
@@ -295,3 +303,5 @@ export default function ExpensesPage() {
 
     
 }
+
+    

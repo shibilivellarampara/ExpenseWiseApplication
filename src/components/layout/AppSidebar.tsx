@@ -23,11 +23,10 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
-import pkg from '../../../package.json';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { UserProfile } from '@/lib/types';
 import { doc } from 'firebase/firestore';
-const appVersion = pkg.version;
+const appVersion = "1.6.7";
 
 
 const baseNavItems = [

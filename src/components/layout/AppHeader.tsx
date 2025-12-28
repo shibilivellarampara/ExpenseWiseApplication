@@ -24,7 +24,6 @@ import {
   BarChartHorizontal,
   HandCoins,
 } from 'lucide-react';
-import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +35,7 @@ import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
 
 
-const appVersion = pkg.version;
+const appVersion = "1.6.7";
 
 
 const baseNavItems = [

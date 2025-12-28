@@ -8,6 +8,8 @@ import { CHART_COLORS } from '@/lib/colors';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Button } from '../ui/button';
 
 interface PieChartDataPoint {
   name: string;
@@ -162,6 +164,17 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
   };
+  
+  const { topData, othersData } = useMemo(() => {
+    const topN = 11;
+    if (allData.length <= topN) {
+      return { topData: allData, othersData: [] };
+    }
+    const top = allData.slice(0, topN);
+    const others = allData.slice(topN);
+    return { topData: top, othersData: others };
+  }, [allData]);
+
 
   if (data.length === 0) {
     return (
@@ -178,7 +191,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
   const totalAmount = totalAmountForPercentage ?? allData.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="w-full flex flex-col h-[500px]">
+    <div className="w-full flex flex-col h-[650px]">
         <div className="h-[250px] w-full overflow-visible">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart
@@ -208,7 +221,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
         <div className="flex-grow min-h-0">
             <ScrollArea className="h-full">
                  <div className="space-y-2 p-2">
-                    {allData.map((item, index) => (
+                    {topData.map((item, index) => (
                         <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-accent">
                             <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}/>
@@ -226,6 +239,32 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
                             </div>
                         </div>
                     ))}
+                    {othersData.length > 0 && (
+                      <Dialog>
+                          <DialogTrigger asChild>
+                              <Button variant="ghost" className="w-full justify-start text-sm p-2 rounded-md hover:bg-accent">
+                                  Others
+                              </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                              <DialogHeader>
+                                  <DialogTitle>Other Categories</DialogTitle>
+                              </DialogHeader>
+                              <ScrollArea className="h-72">
+                                  <div className="space-y-2 p-2">
+                                      {othersData.map((item, index) => (
+                                          <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-md">
+                                              <span>{item.name}</span>
+                                              <Badge variant="secondary" className="font-mono">
+                                                  {currencySymbol}{item.value.toFixed(2)}
+                                              </Badge>
+                                          </div>
+                                      ))}
+                                  </div>
+                              </ScrollArea>
+                          </DialogContent>
+                      </Dialog>
+                  )}
                  </div>
             </ScrollArea>
         </div>

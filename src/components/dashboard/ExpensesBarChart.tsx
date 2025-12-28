@@ -11,6 +11,8 @@ import { CHART_COLORS } from '@/lib/colors';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Button } from '../ui/button';
 
 
 interface ExpensesBarChartProps {
@@ -60,7 +62,7 @@ const CustomTooltip = ({ active, payload, label, currencySymbol }: any) => {
     return null;
 };
 
-const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpense, currencySymbol }: { onLegendClick: (dataKey: string) => void, categoryColors: Map<string, string>, categoryTotals: Map<string, number>, totalExpense: number, currencySymbol: string}) => {
+const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpense, currencySymbol, othersData }: { onLegendClick: (dataKey: string) => void, categoryColors: Map<string, string>, categoryTotals: Map<string, number>, totalExpense: number, currencySymbol: string, othersData: { name: string; value: number }[] }) => {
     const payload = Array.from(categoryTotals.keys()).map(name => ({
         value: name,
         color: categoryColors.get(name) || '#8884d8'
@@ -76,6 +78,42 @@ const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpe
                 const value = categoryTotals.get(categoryName) || 0;
                 const percentage = totalExpense > 0 ? (value / totalExpense) * 100 : 0;
                 
+                if (categoryName === 'Others') {
+                  return (
+                    <Dialog key="others-legend">
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" className="w-full justify-start text-sm p-2 rounded-md hover:bg-accent">
+                                <div className="h-2 w-2 rounded-full mr-2" style={{ backgroundColor: entry.color }} />
+                                <span className="truncate flex-1 text-left">{categoryName}</span>
+                                <Badge variant="secondary" className="font-mono ml-auto mr-2">
+                                    {currencySymbol}{value.toFixed(2)}
+                                </Badge>
+                                 <span className="text-xs text-muted-foreground w-12 text-right">
+                                    ({percentage.toFixed(1)}%)
+                                </span>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Other Categories</DialogTitle>
+                            </DialogHeader>
+                            <ScrollArea className="h-72">
+                                <div className="space-y-2 p-2">
+                                    {othersData.map((item, index) => (
+                                        <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-md">
+                                            <span>{item.name}</span>
+                                            <Badge variant="secondary" className="font-mono">
+                                                {currencySymbol}{item.value.toFixed(2)}
+                                            </Badge>
+                                        </div>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                        </DialogContent>
+                    </Dialog>
+                  )
+                }
+
                 return (
                     <div
                         key={`item-${index}`}
@@ -107,7 +145,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
     const expenseOnlyData = useMemo(() => expenses.filter(e => e.type === 'expense'), [expenses]);
     
     // Determine top 7 categories + "Others"
-    const { topCategories, categoryColors, categoryTotals, totalExpense } = useMemo(() => {
+    const { topCategories, categoryColors, categoryTotals, totalExpense, othersData } = useMemo(() => {
         const totals = new Map<string, number>();
         expenseOnlyData.forEach(e => {
             const categoryName = e.category?.name || 'Uncategorized';
@@ -118,6 +156,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
         
         const topN = 7;
         const topCategoryNames = sortedCategories.slice(0, topN).map(([name]) => name);
+        let othersData: { name: string, value: number }[] = [];
 
         const finalCategoryTotals = new Map<string, number>();
         let othersTotal = 0;
@@ -127,6 +166,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                 finalCategoryTotals.set(name, total);
             } else {
                 othersTotal += total;
+                othersData.push({ name, value: total });
             }
         });
 
@@ -146,7 +186,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
 
         const totalOverallExpense = Array.from(totals.values()).reduce((sum, val) => sum + val, 0);
         
-        return { topCategories: topCategoryNames, categoryColors: colors, categoryTotals: finalCategoryTotals, totalExpense: totalOverallExpense };
+        return { topCategories: topCategoryNames, categoryColors: colors, categoryTotals: finalCategoryTotals, totalExpense: totalOverallExpense, othersData };
     }, [expenseOnlyData]);
 
     const chartData = useMemo(() => {
@@ -288,6 +328,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
                         categoryTotals={categoryTotals} 
                         totalExpense={totalExpense} 
                         currencySymbol={currencySymbol} 
+                        othersData={othersData}
                     />
                 </div>
             )}

@@ -39,26 +39,20 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
   const RADIAN = Math.PI / 180;
   const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
   
-  // Default positioning
-  let sin = Math.sin(-RADIAN * (midAngle || 0));
-  let cos = Math.cos(-RADIAN * (midAngle || 0));
-  let sx = (cx || 0) + ((outerRadius || 0) + 6) * cos;
-  let sy = (cy || 0) + ((outerRadius || 0) + 6) * sin;
-  let mx = (cx || 0) + ((outerRadius || 0) + 15) * cos;
-  let my = (cy || 0) + ((outerRadius || 0) + 15) * sin;
-  let ex = mx + (cos >= 0 ? 1 : -1) * 12;
-  let ey = my;
-  let textAnchor = cos >= 0 ? 'start' : 'end';
-  
-  // If the slice is on the left side of the chart (90 to 270 degrees)
-  if (midAngle && midAngle > 90 && midAngle < 270) {
-      // Reposition the label to the top-left area to avoid clipping
-      ex = (cx || 0) - (outerRadius || 0) - 10;
-      ey = (cy || 0) - (outerRadius || 0) - 10;
-      mx = ex;
-      my = ey;
-      textAnchor = 'end';
+  if (!cx || !cy || !midAngle || !innerRadius || !outerRadius || !value || !percent) {
+    return null;
   }
+
+  const sin = Math.sin(-RADIAN * midAngle);
+  const cos = Math.cos(-RADIAN * midAngle);
+  const sx = cx + (outerRadius + 6) * cos;
+  const sy = cy + (outerRadius + 6) * sin;
+  const mx = cx + (outerRadius + 15) * cos;
+  const my = cy + (outerRadius + 15) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
+  const ey = my;
+
+  const textAnchor = cos >= 0 ? 'start' : 'end';
   
   const name = payload.name || '';
   const words = name.split(' ');
@@ -78,9 +72,8 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
   lines.push(currentLine.trim());
   
   const labelFontSize = lines.length > 2 ? '0.7rem' : lines.length > 1 ? '0.8rem' : '1rem';
-  const lineHeight = lines.length > 1 ? 1.2 : 1;
-  const totalLabelHeight = lines.length * parseFloat(labelFontSize) * lineHeight;
-  const startY = (cy || 0) - (totalLabelHeight / 2) + (parseFloat(labelFontSize) / 2);
+  const totalLabelHeight = lines.length * parseFloat(labelFontSize) * (lines.length > 1 ? 1.2 : 1);
+  const startY = cy - (totalLabelHeight / 2) + (parseFloat(labelFontSize) / 2);
 
 
   return (
@@ -104,15 +97,15 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
         cy={cy}
         startAngle={startAngle}
         endAngle={endAngle}
-        innerRadius={(outerRadius || 0) + 4}
-        outerRadius={(outerRadius || 0) + 8}
+        innerRadius={outerRadius + 4}
+        outerRadius={outerRadius + 8}
         fill={fill}
       />
        <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
       <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
       <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} textAnchor={textAnchor} className="text-sm fill-foreground">{`${currencySymbol}${value?.toFixed(2)}`}</text>
       <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} dy={18} textAnchor={textAnchor} className="text-xs fill-muted-foreground">
-        {`(${(percent || 0 * 100).toFixed(2)}%)`}
+        {`(${(percent * 100).toFixed(2)}%)`}
       </text>
     </g>
   );
@@ -144,7 +137,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
     <div className="w-full flex flex-col h-[450px]">
         <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <Pie
                   activeIndex={activeIndex}
                   activeShape={(props: ActiveShapeProps) => renderActiveShape(props, currencySymbol)}

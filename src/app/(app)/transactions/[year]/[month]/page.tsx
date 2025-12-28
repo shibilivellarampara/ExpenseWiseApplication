@@ -16,6 +16,8 @@ import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
+import { useSearchParams } from 'next/navigation';
+
 
 export default function MonthlyExpensesPage({ params }: { params: { year: string, month: string } }) {
     const { user } = useUser();

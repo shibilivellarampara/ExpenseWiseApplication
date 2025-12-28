@@ -155,11 +155,11 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
                 <RadioGroup value={paymentType} onValueChange={(value) => setPaymentType(value as 'full' | 'specific')} className="flex gap-4">
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="full" id="pay-full" />
-                        <Label htmlFor="pay-full">Full Amount ({outstandingAmount.toFixed(2)})</Label>
+                        <Label htmlFor="pay-full">Full Amount</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="specific" id="pay-specific" />
-                        <Label htmlFor="pay-specific">Specific Amount</Label>
+                        <Label htmlFor="pay-specific">Custom Amount</Label>
                     </div>
                 </RadioGroup>
                  {paymentType === 'specific' && (

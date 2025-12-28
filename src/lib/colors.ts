@@ -4,33 +4,35 @@ type ColorInfo = {
   dark: { bg: string; text: string };
 };
 
+// Fintech-aligned color palette for dynamic badges
 export const COLORS: ColorInfo[] = [
-  { light: { bg: '24.6 95% 90%', text: '24.6 95% 30%' }, dark: { bg: '24.6 35% 20%', text: '24.6 95% 80%' } }, // Orange
-  { light: { bg: '142.1 76% 92%', text: '142.1 76% 25%' }, dark: { bg: '142.1 30% 22%', text: '142.1 76% 85%' } }, // Green
-  { light: { bg: '262.1 83% 92%', text: '262.1 83% 45%' }, dark: { bg: '262.1 40% 25%', text: '262.1 83% 88%' } }, // Violet
-  { light: { bg: '346.8 77% 91%', text: '346.8 77% 40%' }, dark: { bg: '346.8 35% 23%', text: '346.8 77% 86%' } }, // Rose
-  { light: { bg: '217.2 91% 91%', text: '217.2 91% 40%' }, dark: { bg: '217.2 45% 24%', text: '217.2 91% 87%' } }, // Blue
-  { light: { bg: '47.9 95% 88%', text: '47.9 95% 30%' }, dark: { bg: '47.9 40% 21%', text: '47.9 95% 82%' } }, // Amber
-  { light: { bg: '172.8 82% 90%', text: '172.8 82% 28%' }, dark: { bg: '172.8 40% 20%', text: '172.8 82% 84%' } }, // Teal
-  { light: { bg: '312.4 81% 93%', text: '312.4 81% 50%' }, dark: { bg: '312.4 38% 26%', text: '312.4 81% 90%' } }, // Fuchsia
-  { light: { bg: '73.4 95% 90%', text: '73.4 95% 30%' }, dark: { bg: '73.4 35% 22%', text: '73.4 95% 85%' } }, // Lime
-  { light: { bg: '197.6 91% 90%', text: '197.6 91% 35%' }, dark: { bg: '197.6 45% 23%', text: '197.6 91% 88%' } }, // Sky
-  { light: { bg: '0 84% 91%', text: '0 84% 40%' }, dark: { bg: '0 40% 24%', text: '0 84% 87%' } }, // Red
-  { light: { bg: '220 13% 91%', text: '220 13% 31%' }, dark: { bg: '220 13% 25%', text: '220 13% 88%' } }, // Slate (for contrast)
+  { light: { bg: '210 80% 95%', text: '210 80% 30%' }, dark: { bg: '210 40% 20%', text: '210 80% 85%' } }, // Blue
+  { light: { bg: '180 45% 95%', text: '180 45% 30%' }, dark: { bg: '180 45% 20%', text: '180 45% 85%' } }, // Teal/Green
+  { light: { bg: '30 90% 95%', text: '30 90% 40%' }, dark: { bg: '30 80% 22%', text: '30 80% 85%' } },     // Orange/Amber
+  { light: { bg: '220 25% 94%', text: '220 25% 30%' }, dark: { bg: '220 25% 25%', text: '220 15% 80%' } }, // Muted Navy
+  { light: { bg: '210 50% 95%', text: '210 50% 35%' }, dark: { bg: '210 30% 22%', text: '210 50% 88%' } }, // Softer Blue
+  { light: { bg: '170 35% 94%', text: '170 35% 30%' }, dark: { bg: '170 30% 20%', text: '170 35% 85%' } }, // Muted Green
+  { light: { bg: '40 80% 95%', text: '40 80% 45%' }, dark: { bg: '40 60% 23%', text: '40 80% 88%' } },     // Softer Amber
+  { light: { bg: '220 15% 92%', text: '220 15% 40%' }, dark: { bg: '220 15% 30%', text: '220 15% 85%' } }, // Slate
+  { light: { bg: '190 60% 94%', text: '190 60% 30%' }, dark: { bg: '190 40% 22%', text: '190 60% 85%' } }, // Teal-Blue
+  { light: { bg: '350 80% 96%', text: '350 80% 50%' }, dark: { bg: '350.5 50% 25%', text: '350 80% 88%' } }, // Soft Red/Orange
+  { light: { bg: '260 50% 95%', text: '260 50% 40%' }, dark: { bg: '260 30% 25%', text: '260 50% 85%' } }, // Muted Purple
+  { light: { bg: '230 20% 93%', text: '230 20% 35%' }, dark: { bg: '230 15% 28%', text: '230 20% 82%' } }, // Desaturated Blue
 ];
 
-// Simplified array of HSL color strings for charts
+
+// Simplified array of HSL color strings for charts, aligned with Fintech theme
 export const CHART_COLORS: string[] = [
-    "hsl(24.6, 95%, 53%)", // Orange
-    "hsl(142.1, 76%, 36%)", // Green
-    "hsl(262.1, 83%, 58%)", // Violet
-    "hsl(346.8, 77%, 49%)", // Rose
-    "hsl(217.2, 91%, 59%)", // Blue
-    "hsl(47.9, 96%, 53%)",  // Amber
-    "hsl(172.8, 82%, 38%)", // Teal
-    "hsl(312.4, 81%, 63%)", // Fuchsia
-    "hsl(73.4, 95%, 43%)",  // Lime
-    "hsl(197.6, 91%, 48%)", // Sky
-    "hsl(0, 84%, 60%)",    // Red
-    "hsl(220, 13%, 47%)"   // Slate
+    "hsl(210, 80%, 55%)",  // Primary Blue
+    "hsl(180, 45%, 55%)",  // Teal/Green
+    "hsl(30, 90%, 60%)",   // Orange/Amber
+    "hsl(220, 25%, 65%)",  // Muted Navy/Slate
+    "hsl(210, 80%, 75%)",  // Lighter Blue
+    "hsl(180, 45%, 75%)",  // Lighter Teal
+    "hsl(30, 90%, 75%)",   // Lighter Orange
+    "hsl(220, 25%, 45%)",  // Darker Slate
+    "hsl(200, 60%, 60%)",  // Sky Blue
+    "hsl(40, 80%, 65%)",   // Gold/Amber
+    "hsl(160, 50%, 50%)",  // Seafoam Green
+    "hsl(240, 40%, 60%)"   // Muted Indigo
 ];

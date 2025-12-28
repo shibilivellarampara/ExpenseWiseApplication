@@ -64,7 +64,7 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
   });
   lines.push(currentLine.trim());
   
-  const labelFontSize = lines.length > 2 ? '0.8rem' : lines.length > 1 ? '0.9rem' : '1.1rem';
+  const labelFontSize = lines.length > 2 ? '0.7rem' : lines.length > 1 ? '0.8rem' : '1rem';
   const lineHeight = lines.length > 1 ? 1.2 : 1;
   const totalLabelHeight = lines.length * parseFloat(labelFontSize) * lineHeight;
   const startY = (cy || 0) - (totalLabelHeight / 2) + (parseFloat(labelFontSize) / 2);
@@ -72,7 +72,7 @@ const renderActiveShape = (props: ActiveShapeProps, currencySymbol: string) => {
 
   return (
     <g>
-       <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill={fill} style={{ fontSize: labelFontSize, fontWeight: 'bold' }}>
+       <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill={fill} style={{ fontSize: labelFontSize, fontWeight: 'normal' }}>
           {lines.map((line, index) => (
             <tspan key={index} x={cx} dy={index === 0 ? -(lines.length - 1) * 0.6 + 'em' : '1.2em'}>{line}</tspan>
           ))}

@@ -18,8 +18,14 @@ import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
 import { useSearchParams } from 'next/navigation';
 
+interface MonthlyExpensesPageProps {
+    params: {
+        year: string;
+        month: string;
+    };
+}
 
-export default function MonthlyExpensesPage({ params }: { params: { year: string, month: string } }) {
+export default function MonthlyExpensesPage({ params }: MonthlyExpensesPageProps) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { year, month } = params;

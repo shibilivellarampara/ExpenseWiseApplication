@@ -20,10 +20,8 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const mainContentRef = useRef<HTMLElement | null>(null);
     const [isScrolled, setIsScrolled] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
-    const [showScrollBottom, setShowScrollBottom] = useState(false);
     const isMobile = useMediaQuery("(max-width: 768px)");
 
     const searchParams = useSearchParams();
@@ -169,29 +167,24 @@ export default function ExpensesPage() {
     }, [allExpenses, filters, debouncedSearchQuery, categoryMap, accountMap, tagMap, accounts]);
     
      useEffect(() => {
-        const mainElement = document.getElementById('main-content');
-        mainContentRef.current = mainElement;
+        const mainContentEl = document.getElementById('main-content');
 
         const handleScroll = () => {
-            if (mainContentRef.current) {
-                const { scrollTop, scrollHeight, clientHeight } = mainContentRef.current;
-                setIsScrolled(scrollTop > 10); // Adjust threshold as needed
-                setShowScrollTop(scrollTop > 200);
-                setShowScrollBottom(scrollHeight - scrollTop - clientHeight > 200);
-            }
-        };
+            const el = mainContentEl || window;
+            const scrollTop = mainContentEl ? el.scrollTop : window.scrollY;
 
-        if (mainContentRef.current) {
-            mainContentRef.current.addEventListener('scroll', handleScroll);
-            handleScroll(); // Initial check
-        }
+            setIsScrolled(scrollTop > 10);
+            setShowScrollTop(scrollTop > 200);
+        };
+        
+        const targetElement = mainContentEl || window;
+        targetElement.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll(); // Initial check
 
         return () => {
-            if (mainContentRef.current) {
-                mainContentRef.current.removeEventListener('scroll', handleScroll);
-            }
+            targetElement.removeEventListener('scroll', handleScroll);
         };
-    }, [filteredAndEnrichedExpenses]);
+    }, []);
 
     const handleFiltersChange = (newFilters: Filters) => {
         setFilters(newFilters);
@@ -223,11 +216,9 @@ export default function ExpensesPage() {
     };
     
     const scrollToTop = () => {
-        mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const scrollToBottom = () => {
-        mainContentRef.current?.scrollTo({ top: mainContentRef.current.scrollHeight, behavior: 'smooth' });
+        const mainContentEl = document.getElementById('main-content');
+        const targetElement = mainContentEl || window;
+        targetElement.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const showBottomNav = userProfile?.dashboardSettings?.navigationStyle === 'bottom' && isMobile;
@@ -272,12 +263,6 @@ export default function ExpensesPage() {
                                 <span className="sr-only">Scroll to top</span>
                             </Button>
                         )}
-                        {showScrollBottom && (
-                            <Button onClick={scrollToBottom} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
-                                <ArrowDown className="h-6 w-6" />
-                                <span className="sr-only">Scroll to bottom</span>
-                            </Button>
-                        )}
                     </div>
                 </div>
             </div>
@@ -301,5 +286,3 @@ export default function ExpensesPage() {
 
     
 }
-
-    

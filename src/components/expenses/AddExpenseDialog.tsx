@@ -36,7 +36,7 @@ import { useState, useMemo, useEffect, useCallback, useTransition } from 'react'
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy, where, getDocs } from 'firebase/firestore';
-import { UserProfile, Category, Tag, Account, EnrichedExpense, SharedLedger } from '@/lib/types';
+import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import * as LucideIcons from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -988,33 +988,6 @@ function useExpenseForm({
             } else {
                 batch.update(expenseRef, expenseData);
             }
-            
-            // --- Shared Expense Logic ---
-            if (isAddOperation && values.tagIds && values.tagIds.length > 0) {
-                const ledgersQuery = query(collection(firestore, 'shared_ledgers'), where('memberIds', 'array-contains', user.uid));
-                const ledgersSnapshot = await getDocs(ledgersQuery);
-                const sharedLedgers = ledgersSnapshot.docs.map(d => d.data() as SharedLedger);
-
-                for (const ledger of sharedLedgers) {
-                    const userTagForLedger = ledger.memberSharedTags[user.uid];
-                    if (userTagForLedger && values.tagIds.includes(userTagForLedger)) {
-                        const sharedTxRef = doc(collection(firestore, 'shared_transactions'));
-                        batch.set(sharedTxRef, {
-                            id: sharedTxRef.id,
-                            ledgerId: ledger.id,
-                            createdBy: user.uid,
-                            type: values.type,
-                            amount: values.amount,
-                            description: finalDescription,
-                            date: values.date,
-                            createdAt: serverTimestamp(),
-                            source: 'automatic',
-                            sourceExpenseId: expenseRef.id,
-                        });
-                    }
-                }
-            }
-
 
             await commitBatchNonBlocking(batch, collectionPath);
 
@@ -1098,7 +1071,7 @@ function useExpenseForm({
             toast({ title: 'Transaction Deleted', description: 'The transaction has been permanently removed.' });
             onSaveSuccess?.();
             setOpen(false);
-        } catch (error: any) {
+        } catch (error: any) => {
             toast({ variant: 'destructive', title: 'Delete Failed', description: "There was an unexpected error. Please try again." });
         } finally {
             setIsLoading(false);
@@ -1119,5 +1092,3 @@ function useExpenseForm({
       tags: tags || []
     };
 }
-
-    

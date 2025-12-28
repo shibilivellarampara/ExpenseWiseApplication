@@ -4,12 +4,12 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Sector } from 'recharts';
 import { useMemo, useState } from 'react';
 import { PieChart as PieChartIcon } from 'lucide-react';
-import { CHART_COLORS } from "@/lib/colors";
-import { ScrollArea } from '../ui/scroll-area';
+import { CHART_COLORS } from '@/lib/colors';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Badge } from '../ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-import { Button } from '../ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface PieChartDataPoint {
   name: string;

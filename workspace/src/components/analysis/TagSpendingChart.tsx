@@ -7,8 +7,8 @@ import { Cell, Pie, PieChart as RechartsPieChart, ResponsiveContainer, Tooltip, 
 import { EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { CHART_COLORS } from '@/lib/colors';
-import { ScrollArea } from '../ui/scroll-area';
-import { Badge } from '../ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 interface PieChartDataPoint {
   name: string;
@@ -27,7 +27,7 @@ const renderActiveShape = (props: any, currencySymbol: string) => {
   const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
   
   if (!value || !payload) return <g />;
-  
+
   const sin = Math.sin(-RADIAN * (midAngle || 0));
   const cos = Math.cos(-RADIAN * (midAngle || 0));
   const sx = (cx || 0) + ((outerRadius || 0) + 6) * cos;

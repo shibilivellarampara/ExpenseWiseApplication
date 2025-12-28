@@ -108,7 +108,7 @@ export function IncomeBreakdownChart({ expenses, currency }: IncomeBreakdownChar
                     <RechartsPieChart>
                         <Pie
                             activeIndex={activeIndex}
-                            activeShape={(props) => renderActiveShape(props, currencySymbol)}
+                            activeShape={(props: ActiveShapeProps) => renderActiveShape(props, currencySymbol)}
                             data={chartData}
                             dataKey="value"
                             nameKey="name"

@@ -62,7 +62,7 @@ const uploadToGoogleDriveFlow = ai.defineFlow(
     if (!response.ok) {
       const errorBody = await response.json();
       console.error('Google Drive API Error:', errorBody);
-      throw new Error(`Google Drive API failed with status: ${response.status}. ${errorBody.error.message}`);
+      throw new Error(`Google Drive API failed: ${errorBody.error.message || 'An unknown error occurred.'}`);
     }
 
     const result = await response.json();
@@ -73,3 +73,5 @@ const uploadToGoogleDriveFlow = ai.defineFlow(
     };
   }
 );
+
+    

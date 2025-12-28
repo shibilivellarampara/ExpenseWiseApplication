@@ -170,8 +170,12 @@ export default function ExpensesPage() {
         const mainContentEl = document.getElementById('main-content');
 
         const handleScroll = () => {
-            const el = mainContentEl || window;
-            const scrollTop = mainContentEl ? el.scrollTop : window.scrollY;
+            let scrollTop;
+            if (mainContentEl) {
+                scrollTop = mainContentEl.scrollTop;
+            } else {
+                scrollTop = window.scrollY;
+            }
 
             setIsScrolled(scrollTop > 10);
             setShowScrollTop(scrollTop > 200);
@@ -286,3 +290,5 @@ export default function ExpensesPage() {
 
     
 }
+
+    

@@ -22,10 +22,10 @@ import { MoreOptionsDrawer } from './MoreOptionsDrawer';
 
 const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/expenses', special_href: '/transactions', icon: ArrowRightLeft, label: 'Transactions' },
-  { href: 'FAB', icon: Plus, label: 'Add' }, // Placeholder for the Floating Action Button
   { href: '/analysis', icon: BarChartHorizontal, label: 'Analysis' },
+  { href: 'FAB', icon: Plus, label: 'Add' }, // Placeholder for the Floating Action Button
   { href: '/accounts', icon: Wallet, label: 'Accounts' },
+  { href: '/more', icon: MoreHorizontal, label: 'More' },
 ];
 
 export function BottomNav() {
@@ -81,6 +81,22 @@ export function BottomNav() {
                             )}
                         </div>
                     );
+                }
+                
+                if (label === 'More') {
+                    return (
+                        <MoreOptionsDrawer key="more-drawer">
+                             <div className={cn(
+                                'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
+                                pathname.startsWith('/more') || pathname.startsWith('/profile') || pathname.startsWith('/about') || pathname.startsWith('/data') || pathname.startsWith('/debts')
+                                    ? 'text-primary'
+                                    : 'text-muted-foreground hover:text-primary'
+                            )}>
+                                <Icon className="h-5 w-5" />
+                                <span>{label}</span>
+                            </div>
+                        </MoreOptionsDrawer>
+                    )
                 }
 
                 const finalHref = label === 'Transactions' ? transactionsHref : href;

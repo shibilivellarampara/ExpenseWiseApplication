@@ -1,4 +1,3 @@
-
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
@@ -10,7 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
 import { PanelLeft, Bell, Circle, CheckCheck, MoreHorizontal } from 'lucide-react';
-import { Logo } from '@/components/Logo';
+import { Logo } from '../Logo';
 import { NavLink } from './AppSidebar';
 import {
   LayoutDashboard,
@@ -31,9 +30,8 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
-import pkg from '../../../package.json';
 
-const appVersion = pkg.version;
+const appVersion = "1.6.8";
 
 
 const baseNavItems = [

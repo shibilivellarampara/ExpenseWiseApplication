@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -25,8 +24,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { UserProfile } from '@/lib/types';
 import { doc } from 'firebase/firestore';
-import pkg from '../../../package.json';
-const appVersion = pkg.version;
+const appVersion = "1.6.8";
 
 
 const baseNavItems = [

@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
-import { PanelLeft, Bell, Circle, CheckCheck, ArrowRight, ArrowLeft, Users, MoreHorizontal } from 'lucide-react';
+import { PanelLeft, Bell, Circle, CheckCheck, MoreHorizontal } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { NavLink } from './AppSidebar';
 import {
@@ -18,7 +18,6 @@ import {
   FileUp,
   Settings,
   ArrowRightLeft,
-  FileText,
   Info,
   BarChartHorizontal,
   HandCoins,
@@ -269,5 +268,3 @@ export function AppHeader({ showMobileSidebar }: { showMobileSidebar: boolean })
     </header>
   );
 }
-
-    

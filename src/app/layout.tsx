@@ -6,8 +6,9 @@ import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from 'next-themes';
 import Script from 'next/script';
+import pkg from '../../package.json';
 
-const appVersion = "1.6.8";
+const appVersion = pkg.version;
 
 export const metadata: Metadata = {
   title: 'ExpenseWise',

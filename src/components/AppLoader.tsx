@@ -20,7 +20,7 @@ export function AppLoader({ message }: { message?: string }) {
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrentIndex((prevIndex) => (prevIndex + 1) % Math.max(icons.length, messages.length));
-        }, 400); // Change icon and message every 0.4 seconds
+        }, 1000); // Change icon and message every 1 second
 
         return () => clearInterval(interval);
     }, []);

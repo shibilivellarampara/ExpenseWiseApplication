@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 
 const appVersion = "1.6.8";
@@ -187,6 +188,7 @@ export function AppHeader() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { openMobile, setOpenMobile } = useSidebar();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const userProfileRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -195,7 +197,7 @@ export function AppHeader() {
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
-  const navigationStyle = userProfile?.dashboardSettings?.navigationStyle || 'sidebar';
+  const navigationStyle = userProfile?.dashboardSettings?.navigationStyle || (isMobile ? 'bottom' : 'sidebar');
   
   const navItems = baseNavItems.map(item => {
     if (item.label === 'Transactions') {

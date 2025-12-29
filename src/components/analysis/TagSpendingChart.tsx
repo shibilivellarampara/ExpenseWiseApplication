@@ -70,10 +70,9 @@ export function TagSpendingChart({ expenses, currency }: TagSpendingChartProps) 
 
         const dataMap = new Map<string, number>();
         expenseTransactions.forEach(item => {
-            if (item.tags.length > 0) {
-                const amountPerTag = item.amount / item.tags.length;
+            if (item.tags && item.tags.length > 0) {
                 item.tags.forEach(tag => {
-                    dataMap.set(tag.name, (dataMap.get(tag.name) || 0) + amountPerTag);
+                    dataMap.set(tag.name, (dataMap.get(tag.name) || 0) + item.amount);
                 });
             } else {
                  dataMap.set('Untagged', (dataMap.get('Untagged') || 0) + item.amount);

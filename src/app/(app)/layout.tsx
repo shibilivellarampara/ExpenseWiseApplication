@@ -4,43 +4,23 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { Suspense } from 'react';
 import { PageLoader } from '@/components/PageLoader';
-import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { UserProfile } from '@/lib/types';
-import { BottomNav } from '@/components/layout/BottomNav';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { BottomNav } from '@/components/layout/BottomNav';
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
-    const { user } = useUser();
-    const firestore = useFirestore();
     const isMobile = useMediaQuery("(max-width: 768px)");
 
-    const userProfileRef = useMemoFirebase(() => {
-        if (!user) return null;
-        return doc(firestore, `users/${user.uid}`);
-    }, [user, firestore]);
-
-    const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-
-    if (!userProfile) {
-        return <PageLoader />;
-    }
-
-    const showBottomNav = isMobile;
-
     return (
-        <div className="flex h-screen w-full bg-background">
-            <div className="flex flex-1 flex-col overflow-hidden">
-                <AppHeader />
-                <main id="main-content" className="flex-1 overflow-y-auto" style={{ paddingBottom: showBottomNav ? '8rem' : '0' }}>
-                    <div className="container mx-auto p-4 md:p-6 lg:p-8">
-                        <Suspense fallback={<PageLoader />}>
-                            {children}
-                        </Suspense>
-                    </div>
-                </main>
-                 {showBottomNav && <BottomNav />}
-            </div>
+        <div className="flex h-screen w-full flex-col bg-background">
+            <AppHeader />
+            <main id="main-content" className="flex-1 overflow-y-auto" style={{ paddingBottom: isMobile ? '6rem' : '0' }}>
+                <div className="container mx-auto p-4 md:p-6 lg:p-8">
+                    <Suspense fallback={<PageLoader />}>
+                        {children}
+                    </Suspense>
+                </div>
+            </main>
+            {isMobile && <BottomNav />}
         </div>
     );
 }

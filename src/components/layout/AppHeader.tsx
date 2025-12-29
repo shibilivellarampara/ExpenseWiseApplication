@@ -5,21 +5,10 @@ import { UserNav } from '@/components/auth/UserNav';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
-import { PanelLeft, Bell, Circle, CheckCheck, MoreHorizontal } from 'lucide-react';
+import { Bell, Circle, CheckCheck } from 'lucide-react';
 import { Logo } from '../Logo';
-import {
-  LayoutDashboard,
-  Wallet,
-  FileUp,
-  Settings,
-  ArrowRightLeft,
-  Info,
-  BarChartHorizontal,
-  HandCoins,
-} from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Badge } from '@/components/ui/badge';
@@ -32,16 +21,15 @@ import { collection, query, where, doc } from 'firebase/firestore';
 
 const appVersion = "1.6.9";
 
-
 const baseNavItems = [
-  { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
-  { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
-  { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
-  { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
-  { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
-  { href: '/data', icon: <FileUp className="h-5 w-5" />, label: 'Import / Export' },
-  { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
-  { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
+  { href: '/dashboard', label: 'Dashboard' },
+  { href: '/transactions', special_href: '/expenses', label: 'Transactions' },
+  { href: '/accounts', label: 'Accounts' },
+  { href: '/analysis', label: 'Analysis' },
+  { href: '/debts', label: 'Debts' },
+  { href: '/data', label: 'Import / Export' },
+  { href: '/profile', label: 'Settings' },
+  { href: '/about', label: 'About' },
 ];
 
 const getPageTitle = (path: string): string => {

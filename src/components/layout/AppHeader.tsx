@@ -1,8 +1,9 @@
+
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
 import { usePathname, useRouter } from 'next/navigation';
-import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';

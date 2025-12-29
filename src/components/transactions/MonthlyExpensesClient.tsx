@@ -210,7 +210,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                 error={expensesError ? 'Error loading transactions' : null}
                 onBadgeClick={handleBadgeClick}
             />
-
+            
              <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">
                 <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">

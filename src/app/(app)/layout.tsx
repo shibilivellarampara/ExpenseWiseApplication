@@ -26,16 +26,15 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
     const navigationStyle = userProfile?.dashboardSettings?.navigationStyle || (isMobile ? 'bottom' : 'sidebar');
     
-    // The sidebar should only be shown if the style is 'sidebar', and never on mobile.
     const showSidebar = navigationStyle === 'sidebar' && !isMobile;
-    // The bottom nav is only for mobile layouts when the style is 'bottom'.
     const showBottomNav = navigationStyle === 'bottom' && isMobile;
+    const showMobileSidebarButton = navigationStyle === 'sidebar' && isMobile;
     
     return (
         <div className="flex h-screen w-full bg-background">
             {showSidebar && <AppSidebar />}
             <div className="flex flex-1 flex-col overflow-hidden">
-                <AppHeader />
+                <AppHeader showMobileSidebar={showMobileSidebarButton} />
                 <main id="main-content" className="flex-1 overflow-y-auto" style={{ paddingBottom: showBottomNav ? '8rem' : '0' }}>
                     <div className="container mx-auto p-4 md:p-6 lg:p-8">
                         <Suspense fallback={<PageLoader />}>

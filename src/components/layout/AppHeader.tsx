@@ -32,7 +32,6 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
-import { useMediaQuery } from '@/hooks/use-media-query';
 
 
 const appVersion = "1.6.8";
@@ -183,12 +182,11 @@ function Notifications() {
     )
 }
 
-export function AppHeader() {
+export function AppHeader({ showMobileSidebar }: { showMobileSidebar: boolean }) {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { openMobile, setOpenMobile } = useSidebar();
-  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const userProfileRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -197,7 +195,6 @@ export function AppHeader() {
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
-  const navigationStyle = userProfile?.dashboardSettings?.navigationStyle || (isMobile ? 'bottom' : 'sidebar');
   
   const navItems = baseNavItems.map(item => {
     if (item.label === 'Transactions') {
@@ -218,7 +215,7 @@ export function AppHeader() {
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
         
          <div className="md:hidden">
-            {navigationStyle === 'sidebar' && (
+            {showMobileSidebar && (
                  <Sheet open={openMobile} onOpenChange={setOpenMobile}>
                     <SheetTrigger asChild>
                         <Button size="icon" variant="ghost">

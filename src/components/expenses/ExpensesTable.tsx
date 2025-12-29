@@ -1,5 +1,4 @@
 
-
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +15,7 @@ import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { generateColorStyle } from '@/lib/utils';
+import { generateColorStyle } from "@/lib/utils";
 import { renderIcon } from '@/lib/render-icon';
 
 interface ExpensesTableProps {

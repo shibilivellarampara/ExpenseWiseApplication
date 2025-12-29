@@ -29,7 +29,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
 
-const appVersion = "1.6.8";
+const appVersion = "1.6.9";
 
 
 const baseNavItems = [

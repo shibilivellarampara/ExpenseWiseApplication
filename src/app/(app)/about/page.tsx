@@ -4,10 +4,23 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.6.8";
+const appVersion = "1.6.9";
 
 
 const changelog = [
+    {
+        version: "1.6.9",
+        date: "2025-12-29",
+        changes: [
+            { type: 'Feature', description: "Implemented a scalable system for preset avatars by moving them to a JSON configuration file, simplifying future updates." },
+            { type: 'UI/UX', description: "Improved the styling of the user profile dropdown menu for a cleaner, more polished appearance." },
+            { type: 'UI/UX', description: "Adjusted the height of dashboard charts to be more dynamic, reducing unnecessary white space." },
+            { type: 'Fix', description: "Corrected the 'Spending by Tag' chart calculation to ensure the full transaction amount is applied to each tag." },
+            { type: 'Fix', description: "Resolved a ReferenceError in the dashboard's data generation function to prevent chart failures." },
+            { type: 'Feature', description: "Added a tag filter to the Expense Analysis page for more granular expense tracking." },
+            { type: 'UI/UX', description: "Unified and improved the application's loading animations for a more consistent and dynamic user experience." },
+        ]
+    },
      {
         version: "1.6.8",
         date: "2025-12-30",
@@ -443,7 +456,3 @@ export default function AboutPage() {
     );
 
 }
-
-    
-
-    

@@ -172,7 +172,7 @@
     --destructive: 30 90% 60%; /* Orange/Amber */
     --destructive-foreground: 0 0% 100%;
     --border: 220 15% 90%;
-    --input: 220 15% 97%;
+    --input: 220 15% 90%;
     --ring: 210 80% 55%;
     --radius: 0.75rem;
 
@@ -202,7 +202,7 @@
     --destructive: 30 80% 60%; /* Orange/Amber */
     --destructive-foreground: 30 80% 5%;
     --border: 220 25% 22%;
-    --input: 220 25% 18%;
+    --input: 220 25% 22%;
     --ring: 210 90% 65%;
     
     --sidebar-background: 220 25% 10%;

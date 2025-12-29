@@ -156,47 +156,59 @@ export default function DashboardPage() {
     const enrichedLastMonthExpenses = useMemo(() => enrichExpenses(lastMonthExpenses), [lastMonthExpenses, categoryMap, accountMap, tagMap]);
 
     const generatePieChartData = (grouping: PieChartGrouping) => {
-        const expenseOnly = enrichedChartExpenses.filter(e => e.type === 'expense');
         const dataMap = new Map<string, number>();
 
-        if (grouping === 'tag') {
-            expenseOnly.forEach(item => {
-                if (item.tags.length > 0) {
-                    item.tags.forEach(tag => {
-                        dataMap.set(tag.name, (dataMap.get(tag.name) || 0) + item.amount);
-                    });
-                } else {
-                    dataMap.set('Untagged', (dataMap.get('Untagged') || 0) + item.amount);
-                }
+        if (grouping === 'category') {
+            const expensesToConsider = enrichedChartExpenses.filter(e => e.category?.name !== 'Salary');
+            expensesToConsider.forEach(item => {
+                const key = item.category?.name || 'Uncategorized';
+                const amount = item.type === 'expense' ? -item.amount : item.amount;
+                dataMap.set(key, (dataMap.get(key) || 0) + amount);
             });
-        } else { // 'category' or 'account'
-            expenseOnly.forEach(item => {
-                let key: string | undefined;
-                switch(grouping) {
-                    case 'category':
-                        key = item.category?.name || 'Uncategorized';
-                        break;
-                    case 'account':
-                        key = item.account?.name;
-                        break;
-                }
-                if (key) {
-                    dataMap.set(key, (dataMap.get(key) || 0) + item.amount);
-                }
-            });
+        } else {
+            const expenseOnly = enrichedChartExpenses.filter(e => e.type === 'expense');
+            if (grouping === 'tag') {
+                expenseOnly.forEach(item => {
+                    if (item.tags.length > 0) {
+                        item.tags.forEach(tag => {
+                            dataMap.set(tag.name, (dataMap.get(tag.name) || 0) + item.amount);
+                        });
+                    } else {
+                        dataMap.set('Untagged', (dataMap.get('Untagged') || 0) + item.amount);
+                    }
+                });
+            } else { // 'account'
+                expenseOnly.forEach(item => {
+                    if (item.account?.name) {
+                        dataMap.set(item.account.name, (dataMap.get(item.account.name) || 0) + item.amount);
+                    }
+                });
+            }
         }
         
-        const allData = Array.from(dataMap, ([name, value]) => ({ name, value, icon: '' })).sort((a,b) => b.value - a.value);
+        let allData;
+        if (grouping === 'category') {
+            allData = Array.from(dataMap, ([name, value]) => ({ name, value, netValue: value })).sort((a,b) => Math.abs(b.value) - Math.abs(a.value));
+        } else {
+             allData = Array.from(dataMap, ([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
+        }
 
         const topN = 11;
         let chartData = allData;
         if (allData.length > topN) {
             const topData = allData.slice(0, topN);
             const otherValue = allData.slice(topN).reduce((sum, item) => sum + item.value, 0);
-            chartData = [...topData, { name: 'Others', value: otherValue, icon: '' }];
+            
+            const others: { name: string; value: number; netValue?: number } = { name: 'Others', value: otherValue };
+            if (grouping === 'category') {
+                others.value = Math.abs(otherValue);
+                others.netValue = otherValue;
+            }
+            
+            chartData = [...topData, others];
         }
 
-        const totalExpenses = expenseOnly.reduce((sum, item) => sum + item.amount, 0);
+        const totalExpenses = expenseOnlyData.reduce((sum, item) => sum + item.amount, 0);
 
         return { chartData, allData, totalAmount: totalExpenses };
     };
@@ -277,7 +289,7 @@ export default function DashboardPage() {
                                     ) : (
                                         <>
                                             <TabsContent value="category">
-                                                <CategoryPieChart data={pieChartCategoryData} allData={allCategoryData} currencySymbol={currencySymbol} />
+                                                <CategoryPieChart data={pieChartCategoryData.map(d => ({ ...d, value: Math.abs(d.value) }))} allData={allCategoryData} currencySymbol={currencySymbol} isNet />
                                             </TabsContent>
                                             <TabsContent value="account">
                                                 <CategoryPieChart data={pieChartAccountData} allData={allAccountData} currencySymbol={currencySymbol} />

@@ -159,11 +159,10 @@ export default function DashboardPage() {
         const dataMap = new Map<string, number>();
 
         if (grouping === 'category') {
-            const expensesToConsider = enrichedChartExpenses.filter(e => e.category?.name !== 'Salary');
-            expensesToConsider.forEach(item => {
+            const expenseOnly = enrichedChartExpenses.filter(e => e.type === 'expense');
+            expenseOnly.forEach(item => {
                 const key = item.category?.name || 'Uncategorized';
-                const amount = item.type === 'expense' ? -item.amount : item.amount;
-                dataMap.set(key, (dataMap.get(key) || 0) + amount);
+                dataMap.set(key, (dataMap.get(key) || 0) + item.amount);
             });
         } else {
             const expenseOnly = enrichedChartExpenses.filter(e => e.type === 'expense');
@@ -188,7 +187,7 @@ export default function DashboardPage() {
         
         let allData;
         if (grouping === 'category') {
-            allData = Array.from(dataMap, ([name, value]) => ({ name, value, netValue: value })).sort((a,b) => Math.abs(b.value) - Math.abs(a.value));
+             allData = Array.from(dataMap, ([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
         } else {
              allData = Array.from(dataMap, ([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
         }
@@ -200,10 +199,6 @@ export default function DashboardPage() {
             const otherValue = allData.slice(topN).reduce((sum, item) => sum + item.value, 0);
             
             const others: { name: string; value: number; netValue?: number } = { name: 'Others', value: otherValue };
-            if (grouping === 'category') {
-                others.value = Math.abs(otherValue);
-                others.netValue = otherValue;
-            }
             
             chartData = [...topData, others];
         }
@@ -290,7 +285,7 @@ export default function DashboardPage() {
                                     ) : (
                                         <>
                                             <TabsContent value="category">
-                                                <CategoryPieChart data={pieChartCategoryData.map(d => ({ ...d, value: Math.abs(d.value) }))} allData={allCategoryData} currencySymbol={currencySymbol} isNet />
+                                                <CategoryPieChart data={pieChartCategoryData} allData={allCategoryData} currencySymbol={currencySymbol} />
                                             </TabsContent>
                                             <TabsContent value="account">
                                                 <CategoryPieChart data={pieChartAccountData} allData={allAccountData} currencySymbol={currencySymbol} />

@@ -48,8 +48,8 @@ export function BottomNav() {
   const isTransactionsPage = pathname.startsWith('/expenses') || pathname.startsWith('/transactions');
 
   return (
-    <div className="fixed bottom-4 left-0 right-0 z-40 flex justify-center md:hidden">
-        <div className="relative flex h-16 items-center justify-around rounded-full bg-background/80 shadow-lg ring-1 ring-black/5 backdrop-blur-md">
+    <div className="fixed bottom-0 left-0 right-0 h-20 bg-transparent" style={{ pointerEvents: 'none' }}>
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex h-16 items-center justify-around rounded-full bg-background/80 shadow-lg ring-1 ring-black/5 backdrop-blur-md" style={{ pointerEvents: 'auto' }}>
             {baseNavItems.map(({ href, icon: Icon, label }) => {
                  if (href === 'DYNAMIC_ITEM') {
                     if (isTransactionsPage) {
@@ -88,7 +88,7 @@ export function BottomNav() {
                 if (label === 'More') {
                     return (
                         <MoreSheet key="more-sheet">
-                            <div className="flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full text-muted-foreground">
+                            <div className="flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full text-muted-foreground cursor-pointer">
                                 <Icon className="h-5 w-5" />
                                 <span>{label}</span>
                             </div>

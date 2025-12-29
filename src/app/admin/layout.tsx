@@ -7,7 +7,6 @@ import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { UserProfile } from '@/lib/types';
 import { doc } from 'firebase/firestore';
-import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AppHeader } from '@/components/layout/AppHeader';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { AppLoader } from '@/components/AppLoader';
@@ -44,7 +43,6 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
   return (
       <div className="flex h-screen w-full bg-background">
-        <AdminSidebar />
         <div className="flex flex-1 flex-col">
           <AppHeader />
           <main className="flex-1 overflow-y-auto">

@@ -6,7 +6,7 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { Suspense } from 'react';
 import { PageLoader } from '@/components/PageLoader';
-import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { UserProfile } from '@/lib/types';
@@ -22,17 +22,19 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         if (!user) return null;
         return doc(firestore, `users/${user.uid}`);
     }, [user, firestore]);
+
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-    // Centralize navigation logic with a safe fallback
-    const navigationStyle = userProfile?.dashboardSettings?.navigationStyle || (isMobile ? 'bottom' : 'sidebar');
-    
+    if (!userProfile) {
+        return <PageLoader />;
+    }
+
+    const navigationStyle = userProfile.dashboardSettings?.navigationStyle;
+
     const showSidebar = navigationStyle === 'sidebar' && !isMobile;
     const showBottomNav = navigationStyle === 'bottom' && isMobile;
-    
-    // Explicitly control when the mobile sidebar button should appear
     const showMobileSidebarButton = navigationStyle === 'sidebar' && isMobile;
-    
+
     return (
         <div className="flex h-screen w-full bg-background">
             {showSidebar && <AppSidebar />}

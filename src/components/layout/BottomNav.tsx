@@ -52,9 +52,9 @@ export function BottomNav() {
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex h-16 items-center justify-around rounded-full bg-background/80 shadow-lg ring-1 ring-black/5 backdrop-blur-md" style={{ pointerEvents: 'auto' }}>
             {baseNavItems.map(({ href, icon: Icon, label }) => {
                  if (href === 'DYNAMIC_ITEM') {
-                    if (isTransactionsPage) {
-                        return (
-                             <div key="fab" className="relative -top-6">
+                    return (
+                        <div key="fab" className="relative -top-6">
+                            {isTransactionsPage ? (
                                 <AddExpenseDialog onSaveSuccess={handleDataChange}>
                                     <Button
                                         size="icon"
@@ -64,25 +64,20 @@ export function BottomNav() {
                                         <span className="sr-only">Add Transaction</span>
                                     </Button>
                                 </AddExpenseDialog>
-                            </div>
-                        )
-                    }
-                    // On other pages, show a link to the transactions page
-                    return (
-                        <Link
-                            key="transactions-link"
-                            href={transactionsHref}
-                            className={cn(
-                                'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
-                                isTransactionsPage
-                                    ? 'text-primary'
-                                    : 'text-muted-foreground hover:text-primary'
+                            ) : (
+                                <Button
+                                    size="icon"
+                                    className="h-16 w-16 rounded-full bg-primary shadow-lg ring-4 ring-background"
+                                    asChild
+                                >
+                                    <Link href={transactionsHref}>
+                                        <ArrowRightLeft className="h-7 w-7" />
+                                        <span className="sr-only">Go to Transactions</span>
+                                    </Link>
+                                </Button>
                             )}
-                        >
-                            <ArrowRightLeft className="h-5 w-5" />
-                            <span>Transactions</span>
-                        </Link>
-                    )
+                        </div>
+                    );
                  }
 
                 if (label === 'More') {

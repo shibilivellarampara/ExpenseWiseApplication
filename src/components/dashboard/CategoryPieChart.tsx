@@ -14,14 +14,12 @@ import { Button } from '@/components/ui/button';
 interface PieChartDataPoint {
   name: string;
   value: number;
-  netValue?: number;
 }
 interface CategoryPieChartProps {
   data: PieChartDataPoint[];
   allData: PieChartDataPoint[];
   currencySymbol: string;
   totalAmountForPercentage?: number;
-  isNet?: boolean;
 }
 
 interface ActiveShapeProps {
@@ -41,8 +39,7 @@ interface ActiveShapeProps {
 
 const renderActiveShape = (
   props: any,
-  currencySymbol: string,
-  isNet?: boolean
+  currencySymbol: string
 ) => {
   const RADIAN = Math.PI / 180;
   const {
@@ -61,9 +58,6 @@ const renderActiveShape = (
 
   if (!value || !payload) return <g />;
 
-  const netValue = payload.netValue ?? value;
-  const displayValue = isNet ? netValue : value;
-
   const sin = Math.sin(-RADIAN * midAngle);
   const cos = Math.cos(-RADIAN * midAngle);
 
@@ -80,7 +74,7 @@ const renderActiveShape = (
   const MAX_X = SVG_WIDTH - CHART_PADDING;
 
   // Estimated text width (rough but reliable)
-  const labelText = `${currencySymbol}${displayValue.toFixed(2)}`;
+  const labelText = `${currencySymbol}${value.toFixed(2)}`;
   const estimatedTextWidth = labelText.length * 7;
 
   let ex = mx + (cos >= 0 ? 12 : -12);
@@ -93,8 +87,6 @@ const renderActiveShape = (
   }
 
   const textAnchor = cos >= 0 ? 'start' : 'end';
-  
-  const valueColor = isNet ? (netValue >= 0 ? 'fill-green-600' : 'fill-red-500') : 'fill-foreground';
 
   return (
     <g>
@@ -145,30 +137,28 @@ const renderActiveShape = (
         x={ex + (cos >= 0 ? 4 : -4)}
         y={my}
         textAnchor={textAnchor}
-        className={cn("text-sm", valueColor)}
+        className="text-sm fill-foreground"
       >
-        {isNet && netValue > 0 ? '+' : ''}{labelText}
+        {labelText}
       </text>
 
       {/* Percentage */}
-      {!isNet && (
-        <text
-            x={ex + (cos >= 0 ? 4 : -4)}
-            y={my}
-            dy={16}
-            textAnchor={textAnchor}
-            className="text-xs fill-muted-foreground"
-        >
-            ({(percent * 100).toFixed(2)}%)
-        </text>
-      )}
+      <text
+        x={ex + (cos >= 0 ? 4 : -4)}
+        y={my}
+        dy={16}
+        textAnchor={textAnchor}
+        className="text-xs fill-muted-foreground"
+      >
+        ({(percent * 100).toFixed(2)}%)
+      </text>
     </g>
   );
 };
 
 
 
-export function CategoryPieChart({ data, allData, currencySymbol, totalAmountForPercentage, isNet }: CategoryPieChartProps) {
+export function CategoryPieChart({ data, allData, currencySymbol, totalAmountForPercentage }: CategoryPieChartProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const onPieEnter = (_: any, index: number) => {
@@ -176,7 +166,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
   };
   
   const { topData, othersData } = useMemo(() => {
-    const topN = 11;
+    const topN = 7;
     if (allData.length <= topN) {
       return { topData: allData, othersData: [] };
     }
@@ -202,7 +192,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
   const safeColors = CHART_COLORS.slice(0, 11);
 
   return (
-    <div className="w-full flex flex-col h-[750px]">
+    <div className="w-full flex flex-col h-[450px]">
         <div className="h-[250px] w-full overflow-visible">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart
@@ -211,7 +201,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
               >
                 <Pie
                   activeIndex={activeIndex}
-                  activeShape={(props: any) => renderActiveShape(props, currencySymbol, isNet)}
+                  activeShape={(props: any) => renderActiveShape(props, currencySymbol)}
                   data={data}
                   cx="50%"
                   cy="50%"
@@ -233,35 +223,29 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
             <ScrollArea className="h-full">
                  <div className="space-y-2 p-2">
                     {allData.map((item, index) => {
+                        const isOther = topData.length < allData.length && index >= topData.length;
                         const isAggregatedOther = item.name === 'Others';
                         const color = isAggregatedOther ? '#B0BEC5' : safeColors[index % safeColors.length];
-                        const displayValue = isNet ? item.netValue : item.value;
-
-                        const legendItem = (
-                            <div className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-accent w-full">
-                                <div className="flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }}/>
-                                    <span className="truncate flex-1 text-left">{item.name}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="secondary" className={cn("font-mono", isNet ? (displayValue! >= 0 ? 'text-green-600' : 'text-red-500') : '')}>
-                                        {isNet && displayValue! > 0 ? '+' : ''}{currencySymbol}{displayValue!.toFixed(2)}
-                                    </Badge>
-                                    {!isNet && totalAmount > 0 && (
-                                    <span className="text-xs text-muted-foreground w-12 text-right">
-                                        ({((item.value / totalAmount) * 100).toFixed(1)}%)
-                                    </span>
-                                    )}
-                                </div>
-                            </div>
-                        );
 
                         if (isAggregatedOther) {
                             return (
                                 <Dialog key="others-legend">
                                     <DialogTrigger asChild>
-                                        <Button variant="ghost" className="w-full p-0 h-auto justify-start">
-                                            {legendItem}
+                                        <Button variant="ghost" className="w-full justify-between items-center text-sm p-2 rounded-md hover:bg-accent h-auto">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                                                <span className="truncate flex-1 text-left">{item.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="secondary" className="font-mono">
+                                                    {currencySymbol}{item.value.toFixed(2)}
+                                                </Badge>
+                                                {totalAmount > 0 && (
+                                                <span className="text-xs text-muted-foreground w-12 text-right">
+                                                    ({((item.value / totalAmount) * 100).toFixed(1)}%)
+                                                </span>
+                                                )}
+                                            </div>
                                         </Button>
                                     </DialogTrigger>
                                     <DialogContent>
@@ -273,8 +257,8 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
                                                 {othersData.map((otherItem) => (
                                                     <div key={otherItem.name} className="flex justify-between items-center text-sm p-2 rounded-md">
                                                         <span>{otherItem.name}</span>
-                                                        <Badge variant="secondary" className={cn("font-mono", isNet ? (otherItem.netValue! >= 0 ? 'text-green-600' : 'text-red-500') : '')}>
-                                                            {isNet && otherItem.netValue! > 0 ? '+' : ''}{currencySymbol}{otherItem.netValue!.toFixed(2)}
+                                                        <Badge variant="secondary" className="font-mono">
+                                                            {currencySymbol}{otherItem.value.toFixed(2)}
                                                         </Badge>
                                                     </div>
                                                 ))}
@@ -285,11 +269,28 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
                             );
                         }
 
-                        return (
-                            <div key={item.name}>
-                                {legendItem}
-                            </div>
-                        )
+                        if (!isOther) {
+                             return (
+                                <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-accent">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }}/>
+                                        <span>{item.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary" className="font-mono">
+                                            {currencySymbol}{item.value.toFixed(2)}
+                                        </Badge>
+                                        {totalAmount > 0 && (
+                                        <span className="text-xs text-muted-foreground w-12 text-right">
+                                            ({((item.value / totalAmount) * 100).toFixed(1)}%)
+                                        </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        }
+                        return null;
+
                     })}
                  </div>
             </ScrollArea>

@@ -283,7 +283,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
     }
 
     return (
-        <div className="w-full flex flex-col h-[750px]">
+        <div className="w-full flex flex-col h-[450px]">
             <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={chartData}>

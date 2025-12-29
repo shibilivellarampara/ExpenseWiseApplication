@@ -166,7 +166,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
   };
   
   const { topData, othersData } = useMemo(() => {
-    const topN = 7;
+    const topN = 11;
     if (allData.length <= topN) {
       return { topData: allData, othersData: [] };
     }

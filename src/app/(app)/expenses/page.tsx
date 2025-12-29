@@ -225,9 +225,6 @@ export default function ExpensesPage() {
         targetElement.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const showBottomNav = userProfile?.dashboardSettings?.navigationStyle === 'bottom' && isMobile;
-
-
     return (
         <div className="w-full space-y-4 pb-24">
             <ExpensesSummary 
@@ -258,7 +255,7 @@ export default function ExpensesPage() {
                 onBadgeClick={handleBadgeClick}
             />
 
-            <div className={cn("fixed left-0 right-0 p-4 z-10 md:hidden", showBottomNav ? 'bottom-20' : 'bottom-4')}>
+            <div className={cn("fixed left-0 right-0 p-4 z-10 md:hidden", isMobile ? 'bottom-20' : 'bottom-4')}>
                 <div className="container mx-auto flex flex-col items-center gap-3">
                     <div className="flex gap-3">
                         {showScrollTop && (
@@ -290,5 +287,3 @@ export default function ExpensesPage() {
 
     
 }
-
-    

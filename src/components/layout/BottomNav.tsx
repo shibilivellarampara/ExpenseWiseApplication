@@ -54,30 +54,15 @@ export function BottomNav() {
                  if (label === 'Add') {
                     return (
                         <div key="fab" className="relative -top-6">
-                            {isTransactionsPage ? (
-                                <AddExpenseDialog onSaveSuccess={handleDataChange}>
-                                    <Button
-                                        size="icon"
-                                        className="h-16 w-16 rounded-full bg-primary shadow-lg ring-4 ring-background"
-                                    >
-                                        <Plus className="h-7 w-7" />
-                                        <span className="sr-only">Add Transaction</span>
-                                    </Button>
-                                </AddExpenseDialog>
-                            ) : (
-                                 <Link href={transactionsHref} passHref>
-                                     <Button
-                                        asChild
-                                        size="icon"
-                                        className="h-16 w-16 rounded-full bg-primary shadow-lg ring-4 ring-background"
-                                    >
-                                        <div>
-                                            <ArrowRightLeft className="h-7 w-7" />
-                                            <span className="sr-only">Go to Transactions</span>
-                                        </div>
-                                    </Button>
-                                </Link>
-                            )}
+                            <AddExpenseDialog onSaveSuccess={handleDataChange}>
+                                <Button
+                                    size="icon"
+                                    className="h-16 w-16 rounded-full bg-primary shadow-lg ring-4 ring-background"
+                                >
+                                    <Plus className="h-7 w-7" />
+                                    <span className="sr-only">Add Transaction</span>
+                                </Button>
+                            </AddExpenseDialog>
                         </div>
                     );
                 }

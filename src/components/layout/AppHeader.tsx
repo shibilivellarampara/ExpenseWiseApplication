@@ -5,22 +5,10 @@ import { UserNav } from '@/components/auth/UserNav';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
-import { PanelLeft, Bell, Circle, CheckCheck, ArrowRight, ArrowLeft, Users } from 'lucide-react';
+import { Bell, Circle, CheckCheck } from 'lucide-react';
 import { Logo } from '../Logo';
-import {
-  LayoutDashboard,
-  Wallet,
-  FileUp,
-  Settings,
-  ArrowRightLeft,
-  FileText,
-  Info,
-  BarChartHorizontal,
-  HandCoins,
-} from 'lucide-react';
 import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -31,6 +19,16 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
+import {
+  LayoutDashboard,
+  Wallet,
+  FileUp,
+  Settings,
+  ArrowRightLeft,
+  Info,
+  BarChartHorizontal,
+  HandCoins,
+} from 'lucide-react';
 
 
 const appVersion = pkg.version;

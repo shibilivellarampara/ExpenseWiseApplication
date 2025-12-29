@@ -24,10 +24,13 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     }, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
+    // Centralize navigation logic with a safe fallback
     const navigationStyle = userProfile?.dashboardSettings?.navigationStyle || (isMobile ? 'bottom' : 'sidebar');
     
     const showSidebar = navigationStyle === 'sidebar' && !isMobile;
     const showBottomNav = navigationStyle === 'bottom' && isMobile;
+    
+    // Explicitly control when the mobile sidebar button should appear
     const showMobileSidebarButton = navigationStyle === 'sidebar' && isMobile;
     
     return (

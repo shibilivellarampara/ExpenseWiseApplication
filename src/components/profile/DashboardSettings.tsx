@@ -46,6 +46,7 @@ export function DashboardSettings() {
     }
 
     const show5YearView = userProfile?.dashboardSettings?.show5YearView ?? false;
+    const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
 
     return (
         <div className="space-y-4">
@@ -60,6 +61,26 @@ export function DashboardSettings() {
                     checked={show5YearView}
                     onCheckedChange={(value) => handleSettingChange('show5YearView', value)}
                 />
+            </div>
+             <div className="rounded-lg border p-3 shadow-sm space-y-2">
+                <Label>Default Transaction View</Label>
+                 <RadioGroup
+                    value={transactionGrouping}
+                    onValueChange={(value) => handleSettingChange('transactionGrouping', value)}
+                    className="flex space-x-4"
+                >
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="daily" id="daily-view" />
+                        <Label htmlFor="daily-view" className="font-normal">Group by Day</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="monthly" id="monthly-view" />
+                        <Label htmlFor="monthly-view" className="font-normal">Group by Month</Label>
+                    </div>
+                </RadioGroup>
+                <p className="text-[0.8rem] text-muted-foreground">
+                    How to group transactions on the main page.
+                </p>
             </div>
         </div>
     );

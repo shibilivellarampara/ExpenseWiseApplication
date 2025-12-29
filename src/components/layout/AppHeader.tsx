@@ -168,7 +168,7 @@ function Notifications() {
 
 export function AppHeader() {
   const pathname = usePathname();
-  const { user, isUserLoading } = useUser();
+  const { isUserLoading } = useUser();
     
   const pageTitle = getPageTitle(pathname);
     

@@ -1,4 +1,3 @@
-
 'use client';
 
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -29,7 +28,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         return <PageLoader />;
     }
 
-    const navigationStyle = userProfile.dashboardSettings?.navigationStyle;
+    const navigationStyle = userProfile.dashboardSettings?.navigationStyle || (isMobile ? 'bottom' : 'sidebar');
 
     const showSidebar = navigationStyle === 'sidebar' && !isMobile;
     const showBottomNav = navigationStyle === 'bottom' && isMobile;

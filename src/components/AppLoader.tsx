@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Wallet, Landmark, CircleDollarSign, TrendingUp, Loader } from 'lucide-react';
@@ -29,7 +30,7 @@ export function AppLoader({ message }: { message?: string }) {
     const currentMessage = message || messages[currentIndex % messages.length];
 
     return (
-        <div className="flex flex-col items-center justify-center gap-6">
+        <div className="flex flex-col items-center justify-center gap-4 text-center">
             <div className="relative h-16 w-16">
                 {icons.map((Icon, index) => (
                     <div
@@ -40,7 +41,7 @@ export function AppLoader({ message }: { message?: string }) {
                     </div>
                 ))}
             </div>
-            <p className="text-muted-foreground animate-pulse">{currentMessage}</p>
+            <p className="text-sm text-muted-foreground animate-pulse">{currentMessage}</p>
         </div>
     );
 }

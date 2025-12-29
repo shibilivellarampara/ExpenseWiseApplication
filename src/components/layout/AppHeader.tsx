@@ -3,30 +3,48 @@
 
 import { UserNav } from '@/components/auth/UserNav';
 import { usePathname, useRouter } from 'next/navigation';
-import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
-import { Bell, Circle, CheckCheck } from 'lucide-react';
+import { PanelLeft, Bell, Circle, CheckCheck, ArrowRight, ArrowLeft, Users } from 'lucide-react';
 import { Logo } from '../Logo';
+import {
+  LayoutDashboard,
+  Wallet,
+  FileUp,
+  Settings,
+  ArrowRightLeft,
+  FileText,
+  Info,
+  BarChartHorizontal,
+  HandCoins,
+} from 'lucide-react';
+import pkg from '../../../package.json';
+import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Badge } from '@/components/ui/badge';
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Account } from '@/lib/types';
-import { collection, query, where } from 'firebase/firestore';
+import { Account, UserProfile } from '@/lib/types';
+import { collection, query, where, doc } from 'firebase/firestore';
+
+
+const appVersion = pkg.version;
 
 
 const baseNavItems = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/transactions', special_href: '/expenses', label: 'Transactions' },
-  { href: '/accounts', label: 'Accounts' },
-  { href: '/analysis', label: 'Analysis' },
-  { href: '/debts', label: 'Debts' },
-  { href: '/data', label: 'Import / Export' },
-  { href: '/profile', label: 'Settings' },
-  { href: '/about', label: 'About' },
+  { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
+  { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
+  { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
+  { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
+  { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
+  { href: '/data', icon: <FileUp className="h-5 w-5" />, label: 'Import / Export' },
+  { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
+  { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
 ];
 
 const getPageTitle = (path: string): string => {

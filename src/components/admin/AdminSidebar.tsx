@@ -11,7 +11,6 @@ import { Logo } from '../Logo';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
-import { useSidebar } from '../ui/sidebar';
 import pkg from '../../../package.json';
 
 const appVersion = pkg.version;
@@ -22,16 +21,9 @@ const adminNavItems = [
 ];
 
 export const NavLink = ({ href, icon, label, isActive }: { href: string, icon: React.ReactNode, label: string, isActive: boolean }) => {
-  const { isMobile, setOpenMobile } = useSidebar();
-
-  const handleClick = () => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  };
 
   return (
-    <Link href={href} passHref onClick={handleClick}>
+    <Link href={href} passHref>
       <Button
         variant="ghost"
         className={cn(

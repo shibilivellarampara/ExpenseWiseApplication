@@ -9,7 +9,6 @@ import { UserProfile } from '@/lib/types';
 import { doc } from 'firebase/firestore';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AppHeader } from '@/components/layout/AppHeader';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { AppLoader } from '@/components/AppLoader';
 
@@ -44,11 +43,10 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
       <div className="flex h-screen w-full bg-background">
         <AdminSidebar />
         <div className="flex flex-1 flex-col">
-          <AppHeader showMobileSidebar={false} />
+          <AppHeader />
           <main className="flex-1 overflow-y-auto">
             <div className="container mx-auto p-4 md:p-6 lg:p-8">
               {children}
@@ -56,7 +54,6 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
-    </SidebarProvider>
   );
 }
 

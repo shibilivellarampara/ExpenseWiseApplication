@@ -42,15 +42,13 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   }
 
   return (
-      <div className="flex h-screen w-full bg-background">
-        <div className="flex flex-1 flex-col">
+      <div className="flex h-screen w-full flex-col bg-background">
           <AppHeader />
           <main className="flex-1 overflow-y-auto">
             <div className="container mx-auto p-4 md:p-6 lg:p-8">
               {children}
             </div>
           </main>
-        </div>
       </div>
   );
 }

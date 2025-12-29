@@ -5,7 +5,7 @@
 import { UserNav } from '@/components/auth/UserNav';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
-import { useSidebar } from '@/components/ui/sidebar';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';

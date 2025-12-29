@@ -218,8 +218,14 @@
   * {
     @apply border-border;
   }
-  body {
+  html, body {
     @apply bg-background text-foreground;
+    width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+  body {
     -webkit-user-select: none; /* Safari */
     -ms-user-select: none; /* IE 10+ */
     user-select: none; /* Standard syntax */
@@ -302,4 +308,3 @@
 .PhoneInputCountrySelectArrow {
     display: none;
 }
-

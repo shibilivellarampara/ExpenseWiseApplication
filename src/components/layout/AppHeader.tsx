@@ -3,14 +3,12 @@
 import { UserNav } from '@/components/auth/UserNav';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
-import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
 import { PanelLeft, Bell, Circle, CheckCheck, MoreHorizontal } from 'lucide-react';
 import { Logo } from '../Logo';
-import { NavLink } from './AppSidebar';
 import {
   LayoutDashboard,
   Wallet,
@@ -179,78 +177,23 @@ function Notifications() {
     )
 }
 
-export function AppHeader({ showMobileSidebar }: { showMobileSidebar: boolean }) {
+export function AppHeader() {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
-  const { openMobile, setOpenMobile } = useSidebar();
-
-  const userProfileRef = useMemoFirebase(() => {
-    if (!user) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [user, firestore]);
-  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-
-  const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
-  
-  const navItems = baseNavItems.map(item => {
-    if (item.label === 'Transactions') {
-      const href = transactionGrouping === 'monthly' ? item.href : item.special_href;
-      const isActive = transactionGrouping === 'monthly' ? pathname.startsWith(item.href) : pathname.startsWith(item.special_href!);
-      return { ...item, href: href!, isActive: isActive };
-    }
-     if (item.label === 'Import / Export') {
-        const isActive = pathname.startsWith('/data') || pathname.startsWith('/import') || pathname.startsWith('/reports');
-        return { ...item, isActive: isActive, href: '/data' };
-    }
-    return { ...item, isActive: pathname.startsWith(item.href) };
-  });
-
+    
   const pageTitle = getPageTitle(pathname);
     
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
         
          <div className="md:hidden">
-            {showMobileSidebar && (
-                 <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-                    <SheetTrigger asChild>
-                        <Button size="icon" variant="ghost">
-                            <PanelLeft />
-                            <span className="sr-only">Toggle Menu</span>
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="p-0 w-64">
-                        <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
-                            <SheetHeader className="p-4 border-b border-sidebar-border">
-                              <SheetTitle>
-                                <Logo />
-                              </SheetTitle>
-                            </SheetHeader>
-                            <nav className="flex-grow space-y-2 mt-4 px-2">
-                                {navItems.map((item) => (
-                                    <NavLink
-                                        key={item.href}
-                                        href={item.href}
-                                        icon={item.icon}
-                                        label={item.label}
-                                        isActive={item.isActive}
-                                    />
-                                ))}
-                            </nav>
-                            <div className="mt-auto p-4 text-center text-xs text-sidebar-muted-foreground">
-                                <Separator className='my-2 bg-sidebar-border' />
-                                <span>Version {appVersion}</span>
-                            </div>
-                        </div>
-                    </SheetContent>
-                </Sheet>
-            )}
+            <Logo />
         </div>
-
-        <div className="flex-1">
-            <h1 className="text-lg font-semibold">{pageTitle}</h1>
+        <div className="hidden md:block flex-1">
+             <h1 className="text-lg font-semibold">{pageTitle}</h1>
         </div>
+        
+        <div className="flex-1 md:hidden" />
         
         <div className="flex items-center gap-2">
             {isUserLoading ? (

@@ -163,33 +163,7 @@ export function TransactionFieldOrderSettings() {
 
     return (
          <div className="space-y-6">
-             <div className="space-y-4">
-                <h4 className="font-semibold text-foreground">Navigation</h4>
-                <div className="rounded-lg border p-3 shadow-sm space-y-2">
-                    <Label>Navigation Style</Label>
-                    <RadioGroup
-                        value={dashboardSettings?.navigationStyle || 'sidebar'}
-                        onValueChange={(value) => handleDashboardSettingChange('navigationStyle', value)}
-                        className="flex space-x-4"
-                    >
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="sidebar" id="nav-sidebar" />
-                            <Label htmlFor="nav-sidebar" className="font-normal">Sidebar</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="bottom" id="nav-bottom" />
-                            <Label htmlFor="nav-bottom" className="font-normal">Bottom Tabs</Label>
-                        </div>
-                    </RadioGroup>
-                    <p className="text-[0.8rem] text-muted-foreground">
-                        Choose between a sidebar or bottom tabs for main navigation (applies to mobile).
-                    </p>
-                </div>
-            </div>
-
-            <Separator />
-            
-             <div className="space-y-4">
+            <div className="space-y-4">
                 <h4 className="font-semibold text-foreground">Transaction List</h4>
                  <div className="rounded-lg border p-3 shadow-sm space-y-2">
                     <Label>Default View</Label>

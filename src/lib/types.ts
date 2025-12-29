@@ -22,7 +22,6 @@ export type UserProfile = {
     isAiSuggestionEnabled?: boolean;
     transactionViewMode?: 'normal' | 'compact';
     transactionGrouping?: 'daily' | 'monthly';
-    navigationStyle?: 'sidebar' | 'bottom';
   };
   analysisSettings?: {
     excludedCategoryIds?: string[];

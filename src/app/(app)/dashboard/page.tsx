@@ -208,6 +208,7 @@ export default function DashboardPage() {
             chartData = [...topData, others];
         }
 
+        const expenseOnlyData = enrichedChartExpenses.filter(e => e.type === 'expense');
         const totalExpenses = expenseOnlyData.reduce((sum, item) => sum + item.amount, 0);
 
         return { chartData, allData, totalAmount: totalExpenses };

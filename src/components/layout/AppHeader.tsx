@@ -32,9 +32,9 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Account, UserProfile } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
+import pkg from '../../../package.json';
 
-
-const appVersion = "1.6.8";
+const appVersion = pkg.version;
 
 
 const baseNavItems = [
@@ -269,3 +269,5 @@ export function AppHeader({ showMobileSidebar }: { showMobileSidebar: boolean })
     </header>
   );
 }
+
+    

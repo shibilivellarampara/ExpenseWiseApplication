@@ -36,6 +36,7 @@ type StoredFilters = {
     timeRangePreset: TimeRangePreset;
     customDateRange: { from?: string; to?: string };
     selectedAccounts: string[];
+    selectedTags: string[];
 };
 
 function AnalysisPageSkeleton() {
@@ -109,6 +110,7 @@ export default function AnalysisPage() {
     const [aiAnalysis, setAiAnalysis] = useState<any>(null);
     const [customDateRange, setCustomDateRange] = useState<{ from?: Date, to?: Date }>({ from: undefined, to: undefined });
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
     
     // Load filters from localStorage on initial render
     useEffect(() => {
@@ -133,6 +135,11 @@ export default function AnalysisPage() {
                     } else if (storedFilters.selectedAccounts) {
                         setSelectedAccounts(storedFilters.selectedAccounts);
                     }
+                    
+                    if (storedFilters.selectedTags) {
+                        setSelectedTags(storedFilters.selectedTags);
+                    }
+
                 } catch (e) {
                     console.error("Failed to parse stored filters", e);
                     localStorage.removeItem(FILTERS_STORAGE_KEY);
@@ -159,10 +166,11 @@ export default function AnalysisPage() {
                     to: customDateRange.to ? format(customDateRange.to, 'yyyy-MM-dd') : undefined,
                 },
                 selectedAccounts,
+                selectedTags,
             };
             localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filtersToStore));
         }
-    }, [timeRangePreset, customDateRange, selectedAccounts, user, isInitialLoad, FILTERS_STORAGE_KEY]);
+    }, [timeRangePreset, customDateRange, selectedAccounts, selectedTags, user, isInitialLoad, FILTERS_STORAGE_KEY]);
 
 
     const { dateRangeStart, dateRangeEnd } = useMemo(() => {
@@ -239,6 +247,11 @@ export default function AnalysisPage() {
                 if (selectedAccounts.length > 0 && expense.accountId && !selectedAccounts.includes(expense.accountId)) {
                     return false;
                 }
+                if (selectedTags.length > 0) {
+                    if (!expense.tagIds || expense.tagIds.length === 0) return false;
+                    const hasMatchingTag = expense.tagIds.some(tagId => selectedTags.includes(tagId));
+                    if (!hasMatchingTag) return false;
+                }
                 return true;
             })
             .map(expense => ({
@@ -248,7 +261,7 @@ export default function AnalysisPage() {
                 account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             }));
-    }, [allExpenses, categoryMap, accountMap, tagMap, selectedAccounts]);
+    }, [allExpenses, categoryMap, accountMap, tagMap, selectedAccounts, selectedTags]);
 
     const expensesForAnalysis = useMemo((): EnrichedExpense[] => {
         const excludedCategoryIds = analysisSettings?.excludedCategoryIds || [];
@@ -288,6 +301,18 @@ export default function AnalysisPage() {
             prev.includes(accountId)
                 ? prev.filter(id => id !== accountId)
                 : [...prev, accountId]
+        );
+    }
+    
+    const handleTagSelectChange = (tagId: string) => {
+        if (tagId === 'all') {
+            setSelectedTags([]);
+            return;
+        }
+        setSelectedTags(prev => 
+            prev.includes(tagId)
+                ? prev.filter(id => id !== tagId)
+                : [...prev, tagId]
         );
     }
 
@@ -375,6 +400,42 @@ export default function AnalysisPage() {
                                             >
                                                 {item.name}
                                                  <Check className={cn("h-4 w-4", selectedAccounts.includes(item.id) ? "opacity-100" : "opacity-0")} />
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full sm:w-[180px] justify-between">
+                                <span>{selectedTags.length > 0 ? `${selectedTags.length} tags selected` : "All Tags"}</span>
+                                <ChevronDown className="h-4 w-4 opacity-50" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                            <Command>
+                                <CommandInput placeholder="Search tags..." />
+                                <CommandList>
+                                    <CommandEmpty>No results found.</CommandEmpty>
+                                    <CommandGroup>
+                                         <CommandItem
+                                            onSelect={() => handleTagSelectChange('all')}
+                                            className="flex justify-between cursor-pointer"
+                                        >
+                                            All Tags
+                                            <Check className={cn("h-4 w-4", selectedTags.length === 0 ? "opacity-100" : "opacity-0")} />
+                                        </CommandItem>
+                                        {(tags || []).map(item => (
+                                            <CommandItem
+                                                key={item.id}
+                                                onSelect={() => handleTagSelectChange(item.id)}
+                                                className="flex justify-between cursor-pointer"
+                                            >
+                                                {item.name}
+                                                 <Check className={cn("h-4 w-4", selectedTags.includes(item.id) ? "opacity-100" : "opacity-0")} />
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>

@@ -175,7 +175,6 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
         }
     };
     
-    const showBottomNav = userProfile?.dashboardSettings?.navigationStyle === 'bottom' && isMobile;
 
     return (
         <div className="w-full space-y-4 pb-24">

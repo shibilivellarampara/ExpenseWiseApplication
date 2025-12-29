@@ -5,10 +5,53 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.6.4";
+const appVersion = "1.6.8";
 
 
 const changelog = [
+     {
+        version: "1.6.8",
+        date: "2025-12-30",
+        changes: [
+            { type: 'Feature', description: "Redesigned the 'More' menu on mobile with a cleaner, more modern sheet-style layout for easier navigation." },
+            { type: 'UI/UX', description: "Streamlined the mobile bottom navigation by focusing on primary actions and moving secondary links to the 'More' sheet." },
+            { type: 'Fix', description: "Ensured PWA app icons update correctly on users' home screens by versioning the manifest file." },
+            { type: 'Fix', description: "Resolved a critical build error caused by an invalid import path in the main app layout." },
+        ]
+    },
+    {
+        version: "1.6.7",
+        date: "2025-12-29",
+        changes: [
+            { type: 'Fix', description: "Resolved numerous critical build failures by completely removing all code, types, and routes related to the deprecated 'Shared Expenses' feature." },
+            { type: 'Fix', description: "Corrected invalid component import paths across multiple files to ensure module resolution." },
+            { type: 'Fix', description: "Fixed a syntax error in a try/catch block that was causing the build to fail." },
+            { type: 'Fix', description: "Resolved a TypeScript type error in chart components by ensuring functions always return a valid JSX element." },
+        ]
+    },
+    {
+        version: "1.6.6",
+        date: "2025-12-28",
+        changes: [
+            { type: 'UI/UX', description: "Updated the application logo and Progressive Web App (PWA) icons for a consistent brand identity." },
+            { type: 'UI/UX', description: "Set 'Fintech' as the default theme, providing a modern and professional look out-of-the-box." },
+            { type: 'UI/UX', description: "Improved the 'Add Debt' form with clearer 'You Gave'/'You Got' labels and a bolder amount field." },
+            { type: 'Fix', description: "Fixed an issue causing all category and tag badges to appear in the same color when using Fintech themes." },
+            { type: 'Fix', description: "Resolved an issue on mobile devices where users had to log in again after closing the PWA." },
+            { type: 'Fix', description: "Corrected hardcoded colors on the 'Debts & Dues' page to respect the current theme." },
+        ]
+    },
+    {
+        version: "1.6.5",
+        date: "2025-12-28",
+        changes: [
+            { type: 'UI/UX', description: "Redesigned the 'Expenses Overview' chart with a cleaner look, focusing on the top 7 categories and grouping the rest into a new clickable 'Others' category." },
+            { type: 'UI/UX', description: "Replaced the chart legend with a detailed, scrollable vertical list showing amounts and percentages." },
+            { type: 'Fix', description: "Corrected layout issues where the category list on the dashboard did not fill its available space." },
+            { type: 'UI/UX', description: "Improved the app-wide loading experience with more dynamic graphics and friendlier messages." },
+            { type: 'Fix', description: "Adjusted chart tooltips to prevent them from obscuring the data when hovering." },
+        ]
+    },
     {
         version: "1.6.4",
         date: "2025-12-23",
@@ -401,3 +444,5 @@ export default function AboutPage() {
     );
 
 }
+
+    

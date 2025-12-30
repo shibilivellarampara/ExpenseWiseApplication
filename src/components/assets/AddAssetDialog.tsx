@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
+import { collection, serverTimestamp, doc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Asset, AssetType, EnrichedAsset } from '@/lib/types';
@@ -85,9 +85,9 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
                 form.reset({
                     name: '',
                     assetType: 'savings_cash',
-                    investedAmount: undefined,
-                    currentValue: undefined,
-                    quantity: undefined,
+                    investedAmount: '' as any,
+                    currentValue: '' as any,
+                    quantity: '' as any,
                     startDate: undefined,
                     maturityDate: undefined,
                     notes: '',
@@ -186,7 +186,7 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
                                     <FormItem>
                                         <FormLabel>Invested Amount *</FormLabel>
                                         <FormControl>
-                                            <Input type="number" step="0.01" placeholder="10000" {...field} />
+                                            <Input type="number" step="0.01" placeholder="10000" {...field} value={field.value ?? ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -199,7 +199,7 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
                                     <FormItem>
                                         <FormLabel>Current Value *</FormLabel>
                                         <FormControl>
-                                            <Input type="number" step="0.01" placeholder="12000" {...field} />
+                                            <Input type="number" step="0.01" placeholder="12000" {...field} value={field.value ?? ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -214,7 +214,7 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
                                 <FormItem>
                                     <FormLabel>Quantity</FormLabel>
                                     <FormControl>
-                                        <Input type="number" step="0.001" placeholder="e.g., 10 (for stocks)" {...field} />
+                                        <Input type="number" step="0.001" placeholder="e.g., 10 (for stocks)" {...field} value={field.value ?? ''} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

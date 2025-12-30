@@ -30,13 +30,14 @@ import { DateTimePicker } from '../DateTimePicker';
 const assetSchema = z.object({
   name: z.string().min(1, 'Asset name is required.'),
   assetType: z.enum(Object.keys(ASSET_TYPES) as [AssetType, ...AssetType[]]),
-  investedAmount: z.coerce.number().min(0, "Invested amount cannot be negative."),
-  currentValue: z.coerce.number().min(0, "Current value cannot be negative."),
+  investedAmount: z.coerce.number({invalid_type_error: "Invested amount is required."}).min(0, "Invested amount cannot be negative."),
+  currentValue: z.coerce.number({invalid_type_error: "Current value is required."}).min(0, "Current value cannot be negative."),
   quantity: z.coerce.number().optional(),
   startDate: z.date().optional().nullable(),
   maturityDate: z.date().optional().nullable(),
   notes: z.string().optional(),
 });
+
 
 type AssetFormData = z.infer<typeof assetSchema>;
 
@@ -88,8 +89,8 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
                     investedAmount: '' as any,
                     currentValue: '' as any,
                     quantity: '' as any,
-                    startDate: undefined,
-                    maturityDate: undefined,
+                    startDate: null,
+                    maturityDate: null,
                     notes: '',
                 });
             }

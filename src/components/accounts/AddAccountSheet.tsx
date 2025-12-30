@@ -114,14 +114,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
     const accountType = form.watch('type');
     const statementDate = form.watch('cardDetails.statementDate');
 
-     useEffect(() => {
-        if (accountType === 'credit_card' && statementDate) {
-            const date = new Date(2000, 0, statementDate); // Use a non-leap year
-            date.setDate(date.getDate() + 15);
-            form.setValue('billingDate', date.getDate());
-        }
-    }, [statementDate, accountType, form]);
-
 
     useEffect(() => {
         if(open) {
@@ -354,9 +346,9 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                                         <FormItem>
                                             <FormLabel>Payment Due Date (Day of Month)</FormLabel>
                                             <FormControl>
-                                                <Input type="number" min="1" max="31" placeholder="e.g., 25" {...field} value={field.value ?? ''} disabled />
+                                                <Input type="number" min="1" max="31" placeholder="e.g., 25" {...field} value={field.value ?? ''} />
                                             </FormControl>
-                                             <FormDescription>Automatically calculated as 15 days after statement date.</FormDescription>
+                                             <FormDescription>Set the day your credit card bill is due.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}

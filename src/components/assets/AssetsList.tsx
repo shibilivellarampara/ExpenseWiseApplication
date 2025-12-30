@@ -24,7 +24,7 @@ interface AssetsListProps {
     isLoading?: boolean;
 }
 
-function DeleteAssetButton({ asset }: { asset: Asset }) {
+function DeleteAssetButton({ asset }: { asset: EnrichedAsset }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const [isDeleting, setIsDeleting] = useState(false);

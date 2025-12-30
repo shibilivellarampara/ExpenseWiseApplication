@@ -76,10 +76,10 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
                     assetType: assetToEdit.assetType,
                     investedAmount: assetToEdit.investedAmount,
                     currentValue: assetToEdit.currentValue,
-                    quantity: assetToEdit.quantity,
+                    quantity: assetToEdit.quantity || undefined,
                     startDate: assetToEdit.startDate,
                     maturityDate: assetToEdit.maturityDate,
-                    notes: assetToEdit.notes,
+                    notes: assetToEdit.notes || '',
                 });
             } else {
                 form.reset({
@@ -111,12 +111,12 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
         };
     
         try {
-            const assetsCollectionRef = collection(firestore, `users/${user.uid}/assets`);
             if (isEditMode && assetToEdit) {
-                const assetRef = doc(assetsCollectionRef, assetToEdit.id);
+                const assetRef = doc(firestore, `users/${user.uid}/assets`, assetToEdit.id);
                 await setDocumentNonBlocking(assetRef, assetData, { merge: true });
                 toast({ title: 'Asset Updated!', description: 'Your asset details have been saved.' });
             } else {
+                const assetsCollectionRef = collection(firestore, `users/${user.uid}/assets`);
                 await addDocumentNonBlocking(assetsCollectionRef, assetData);
                 toast({ title: 'Asset Added!', description: 'The new asset has been created.' });
             }

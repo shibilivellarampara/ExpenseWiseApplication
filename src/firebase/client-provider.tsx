@@ -6,6 +6,7 @@ import { FirebaseProvider } from '@/firebase/provider';
 import { initializeFirebase } from '@/firebase';
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
+import { setPersistence, browserLocalPersistence } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import { FirebaseStorage } from 'firebase/storage';
 import { registerSW } from '@/app/register-sw';
@@ -27,7 +28,16 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
   useEffect(() => {
     const firebaseSdks = initializeFirebase();
     if (firebaseSdks.firebaseApp && firebaseSdks.auth && firebaseSdks.firestore && firebaseSdks.storage) {
-        setSdks(firebaseSdks as FirebaseSDKs);
+        // Explicitly set persistence here to ensure user stays logged in
+        setPersistence(firebaseSdks.auth, browserLocalPersistence)
+            .then(() => {
+                setSdks(firebaseSdks as FirebaseSDKs);
+            })
+            .catch((error) => {
+                console.error("Error setting Firebase auth persistence:", error);
+                // Still set SDKs even if persistence fails, to not block the app
+                setSdks(firebaseSdks as FirebaseSDKs);
+            });
     }
   }, []);
 

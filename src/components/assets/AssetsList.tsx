@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -79,12 +80,19 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
 
     const enrichedAssets = useMemo(() => {
         if (!assets) return [];
-        return assets.map(a => ({
-            ...a,
-            lastUpdated: a.lastUpdated ? (a.lastUpdated as any).toDate() : new Date(),
-            startDate: a.startDate ? (a.startDate as any).toDate() : undefined,
-            maturityDate: a.maturityDate ? (a.maturityDate as any).toDate() : undefined,
-        })) as EnrichedAsset[];
+        return assets.map(a => {
+            // Helper to check if it's a Firestore Timestamp
+            const isTimestamp = (date: any): date is { toDate: () => Date } => {
+                return date && typeof date.toDate === 'function';
+            };
+
+            return {
+                ...a,
+                lastUpdated: isTimestamp(a.lastUpdated) ? a.lastUpdated.toDate() : a.lastUpdated as Date,
+                startDate: isTimestamp(a.startDate) ? a.startDate.toDate() : a.startDate as Date | undefined,
+                maturityDate: isTimestamp(a.maturityDate) ? a.maturityDate.toDate() : a.maturityDate as Date | undefined,
+            }
+        }) as EnrichedAsset[];
     }, [assets]);
 
     const groupedAssets = useMemo(() => {

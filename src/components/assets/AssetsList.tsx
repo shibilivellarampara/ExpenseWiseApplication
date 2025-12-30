@@ -78,9 +78,10 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
     const enrichedAssets = useMemo(() => {
+        if (!assets) return [];
         return assets.map(a => ({
             ...a,
-            lastUpdated: a.lastUpdated.toDate(),
+            lastUpdated: a.lastUpdated ? a.lastUpdated.toDate() : new Date(),
             startDate: a.startDate?.toDate(),
             maturityDate: a.maturityDate?.toDate(),
         })) as EnrichedAsset[];

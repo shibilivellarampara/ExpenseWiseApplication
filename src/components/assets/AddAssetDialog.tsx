@@ -28,6 +28,7 @@ import { ASSET_TYPES } from '@/lib/assets';
 import { DateTimePicker } from '../DateTimePicker';
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 const assetSchema = z.object({
   name: z.string().min(1, 'Asset name is required.'),

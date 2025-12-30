@@ -1,11 +1,10 @@
-
 'use client';
 
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from '@/firebase';
-import { Asset, UserProfile } from '@/lib/types';
+import { Asset, UserProfile, Account } from '@/lib/types';
 import { collection, orderBy, query, doc } from 'firebase/firestore';
 import { AddAssetDialog } from '@/components/assets/AddAssetDialog';
 import { AssetsList } from '@/components/assets/AssetsList';
@@ -39,22 +38,46 @@ export default function AssetsPage() {
         user ? query(collection(firestore, `users/${user.uid}/assets`), orderBy('lastUpdated', 'desc')) : null
     , [firestore, user]);
 
+    const accountsQuery = useMemoFirebase(() => 
+        user ? query(collection(firestore, `users/${user.uid}/accounts`)) : null
+    , [firestore, user]);
+
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
-    const { data: assets, isLoading: assetsLoading } = useCollection<Asset>(assetsQuery);
+    const { data: manualAssets, isLoading: assetsLoading } = useCollection<Asset>(assetsQuery);
+    const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
-    const isLoading = assetsLoading || profileLoading;
+    const isLoading = assetsLoading || profileLoading || accountsLoading;
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
+    const combinedAssets = useMemo(() => {
+        if (!manualAssets || !accounts) return [];
+
+        const savingsAndCashAccountsAsAssets: Asset[] = accounts
+            .filter(acc => acc.type === 'bank' || acc.type === 'cash')
+            .map(acc => ({
+                id: acc.id,
+                userId: acc.userId,
+                assetType: 'savings_cash',
+                name: acc.name,
+                investedAmount: acc.balance,
+                currentValue: acc.balance,
+                lastUpdated: new Date() as any, // This is a client-side representation, so timestamp is for sorting
+                isFromAccount: true, // Custom flag to identify these assets
+            }));
+        
+        return [...manualAssets, ...savingsAndCashAccountsAsAssets];
+    }, [manualAssets, accounts]);
+
     const { totalNetAssets, totalInvested, overallGainLoss, overallReturn } = useMemo(() => {
-        if (!assets) return { totalNetAssets: 0, totalInvested: 0, overallGainLoss: 0, overallReturn: 0 };
-        const totalNetAssets = assets.reduce((sum, asset) => sum + asset.currentValue, 0);
-        const totalInvested = assets.reduce((sum, asset) => sum + asset.investedAmount, 0);
+        if (!combinedAssets) return { totalNetAssets: 0, totalInvested: 0, overallGainLoss: 0, overallReturn: 0 };
+        const totalNetAssets = combinedAssets.reduce((sum, asset) => sum + asset.currentValue, 0);
+        const totalInvested = combinedAssets.reduce((sum, asset) => sum + asset.investedAmount, 0);
         const overallGainLoss = totalNetAssets - totalInvested;
         const overallReturn = totalInvested > 0 ? (overallGainLoss / totalInvested) * 100 : 0;
         return { totalNetAssets, totalInvested, overallGainLoss, overallReturn };
-    }, [assets]);
+    }, [combinedAssets]);
 
     return (
         <div className="w-full space-y-8">
@@ -108,7 +131,7 @@ export default function AssetsPage() {
                         </Card>
                     </div>
 
-                    <AssetsList assets={assets || []} />
+                    <AssetsList assets={combinedAssets || []} />
                  </>
             )}
         </div>

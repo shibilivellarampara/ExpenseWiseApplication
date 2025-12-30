@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -7,7 +6,7 @@ import { Asset, EnrichedAsset, UserProfile, AssetType } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { useDoc, useFirestore, useUser, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { TrendingUp, Edit, Trash2, Loader2, MoreVertical, PlusCircle } from 'lucide-react';
+import { TrendingUp, Edit, Trash2, Loader2, MoreVertical, PlusCircle, Link as LinkIcon, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
@@ -17,6 +16,7 @@ import { getCurrencySymbol } from '@/lib/currencies';
 import { AddAssetDialog } from './AddAssetDialog';
 import { ASSET_TYPES } from '@/lib/assets';
 import { renderIcon } from '@/lib/render-icon';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 interface AssetsListProps {
     assets: Asset[];
@@ -81,9 +81,9 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
         if (!assets) return [];
         return assets.map(a => ({
             ...a,
-            lastUpdated: a.lastUpdated ? a.lastUpdated.toDate() : new Date(),
-            startDate: a.startDate?.toDate(),
-            maturityDate: a.maturityDate?.toDate(),
+            lastUpdated: a.lastUpdated ? (a.lastUpdated as any).toDate() : new Date(),
+            startDate: a.startDate ? (a.startDate as any).toDate() : undefined,
+            maturityDate: a.maturityDate ? (a.maturityDate as any).toDate() : undefined,
         })) as EnrichedAsset[];
     }, [assets]);
 
@@ -121,17 +121,20 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
             {Object.keys(ASSET_TYPES).map(key => {
                 const assetType = key as AssetType;
                 const categoryAssets = groupedAssets[assetType];
+                const categoryInfo = ASSET_TYPES[assetType];
+                
+                const isSavingsCategory = assetType === 'savings_cash';
+                const hasManualSavingsAssets = categoryAssets?.some(a => !a.isFromAccount);
 
                 if (!categoryAssets || categoryAssets.length === 0) {
-                    return null;
+                    if (!isSavingsCategory) return null; // Don't render card if no assets and not savings
                 }
 
-                const categoryInfo = ASSET_TYPES[assetType];
-                const categoryTotal = categoryAssets.reduce((sum, asset) => sum + asset.currentValue, 0);
+                const categoryTotal = categoryAssets?.reduce((sum, asset) => sum + asset.currentValue, 0) || 0;
 
                 return (
                     <Card key={assetType}>
-                        <CardHeader>
+                        <CardHeader className="flex flex-row justify-between items-start">
                             <div className="flex items-center gap-3">
                                 {renderIcon(categoryInfo.icon, 'h-6 w-6 text-primary')}
                                 <div>
@@ -139,58 +142,112 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                     <CardDescription>{currencySymbol}{categoryTotal.toFixed(2)}</CardDescription>
                                 </div>
                             </div>
+                             {assetType !== 'savings_cash' && (
+                                 <AddAssetDialog initialAssetType={assetType}>
+                                    <Button variant="ghost" size="sm">
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add
+                                    </Button>
+                                </AddAssetDialog>
+                             )}
+                              {isSavingsCategory && !hasManualSavingsAssets && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <Info className="h-4 w-4 text-muted-foreground" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p className="max-w-xs">This is automatically updated from your Bank and Cash accounts. To add a new account, go to the Accounts page.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
                         </CardHeader>
                         <CardContent className="p-0">
-                            <div className="divide-y">
-                                {categoryAssets.map(asset => {
-                                    const gainLoss = asset.currentValue - asset.investedAmount;
-                                    const percentageReturn = asset.investedAmount > 0 ? (gainLoss / asset.investedAmount) * 100 : 0;
-                                    return (
-                                        <div key={asset.id} className="p-4 flex items-start gap-4 group">
-                                            <div className="flex-grow space-y-1">
-                                                <div className="font-semibold">{asset.name}</div>
-                                                <div className="flex items-center gap-4 text-sm">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs text-muted-foreground">Current Value</span>
-                                                        <span className="font-medium">{currencySymbol}{asset.currentValue.toFixed(2)}</span>
+                            {categoryAssets && categoryAssets.length > 0 ? (
+                                <div className="divide-y">
+                                    {categoryAssets.map(asset => {
+                                        const gainLoss = asset.currentValue - asset.investedAmount;
+                                        const percentageReturn = asset.investedAmount > 0 ? (gainLoss / asset.investedAmount) * 100 : 0;
+                                        const isFromAccount = asset.isFromAccount;
+
+                                        return (
+                                            <div key={asset.id} className="p-4 flex items-start gap-4 group">
+                                                <div className="flex-grow space-y-1">
+                                                    <div className="font-semibold flex items-center gap-2">
+                                                        {asset.name}
+                                                         {isFromAccount && (
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger>
+                                                                        <LinkIcon className="h-3 w-3 text-muted-foreground" />
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>Linked to Account</TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        )}
                                                     </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs text-muted-foreground">Invested</span>
-                                                        <span className="font-medium text-muted-foreground">{currencySymbol}{asset.investedAmount.toFixed(2)}</span>
-                                                    </div>
+                                                    {!isFromAccount && (
+                                                        <div className="flex items-center gap-4 text-sm">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs text-muted-foreground">Current Value</span>
+                                                                <span className="font-medium">{currencySymbol}{asset.currentValue.toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs text-muted-foreground">Invested</span>
+                                                                <span className="font-medium text-muted-foreground">{currencySymbol}{asset.investedAmount.toFixed(2)}</span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col items-end">
+                                                    {!isFromAccount ? (
+                                                        <>
+                                                            <div className={cn("font-bold text-lg", gainLoss >= 0 ? 'text-green-600' : 'text-red-500')}>
+                                                                {gainLoss >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(gainLoss).toFixed(2)}
+                                                            </div>
+                                                            <div className={cn("text-xs flex items-center", gainLoss >= 0 ? 'text-green-600' : 'text-red-500')}>
+                                                                <TrendingUp className="h-3 w-3 mr-1" />
+                                                                ({percentageReturn.toFixed(2)}%)
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                         <div className="font-bold text-lg text-foreground">
+                                                            {currencySymbol}{asset.currentValue.toFixed(2)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center ml-auto pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {!isFromAccount ? (
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                    <MoreVertical className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <AddAssetDialog assetToEdit={asset}>
+                                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                        <Edit className="mr-2 h-4 w-4" />
+                                                                        Edit
+                                                                    </DropdownMenuItem>
+                                                                </AddAssetDialog>
+                                                                <DeleteAssetButton asset={asset} />
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    ) : (
+                                                        <div className="w-8 h-8"></div>
+                                                    )}
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col items-end">
-                                                <div className={cn("font-bold text-lg", gainLoss >= 0 ? 'text-green-600' : 'text-red-500')}>
-                                                    {gainLoss >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(gainLoss).toFixed(2)}
-                                                </div>
-                                                <div className={cn("text-xs flex items-center", gainLoss >= 0 ? 'text-green-600' : 'text-red-500')}>
-                                                    <TrendingUp className="h-3 w-3 mr-1" />
-                                                    ({percentageReturn.toFixed(2)}%)
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center ml-auto pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                            <MoreVertical className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <AddAssetDialog assetToEdit={asset}>
-                                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                                <Edit className="mr-2 h-4 w-4" />
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                        </AddAssetDialog>
-                                                        <DeleteAssetButton asset={asset} />
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
+                                        )
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="p-4 text-center text-sm text-muted-foreground">
+                                    No assets in this category yet.
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 )

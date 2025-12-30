@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -44,10 +43,11 @@ type AssetFormData = z.infer<typeof assetSchema>;
 interface AddAssetDialogProps {
     children: React.ReactNode;
     assetToEdit?: EnrichedAsset;
+    initialAssetType?: AssetType;
     onSaveSuccess?: () => void;
 }
 
-export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAssetDialogProps) {
+export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSaveSuccess }: AddAssetDialogProps) {
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +59,7 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
         resolver: zodResolver(assetSchema),
         defaultValues: {
             name: '',
-            assetType: 'savings_cash',
+            assetType: initialAssetType || 'mutual_funds',
             investedAmount: undefined,
             currentValue: undefined,
             quantity: undefined,
@@ -85,7 +85,7 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
             } else {
                 form.reset({
                     name: '',
-                    assetType: 'savings_cash',
+                    assetType: initialAssetType || 'mutual_funds',
                     investedAmount: '' as any,
                     currentValue: '' as any,
                     quantity: '' as any,
@@ -95,7 +95,7 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
                 });
             }
         }
-    }, [open, form, isEditMode, assetToEdit]);
+    }, [open, form, isEditMode, assetToEdit, initialAssetType]);
 
     async function onSubmit(values: AssetFormData) {
         setIsLoading(true);
@@ -150,14 +150,14 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Asset Type *</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isEditMode}>
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select an asset type" />
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {Object.entries(ASSET_TYPES).map(([key, { label }]) => (
+                                        {Object.entries(ASSET_TYPES).filter(([key]) => key !== 'savings_cash').map(([key, { label }]) => (
                                              <SelectItem key={key} value={key}>{label}</SelectItem>
                                         ))}
                                     </SelectContent>

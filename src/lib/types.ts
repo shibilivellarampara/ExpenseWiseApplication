@@ -1,4 +1,3 @@
-
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -162,6 +161,7 @@ export type Asset = {
     maturityDate?: Timestamp;
     notes?: string;
     lastUpdated: Timestamp;
+    isFromAccount?: boolean; // Custom property
 };
 
 export type EnrichedAsset = Omit<Asset, 'startDate' | 'maturityDate' | 'lastUpdated'> & {

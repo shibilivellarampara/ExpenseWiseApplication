@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -14,7 +15,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Input, InputProps } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -25,6 +26,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Asset, AssetType, EnrichedAsset } from '@/lib/types';
 import { ASSET_TYPES } from '@/lib/assets';
 import { DateTimePicker } from '../DateTimePicker';
+import React from 'react';
+import { cn } from '@/lib/utils';
 
 const assetSchema = z.object({
   name: z.string().min(1, 'Asset name is required.'),
@@ -46,6 +49,66 @@ interface AddAssetDialogProps {
     initialAssetType?: AssetType;
     onSaveSuccess?: () => void;
 }
+
+
+const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string }>(
+    ({ className, label, id, ...props }, ref) => {
+        const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
+        return (
+            <div className="relative">
+                <Input
+                    ref={ref}
+                    id={id}
+                    placeholder=" "
+                    className={cn("peer h-14 pt-5 text-base floating-input", className)}
+                    data-has-value={hasValue}
+                    {...props}
+                />
+                <Label
+                    htmlFor={id}
+                    className={cn(
+                        "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
+                         "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
+                         "peer-data-[has-value=true]:top-0 peer-data-[has-value=true]:-translate-y-1/2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium"
+                    )}
+                >
+                    {label}
+                </Label>
+            </div>
+        );
+    }
+);
+FloatingLabelInput.displayName = 'FloatingLabelInput';
+
+const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof SelectTrigger> & { label: string; children: React.ReactNode; onValueChange: (value: string) => void; value?: string }>(
+    ({ className, label, id, children, onValueChange, value, ...props }, ref) => {
+        const hasValue = !!value;
+        return (
+            <div className="relative">
+                 <Select onValueChange={onValueChange} value={value}>
+                    <SelectTrigger ref={ref} id={id} className={cn("peer h-14 pt-4 text-base floating-input", className)} data-has-value={hasValue} {...props}>
+                        <SelectValue placeholder=" "/>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {children}
+                    </SelectContent>
+                </Select>
+                 <Label
+                    htmlFor={id}
+                     className={cn(
+                        "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
+                        "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
+                        hasValue && "top-0 -translate-y-1/2 text-xs font-medium"
+                    )}
+                >
+                    {label}
+                </Label>
+            </div>
+        )
+    }
+);
+FloatingLabelSelect.displayName = 'FloatingLabelSelect';
+
 
 export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSaveSuccess }: AddAssetDialogProps) {
     const [open, setOpen] = useState(false);
@@ -149,20 +212,18 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                             name="assetType"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Asset Type *</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isEditMode}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select an asset type" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
+                                    <FloatingLabelSelect
+                                        label="Asset Type *"
+                                        id="assetType"
+                                        onValueChange={field.onChange}
+                                        value={field.value}
+                                        disabled={isEditMode}
+                                    >
                                         {Object.entries(ASSET_TYPES).filter(([key]) => key !== 'savings_cash').map(([key, { label }]) => (
                                              <SelectItem key={key} value={key}>{label}</SelectItem>
                                         ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
+                                    </FloatingLabelSelect>
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
@@ -171,10 +232,12 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Asset Name *</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g., HDFC Bank Savings" {...field} value={field.value ?? ''} />
-                                    </FormControl>
+                                    <FloatingLabelInput
+                                        label="Asset Name *"
+                                        id="name"
+                                        {...field}
+                                        value={field.value ?? ''}
+                                    />
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -185,10 +248,14 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                                 name="investedAmount"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Invested Amount *</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" step="0.01" placeholder="10000" {...field} value={field.value ?? ''} />
-                                        </FormControl>
+                                        <FloatingLabelInput
+                                            label="Invested Amount *"
+                                            id="investedAmount"
+                                            type="number"
+                                            step="0.01"
+                                            {...field}
+                                            value={field.value ?? ''}
+                                        />
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -198,10 +265,14 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                                 name="currentValue"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Current Value *</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" step="0.01" placeholder="12000" {...field} value={field.value ?? ''} />
-                                        </FormControl>
+                                        <FloatingLabelInput
+                                            label="Current Value *"
+                                            id="currentValue"
+                                            type="number"
+                                            step="0.01"
+                                            {...field}
+                                            value={field.value ?? ''}
+                                        />
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -213,10 +284,14 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                             name="quantity"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Quantity</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" step="0.001" placeholder="e.g., 10 (for stocks)" {...field} value={field.value ?? ''} />
-                                    </FormControl>
+                                    <FloatingLabelInput
+                                        label="Quantity"
+                                        id="quantity"
+                                        type="number"
+                                        step="0.001"
+                                        {...field}
+                                        value={field.value ?? ''}
+                                    />
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -227,7 +302,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                                 name="startDate"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Start Date</FormLabel>
+                                        <Label>Start Date</Label>
                                         <DateTimePicker field={field} />
                                         <FormMessage />
                                     </FormItem>
@@ -238,7 +313,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                                 name="maturityDate"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Maturity Date</FormLabel>
+                                        <Label>Maturity Date</Label>
                                         <DateTimePicker field={field} />
                                         <FormMessage />
                                     </FormItem>
@@ -250,7 +325,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                             name="notes"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Notes</FormLabel>
+                                    <Label>Notes</Label>
                                     <FormControl>
                                         <Textarea placeholder="Any additional notes about this asset..." {...field} value={field.value ?? ''} />
                                     </FormControl>

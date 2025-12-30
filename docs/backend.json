@@ -95,6 +95,52 @@
       },
       "required": ["id", "userId", "type", "amount", "date", "accountId"]
     },
+    "RecurringExpense": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "RecurringExpense",
+        "type": "object",
+        "description": "Represents a recurring transaction.",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "amount": { "type": "number" },
+          "type": { "type": "string", "enum": ["expense", "income"] },
+          "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly", "yearly"] },
+          "startDate": { "type": "string", "format": "date-time" },
+          "nextDueDate": { "type": "string", "format": "date-time" },
+          "lastCreatedDate": { "type": "string", "format": "date-time" },
+          "categoryId": { "type": "string" },
+          "accountId": { "type": "string" },
+          "tagIds": { "type": "array", "items": { "type": "string" } },
+          "description": { "type": "string" },
+          "status": { "type": "string", "enum": ["active", "paused"] }
+        },
+        "required": ["id", "userId", "name", "amount", "type", "frequency", "startDate", "nextDueDate", "status"]
+    },
+    "Asset": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Asset",
+      "type": "object",
+      "description": "Represents a financial asset held by the user.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "assetType": { 
+          "type": "string", 
+          "enum": ["savings_cash", "mutual_funds", "stocks_equity", "fixed_income", "retirement", "digital_assets", "other"]
+        },
+        "name": { "type": "string", "description": "The name or label for the asset." },
+        "investedAmount": { "type": "number", "description": "The total amount invested in the asset." },
+        "currentValue": { "type": "number", "description": "The current market value of the asset." },
+        "quantity": { "type": "number", "description": "The quantity of the asset held (e.g., number of stocks)." },
+        "startDate": { "type": "string", "format": "date-time", "description": "The date the asset was acquired or started." },
+        "maturityDate": { "type": "string", "format": "date-time", "description": "The maturity date for fixed income assets." },
+        "notes": { "type": "string", "description": "User's personal notes about the asset." },
+        "lastUpdated": { "type": "string", "format": "date-time", "description": "The timestamp of the last update." }
+      },
+      "required": ["id", "userId", "assetType", "name", "investedAmount", "currentValue", "lastUpdated"]
+    },
      "CardDetails": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "CardDetails",
@@ -188,6 +234,10 @@
       "schema": { "$ref": "#/entities/Expense" },
       "description": "Stores individual expense records for a user."
     },
+    "/users/{userId}/recurringExpenses/{recurringExpenseId}": {
+        "schema": { "$ref": "#/entities/RecurringExpense" },
+        "description": "Stores recurring expense configurations for a user."
+    },
     "/users/{userId}/accounts/{accountId}": {
       "schema": { "$ref": "#/entities/Account" },
       "description": "Stores user's financial accounts."
@@ -203,6 +253,10 @@
     "/users/{userId}/debts/{debtId}": {
         "schema": { "$ref": "#/entities/Debt" },
         "description": "Stores debt and loan records for a user."
+    },
+    "/users/{userId}/assets/{assetId}": {
+        "schema": { "$ref": "#/entities/Asset" },
+        "description": "Stores user's financial assets."
     },
     "/admin/{adminId}": {
         "schema": { "$ref": "#/entities/UserProfile" },

@@ -11,7 +11,7 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import Link from 'next/link';
-import { HandCoins, FileUp, Settings, Info, ChevronRight, UserCircle } from 'lucide-react';
+import { HandCoins, FileUp, Settings, Info, ChevronRight, UserCircle, Briefcase } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/lib/utils';
@@ -20,7 +20,9 @@ import { useState } from 'react';
 
 const secondaryNavItems = [
   { href: '/debts', icon: <HandCoins className="h-5 w-5 text-muted-foreground" />, label: 'Debts & Dues' },
+  { href: '/assets', icon: <Briefcase className="h-5 w-5 text-muted-foreground" />, label: 'Assets' },
   { href: '/data', icon: <FileUp className="h-5 w-5 text-muted-foreground" />, label: 'Import / Export' },
+  { href: '/recurring', icon: <Settings className="h-5 w-5 text-muted-foreground" />, label: 'Recurring' },
   { href: '/profile', icon: <Settings className="h-5 w-5 text-muted-foreground" />, label: 'All Settings' },
   { href: '/about', icon: <Info className="h-5 w-5 text-muted-foreground" />, label: 'About' },
 ];

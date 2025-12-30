@@ -33,8 +33,8 @@ const assetSchema = z.object({
   investedAmount: z.coerce.number().min(0, "Invested amount cannot be negative."),
   currentValue: z.coerce.number().min(0, "Current value cannot be negative."),
   quantity: z.coerce.number().optional(),
-  startDate: z.date().optional(),
-  maturityDate: z.date().optional(),
+  startDate: z.date().optional().nullable(),
+  maturityDate: z.date().optional().nullable(),
   notes: z.string().optional(),
 });
 

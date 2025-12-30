@@ -17,12 +17,6 @@ const changelog = [
             { type: 'Feature', description: "Introduced a 'Recurring' feature to automate tracking for subscriptions and regular bills." },
             { type: 'Feature', description: "Added a new page to manage all recurring income and expenses." },
             { type: 'Fix', description: "Resolved all Firestore permission errors by simplifying security rules for development." },
-        ]
-    },
-    {
-        version: "1.6.9",
-        date: "2025-12-29",
-        changes: [
             { type: 'Feature', description: "Implemented a scalable system for preset avatars by moving them to a JSON configuration file, simplifying future updates." },
             { type: 'UI/UX', description: "Improved the styling of the user profile dropdown menu for a cleaner, more polished appearance." },
             { type: 'UI/UX', description: "Adjusted the height of dashboard charts to be more dynamic, reducing unnecessary white space." },
@@ -30,12 +24,6 @@ const changelog = [
             { type: 'Fix', description: "Resolved a ReferenceError in the dashboard's data generation function to prevent chart failures." },
             { type: 'Feature', description: "Added a tag filter to the Expense Analysis page for more granular expense tracking." },
             { type: 'UI/UX', description: "Unified and improved the application's loading animations for a more consistent and dynamic user experience." },
-        ]
-    },
-     {
-        version: "1.6.8",
-        date: "2025-12-30",
-        changes: [
             { type: 'Feature', description: "Redesigned the 'More' menu on mobile with a cleaner, more modern sheet-style layout for easier navigation." },
             { type: 'UI/UX', description: "Streamlined the mobile bottom navigation by focusing on primary actions and moving secondary links to the 'More' sheet." },
             { type: 'Fix', description: "Ensured PWA app icons update correctly on users' home screens by versioning the manifest file." },
@@ -467,3 +455,5 @@ export default function AboutPage() {
     );
 
 }
+
+    

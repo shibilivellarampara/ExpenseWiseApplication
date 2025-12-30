@@ -13,6 +13,7 @@ const changelog = [
         version: "1.7.0",
         date: "2025-12-31",
         changes: [
+            { type: 'Feature', description: "Introduced a new 'Assets' page to track financial holdings like stocks and mutual funds." },
             { type: 'Feature', description: "Introduced a 'Recurring' feature to automate tracking for subscriptions and regular bills." },
             { type: 'Feature', description: "Added a new page to manage all recurring income and expenses." },
             { type: 'Fix', description: "Resolved all Firestore permission errors by simplifying security rules for development." },

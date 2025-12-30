@@ -89,8 +89,8 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
             return {
                 ...a,
                 lastUpdated: isTimestamp(a.lastUpdated) ? a.lastUpdated.toDate() : a.lastUpdated as Date,
-                startDate: isTimestamp(a.startDate) ? a.startDate.toDate() : a.startDate as Date | undefined,
-                maturityDate: isTimestamp(a.maturityDate) ? a.maturityDate.toDate() : a.maturityDate as Date | undefined,
+                startDate: a.startDate && isTimestamp(a.startDate) ? a.startDate.toDate() : a.startDate as Date | undefined,
+                maturityDate: a.maturityDate && isTimestamp(a.maturityDate) ? a.maturityDate.toDate() : a.maturityDate as Date | undefined,
             }
         }) as EnrichedAsset[];
     }, [assets]);
@@ -220,7 +220,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                                             </div>
                                                         </>
                                                     ) : (
-                                                         <div className="font-bold text-lg text-foreground">
+                                                         <div className={cn("font-bold text-lg", asset.currentValue >= 0 ? 'text-green-600' : 'text-red-500')}>
                                                             {currencySymbol}{asset.currentValue.toFixed(2)}
                                                         </div>
                                                     )}

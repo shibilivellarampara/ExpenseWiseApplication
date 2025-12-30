@@ -375,12 +375,6 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                         <div className="flex items-center justify-between text-sm text-muted-foreground">
                                             <span>Outstanding Amount</span>
                                             <div className="flex items-center gap-2">
-                                                {item.cardDetails?.statementDate && (
-                                                    <div className="flex items-center gap-1">
-                                                        <CalendarDays className="h-4 w-4" />
-                                                        <span>Stmt: {item.cardDetails.statementDate}{getOrdinalSuffix(item.cardDetails.statementDate)}</span>
-                                                    </div>
-                                                )}
                                                 {item.billingDate && (
                                                     <div className="flex items-center gap-1">
                                                         <CalendarDays className="h-4 w-4" />
@@ -393,8 +387,8 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                             <div className="mt-1">
                                                 <Progress value={availablePercentage} className="h-2" />
                                                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                                                    <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
                                                     <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
+                                                    <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         )}

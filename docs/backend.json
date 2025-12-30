@@ -106,7 +106,8 @@
         "cardholderName": { "type": "string", "description": "The name of the cardholder as it appears on the card." },
         "expiryMonth": { "type": "number", "description": "The expiration month of the card (1-12)." },
         "expiryYear": { "type": "number", "description": "The expiration year of the card (e.g., 2028)." },
-        "network": { "type": "string", "enum": ["visa", "mastercard", "amex", "discover", "rupay", "other"], "description": "The card network." }
+        "network": { "type": "string", "enum": ["visa", "mastercard", "amex", "discover", "rupay", "other"], "description": "The card network." },
+        "statementDate": { "type": "number", "description": "Day of the month for credit card statement generation (1-31)." }
       }
     },
     "Account": {

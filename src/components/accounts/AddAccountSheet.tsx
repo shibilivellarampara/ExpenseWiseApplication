@@ -19,7 +19,7 @@ import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useCollection, useFirestore, useUser, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, setDoc as setDocFirestore, writeBatch } from 'firebase/firestore';
 import { Loader2, Pilcrow, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
@@ -160,67 +160,81 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
              setIsLoading(false);
              return;
         }
-
-        const accountData: any = { ...values, userId: user.uid };
-        
-        if (values.type === 'credit_card') {
-            accountData.balance = (values.limit || 0) - (values.balance || 0);
-
-            if (accountData.cardDetails) {
-                const cleanedDetails: Partial<CardDetails> = {};
-                for (const key in accountData.cardDetails) {
-                    const value = accountData.cardDetails[key as keyof CardDetails];
-                    if (value !== undefined && value !== null && value !== '' && !Number.isNaN(value)) {
-                        cleanedDetails[key as keyof CardDetails] = value;
-                    }
-                }
-                accountData.cardDetails = cleanedDetails;
-                if (Object.keys(accountData.cardDetails).length === 0) {
-                    delete accountData.cardDetails;
+    
+        const accountData: any = { ...values };
+        delete accountData.balance; // Balance should not be directly set, it is calculated
+    
+        // Clean cardDetails
+        if (accountData.cardDetails) {
+            const cleanedDetails: Partial<CardDetails> = {};
+            for (const key in accountData.cardDetails) {
+                const value = accountData.cardDetails[key as keyof CardDetails];
+                if (value !== undefined && value !== null && value !== '' && !Number.isNaN(value)) {
+                    cleanedDetails[key as keyof CardDetails] = value;
                 }
             }
-        } else {
+            accountData.cardDetails = cleanedDetails;
+            if (Object.keys(accountData.cardDetails).length === 0) {
+                delete accountData.cardDetails;
+            }
+        }
+    
+        if (values.type !== 'credit_card') {
             delete accountData.limit;
             delete accountData.billingDate;
             delete accountData.cardDetails;
         }
-
-
+    
         try {
             if (isEditMode && accountToEdit) {
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountToEdit.id);
-                delete accountData.balance;
-                
-                setDocumentNonBlocking(accountRef, accountData, { merge: true });
+                // For edit, we only update specific fields, not the balance.
+                await setDocFirestore(accountRef, accountData, { merge: true });
                 toast({
                     title: 'Account Updated!',
                     description: 'Your account details have been saved.',
                 });
             } else {
-                const newAccountRef = doc(collection(firestore, `users/${user.uid}/accounts`));
-                
-                await setDocumentNonBlocking(newAccountRef, { ...accountData, id: newAccountRef.id });
-                
-                if (values.type !== 'credit_card' && values.balance) {
-                    const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
-                    await addDocumentNonBlocking(expensesCol, {
-                        userId: user.uid,
-                        type: 'income',
-                        amount: Math.abs(values.balance),
-                        description: 'Initial Balance',
-                        date: new Date(),
-                        createdAt: serverTimestamp(),
-                        accountId: newAccountRef.id,
-                    });
-                }
-                
+                 // For new account
+                 const newAccountRef = doc(collection(firestore, `users/${user.uid}/accounts`));
+                 const finalBalance = (values.type === 'credit_card') 
+                     ? (values.limit || 0) - (values.balance || 0) 
+                     : (values.balance || 0);
+                 
+                 const newAccountData = {
+                     ...accountData,
+                     id: newAccountRef.id,
+                     userId: user.uid,
+                     balance: finalBalance,
+                 };
+ 
+                 const batch = writeBatch(firestore);
+                 batch.set(newAccountRef, newAccountData);
+ 
+                 // If there's an initial balance for a non-credit card, create an initial transaction
+                 if (values.type !== 'credit_card' && values.balance) {
+                     const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
+                     const initialTxRef = doc(expensesCol);
+                     batch.set(initialTxRef, {
+                         id: initialTxRef.id,
+                         userId: user.uid,
+                         type: 'income',
+                         amount: Math.abs(values.balance),
+                         description: 'Initial Balance',
+                         date: new Date(),
+                         createdAt: serverTimestamp(),
+                         accountId: newAccountRef.id,
+                     });
+                 }
+                 await batch.commit();
+
                 toast({
                     title: 'Account Added!',
                     description: 'The new account has been created.',
                 });
             }
             setOpen(false);
-
+    
         } catch (error: any) {
              let description = "There was an unexpected error. Please try again.";
             if (error.message.includes("invalid data")) {
@@ -268,7 +282,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Account Type</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isEditMode}>
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select an account type" />

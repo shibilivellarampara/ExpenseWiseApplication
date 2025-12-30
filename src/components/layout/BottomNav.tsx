@@ -18,6 +18,7 @@ import { doc } from 'firebase/firestore';
 import { AddExpenseDialog } from '@/components/expenses/AddExpenseDialog';
 import { Button } from '@/components/ui/button';
 import { MoreSheet } from './MoreSheet';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const baseNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -82,12 +83,21 @@ export function BottomNav() {
 
                 if (label === 'More') {
                     return (
-                        <MoreSheet key="more-sheet">
-                            <div className="flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full text-muted-foreground cursor-pointer">
-                                <Icon className="h-5 w-5" />
-                                <span>{label}</span>
-                            </div>
-                        </MoreSheet>
+                        <TooltipProvider key="more-tooltip">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <MoreSheet>
+                                        <div className="flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full text-muted-foreground cursor-pointer">
+                                            <Icon className="h-5 w-5" />
+                                            <span>{label}</span>
+                                        </div>
+                                    </MoreSheet>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>More options</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     );
                 }
                 

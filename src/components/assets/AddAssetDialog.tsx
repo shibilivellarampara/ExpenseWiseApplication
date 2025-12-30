@@ -111,13 +111,13 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
         };
     
         try {
+            const assetsCollectionRef = collection(firestore, `users/${user.uid}/assets`);
             if (isEditMode && assetToEdit) {
-                const assetRef = collection(firestore, `users/${user.uid}/assets`);
-                await setDocumentNonBlocking(doc(assetRef, assetToEdit.id), assetData, { merge: true });
+                const assetRef = doc(assetsCollectionRef, assetToEdit.id);
+                await setDocumentNonBlocking(assetRef, assetData, { merge: true });
                 toast({ title: 'Asset Updated!', description: 'Your asset details have been saved.' });
             } else {
-                const newAssetRef = collection(firestore, `users/${user.uid}/assets`);
-                await addDocumentNonBlocking(newAssetRef, assetData);
+                await addDocumentNonBlocking(assetsCollectionRef, assetData);
                 toast({ title: 'Asset Added!', description: 'The new asset has been created.' });
             }
             onSaveSuccess?.();
@@ -172,7 +172,7 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
                                 <FormItem>
                                     <FormLabel>Asset Name *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g., HDFC Bank Savings" {...field} />
+                                        <Input placeholder="e.g., HDFC Bank Savings" {...field} value={field.value ?? ''} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -251,7 +251,7 @@ export function AddAssetDialog({ children, assetToEdit, onSaveSuccess }: AddAsse
                                 <FormItem>
                                     <FormLabel>Notes</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Any additional notes about this asset..." {...field} />
+                                        <Textarea placeholder="Any additional notes about this asset..." {...field} value={field.value ?? ''} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

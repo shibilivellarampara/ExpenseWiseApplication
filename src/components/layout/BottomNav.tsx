@@ -10,7 +10,6 @@ import {
   BarChartHorizontal,
   Plus,
   MoreHorizontal,
-  Briefcase,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -22,7 +21,7 @@ import { MoreSheet } from './MoreSheet';
 
 const baseNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/assets', icon: Briefcase, label: 'Assets' },
+  { href: '/analysis', icon: BarChartHorizontal, label: 'Analysis' },
   // Placeholder for the dynamic item
   { href: 'DYNAMIC_ITEM', icon: Plus, label: 'Add' },
   { href: '/accounts', icon: Wallet, label: 'Accounts' },

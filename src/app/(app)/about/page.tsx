@@ -8,10 +8,20 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-const appVersion = "1.7.1";
+const appVersion = "1.7.2";
 
 
 const changelog = [
+    {
+        version: "1.7.2",
+        date: "2026-01-02",
+        changes: [
+            { type: 'UI/UX', description: "Polished the mobile bottom navigation with a more transparent and refined design for a modern look and feel." },
+            { type: 'UI/UX', description: "Adjusted the Floating Action Button (FAB) size and positioning for better ergonomics and a more premium aesthetic." },
+            { type: 'UI/UX', description: "Improved the visual hierarchy of the expandable 'More' menu on mobile, creating a cleaner, stacked-pill layout." },
+            { type: 'Fix', description: "Corrected minor alignment issues in the secondary mobile navigation row to ensure perfect spacing." },
+        ]
+    },
     {
         version: "1.7.1",
         date: "2025-12-31",
@@ -490,3 +500,5 @@ export default function AboutPage() {
     );
 
 }
+
+    

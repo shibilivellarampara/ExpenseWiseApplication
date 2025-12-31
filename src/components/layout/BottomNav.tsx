@@ -24,11 +24,6 @@ import { AddExpenseDialog } from '@/components/expenses/AddExpenseDialog';
 import { Button } from '@/components/ui/button';
 import { useState, useRef, useEffect } from 'react';
 
-const primaryNavItems = [
-    { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/analysis', icon: BarChartHorizontal, label: 'Analysis' },
-];
-
 const secondaryNavItems = [
     { href: '/debts', icon: HandCoins, label: 'Debts'},
     { href: '/assets', icon: Briefcase, label: 'Assets'},
@@ -90,7 +85,7 @@ export function BottomNav() {
             {/* Secondary Navigation Row */}
             <div
                 className={cn(
-                    "flex justify-around items-center bg-background/95 backdrop-blur-md border-x border-t rounded-t-2xl h-16 transition-all duration-200 ease-in-out",
+                    "flex justify-around items-center bg-background/80 backdrop-blur-md border-x border-t rounded-t-2xl h-14 transition-all duration-200 ease-in-out",
                     "py-1",
                     isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
                 )}
@@ -106,7 +101,8 @@ export function BottomNav() {
 
             {/* Primary Navigation Container */}
              <div className="relative h-16">
-                <div className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around">
+                {/* Primary Oval Bar */}
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around">
                     <NavLink href="/dashboard" currentPath={pathname}>
                         <LayoutDashboard className="h-5 w-5" />
                         <span className="text-xs">Dashboard</span>
@@ -135,6 +131,7 @@ export function BottomNav() {
                     </button>
                 </div>
             
+                {/* Floating Action Button */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[75%] h-[72px] w-[72px] flex items-center justify-center z-10">
                      {isTransactionsPage ? (
                     <AddExpenseDialog onSaveSuccess={handleDataChange}>

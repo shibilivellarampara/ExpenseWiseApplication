@@ -248,10 +248,6 @@ export default function AnalysisPage() {
                     return false;
                 }
                 if (selectedTags.length > 0) {
-                     if (selectedTags.includes('__none__')) {
-                        // If 'No Tag' is selected, only include expenses with no tags
-                        return !expense.tagIds || expense.tagIds.length === 0;
-                    }
                     if (!expense.tagIds || expense.tagIds.length === 0) return false;
                     const hasMatchingTag = expense.tagIds.some(tagId => selectedTags.includes(tagId));
                     if (!hasMatchingTag) return false;
@@ -309,11 +305,7 @@ export default function AnalysisPage() {
     }
     
     const handleTagSelectChange = (tagId: string) => {
-        if (tagId === 'all') {
-            setSelectedTags([]);
-            return;
-        }
-         if (tagId === 'clear') {
+        if (tagId === 'clear') {
             setSelectedTags([]);
             return;
         }
@@ -427,34 +419,17 @@ export default function AnalysisPage() {
                             <Command>
                                 <CommandInput placeholder="Search tags..." />
                                 {selectedTags.length > 0 && (
-                                    <CommandGroup>
-                                        <CommandItem
-                                            onSelect={() => handleTagSelectChange('clear')}
-                                            className="flex justify-start items-center gap-2 cursor-pointer text-destructive"
-                                        >
-                                            <XCircle className="h-4 w-4" />
-                                            Clear Selection
-                                        </CommandItem>
-                                    </CommandGroup>
+                                    <CommandItem
+                                        onSelect={() => handleTagSelectChange('clear')}
+                                        className="flex justify-start items-center gap-2 cursor-pointer text-destructive"
+                                    >
+                                        <XCircle className="h-4 w-4" />
+                                        Clear Selection
+                                    </CommandItem>
                                 )}
                                 <CommandList>
                                     <CommandEmpty>No results found.</CommandEmpty>
                                     <CommandGroup>
-                                        <DropdownMenuSeparator className={cn(selectedTags.length === 0 && "hidden")} />
-                                        <CommandItem
-                                            onSelect={() => handleTagSelectChange('all')}
-                                            className="flex justify-between cursor-pointer"
-                                        >
-                                            All Tags
-                                            <Check className={cn("h-4 w-4", selectedTags.length === 0 ? "opacity-100" : "opacity-0")} />
-                                        </CommandItem>
-                                        <CommandItem
-                                            onSelect={() => handleTagSelectChange('__none__')}
-                                            className="flex justify-between cursor-pointer"
-                                        >
-                                            No Tag
-                                            <Check className={cn("h-4 w-4", selectedTags.includes('__none__') ? "opacity-100" : "opacity-0")} />
-                                        </CommandItem>
                                         {(tags || []).map(item => (
                                             <CommandItem
                                                 key={item.id}

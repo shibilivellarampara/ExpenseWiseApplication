@@ -23,93 +23,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle as Dialo
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-function AddOrEditItemDialog({
-    isOpen,
-    onOpenChange,
-    itemToEdit,
-    onSave,
-    itemType
-}: {
-    isOpen: boolean,
-    onOpenChange: (open: boolean) => void,
-    itemToEdit: { id: string, name: string, icon: string } | null,
-    onSave: (name: string, icon: string) => void,
-    itemType: 'Category' | 'Tag'
-}) {
-    const [name, setName] = useState('');
-    const [icon, setIcon] = useState(itemType === 'Category' ? 'Shapes' : 'Tag');
-    const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-
-    React.useEffect(() => {
-        if (isOpen) {
-            if (itemToEdit) {
-                setName(itemToEdit.name);
-                setIcon(itemToEdit.icon);
-            } else {
-                setName('');
-                setIcon(itemType === 'Category' ? 'Shapes' : 'Tag');
-            }
-        }
-    }, [isOpen, itemToEdit, itemType]);
-
-    const handleSave = async () => {
-        setIsSaving(true);
-        await onSave(name, icon);
-        setIsSaving(false);
-        onOpenChange(false);
-    };
-
-    const renderIcon = (iconName: string) => {
-        const IconComponent = (LucideIcons as any)[iconName];
-        return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitlePrimitive>{itemToEdit ? `Edit ${itemType}` : `Add New ${itemType}`}</DialogTitlePrimitive>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                    <Input
-                        placeholder={`${itemType} Name`}
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        autoFocus
-                    />
-                    <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start">
-                                {renderIcon(icon)}
-                                <span className="ml-2">{icon}</span>
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <ScrollArea className="h-72">
-                                <div className="grid grid-cols-5 gap-2 p-4">
-                                    {availableIcons.map(iconName => (
-                                        <Button key={iconName} variant="ghost" size="icon" onClick={() => { setIcon(iconName); setIconPopoverOpen(false); }}>
-                                            {renderIcon(iconName)}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </ScrollArea>
-                        </PopoverContent>
-                    </Popover>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={handleSave} disabled={isSaving || !name}>
-                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
 export function CategorySettings() {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -120,14 +33,17 @@ export function CategorySettings() {
         , [firestore, user]);
 
     const { data: categories, isLoading } = useCollection<Category>(categoriesQuery);
-
+    
+    const [newItemName, setNewItemName] = useState('');
+    const [newItemIcon, setNewItemIcon] = useState('Shapes');
     const [editingItem, setEditingItem] = useState<{ id: string; name: string; icon: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
+    const [editIconPopoverOpen, setEditIconPopoverOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showMergeDialog, setShowMergeDialog] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
 
     const SYSTEM_CATEGORIES = ['Credit Limit Upgrade', 'Credit Card Payment', 'Credit Limit Downgrade'];
@@ -137,47 +53,66 @@ export function CategorySettings() {
         return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
     };
     
-    const handleSaveItem = async (name: string, icon: string) => {
-        if (!name || !user || !firestore) return;
+    const handleAddItem = async () => {
+        if (!newItemName || !user || !firestore) return;
+
+        const isDuplicate = categories?.some(c => c.name.toLowerCase() === newItemName.toLowerCase());
+        if (isDuplicate) {
+            toast({
+                variant: 'destructive',
+                title: 'Duplicate Category',
+                description: `A category named "${newItemName}" already exists.`,
+            });
+            return;
+        }
+
+        setIsSaving(true);
+        const ref = collection(firestore, `users/${user.uid}/categories`);
+        const newDocRef = doc(ref);
+        const categoryData = { id: newDocRef.id, name: newItemName, icon: newItemIcon, userId: user.uid, status: 'active' };
         
+        try {
+            await setDocumentNonBlocking(newDocRef, categoryData);
+            toast({ title: 'Category Added' });
+            setNewItemName('');
+            setNewItemIcon('Shapes');
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+    
+    const handleUpdateItem = async () => {
+        if (!editingItem || !user || !firestore) return;
+
         const isDuplicate = categories?.some(c =>
-            c.name.toLowerCase() === name.toLowerCase() && c.id !== editingItem?.id
+            c.name.toLowerCase() === editingItem.name.toLowerCase() && c.id !== editingItem.id
         );
 
         if (isDuplicate) {
             toast({
                 variant: 'destructive',
                 title: 'Duplicate Category',
-                description: `A category named "${name}" already exists.`,
+                description: `A category named "${editingItem.name}" already exists.`,
             });
             return;
         }
-        
+
         setIsSaving(true);
-        
+        const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
+        const updatedData = { name: editingItem.name, icon: editingItem.icon };
+
         try {
-            if (editingItem) {
-                // Update existing item
-                const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
-                const updatedData = { name, icon };
-                await setDocumentNonBlocking(itemRef, updatedData, { merge: true });
-                toast({ title: "Category Updated" });
-            } else {
-                // Add new item
-                const ref = collection(firestore, `users/${user.uid}/categories`);
-                const newDocRef = doc(ref);
-                const categoryData = { id: newDocRef.id, name, icon, userId: user.uid, status: 'active' };
-                await setDocumentNonBlocking(newDocRef, categoryData);
-                toast({ title: 'Category Added' });
-            }
+            await setDocumentNonBlocking(itemRef, updatedData, { merge: true });
+            toast({ title: "Category Updated" });
+            setEditingItem(null);
         } catch (error: any) {
-             toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.'});
+            toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
         } finally {
             setIsSaving(false);
-            setEditingItem(null);
         }
     };
-
 
     const handleRemoveItem = async (itemId: string) => {
         if (!user || !firestore) return;
@@ -300,33 +235,45 @@ export function CategorySettings() {
 
     return (
         <div className="space-y-4">
-            <AddOrEditItemDialog 
-                isOpen={isAddDialogOpen || !!editingItem}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setIsAddDialogOpen(false);
-                        setEditingItem(null);
-                    }
-                }}
-                itemToEdit={editingItem}
-                onSave={handleSaveItem}
-                itemType="Category"
-            />
             <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-2">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search categories..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-8"
-                            />
-                        </div>
-                        <Button onClick={() => { setEditingItem(null); setIsAddDialogOpen(true); }}>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add New
+                <CardHeader className="space-y-4">
+                     <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search categories..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-8"
+                        />
+                    </div>
+                     <div className="flex items-center gap-2">
+                        <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" size="icon" className="h-10 w-10">
+                                    {renderIcon(newItemIcon)}
+                                </Button>
+                            </PopoverTrigger>
+                           <PopoverContent className="w-auto p-0">
+                                <ScrollArea className="h-72">
+                                    <div className="grid grid-cols-5 gap-2 p-4">
+                                        {availableIcons.map(iconName => (
+                                            <Button key={iconName} variant="ghost" size="icon" onClick={() => { setNewItemIcon(iconName); setIconPopoverOpen(false); }}>
+                                                {renderIcon(iconName)}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
+                            </PopoverContent>
+                        </Popover>
+                        <Input
+                            placeholder="New Category Name"
+                            value={newItemName}
+                            onChange={(e) => setNewItemName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
+                            className="flex-grow"
+                        />
+                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName}>
+                            {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
                         </Button>
                     </div>
                 </CardHeader>
@@ -335,30 +282,13 @@ export function CategorySettings() {
                         <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
                     ) : (
                         <>
-                            <div className="flex items-center justify-between px-2">
-                                <div className="flex items-center gap-2">
-                                    <Checkbox
-                                        id="select-all-categories"
-                                        checked={selectedIds.length === activeCategories.length && activeCategories.length > 0}
-                                        onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.map(c => c.id) : [])}
-                                    />
-                                    <label htmlFor="select-all-categories" className="text-sm font-medium">Select All</label>
-                                </div>
-                                {selectedIds.length > 1 && (
-                                     <MergeItemsDialog
-                                        open={showMergeDialog}
-                                        onOpenChange={setShowMergeDialog}
-                                        items={categories?.filter(c => selectedIds.includes(c.id)) || []}
-                                        itemType="Category"
-                                        onMerge={handleMerge}
-                                        isSaving={isSaving}
-                                    >
-                                        <Button variant="outline" size="sm">
-                                            <Merge className="mr-2 h-4 w-4" />
-                                            Merge ({selectedIds.length})
-                                        </Button>
-                                    </MergeItemsDialog>
-                                )}
+                            <div className="flex items-center px-2">
+                                <Checkbox
+                                    id="select-all-categories"
+                                    checked={selectedIds.length === activeCategories.length && activeCategories.length > 0}
+                                    onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.map(c => c.id) : [])}
+                                />
+                                <label htmlFor="select-all-categories" className="text-sm font-medium ml-2">Select All</label>
                             </div>
                             {activeCategories.map((item, index) => (
                                 <div key={item.id}>
@@ -369,41 +299,94 @@ export function CategorySettings() {
                                             onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
                                             disabled={isSaving}
                                         />
-                                        <div className="flex items-center flex-1 gap-2">
-                                            {renderIcon(item.icon)}
-                                            <span>{item.name}</span>
-                                            {SYSTEM_CATEGORIES.includes(item.name) && (
-                                                <Badge variant="secondary">System</Badge>
-                                            )}
-                                        </div>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                         <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
-                                            <Archive className="h-4 w-4" />
-                                        </Button>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" type="button" disabled={SYSTEM_CATEGORIES.includes(item.name)}>
-                                                    <Trash2 className="h-4 w-4" />
+                                        {editingItem?.id === item.id ? (
+                                            <>
+                                                <Popover open={editIconPopoverOpen} onOpenChange={setEditIconPopoverOpen}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="outline" size="icon" className="h-8 w-8">
+                                                            {renderIcon(editingItem.icon)}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0">
+                                                        <ScrollArea className="h-72">
+                                                            <div className="grid grid-cols-5 gap-2 p-4">
+                                                                {availableIcons.map(iconName => (
+                                                                    <Button key={iconName} variant="ghost" size="icon" onClick={() => { setEditingItem({ ...editingItem, icon: iconName }); setEditIconPopoverOpen(false); }}>
+                                                                        {renderIcon(iconName)}
+                                                                    </Button>
+                                                                ))}
+                                                            </div>
+                                                        </ScrollArea>
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <Input
+                                                    value={editingItem.name}
+                                                    onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                                    className="h-8"
+                                                />
+                                                <Button size="icon" className="h-8 w-8" onClick={handleUpdateItem}>
+                                                    {isSaving ? <Loader2 className="animate-spin" /> : <Check className="h-4 w-4" />}
                                                 </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        This action cannot be undone. This will permanently delete the "{item.name}" category.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleRemoveItem(item.id)} className="bg-destructive hover:bg-destructive/90">
-                                                        {isSaving ? <Loader2 className="animate-spin" /> : "Delete"}
-                                                    </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingItem(null)}>
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="flex items-center flex-1 gap-2">
+                                                    {renderIcon(item.icon)}
+                                                    <span>{item.name}</span>
+                                                    {SYSTEM_CATEGORIES.includes(item.name) && (
+                                                        <Badge variant="secondary">System</Badge>
+                                                    )}
+                                                </div>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                 <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
+                                                    <Archive className="h-4 w-4" />
+                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon" type="button" disabled={SYSTEM_CATEGORIES.includes(item.name)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This action cannot be undone. This will permanently delete the "{item.name}" category.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleRemoveItem(item.id)} className="bg-destructive hover:bg-destructive/90">
+                                                                {isSaving ? <Loader2 className="animate-spin" /> : "Delete"}
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </>
+                                        )}
                                     </div>
+                                    {index === lastSelectedIndex && selectedIds.length > 1 && (
+                                        <div className="pt-2 pl-8">
+                                            <MergeItemsDialog
+                                                open={showMergeDialog}
+                                                onOpenChange={setShowMergeDialog}
+                                                items={categories?.filter(c => selectedIds.includes(c.id)) || []}
+                                                itemType="Category"
+                                                onMerge={handleMerge}
+                                                isSaving={isSaving}
+                                            >
+                                                <Button variant="outline" size="sm">
+                                                    <Merge className="mr-2 h-4 w-4" />
+                                                    Merge {selectedIds.length} selected categories
+                                                </Button>
+                                            </MergeItemsDialog>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                              {activeCategories.length === 0 && searchQuery && (

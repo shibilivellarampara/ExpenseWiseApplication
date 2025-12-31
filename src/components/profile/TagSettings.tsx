@@ -36,6 +36,7 @@ export function TagSettings() {
     const [editingItem, setEditingItem] = useState<{ id: string; name: string; icon: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
+    const [editIconPopoverOpen, setEditIconPopoverOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showMergeDialog, setShowMergeDialog] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
@@ -237,7 +238,7 @@ export function TagSettings() {
                     <div className="flex items-center gap-2">
                         <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
                             <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-10 w-10">
+                                <Button variant="outline" size="icon" className="h-10 w-10">
                                     {renderIcon(newItemIcon)}
                                 </Button>
                             </PopoverTrigger>
@@ -270,30 +271,13 @@ export function TagSettings() {
                         <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
                     ) : (
                         <>
-                            <div className="flex items-center justify-between px-2">
-                                <div className="flex items-center gap-2">
-                                    <Checkbox
-                                        id="select-all-tags"
-                                        checked={selectedIds.length === activeTags.length && activeTags.length > 0}
-                                        onCheckedChange={(checked) => setSelectedIds(checked ? activeTags.map(c => c.id) : [])}
-                                    />
-                                    <label htmlFor="select-all-tags" className="text-sm font-medium">Select All</label>
-                                </div>
-                                {selectedIds.length > 1 && (
-                                     <MergeItemsDialog
-                                        open={showMergeDialog}
-                                        onOpenChange={setShowMergeDialog}
-                                        items={items?.filter(c => selectedIds.includes(c.id)) || []}
-                                        itemType="Tag"
-                                        onMerge={handleMerge}
-                                        isSaving={isSaving}
-                                    >
-                                        <Button variant="outline" size="sm">
-                                            <Merge className="mr-2 h-4 w-4" />
-                                            Merge ({selectedIds.length})
-                                        </Button>
-                                    </MergeItemsDialog>
-                                )}
+                            <div className="flex items-center px-2">
+                                <Checkbox
+                                    id="select-all-tags"
+                                    checked={selectedIds.length === activeTags.length && activeTags.length > 0}
+                                    onCheckedChange={(checked) => setSelectedIds(checked ? activeTags.map(c => c.id) : [])}
+                                />
+                                <label htmlFor="select-all-tags" className="text-sm font-medium ml-2">Select All</label>
                             </div>
                             {activeTags.map((item, index) => (
                                 <div key={item.id}>
@@ -306,9 +290,9 @@ export function TagSettings() {
                                         />
                                         {editingItem?.id === item.id ? (
                                             <>
-                                                <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
+                                                <Popover open={editIconPopoverOpen} onOpenChange={setEditIconPopoverOpen}>
                                                     <PopoverTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                        <Button variant="outline" size="icon" className="h-8 w-8">
                                                             {renderIcon(editingItem.icon)}
                                                         </Button>
                                                     </PopoverTrigger>
@@ -316,7 +300,7 @@ export function TagSettings() {
                                                         <ScrollArea className="h-72">
                                                             <div className="grid grid-cols-5 gap-2 p-4">
                                                                 {availableIcons.map(iconName => (
-                                                                    <Button key={iconName} variant="ghost" size="icon" onClick={() => { setEditingItem({ ...editingItem, icon: iconName }); setIconPopoverOpen(false); }}>
+                                                                    <Button key={iconName} variant="ghost" size="icon" onClick={() => { setEditingItem({ ...editingItem, icon: iconName }); setEditIconPopoverOpen(false); }}>
                                                                         {renderIcon(iconName)}
                                                                     </Button>
                                                                 ))}

@@ -3,7 +3,7 @@
 
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, TrendingDown, TrendingUp } from 'lucide-react';
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from '@/firebase';
 import { Asset, UserProfile, Account } from '@/lib/types';
 import { collection, orderBy, query, doc } from 'firebase/firestore';
@@ -19,8 +19,6 @@ function AssetsPageSkeleton() {
     return (
         <div className="space-y-8">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Skeleton className="h-24" />
-                <Skeleton className="h-24" />
                 <Skeleton className="h-24" />
                 <Skeleton className="h-24" />
             </div>
@@ -100,14 +98,25 @@ export default function AssetsPage() {
                                 <CardTitle className="text-sm font-medium">Net Assets</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{currencySymbol}{totalNetAssets.toFixed(2)}</div>
-                                 <p className={cn(
-                                        "text-xs text-muted-foreground",
+                                <div className="flex justify-between items-end">
+                                    <div>
+                                        <div className="text-2xl font-bold">{currencySymbol}{totalNetAssets.toFixed(2)}</div>
+                                        <p className="text-xs text-muted-foreground">Total Invested: {currencySymbol}{totalInvested.toFixed(2)}</p>
+                                    </div>
+                                    <div className={cn(
+                                        "flex flex-col items-end text-xs",
                                         overallGainLoss > 0 && "text-green-600",
                                         overallGainLoss < 0 && "text-red-500"
                                     )}>
-                                        {overallGainLoss >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(overallGainLoss).toFixed(2)} ({overallReturn.toFixed(2)}%)
-                                    </p>
+                                        <div className="flex items-center gap-1 font-semibold">
+                                             {overallGainLoss > 0 ? <TrendingUp className="h-4 w-4"/> : overallGainLoss < 0 ? <TrendingDown className="h-4 w-4"/> : null}
+                                             <span>({overallReturn.toFixed(2)}%)</span>
+                                        </div>
+                                        <span>
+                                            {overallGainLoss >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(overallGainLoss).toFixed(2)}
+                                        </span>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                          <Card>

@@ -147,16 +147,14 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                     <CardDescription>{currencySymbol}{categoryTotal.toFixed(2)}</CardDescription>
                                 </div>
                             </div>
-                            <div className="flex items-center">
-                                {assetType !== 'savings_cash' && (
+                           <div className="flex items-center">
+                                {assetType !== 'savings_cash' ? (
                                     <AddAssetDialog initialAssetType={assetType}>
-                                        <Button variant="ghost" size="sm">
-                                            <PlusCircle className="mr-2 h-4 w-4" />
-                                            Add
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <PlusCircle className="h-5 w-5" />
                                         </Button>
                                     </AddAssetDialog>
-                                )}
-                                {assetType === 'savings_cash' && (
+                                ) : (
                                      <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>

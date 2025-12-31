@@ -5,10 +5,23 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.7.0";
+const appVersion = "1.7.1";
 
 
 const changelog = [
+    {
+        version: "1.7.1",
+        date: "2026-01-01",
+        changes: [
+            { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other forms in the application." },
+            { type: 'UI/UX', description: "Improved user feedback by ensuring both 'Save' and 'Save and New' buttons show a loading animation during transaction submission." },
+            { type: 'UI/UX', description: "Made the main application header static for consistent visibility while scrolling." },
+            { type: 'UI/UX', description: "Added a clear button next to the tag filter on the Analysis page to easily deselect all tags." },
+            { type: 'Fix', description: "Disabled the long-press context menu on mobile navigation to provide a more app-like experience." },
+            { type: 'Fix', description: "Resolved a build error in the 'Add Asset' form caused by a missing component import." },
+            { type: 'Fix', description: "Corrected the Google Drive export to open the file link in the same tab instead of a new one." },
+        ]
+    },
     {
         version: "1.7.0",
         date: "2025-12-31",
@@ -467,3 +480,5 @@ export default function AboutPage() {
     );
 
 }
+
+    

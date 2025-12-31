@@ -322,11 +322,10 @@ export function ProfileForm() {
                         <CardDescription className="text-sm">Update your personal information.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0 space-y-4">
-                        <div className="space-y-2">
-                            <Label>Profile Picture</Label>
+                       <div className="flex flex-col sm:flex-row items-center gap-6">
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <button type="button" className="relative h-24 w-24 rounded-full">
+                                    <button type="button" className="relative h-24 w-24 rounded-full flex-shrink-0">
                                         <Avatar className="h-24 w-24">
                                             <AvatarImage src={currentPhoto ?? undefined} alt={nameInput || 'User'} />
                                             <AvatarFallback>{getInitials(nameInput)}</AvatarFallback>
@@ -379,22 +378,23 @@ export function ProfileForm() {
                                     </div>
                                 </PopoverContent>
                             </Popover>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Name</Label>
-                            <Input id="name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} disabled={isLoading} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="defaultCurrency">Default Currency</Label>
-                            <Select onValueChange={setSelectedCurrency} value={displayCurrency} disabled={isLoading}>
-                                <SelectTrigger id="defaultCurrency">
-                                    <SelectValue placeholder="Select a currency" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                             <div className="w-full space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="name">Name</Label>
+                                    <Input id="name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} disabled={isLoading} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="defaultCurrency">Default Currency</Label>
+                                    <Select onValueChange={setSelectedCurrency} value={displayCurrency} disabled={isLoading}>
+                                        <SelectTrigger id="defaultCurrency">
+                                            <SelectValue placeholder="Select a currency" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
                         </div>
                     </CardContent>
                     <CardFooter className="border-t p-4 flex justify-end">

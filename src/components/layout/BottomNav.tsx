@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -15,8 +14,6 @@ import {
   HandCoins,
   Settings,
   X,
-  Building2,
-  FileUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -29,7 +26,6 @@ import { useState, useRef, useEffect } from 'react';
 const primaryNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/analysis', icon: BarChartHorizontal, label: 'Analysis' },
-  { href: '/accounts', icon: Wallet, label: 'Accounts' },
 ];
 
 const secondaryNavItems = [
@@ -93,7 +89,7 @@ export function BottomNav() {
                 "transition-all duration-200 ease-in-out w-full mb-2",
                 isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
             )}>
-                 <div className="bg-background/90 backdrop-blur-md rounded-xl shadow-lg ring-1 ring-black/5 flex justify-around items-center h-16">
+                 <div className="bg-background/95 backdrop-blur-md rounded-xl shadow-lg ring-1 ring-black/5 flex justify-around items-center h-16">
                     {secondaryNavItems.map(({ href, icon: Icon, label }) => (
                          <NavLink key={href} href={href} currentPath={pathname} className="w-20" onClick={() => setIsExpanded(false)}>
                             <Icon className="h-5 w-5" />
@@ -104,8 +100,8 @@ export function BottomNav() {
             </div>
 
             {/* Primary Nav Bar (Oval) */}
-            <div className="relative bg-background/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 h-16 flex items-center justify-around">
-
+            <div className="relative bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 h-16 flex items-center justify-around">
+                
                 {/* Left side */}
                 <div className="flex justify-around flex-1">
                      <NavLink href="/dashboard" currentPath={pathname}>
@@ -140,9 +136,9 @@ export function BottomNav() {
                     </button>
                 </div>
             </div>
-
-             {/* FAB Container */}
-            <div className="absolute left-1/2 -translate-x-1/2 top-0.5 z-10">
+            
+            {/* FAB Container - Positioned relative to the primary bar */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-0 -translate-y-1/2 z-10">
                  {isTransactionsPage ? (
                     <AddExpenseDialog onSaveSuccess={handleDataChange}>
                         <Button

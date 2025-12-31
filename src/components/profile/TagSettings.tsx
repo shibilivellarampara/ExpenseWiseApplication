@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError, setDocumentNonBlocking } from '@/firebase';
@@ -222,42 +223,41 @@ export function TagSettings() {
     return (
         <div className="space-y-4">
             <Card>
-                <CardHeader>
-                     <div className="flex items-center gap-2">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search tags..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-8"
-                            />
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-10 w-10">
-                                        {renderIcon(newItemIcon)}
+                <CardHeader className="space-y-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search tags..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-8"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-10 w-10">
+                                    {renderIcon(newItemIcon)}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                                {availableIcons.map(icon => (
+                                    <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItemIcon(icon)}>
+                                        {renderIcon(icon)}
                                     </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                    {availableIcons.map(icon => (
-                                        <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItemIcon(icon)}>
-                                            {renderIcon(icon)}
-                                        </Button>
-                                    ))}
-                                </PopoverContent>
-                            </Popover>
-                            <Input
-                                placeholder="New Tag Name"
-                                value={newItemName}
-                                onChange={(e) => setNewItemName(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
-                            />
-                            <Button onClick={handleAddItem} disabled={isSaving || !newItemName}>
-                                {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
-                            </Button>
-                        </div>
+                                ))}
+                            </PopoverContent>
+                        </Popover>
+                        <Input
+                            placeholder="New Tag Name"
+                            value={newItemName}
+                            onChange={(e) => setNewItemName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
+                            className="flex-grow"
+                        />
+                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName}>
+                            {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
+                        </Button>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -265,13 +265,30 @@ export function TagSettings() {
                         <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
                     ) : (
                         <>
-                            <div className="flex items-center gap-2 px-2">
-                                <Checkbox
-                                    id="select-all-tags"
-                                    checked={selectedIds.length === activeTags.length && activeTags.length > 0}
-                                    onCheckedChange={(checked) => setSelectedIds(checked ? activeTags.map(c => c.id) : [])}
-                                />
-                                <label htmlFor="select-all-tags" className="text-sm font-medium">Select All</label>
+                            <div className="flex items-center justify-between px-2">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="select-all-tags"
+                                        checked={selectedIds.length === activeTags.length && activeTags.length > 0}
+                                        onCheckedChange={(checked) => setSelectedIds(checked ? activeTags.map(c => c.id) : [])}
+                                    />
+                                    <label htmlFor="select-all-tags" className="text-sm font-medium">Select All</label>
+                                </div>
+                                {selectedIds.length > 1 && (
+                                     <MergeItemsDialog
+                                        open={showMergeDialog}
+                                        onOpenChange={setShowMergeDialog}
+                                        items={items?.filter(c => selectedIds.includes(c.id)) || []}
+                                        itemType="Tag"
+                                        onMerge={handleMerge}
+                                        isSaving={isSaving}
+                                    >
+                                        <Button variant="outline" size="sm">
+                                            <Merge className="mr-2 h-4 w-4" />
+                                            Merge ({selectedIds.length})
+                                        </Button>
+                                    </MergeItemsDialog>
+                                )}
                             </div>
                             {activeTags.map((item, index) => (
                                 <div key={item.id}>
@@ -346,23 +363,6 @@ export function TagSettings() {
                                             </>
                                         )}
                                     </div>
-                                     {index === lastSelectedIndex && selectedIds.length > 1 && (
-                                        <div className="pt-2 pl-8">
-                                            <MergeItemsDialog
-                                                open={showMergeDialog}
-                                                onOpenChange={setShowMergeDialog}
-                                                items={items?.filter(c => selectedIds.includes(c.id)) || []}
-                                                itemType="Tag"
-                                                onMerge={handleMerge}
-                                                isSaving={isSaving}
-                                            >
-                                                <Button variant="outline" size="sm">
-                                                    <Merge className="mr-2 h-4 w-4" />
-                                                    Merge {selectedIds.length} selected tags
-                                                </Button>
-                                            </MergeItemsDialog>
-                                        </div>
-                                    )}
                                 </div>
                             ))}
                              {activeTags.length === 0 && searchQuery && (

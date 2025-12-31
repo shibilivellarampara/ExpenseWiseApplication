@@ -4,6 +4,9 @@
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 const appVersion = "1.7.1";
 
@@ -450,7 +453,14 @@ export default function AboutPage() {
             <PageHeader
                 title={`About ExpenseWise (v${appVersion})`}
                 description="Track features, updates, and bug fixes for your application."
-            />
+            >
+                <Button variant="outline" asChild>
+                    <Link href="/profile">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Settings
+                    </Link>
+                </Button>
+            </PageHeader>
 
             <div className="space-y-6">
                 {changelog.map(entry => (

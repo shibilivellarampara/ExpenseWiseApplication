@@ -292,142 +292,243 @@ export function ProfileForm() {
 
     if (isProfileLoading) {
         return (
-            <Card>
-                <CardHeader>
-                  <CardTitle className="text-base font-semibold">Profile Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 flex items-center justify-center py-10">
-                    <Loader2 className="mx-auto animate-spin" />
-                </CardContent>
-            </Card>
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base font-semibold">Profile Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 flex items-center justify-center py-10">
+                        <Loader2 className="mx-auto animate-spin" />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base font-semibold">Security</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 flex items-center justify-center py-10">
+                        <Loader2 className="mx-auto animate-spin" />
+                    </CardContent>
+                </Card>
+            </div>
         )
     }
 
     return (
-        <Card className="h-fit">
-             <form onSubmit={handleProfileSubmit}>
+        <div className="space-y-6">
+            <form onSubmit={handleProfileSubmit}>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base font-semibold">Profile Details</CardTitle>
+                        <CardDescription className="text-sm">Update your personal information.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0 space-y-4">
+                        <div className="space-y-2">
+                            <Label>Profile Picture</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <button type="button" className="relative h-24 w-24 rounded-full">
+                                        <Avatar className="h-24 w-24">
+                                            <AvatarImage src={currentPhoto ?? undefined} alt={nameInput || 'User'} />
+                                            <AvatarFallback>{getInitials(nameInput)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs font-semibold rounded-full opacity-0 hover:opacity-100 transition-opacity">
+                                            Change
+                                        </div>
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80">
+                                    <div className="grid gap-4">
+                                        <h4 className="font-medium leading-none">Change Avatar</h4>
+                                        <p className="text-sm text-muted-foreground">
+                                            Upload a custom photo or select a pre-designed avatar.
+                                        </p>
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={isLoading}
+                                        >
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            Upload from Gallery
+                                        </Button>
+                                        <Input 
+                                            type="file" 
+                                            ref={fileInputRef} 
+                                            onChange={handleFileChange}
+                                            className="hidden" 
+                                            accept="image/*"
+                                        />
+                                        <Separator />
+                                        <div className="flex justify-center gap-4">
+                                            {AvatarList.map((AvatarItem, index) => (
+                                                <button
+                                                    key={index}
+                                                    type="button"
+                                                    onClick={() => handleAvatarSelect(AvatarItem.svgString)}
+                                                    className={cn(
+                                                        "rounded-full p-1 ring-2 ring-transparent hover:ring-primary focus:ring-primary focus:outline-none transition-all",
+                                                        currentPhoto === `data:image/svg+xml;base64,${btoa(AvatarItem.svgString)}` && "ring-primary ring-offset-2"
+                                                    )}
+                                                >
+                                                <div className="w-16 h-16 rounded-full overflow-hidden">
+                                                        <AvatarItem.component />
+                                                </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Name</Label>
+                            <Input id="name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} disabled={isLoading} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="defaultCurrency">Default Currency</Label>
+                            <Select onValueChange={setSelectedCurrency} value={displayCurrency} disabled={isLoading}>
+                                <SelectTrigger id="defaultCurrency">
+                                    <SelectValue placeholder="Select a currency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="border-t p-4 flex justify-end">
+                        <Button type="submit" disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isUploading ? 'Uploading...' : 'Save Changes'}
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </form>
+            
+            <Card>
                 <CardHeader>
-                    <CardTitle className="text-base font-semibold">Profile Details</CardTitle>
-                    <CardDescription className="text-sm">Update your personal information.</CardDescription>
+                    <CardTitle className="text-base font-semibold">Security</CardTitle>
+                    <CardDescription className="text-sm">Manage your security settings.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-4">
                     <div className="space-y-2">
-                        <Label>Profile Picture</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <button type="button" className="relative h-24 w-24 rounded-full">
-                                    <Avatar className="h-24 w-24">
-                                        <AvatarImage src={currentPhoto ?? undefined} alt={nameInput || 'User'} />
-                                        <AvatarFallback>{getInitials(nameInput)}</AvatarFallback>
-                                    </Avatar>
-                                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs font-semibold rounded-full opacity-0 hover:opacity-100 transition-opacity">
-                                        Change
+                        <Label htmlFor="email">Email</Label>
+                            <div className="flex items-center gap-2">
+                            <Input id="email" type="email" value={userProfile?.email || user?.email || ''} disabled />
+                            <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+                                <DialogTrigger asChild>
+                                    <Button type="button" variant="outline">Edit</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Update Email</DialogTitle>
+                                        <DialogDescription>Enter a new email and your current password to make this change.</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                        <Input 
+                                            placeholder="New email address" 
+                                            type="email"
+                                            value={newEmail} 
+                                            onChange={(e) => setNewEmail(e.target.value)}
+                                        />
+                                        <Input 
+                                            placeholder="Current password" 
+                                            type="password"
+                                            value={currentPasswordForEmail} 
+                                            onChange={(e) => setCurrentPasswordForEmail(e.target.value)}
+                                        />
                                     </div>
-                                </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80">
-                                <div className="grid gap-4">
-                                    <h4 className="font-medium leading-none">Change Avatar</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                        Upload a custom photo or select a pre-designed avatar.
-                                    </p>
-                                    <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        onClick={() => fileInputRef.current?.click()}
-                                        disabled={isLoading}
-                                    >
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Upload from Gallery
-                                    </Button>
-                                    <Input 
-                                        type="file" 
-                                        ref={fileInputRef} 
-                                        onChange={handleFileChange}
-                                        className="hidden" 
-                                        accept="image/*"
+                                    <DialogFooter>
+                                        <Button onClick={handleEmailUpdate} disabled={isLoading}>
+                                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Save Changes
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <div className="flex items-center gap-2">
+                            <Input id="phone" type="tel" value={userProfile?.phoneNumber || 'Not provided'} disabled />
+                            <Dialog open={showPhoneDialog} onOpenChange={setShowPhoneDialog}>
+                                <DialogTrigger asChild>
+                                    <Button type="button" variant="outline">Edit</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Update Phone Number</DialogTitle>
+                                        <DialogDescription>Enter your new phone number with country code. A verification code will be sent.</DialogDescription>
+                                    </DialogHeader>
+                                        <PhoneInput
+                                        international
+                                        withCountryCallingCode
+                                        countryCallingCodeEditable={false}
+                                        defaultCountry="IN"
+                                        placeholder="Enter phone number"
+                                        value={newPhoneNumber}
+                                        onChange={setNewPhoneNumber}
+                                        className="mt-2"
+                                        inputComponent={MemoizedPhoneInput}
                                     />
-                                    <Separator />
-                                    <div className="flex justify-center gap-4">
-                                        {AvatarList.map((AvatarItem, index) => (
-                                            <button
-                                                key={index}
-                                                type="button"
-                                                onClick={() => handleAvatarSelect(AvatarItem.svgString)}
-                                                className={cn(
-                                                    "rounded-full p-1 ring-2 ring-transparent hover:ring-primary focus:ring-primary focus:outline-none transition-all",
-                                                    currentPhoto === `data:image/svg+xml;base64,${btoa(AvatarItem.svgString)}` && "ring-primary ring-offset-2"
-                                                )}
-                                            >
-                                               <div className="w-16 h-16 rounded-full overflow-hidden">
-                                                    <AvatarItem.component />
-                                               </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
+                                    <DialogFooter>
+                                        <Button onClick={handleSendPhoneVerification} disabled={isLoading}>
+                                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Send Code
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
-                        <Input id="name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} disabled={isLoading} />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="defaultCurrency">Default Currency</Label>
-                        <Select onValueChange={setSelectedCurrency} value={displayCurrency} disabled={isLoading}>
-                            <SelectTrigger id="defaultCurrency">
-                                <SelectValue placeholder="Select a currency" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </CardContent>
-                <CardFooter className="border-t p-4 flex justify-end">
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {isUploading ? 'Uploading...' : 'Save Changes'}
-                    </Button>
-                </CardFooter>
-            </form>
-            <Separator />
-             <CardHeader>
-                <CardTitle className="text-base font-semibold">Security</CardTitle>
-                <CardDescription className="text-sm">Manage your security settings.</CardDescription>
-            </CardHeader>
-             <CardContent className="p-4 pt-0 space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                        <div className="flex items-center gap-2">
-                        <Input id="email" type="email" value={userProfile?.email || user?.email || ''} disabled />
-                        <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+                        <Label>Password</Label>
+                        <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
                             <DialogTrigger asChild>
-                                <Button type="button" variant="outline">Edit</Button>
+                                <Button type="button" variant="outline" className="w-full">Change Password</Button>
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>Update Email</DialogTitle>
-                                    <DialogDescription>Enter a new email and your current password to make this change.</DialogDescription>
+                                    <DialogTitle>Change Your Password</DialogTitle>
+                                    <DialogDescription>
+                                        Enter your current password and a new password below.
+                                    </DialogDescription>
                                 </DialogHeader>
-                                <div className="space-y-4">
-                                    <Input 
-                                        placeholder="New email address" 
-                                        type="email"
-                                        value={newEmail} 
-                                        onChange={(e) => setNewEmail(e.target.value)}
-                                    />
-                                    <Input 
-                                        placeholder="Current password" 
-                                        type="password"
-                                        value={currentPasswordForEmail} 
-                                        onChange={(e) => setCurrentPasswordForEmail(e.target.value)}
-                                    />
+                                <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="current-password">Current Password</Label>
+                                        <Input
+                                            id="current-password"
+                                            type="password"
+                                            value={currentPasswordForPassword}
+                                            onChange={(e) => setCurrentPasswordForPassword(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new-password">New Password</Label>
+                                        <Input
+                                            id="new-password"
+                                            type="password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="confirm-password">Confirm New Password</Label>
+                                        <Input
+                                            id="confirm-password"
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
                                 <DialogFooter>
-                                    <Button onClick={handleEmailUpdate} disabled={isLoading}>
+                                    <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>Cancel</Button>
+                                    <Button onClick={handlePasswordChange} disabled={isLoading || !currentPasswordForPassword || !newPassword || !confirmPassword}>
                                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         Save Changes
                                     </Button>
@@ -435,96 +536,10 @@ export function ProfileForm() {
                             </DialogContent>
                         </Dialog>
                     </div>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <div className="flex items-center gap-2">
-                        <Input id="phone" type="tel" value={userProfile?.phoneNumber || 'Not provided'} disabled />
-                        <Dialog open={showPhoneDialog} onOpenChange={setShowPhoneDialog}>
-                            <DialogTrigger asChild>
-                                <Button type="button" variant="outline">Edit</Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Update Phone Number</DialogTitle>
-                                    <DialogDescription>Enter your new phone number with country code. A verification code will be sent.</DialogDescription>
-                                </DialogHeader>
-                                    <PhoneInput
-                                    international
-                                    withCountryCallingCode
-                                    countryCallingCodeEditable={false}
-                                    defaultCountry="IN"
-                                    placeholder="Enter phone number"
-                                    value={newPhoneNumber}
-                                    onChange={setNewPhoneNumber}
-                                    className="mt-2"
-                                    inputComponent={MemoizedPhoneInput}
-                                />
-                                <DialogFooter>
-                                    <Button onClick={handleSendPhoneVerification} disabled={isLoading}>
-                                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Send Code
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-                </div>
+                </CardContent>
+            </Card>
 
-                <div className="space-y-2">
-                    <Label>Password</Label>
-                    <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-                        <DialogTrigger asChild>
-                            <Button type="button" variant="outline" className="w-full">Change Password</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Change Your Password</DialogTitle>
-                                <DialogDescription>
-                                    Enter your current password and a new password below.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="current-password">Current Password</Label>
-                                    <Input
-                                        id="current-password"
-                                        type="password"
-                                        value={currentPasswordForPassword}
-                                        onChange={(e) => setCurrentPasswordForPassword(e.target.value)}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="new-password">New Password</Label>
-                                    <Input
-                                        id="new-password"
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="confirm-password">Confirm New Password</Label>
-                                    <Input
-                                        id="confirm-password"
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>Cancel</Button>
-                                <Button onClick={handlePasswordChange} disabled={isLoading || !currentPasswordForPassword || !newPassword || !confirmPassword}>
-                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Save Changes
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            </CardContent>
-             <Dialog open={showOtpDialog} onOpenChange={setShowOtpDialog}>
+            <Dialog open={showOtpDialog} onOpenChange={setShowOtpDialog}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Enter Verification Code</DialogTitle>
@@ -551,6 +566,6 @@ export function ProfileForm() {
                 </DialogContent>
             </Dialog>
             <div ref={recaptchaContainerRef}></div>
-        </Card>
+        </div>
     );
 }

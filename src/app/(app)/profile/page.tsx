@@ -16,7 +16,7 @@ const settingsLinks = [
     { href: '/profile/categories', icon: Cog, title: 'Categories', description: 'Manage your expense categories.' },
     { href: '/profile/tags', icon: Tags, title: 'Tags', description: 'Manage your expense tags/labels.' },
     { href: '/data', icon: FileUp, title: 'Import & Export', description: 'Backup, restore, or import data.' },
-    { href: '/about', icon: Info, title: 'About & Changelog', description: 'View application details and version history.' },
+    { href: '/about', icon: Info, title: 'About', description: 'View application details and version history.' },
     { href: '/profile/data', icon: Database, title: 'Data Management', description: 'Reset or delete your account data.' },
 ]
 
@@ -51,4 +51,3 @@ export default function ProfilePage() {
         </div>
     );
 }
-

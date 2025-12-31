@@ -36,13 +36,13 @@ const secondaryNavItems = [
     { href: '/profile', icon: Settings, label: 'Settings'},
 ];
 
-const NavLink = ({ href, currentPath, children, isExpanded, onClick }: { href: string; currentPath: string; children: React.ReactNode; isExpanded?: boolean; onClick?: () => void; }) => {
+const NavLink = ({ href, currentPath, children }: { href: string; currentPath: string; children: React.ReactNode; }) => {
     const isActive = href === '/transactions' 
         ? currentPath.startsWith('/transactions') || currentPath.startsWith('/expenses')
         : currentPath.startsWith(href);
         
     return (
-        <Link href={href} className={cn("flex flex-col items-center justify-center gap-1 text-xs font-medium w-16 h-full transition-colors", isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary')} onClick={onClick} onContextMenu={(e) => e.preventDefault()}>
+        <Link href={href} className={cn("flex flex-col items-center justify-center gap-1 text-sm font-medium w-16 h-full transition-colors", isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary')} onContextMenu={(e) => e.preventDefault()}>
             {children}
         </Link>
     )
@@ -84,13 +84,13 @@ export function BottomNav() {
   const isTransactionsPage = pathname.startsWith('/expenses') || pathname.startsWith('/transactions');
   
   return (
-    <div ref={navRef} className="fixed bottom-0 left-0 right-0 z-40 px-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
+    <div ref={navRef} className="fixed bottom-4 left-0 right-0 z-40 px-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom))' }}>
       <div className="relative mx-auto w-full max-w-sm">
 
         {/* Secondary Navigation Row (conditionally rendered) */}
         <div 
             className={cn(
-                "grid grid-cols-4 items-center bg-background/95 backdrop-blur-md border-x border-t rounded-t-2xl h-16 transition-all duration-200 ease-in-out",
+                "flex justify-around items-center bg-background/95 backdrop-blur-md border-x border-t rounded-t-2xl h-16 transition-all duration-200 ease-in-out",
                 isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
             )}
             style={{
@@ -99,7 +99,7 @@ export function BottomNav() {
             }}
         >
             {secondaryNavItems.map(({ href, icon: Icon, label }) => (
-                <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors" onClick={() => setIsExpanded(false)}>
+                <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors h-full" onClick={() => setIsExpanded(false)}>
                     <Icon className="h-4 w-4" />
                     <span className="text-xs">{label}</span>
                 </Link>
@@ -130,7 +130,7 @@ export function BottomNav() {
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className={cn(
-                        'flex flex-col items-center justify-center gap-1 text-xs font-medium w-16 h-full transition-colors',
+                        'flex flex-col items-center justify-center gap-1 text-sm font-medium w-16 h-full transition-colors',
                         isExpanded ? 'text-primary' : 'text-muted-foreground hover:text-primary'
                         )}
                         onContextMenu={(e) => e.preventDefault()}

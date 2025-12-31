@@ -84,7 +84,7 @@ export function BottomNav() {
   const isTransactionsPage = pathname.startsWith('/expenses') || pathname.startsWith('/transactions');
   
   return (
-    <div ref={navRef} className="fixed bottom-2 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-sm" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom))' }}>
+    <div ref={navRef} className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-sm" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom))' }}>
         <div className="relative mx-auto w-full">
             
             {/* Secondary Navigation Row */}
@@ -106,37 +106,33 @@ export function BottomNav() {
 
             {/* Primary Navigation Container */}
              <div className="relative h-16">
-                <div className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center">
-                    <div className="flex justify-around flex-1">
-                        <NavLink href="/dashboard" currentPath={pathname}>
-                            <LayoutDashboard className="h-5 w-5" />
-                            <span className="text-xs">Dashboard</span>
-                        </NavLink>
-                        <NavLink href="/analysis" currentPath={pathname}>
-                            <BarChartHorizontal className="h-5 w-5" />
-                            <span className="text-xs">Analysis</span>
-                        </NavLink>
-                    </div>
+                <div className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around">
+                    <NavLink href="/dashboard" currentPath={pathname}>
+                        <LayoutDashboard className="h-5 w-5" />
+                        <span className="text-xs">Dashboard</span>
+                    </NavLink>
+                    <NavLink href="/analysis" currentPath={pathname}>
+                        <BarChartHorizontal className="h-5 w-5" />
+                        <span className="text-xs">Analysis</span>
+                    </NavLink>
+                    
+                    <div className="w-20" /> 
 
-                    <div className="w-20 flex-shrink-0" />
-
-                    <div className="flex justify-around flex-1">
-                        <NavLink href="/accounts" currentPath={pathname}>
-                            <Wallet className="h-5 w-5" />
-                            <span className="text-xs">Accounts</span>
-                        </NavLink>
-                        <button
-                            onClick={() => setIsExpanded(!isExpanded)}
-                            className={cn(
-                            'flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors',
-                            isExpanded ? 'text-primary' : 'text-muted-foreground hover:text-primary'
-                            )}
-                            onContextMenu={(e) => e.preventDefault()}
-                        >
-                            <MoreHorizontal className={cn("h-5 w-5 transition-transform", isExpanded && "rotate-180")} />
-                            <span className="text-xs">More</span>
-                        </button>
-                    </div>
+                    <NavLink href="/accounts" currentPath={pathname}>
+                        <Wallet className="h-5 w-5" />
+                        <span className="text-xs">Accounts</span>
+                    </NavLink>
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className={cn(
+                        'flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors',
+                        isExpanded ? 'text-primary' : 'text-muted-foreground hover:text-primary'
+                        )}
+                        onContextMenu={(e) => e.preventDefault()}
+                    >
+                        <MoreHorizontal className={cn("h-5 w-5 transition-transform", isExpanded && "rotate-180")} />
+                        <span className="text-xs">More</span>
+                    </button>
                 </div>
             
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[75%] h-[72px] w-[72px] flex items-center justify-center z-10">

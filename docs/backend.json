@@ -135,7 +135,6 @@
         "currentValue": { "type": "number", "description": "The current market value of the asset." },
         "quantity": { "type": "number", "description": "The quantity of the asset held (e.g., number of stocks)." },
         "startDate": { "type": "string", "format": "date-time", "description": "The date the asset was acquired or started." },
-        "maturityDate": { "type": "string", "format": "date-time", "description": "The maturity date for fixed income assets." },
         "notes": { "type": "string", "description": "User's personal notes about the asset." },
         "lastUpdated": { "type": "string", "format": "date-time", "description": "The timestamp of the last update." }
       },

@@ -159,15 +159,13 @@ export type Asset = {
     currentValue: number;
     quantity?: number;
     startDate?: Timestamp;
-    maturityDate?: Timestamp;
     notes?: string;
     lastUpdated: Timestamp;
     isFromAccount?: boolean; // Custom property
 };
 
-export type EnrichedAsset = Omit<Asset, 'startDate' | 'maturityDate' | 'lastUpdated'> & {
+export type EnrichedAsset = Omit<Asset, 'startDate' | 'lastUpdated'> & {
     startDate?: Date;
-    maturityDate?: Date;
     lastUpdated: Date;
 };
 

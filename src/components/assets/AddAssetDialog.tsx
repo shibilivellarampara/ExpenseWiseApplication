@@ -37,7 +37,6 @@ const assetSchema = z.object({
   currentValue: z.coerce.number().optional(),
   quantity: z.coerce.number().optional(),
   startDate: z.date().optional().nullable(),
-  maturityDate: z.date().optional().nullable(),
   notes: z.string().optional(),
 });
 
@@ -128,7 +127,6 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
             currentValue: undefined,
             quantity: undefined,
             startDate: undefined,
-            maturityDate: undefined,
             notes: '',
         },
     });
@@ -143,7 +141,6 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                     currentValue: assetToEdit.currentValue,
                     quantity: assetToEdit.quantity || undefined,
                     startDate: assetToEdit.startDate,
-                    maturityDate: assetToEdit.maturityDate,
                     notes: assetToEdit.notes || '',
                 });
             } else {
@@ -154,7 +151,6 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                     currentValue: '' as any,
                     quantity: '' as any,
                     startDate: null,
-                    maturityDate: null,
                     notes: '',
                 });
             }
@@ -299,30 +295,17 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                                 </FormItem>
                             )}
                         />
-                        <div className="grid grid-cols-2 gap-4">
-                             <FormField
-                                control={form.control}
-                                name="startDate"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <ShadcnLabel>Start Date</ShadcnLabel>
-                                        <DateTimePicker field={field} />
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="maturityDate"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <ShadcnLabel>Maturity Date</ShadcnLabel>
-                                        <DateTimePicker field={field} />
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                        <FormField
+                            control={form.control}
+                            name="startDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <ShadcnLabel>Start Date</ShadcnLabel>
+                                    <DateTimePicker field={field} />
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField
                             control={form.control}
                             name="notes"

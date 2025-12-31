@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -76,13 +75,14 @@ export function BottomNav() {
     <div
       ref={navRef}
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-40 bg-background/80 shadow-lg ring-1 ring-black/5 backdrop-blur-md transition-[height] duration-200 ease-in-out',
+        'fixed bottom-0 left-0 right-0 z-40 bg-background/80 shadow-lg ring-1 ring-black/5 backdrop-blur-md transition-[height] duration-200 ease-in-out rounded-t-2xl',
         isExpanded ? 'h-36' : 'h-20'
       )}
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      {/* FAB - Positioned relative to the main container */}
-      <div className="absolute left-1/2 -translate-x-1/2 -top-8 z-10">
+      <div className="relative h-full w-full">
+        {/* FAB Container */}
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 z-10">
          {isTransactionsPage ? (
             <AddExpenseDialog onSaveSuccess={handleDataChange}>
                 <Button
@@ -109,78 +109,79 @@ export function BottomNav() {
         )}
       </div>
 
-      <div className="relative flex flex-col h-full justify-end">
-        {/* Secondary Row (Top) - Expands */}
-        <div
-          className={cn(
-            'flex items-center justify-around h-16 w-full px-2 transition-opacity duration-150',
-            isExpanded ? 'opacity-100' : 'opacity-0'
-          )}
-        >
-          {secondaryNavItems.map(({ href, icon: Icon, label }) => (
+        <div className="flex h-full flex-col justify-end">
+          {/* Secondary Row (Top) - Expands */}
+          <div
+            className={cn(
+              'flex h-16 w-full items-center justify-around px-2 transition-opacity duration-150',
+              isExpanded ? 'opacity-100' : 'opacity-0'
+            )}
+          >
+            {secondaryNavItems.map(({ href, icon: Icon, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex flex-col items-center justify-center gap-1 text-xs font-medium w-16 h-full text-muted-foreground"
+                onClick={() => setIsExpanded(false)}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
+
+         {/* Separator - Only visible when expanded */}
+        {isExpanded && <Separator className="bg-border/50" />}
+
+        {/* Primary Row (Bottom) - Always visible */}
+        <div className="flex h-16 w-full items-center justify-around">
+          {primaryNavItems.map(({ href, icon: Icon, label }) => (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center justify-center gap-1 text-xs font-medium w-16 h-full text-muted-foreground"
-              onClick={() => setIsExpanded(false)}
+              className={cn(
+                'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
+                pathname.startsWith(href)
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-primary'
+              )}
               onContextMenu={(e) => e.preventDefault()}
             >
               <Icon className="h-5 w-5" />
               <span>{label}</span>
             </Link>
           ))}
+
+          {/* Spacer for FAB */}
+          <div className="w-16" />
+
+          <Link
+            href='/accounts'
+            className={cn(
+              'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
+              pathname.startsWith('/accounts')
+                ? 'text-primary'
+                : 'text-muted-foreground hover:text-primary'
+            )}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <Wallet className="h-5 w-5" />
+            <span>Accounts</span>
+          </Link>
+
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={cn(
+              'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
+              isExpanded ? 'text-primary' : 'text-muted-foreground hover:text-primary'
+            )}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            {isExpanded ? <X className="h-5 w-5" /> : <MoreHorizontal className="h-5 w-5" />}
+            <span>{isExpanded ? 'Close' : 'More'}</span>
+          </button>
         </div>
-
-         {/* Separator - Only visible when expanded */}
-        {isExpanded && <Separator className="bg-border/50" />}
-
-        {/* Primary Row (Bottom) - Always visible */}
-        <div className="flex h-16 items-center justify-around">
-            {primaryNavItems.map(({ href, icon: Icon, label }) => (
-                <Link
-                    key={href}
-                    href={href}
-                    className={cn(
-                        'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
-                        pathname.startsWith(href)
-                            ? 'text-primary'
-                            : 'text-muted-foreground hover:text-primary'
-                    )}
-                    onContextMenu={(e) => e.preventDefault()}
-                >
-                    <Icon className="h-5 w-5" />
-                    <span>{label}</span>
-                </Link>
-            ))}
-
-            {/* Spacer for FAB */}
-            <div className="w-20" /> 
-            
-            <Link
-                href='/accounts'
-                className={cn(
-                    'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
-                    pathname.startsWith('/accounts')
-                        ? 'text-primary'
-                        : 'text-muted-foreground hover:text-primary'
-                )}
-                onContextMenu={(e) => e.preventDefault()}
-            >
-                <Wallet className="h-5 w-5" />
-                <span>Accounts</span>
-            </Link>
-
-            <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className={cn(
-                    'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
-                    isExpanded ? 'text-primary' : 'text-muted-foreground hover:text-primary'
-                )}
-                onContextMenu={(e) => e.preventDefault()}
-            >
-                {isExpanded ? <X className="h-5 w-5" /> : <MoreHorizontal className="h-5 w-5" />}
-                <span>{isExpanded ? 'Close' : 'More'}</span>
-            </button>
         </div>
       </div>
     </div>

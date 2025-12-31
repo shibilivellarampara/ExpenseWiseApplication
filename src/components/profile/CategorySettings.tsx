@@ -26,7 +26,6 @@ export function CategorySettings() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
-    const [isOpen, setIsOpen] = useState(false);
 
     const categoriesQuery = useMemoFirebase(() =>
         user ? collection(firestore, `users/${user.uid}/categories`) : null
@@ -241,173 +240,164 @@ export function CategorySettings() {
 
     return (
         <Card>
-            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-                <CollapsibleTrigger asChild>
-                     <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
-                        <div>
-                            <h3 className="text-base font-semibold font-headline">Categories</h3>
-                            <CardDescription className="text-sm">Manage your expense categories.</CardDescription>
-                        </div>
-                        <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
-                    </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                    <CardContent className="space-y-4 pt-0 p-4">
-                        {isLoading ? (
-                            <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
-                        ) : (
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <Checkbox
-                                        id="select-all-categories"
-                                        checked={selectedIds.length === activeCategories.length && activeCategories.length > 0}
-                                        onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.map(c => c.id) : [])}
-                                    />
-                                    <label htmlFor="select-all-categories" className="text-sm font-medium">Select All</label>
-                                </div>
-                                {activeCategories.map((item, index) => (
-                                    <div key={item.id}>
-                                        <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
-                                            <Checkbox
-                                                id={`select-cat-${item.id}`}
-                                                checked={selectedIds.includes(item.id)}
-                                                onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
-                                                disabled={isSaving}
-                                            />
-                                            {editingItem?.id === item.id ? (
-                                                <div className="flex items-center gap-2 w-full">
-                                                    <Popover open={editingItemPopoverOpen} onOpenChange={setEditingItemPopoverOpen}>
-                                                        <PopoverTrigger asChild>
-                                                            <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                                            {availableIcons.map(icon => (
-                                                                <Button key={icon} variant="ghost" size="icon" onClick={() => {setEditingItem({ ...editingItem, icon }); setEditingItemPopoverOpen(false);}}>
-                                                                    {renderIcon(icon)}
-                                                                </Button>
-                                                            ))}
-                                                        </PopoverContent>
-                                                    </Popover>
-                                                    <Input
-                                                        value={editingItem.name}
-                                                        onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                                                        className="flex-1"
-                                                    />
-                                                    <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
-                                                        <Check className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <div className="flex items-center flex-1 gap-2">
-                                                        {renderIcon(item.icon)}
-                                                        <span>{item.name}</span>
-                                                    </div>
-                                                    <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                     <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
-                                                        <Archive className="h-4 w-4" />
-                                                    </Button>
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                            <Button variant="ghost" size="icon" type="button" disabled={SYSTEM_CATEGORIES.includes(item.name)}>
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    This action cannot be undone. This will permanently delete the "{item.name}" category.
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleRemoveItem(item.id)} className="bg-destructive hover:bg-destructive/90">
-                                                                    {isSaving ? <Loader2 className="animate-spin" /> : "Delete"}
-                                                                </AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                </>
-                                            )}
-                                        </div>
-                                         {index === lastSelectedIndex && selectedIds.length > 1 && (
-                                            <div className="pt-2 pl-8">
-                                                <MergeItemsDialog
-                                                    open={showMergeDialog}
-                                                    onOpenChange={setShowMergeDialog}
-                                                    items={categories?.filter(c => selectedIds.includes(c.id)) || []}
-                                                    itemType="Category"
-                                                    onMerge={handleMerge}
-                                                    isSaving={isSaving}
-                                                >
-                                                    <Button variant="outline" size="sm">
-                                                        <Merge className="mr-2 h-4 w-4" />
-                                                        Merge {selectedIds.length} selected categories
-                                                    </Button>
-                                                </MergeItemsDialog>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        <div className="flex items-center gap-2 pt-4">
-                            <Popover open={newItemPopoverOpen} onOpenChange={setNewItemPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" size="icon" className="shrink-0">{renderIcon(newItem.icon)}</Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                    {availableIcons.map(icon => (
-                                        <Button key={icon} variant="ghost" size="icon" onClick={() => {setNewItem({...newItem, icon}); setNewItemPopoverOpen(false);}}>
-                                            {renderIcon(icon)}
-                                        </Button>
-                                    ))}
-                                </PopoverContent>
-                            </Popover>
-                            <Input
-                                value={newItem.name}
-                                onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                                placeholder="Add new category"
+            <CardHeader>
+                <h3 className="text-base font-semibold font-headline">Categories</h3>
+                <CardDescription className="text-sm">Manage your expense categories.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-0">
+                {isLoading ? (
+                    <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
+                ) : (
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="select-all-categories"
+                                checked={selectedIds.length === activeCategories.length && activeCategories.length > 0}
+                                onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.map(c => c.id) : [])}
                             />
-                            <Button type="button" size="icon" onClick={handleAddItem} disabled={isSaving}>
-                                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
-                            </Button>
+                            <label htmlFor="select-all-categories" className="text-sm font-medium">Select All</label>
                         </div>
-
-                         {inactiveCategories.length > 0 && (
-                            <Collapsible open={showArchived} onOpenChange={setShowArchived}>
-                                <Separator className="my-4"/>
-                                <CollapsibleTrigger asChild>
-                                    <button className="flex w-full items-center justify-between p-2 text-sm font-medium text-muted-foreground">
-                                        <span>View {inactiveCategories.length} archived categories</span>
-                                        {showArchived ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="space-y-2 p-2 pt-0">
-                                    {inactiveCategories.map(item => (
-                                        <div key={item.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                                            <div className="flex items-center gap-2">
-                                                {renderIcon(item.icon)}
-                                                <span className="text-muted-foreground">{item.name}</span>
-                                            </div>
-                                            <Button variant="ghost" size="sm" onClick={() => handleUpdateStatus(item.id, 'active')}>
-                                                <RotateCw className="mr-2 h-4 w-4" />
-                                                Restore
+                        {activeCategories.map((item, index) => (
+                            <div key={item.id}>
+                                <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
+                                    <Checkbox
+                                        id={`select-cat-${item.id}`}
+                                        checked={selectedIds.includes(item.id)}
+                                        onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
+                                        disabled={isSaving}
+                                    />
+                                    {editingItem?.id === item.id ? (
+                                        <div className="flex items-center gap-2 w-full">
+                                            <Popover open={editingItemPopoverOpen} onOpenChange={setEditingItemPopoverOpen}>
+                                                <PopoverTrigger asChild>
+                                                    <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                                                    {availableIcons.map(icon => (
+                                                        <Button key={icon} variant="ghost" size="icon" onClick={() => {setEditingItem({ ...editingItem, icon }); setEditingItemPopoverOpen(false);}}>
+                                                            {renderIcon(icon)}
+                                                        </Button>
+                                                    ))}
+                                                </PopoverContent>
+                                            </Popover>
+                                            <Input
+                                                value={editingItem.name}
+                                                onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                                className="flex-1"
+                                            />
+                                            <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
+                                                <Check className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
+                                                <X className="h-4 w-4" />
                                             </Button>
                                         </div>
-                                    ))}
-                                </CollapsibleContent>
-                            </Collapsible>
-                        )}
-                    </CardContent>
-                </CollapsibleContent>
-            </Collapsible>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center flex-1 gap-2">
+                                                {renderIcon(item.icon)}
+                                                <span>{item.name}</span>
+                                            </div>
+                                            <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                             <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
+                                                <Archive className="h-4 w-4" />
+                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon" type="button" disabled={SYSTEM_CATEGORIES.includes(item.name)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete the "{item.name}" category.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleRemoveItem(item.id)} className="bg-destructive hover:bg-destructive/90">
+                                                            {isSaving ? <Loader2 className="animate-spin" /> : "Delete"}
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </>
+                                    )}
+                                </div>
+                                 {index === lastSelectedIndex && selectedIds.length > 1 && (
+                                    <div className="pt-2 pl-8">
+                                        <MergeItemsDialog
+                                            open={showMergeDialog}
+                                            onOpenChange={setShowMergeDialog}
+                                            items={categories?.filter(c => selectedIds.includes(c.id)) || []}
+                                            itemType="Category"
+                                            onMerge={handleMerge}
+                                            isSaving={isSaving}
+                                        >
+                                            <Button variant="outline" size="sm">
+                                                <Merge className="mr-2 h-4 w-4" />
+                                                Merge {selectedIds.length} selected categories
+                                            </Button>
+                                        </MergeItemsDialog>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+                <div className="flex items-center gap-2 pt-4">
+                    <Popover open={newItemPopoverOpen} onOpenChange={setNewItemPopoverOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="icon" className="shrink-0">{renderIcon(newItem.icon)}</Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                            {availableIcons.map(icon => (
+                                <Button key={icon} variant="ghost" size="icon" onClick={() => {setNewItem({...newItem, icon}); setNewItemPopoverOpen(false);}}>
+                                    {renderIcon(icon)}
+                                </Button>
+                            ))}
+                        </PopoverContent>
+                    </Popover>
+                    <Input
+                        value={newItem.name}
+                        onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+                        placeholder="Add new category"
+                    />
+                    <Button type="button" size="icon" onClick={handleAddItem} disabled={isSaving}>
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                    </Button>
+                </div>
+
+                 {inactiveCategories.length > 0 && (
+                    <Collapsible open={showArchived} onOpenChange={setShowArchived}>
+                        <Separator className="my-4"/>
+                        <CollapsibleTrigger asChild>
+                            <button className="flex w-full items-center justify-between p-2 text-sm font-medium text-muted-foreground">
+                                <span>View {inactiveCategories.length} archived categories</span>
+                                {showArchived ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-2 p-2 pt-0">
+                            {inactiveCategories.map(item => (
+                                <div key={item.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                    <div className="flex items-center gap-2">
+                                        {renderIcon(item.icon)}
+                                        <span className="text-muted-foreground">{item.name}</span>
+                                    </div>
+                                    <Button variant="ghost" size="sm" onClick={() => handleUpdateStatus(item.id, 'active')}>
+                                        <RotateCw className="mr-2 h-4 w-4" />
+                                        Restore
+                                    </Button>
+                                </div>
+                            ))}
+                        </CollapsibleContent>
+                    </Collapsible>
+                )}
+            </CardContent>
         </Card>
     );
 }

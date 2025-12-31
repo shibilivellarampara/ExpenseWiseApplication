@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useFirestore, useStorage, useAuth, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
@@ -23,7 +24,6 @@ import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AvatarList } from "./Avatars";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import React from "react";
 
 const currencies = ["USD", "EUR", "JPY", "GBP", "INR"];
@@ -39,7 +39,6 @@ export function ProfileForm() {
     const firestore = useFirestore();
     const storage = useStorage();
     const auth = useAuth();
-    const [isOpen, setIsOpen] = useState(false);
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
@@ -306,18 +305,11 @@ export function ProfileForm() {
 
     return (
         <Card className="h-fit">
-            <Collapsible defaultOpen={false}>
              <form onSubmit={handleProfileSubmit}>
-                <CollapsibleTrigger asChild>
-                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
-                        <div>
-                            <h3 className="text-base font-semibold font-headline">Profile & Security</h3>
-                            <CardDescription className="text-sm">Update your personal information and password.</CardDescription>
-                        </div>
-                        <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
-                    </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
+                <CardHeader>
+                    <h3 className="text-base font-semibold font-headline">Profile & Security</h3>
+                    <CardDescription className="text-sm">Update your personal information and password.</CardDescription>
+                </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-4">
                     <div className="space-y-2">
                         <Label>Profile Picture</Label>
@@ -524,7 +516,6 @@ export function ProfileForm() {
                         {isUploading ? 'Uploading...' : 'Save Changes'}
                     </Button>
                 </CardFooter>
-                </CollapsibleContent>
             </form>
              <Dialog open={showOtpDialog} onOpenChange={setShowOtpDialog}>
                 <DialogContent>
@@ -553,7 +544,6 @@ export function ProfileForm() {
                 </DialogContent>
             </Dialog>
             <div ref={recaptchaContainerRef}></div>
-            </Collapsible>
         </Card>
     );
 }

@@ -5,10 +5,23 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const appVersion = "1.7.0";
+const appVersion = "1.7.1";
 
 
 const changelog = [
+    {
+        version: "1.7.1",
+        date: "2025-12-31",
+        changes: [
+            { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other forms in the application." },
+            { type: 'UI/UX', description: "Improved user feedback by ensuring both 'Save' and 'Save and New' buttons show a loading animation during transaction submission." },
+            { type: 'UI/UX', description: "Made the main application header static for consistent visibility while scrolling." },
+            { type: 'UI/UX', description: "Added a clear button next to the tag filter on the Analysis page to easily deselect all tags." },
+            { type: 'Fix', description: "Disabled the long-press context menu on mobile navigation to provide a more app-like experience." },
+            { type: 'Fix', description: "Resolved a build error in the 'Add Asset' form caused by a missing component import." },
+            { type: 'Fix', description: "Corrected the Google Drive export to open the file link in the same tab instead of a new one." },
+        ]
+    },
     {
         version: "1.7.0",
         date: "2025-12-31",
@@ -16,12 +29,24 @@ const changelog = [
             { type: 'Feature', description: "Introduced a new 'Assets' page to track financial holdings like stocks and mutual funds." },
             { type: 'Feature', description: "Introduced a 'Recurring' feature to automate tracking for subscriptions and regular bills." },
             { type: 'Feature', description: "Added a new page to manage all recurring income and expenses." },
+        ]
+    },
+    {
+        version: "1.6.9",
+        date: "2025-12-30",
+        changes: [
             { type: 'Fix', description: "Resolved all Firestore permission errors by simplifying security rules for development." },
             { type: 'Feature', description: "Implemented a scalable system for preset avatars by moving them to a JSON configuration file, simplifying future updates." },
             { type: 'UI/UX', description: "Improved the styling of the user profile dropdown menu for a cleaner, more polished appearance." },
             { type: 'UI/UX', description: "Adjusted the height of dashboard charts to be more dynamic, reducing unnecessary white space." },
             { type: 'Fix', description: "Corrected the 'Spending by Tag' chart calculation to ensure the full transaction amount is applied to each tag." },
             { type: 'Fix', description: "Resolved a ReferenceError in the dashboard's data generation function to prevent chart failures." },
+        ]
+    },
+    {
+        version: "1.6.8",
+        date: "2025-12-30",
+        changes: [
             { type: 'Feature', description: "Added a tag filter to the Expense Analysis page for more granular expense tracking." },
             { type: 'UI/UX', description: "Unified and improved the application's loading animations for a more consistent and dynamic user experience." },
             { type: 'Feature', description: "Redesigned the 'More' menu on mobile with a cleaner, more modern sheet-style layout for easier navigation." },

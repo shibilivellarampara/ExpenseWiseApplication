@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from '@/components/PageHeader';
@@ -12,6 +13,7 @@ import { useMemo } from 'react';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 function AssetsPageSkeleton() {
     return (
@@ -92,13 +94,20 @@ export default function AssetsPage() {
 
             {isLoading ? <AssetsPageSkeleton /> : (
                  <>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid gap-4 md:grid-cols-2">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Net Assets</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">{currencySymbol}{totalNetAssets.toFixed(2)}</div>
+                                 <p className={cn(
+                                        "text-xs text-muted-foreground",
+                                        overallGainLoss > 0 && "text-green-600",
+                                        overallGainLoss < 0 && "text-red-500"
+                                    )}>
+                                        {overallGainLoss >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(overallGainLoss).toFixed(2)} ({overallReturn.toFixed(2)}%)
+                                    </p>
                             </CardContent>
                         </Card>
                          <Card>
@@ -107,26 +116,7 @@ export default function AssetsPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">{currencySymbol}{totalInvested.toFixed(2)}</div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Overall Gain/Loss</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className={`text-2xl font-bold ${overallGainLoss >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                    {overallGainLoss >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(overallGainLoss).toFixed(2)}
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Overall Return</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className={`text-2xl font-bold ${overallReturn >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                    {overallReturn.toFixed(2)}%
-                                </div>
+                                <p className="text-xs text-muted-foreground">&nbsp;</p>
                             </CardContent>
                         </Card>
                     </div>

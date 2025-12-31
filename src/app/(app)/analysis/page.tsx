@@ -375,7 +375,7 @@ export default function AnalysisPage() {
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="w-full sm:w-auto justify-between">
-                                <span>{selectedAccounts.length > 0 ? `${selectedAccounts.length} accounts selected` : "All Accounts"}</span>
+                                <span>{selectedAccounts.length > 0 ? `${selectedAccounts.length} accounts` : "All Accounts"}</span>
                                 <ChevronDown className="h-4 w-4 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -412,7 +412,7 @@ export default function AnalysisPage() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="w-full sm:w-auto justify-between pr-8">
-                                    <span>{selectedTags.length > 0 ? `${selectedTags.length} tags selected` : "All Tags"}</span>
+                                    <span>{selectedTags.length > 0 ? `${selectedTags.length} tags` : "All Tags"}</span>
                                     <ChevronDown className="h-4 w-4 opacity-50" />
                                 </Button>
                             </DropdownMenuTrigger>

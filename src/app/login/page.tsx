@@ -2,6 +2,10 @@ import { LoginForm } from '@/components/auth/LoginForm';
 import { Logo } from '@/components/Logo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import pkg from '../../../package.json';
+
+const appVersion = pkg.version;
+
 
 export default function LoginPage() {
   return (
@@ -21,9 +25,10 @@ export default function LoginPage() {
           </p>
         </CardContent>
       </Card>
-       <p className="mt-6 text-center text-xs text-muted-foreground">
-            🔒 Your data is encrypted and never shared.
-        </p>
+       <div className="mt-6 text-center text-xs text-muted-foreground space-y-1">
+            <p>🔒 Your data is encrypted and never shared.</p>
+            <p>v{appVersion}</p>
+        </div>
     </div>
   );
 }

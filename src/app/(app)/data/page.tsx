@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -11,6 +10,7 @@ import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { ExcelImporter } from "@/components/import/ExcelImporter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BackupAndRestore } from "@/components/import/BackupAndRestore";
 
 async function fetchAllTransactions(firestore: any, userId: string, accountId?: string): Promise<Expense[]> {
     let expensesQuery;
@@ -160,9 +160,10 @@ export default function DataPage() {
                 description="Manage your expense data by importing or exporting."
             />
             <Tabs defaultValue="import" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="import">Import</TabsTrigger>
-                    <TabsTrigger value="export">Export</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="import">Import from Excel</TabsTrigger>
+                    <TabsTrigger value="export">Export to Excel</TabsTrigger>
+                    <TabsTrigger value="backup">Backup & Restore</TabsTrigger>
                 </TabsList>
                 <TabsContent value="import" className="mt-6">
                     <ExcelImporter />
@@ -174,6 +175,9 @@ export default function DataPage() {
                         isLoading={isLoading}
                         progress={progress}
                     />
+                </TabsContent>
+                 <TabsContent value="backup" className="mt-6">
+                    <BackupAndRestore />
                 </TabsContent>
             </Tabs>
         </div>

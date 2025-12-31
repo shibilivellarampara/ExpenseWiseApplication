@@ -19,8 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronDown, Settings } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Check, ChevronDown, Settings, XCircle } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AnalysisSettingsContent } from "@/components/profile/AnalysisSettingsContent";
@@ -309,6 +309,10 @@ export default function AnalysisPage() {
             setSelectedTags([]);
             return;
         }
+        if (tagId === 'clear') {
+            setSelectedTags([]);
+            return;
+        }
         setSelectedTags(prev => 
             prev.includes(tagId)
                 ? prev.filter(id => id !== tagId)
@@ -421,7 +425,19 @@ export default function AnalysisPage() {
                                 <CommandList>
                                     <CommandEmpty>No results found.</CommandEmpty>
                                     <CommandGroup>
-                                         <CommandItem
+                                        {selectedTags.length > 0 && (
+                                            <>
+                                                <CommandItem
+                                                    onSelect={() => handleTagSelectChange('clear')}
+                                                    className="flex justify-start items-center gap-2 cursor-pointer text-destructive"
+                                                >
+                                                    <XCircle className="h-4 w-4" />
+                                                    Clear Selection
+                                                </CommandItem>
+                                                <DropdownMenuSeparator />
+                                            </>
+                                        )}
+                                        <CommandItem
                                             onSelect={() => handleTagSelectChange('all')}
                                             className="flex justify-between cursor-pointer"
                                         >
@@ -435,7 +451,7 @@ export default function AnalysisPage() {
                                                 className="flex justify-between cursor-pointer"
                                             >
                                                 {item.name}
-                                                 <Check className={cn("h-4 w-4", selectedTags.includes(item.id) ? "opacity-100" : "opacity-0")} />
+                                                    <Check className={cn("h-4 w-4", selectedTags.includes(item.id) ? "opacity-100" : "opacity-0")} />
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>

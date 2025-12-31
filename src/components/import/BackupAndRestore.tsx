@@ -60,7 +60,7 @@ export function BackupAndRestore() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `expensewise_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `expensewise_backup_${new Date().toISOString().split('T')[0]}.ew`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -204,7 +204,7 @@ export function BackupAndRestore() {
                 <CardFooter>
                      <AlertDialog open={restoreStep === 'confirm'} onOpenChange={(open) => !open && resetRestore()}>
                         <AlertDialogTrigger asChild>
-                            <Button variant="destructive" onClick={() => document.getElementById('restore-file-input')?.click()} disabled={isRestoring}>
+                             <Button variant="destructive" onClick={() => document.getElementById('restore-file-input')?.click()} disabled={isRestoring}>
                                 {isRestoring ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                                 Select Backup File
                             </Button>
@@ -224,7 +224,7 @@ export function BackupAndRestore() {
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
-                    <input type="file" id="restore-file-input" accept=".json" className="hidden" onChange={handleFileSelect} />
+                    <input type="file" id="restore-file-input" accept=".ew" className="hidden" onChange={handleFileSelect} />
                 </CardFooter>
             </Card>
         </div>

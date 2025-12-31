@@ -3,17 +3,21 @@
 
 import { PageHeader } from "@/components/PageHeader";
 import { ProfileForm } from "@/components/profile/ProfileForm";
-import { CategorySettings } from "@/components/profile/CategorySettings";
-import { TagSettings } from "@/components/profile/TagSettings";
-import { DashboardSettings } from "@/components/profile/DashboardSettings";
-import { DataManagementSettings } from "@/components/profile/DataManagementSettings";
-import { TransactionFieldOrderSettings } from "@/components/profile/TransactionFieldOrderSettings";
-import { AnalysisSettings } from "@/components/profile/AnalysisSettings";
-import { Card, CardHeader, CardContent, CardDescription } from "@/components/ui/card";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronRight, Cog, Palette, List, BarChart2, Tags, Database, User } from "lucide-react";
+import Link from "next/link";
+
+
+const settingsLinks = [
+    { href: '/profile/details', icon: User, title: 'Profile & Security', description: 'Update your personal information and password.' },
+    { href: '/profile/form', icon: List, title: 'Form Customization', description: 'Customize transaction form fields.' },
+    { href: '/profile/dashboard', icon: Palette, title: 'Dashboard Settings', description: 'Customize your dashboard appearance.' },
+    { href: '/profile/analysis', icon: BarChart2, title: 'Analysis Settings', description: 'Customize which categories to exclude.' },
+    { href: '/profile/categories', icon: Cog, title: 'Categories', description: 'Manage your expense categories.' },
+    { href: '/profile/tags', icon: Tags, title: 'Tags', description: 'Manage your expense tags/labels.' },
+    { href: '/profile/data', icon: Database, title: 'Data Management', description: 'Reset or delete your account data.' },
+]
+
 
 export default function ProfilePage() {
     return (
@@ -22,54 +26,27 @@ export default function ProfilePage() {
                 title="Settings"
                 description="Manage your account settings and preferences."
             />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                <div className="lg:col-span-1 space-y-6">
-                    <ProfileForm />
-                </div>
-
-                <div className="lg:col-span-2 space-y-6">
-                     <Card>
-                        <Collapsible defaultOpen={false}>
-                            <CollapsibleTrigger asChild>
-                                <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
-                                    <div>
-                                        <h3 className="text-base font-semibold font-headline">Form Customization</h3>
-                                        <CardDescription className="text-sm">Customize transaction form fields.</CardDescription>
+            <div className="space-y-4">
+                {settingsLinks.map((link) => (
+                    <Link key={link.href} href={link.href} className="block">
+                         <Card className="hover:bg-accent transition-colors">
+                            <CardHeader className="flex flex-row items-center justify-between p-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-muted p-3 rounded-lg">
+                                        <link.icon className="h-5 w-5 text-muted-foreground" />
                                     </div>
-                                    <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
-                                </CardHeader>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                                <CardContent className="p-4 pt-0">
-                                    <TransactionFieldOrderSettings />
-                                </CardContent>
-                            </CollapsibleContent>
-                        </Collapsible>
-                    </Card>
-                    <Card>
-                        <Collapsible>
-                            <CollapsibleTrigger asChild>
-                                <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
                                     <div>
-                                        <h3 className="text-base font-semibold font-headline">Dashboard Settings</h3>
-                                        <CardDescription className="text-sm">Customize your dashboard appearance.</CardDescription>
+                                        <h3 className="font-semibold">{link.title}</h3>
+                                        <p className="text-sm text-muted-foreground">{link.description}</p>
                                     </div>
-                                     <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
-                                </CardHeader>
-                            </CollapsibleTrigger>
-                             <CollapsibleContent>
-                                <CardContent className="p-4 pt-0">
-                                    <DashboardSettings />
-                                </CardContent>
-                            </CollapsibleContent>
-                        </Collapsible>
-                    </Card>
-                    <AnalysisSettings />
-                    <CategorySettings />
-                    <TagSettings />
-                </div>
+                                </div>
+                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                            </CardHeader>
+                        </Card>
+                    </Link>
+                ))}
             </div>
-            <DataManagementSettings />
         </div>
     );
 }
+

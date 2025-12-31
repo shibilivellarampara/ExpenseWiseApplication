@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronDown, Settings, XCircle } from "lucide-react";
+import { Check, ChevronDown, Settings, X, XCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -223,7 +223,7 @@ export default function AnalysisPage() {
     
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [firestore, user]);
-    const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name')) : null, [firestore, user]);
+    const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [firestore, user]);
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
     const { data: allExpenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
@@ -354,9 +354,9 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-2 flex-wrap justify-end">
                     <Select value={timeRangePreset} onValueChange={handleTimeRangeChange}>
-                        <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectTrigger className="w-full sm:w-auto">
                             <SelectValue placeholder="Select a time range" />
                         </SelectTrigger>
                         <SelectContent>
@@ -374,7 +374,7 @@ export default function AnalysisPage() {
                     
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full sm:w-[180px] justify-between">
+                            <Button variant="outline" className="w-full sm:w-auto justify-between">
                                 <span>{selectedAccounts.length > 0 ? `${selectedAccounts.length} accounts selected` : "All Accounts"}</span>
                                 <ChevronDown className="h-4 w-4 opacity-50" />
                             </Button>
@@ -408,43 +408,41 @@ export default function AnalysisPage() {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full sm:w-[180px] justify-between">
-                                <span>{selectedTags.length > 0 ? `${selectedTags.length} tags selected` : "All Tags"}</span>
-                                <ChevronDown className="h-4 w-4 opacity-50" />
+                     <div className="flex items-center gap-1">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-full sm:w-auto justify-between">
+                                    <span>{selectedTags.length > 0 ? `${selectedTags.length} tags selected` : "All Tags"}</span>
+                                    <ChevronDown className="h-4 w-4 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                                <Command>
+                                    <CommandInput placeholder="Search tags..." />
+                                    <CommandList>
+                                        <CommandEmpty>No results found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {(tags || []).map(item => (
+                                                <CommandItem
+                                                    key={item.id}
+                                                    onSelect={() => handleTagSelectChange(item.id)}
+                                                    className="flex justify-between cursor-pointer"
+                                                >
+                                                    {item.name}
+                                                        <Check className={cn("h-4 w-4", selectedTags.includes(item.id) ? "opacity-100" : "opacity-0")} />
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                         {selectedTags.length > 0 && (
+                            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={() => setSelectedTags([])}>
+                                <X className="h-4 w-4" />
                             </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                            <Command>
-                                <CommandInput placeholder="Search tags..." />
-                                {selectedTags.length > 0 && (
-                                    <CommandItem
-                                        onSelect={() => handleTagSelectChange('clear')}
-                                        className="flex justify-start items-center gap-2 cursor-pointer text-destructive"
-                                    >
-                                        <XCircle className="h-4 w-4" />
-                                        Clear Selection
-                                    </CommandItem>
-                                )}
-                                <CommandList>
-                                    <CommandEmpty>No results found.</CommandEmpty>
-                                    <CommandGroup>
-                                        {(tags || []).map(item => (
-                                            <CommandItem
-                                                key={item.id}
-                                                onSelect={() => handleTagSelectChange(item.id)}
-                                                className="flex justify-between cursor-pointer"
-                                            >
-                                                {item.name}
-                                                    <Check className={cn("h-4 w-4", selectedTags.includes(item.id) ? "opacity-100" : "opacity-0")} />
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        )}
+                    </div>
                 </div>
             </PageHeader>
             
@@ -576,3 +574,4 @@ export default function AnalysisPage() {
         </div>
     );
 }
+

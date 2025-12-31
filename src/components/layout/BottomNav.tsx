@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -44,6 +45,14 @@ const NavLink = ({ href, currentPath, children, className, onClick }: { href: st
     )
 };
 
+const SecondaryNavLink = ({ href, currentPath, children, className, onClick }: { href: string; currentPath: string; children: React.ReactNode; className?: string; onClick?: () => void; }) => {
+    return (
+        <Link href={href} className={cn("flex flex-col items-center justify-center gap-0.5 text-xs font-medium w-16 h-full transition-colors text-muted-foreground hover:text-primary", className)} onContextMenu={(e) => e.preventDefault()} onClick={onClick}>
+            {children}
+        </Link>
+    )
+}
+
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -83,24 +92,24 @@ export function BottomNav() {
   return (
     <div ref={navRef} className="fixed bottom-4 left-0 right-0 z-40 px-4" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="relative mx-auto w-full max-w-sm">
-
+            
             {/* Secondary Nav - Appears Above */}
-             <div className={cn(
-                "transition-all duration-200 ease-in-out w-full mb-2",
+            <div className={cn(
+                "transition-all duration-200 ease-in-out w-full mb-2 z-10",
                 isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
             )}>
                  <div className="bg-background/95 backdrop-blur-md rounded-xl shadow-lg ring-1 ring-black/5 flex justify-around items-center h-16">
                     {secondaryNavItems.map(({ href, icon: Icon, label }) => (
-                         <NavLink key={href} href={href} currentPath={pathname} className="w-20" onClick={() => setIsExpanded(false)}>
+                         <SecondaryNavLink key={href} href={href} currentPath={pathname} className="w-20" onClick={() => setIsExpanded(false)}>
                             <Icon className="h-5 w-5" />
                             <span>{label}</span>
-                        </NavLink>
+                        </SecondaryNavLink>
                     ))}
                 </div>
             </div>
 
-            {/* Primary Nav Bar (Oval) */}
-            <div className="relative bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 h-16 flex items-center justify-around">
+            {/* Primary Nav Bar (Oval) - This is the anchor */}
+            <div className="relative bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 h-16 flex items-center justify-around z-20">
                 
                 {/* Left side */}
                 <div className="flex justify-around flex-1">
@@ -135,34 +144,34 @@ export function BottomNav() {
                         <span>{isExpanded ? 'Close' : 'More'}</span>
                     </button>
                 </div>
-            </div>
-            
-            {/* FAB Container - Positioned relative to the primary bar */}
-            <div className="absolute left-1/2 -translate-x-1/2 top-0 -translate-y-1/2 z-10">
-                 {isTransactionsPage ? (
-                    <AddExpenseDialog onSaveSuccess={handleDataChange}>
+
+                {/* FAB Container - Absolutely positioned relative to THIS primary bar */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 z-30">
+                     {isTransactionsPage ? (
+                        <AddExpenseDialog onSaveSuccess={handleDataChange}>
+                            <Button
+                                size="icon"
+                                className="h-16 w-16 rounded-full bg-primary shadow-lg"
+                                onContextMenu={(e) => e.preventDefault()}
+                            >
+                                <Plus className="h-7 w-7" />
+                                <span className="sr-only">Add Transaction</span>
+                            </Button>
+                        </AddExpenseDialog>
+                    ) : (
                         <Button
                             size="icon"
                             className="h-16 w-16 rounded-full bg-primary shadow-lg"
+                            asChild
                             onContextMenu={(e) => e.preventDefault()}
                         >
-                            <Plus className="h-7 w-7" />
-                            <span className="sr-only">Add Transaction</span>
+                            <Link href={transactionsHref}>
+                                <ArrowRightLeft className="h-7 w-7" />
+                                <span className="sr-only">Go to Transactions</span>
+                            </Link>
                         </Button>
-                    </AddExpenseDialog>
-                ) : (
-                    <Button
-                        size="icon"
-                        className="h-16 w-16 rounded-full bg-primary shadow-lg"
-                        asChild
-                        onContextMenu={(e) => e.preventDefault()}
-                    >
-                        <Link href={transactionsHref}>
-                            <ArrowRightLeft className="h-7 w-7" />
-                            <span className="sr-only">Go to Transactions</span>
-                        </Link>
-                    </Button>
-                )}
+                    )}
+                </div>
             </div>
 
         </div>

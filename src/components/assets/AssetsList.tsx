@@ -150,26 +150,28 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                     <CardDescription>{currencySymbol}{categoryTotal.toFixed(2)}</CardDescription>
                                 </div>
                             </div>
-                             {assetType !== 'savings_cash' && (
-                                 <AddAssetDialog initialAssetType={assetType}>
-                                    <Button variant="ghost" size="sm">
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        Add
-                                    </Button>
-                                </AddAssetDialog>
-                             )}
-                              {isSavingsCategory && !hasManualSavingsAssets && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger>
-                                            <Info className="h-4 w-4 text-muted-foreground" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p className="max-w-xs">This is automatically updated from your Bank and Cash accounts. To add a new account, go to the Accounts page.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
+                            <div className="flex items-center">
+                                {assetType !== 'savings_cash' && (
+                                    <AddAssetDialog initialAssetType={assetType}>
+                                        <Button variant="ghost" size="sm">
+                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                            Add
+                                        </Button>
+                                    </AddAssetDialog>
+                                )}
+                                {isSavingsCategory && !hasManualSavingsAssets && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <Info className="h-4 w-4 text-muted-foreground" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p className="max-w-xs">This is automatically updated from your Bank and Cash accounts. To add a new account, go to the Accounts page.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                            </div>
                         </CardHeader>
                         <CardContent className="p-0">
                             {categoryAssets && categoryAssets.length > 0 ? (

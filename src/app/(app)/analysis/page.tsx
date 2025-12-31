@@ -354,7 +354,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-2 flex-wrap justify-end">
+                 <div className="flex items-center gap-2 flex-nowrap justify-end">
                     <Select value={timeRangePreset} onValueChange={handleTimeRangeChange}>
                         <SelectTrigger className="w-full sm:w-auto">
                             <SelectValue placeholder="Select a time range" />
@@ -574,4 +574,3 @@ export default function AnalysisPage() {
         </div>
     );
 }
-

@@ -21,9 +21,7 @@ const secondaryNavItems = [
   { href: '/debts', icon: <HandCoins className="h-5 w-5 text-muted-foreground" />, label: 'Debts & Dues' },
   { href: '/assets', icon: <Briefcase className="h-5 w-5 text-muted-foreground" />, label: 'Assets' },
   { href: '/recurring', icon: <Repeat className="h-5 w-5 text-muted-foreground" />, label: 'Recurring' },
-  { href: '/data', icon: <FileUp className="h-5 w-5 text-muted-foreground" />, label: 'Import / Export' },
   { href: '/profile', icon: <Settings className="h-5 w-5 text-muted-foreground" />, label: 'All Settings' },
-  { href: '/about', icon: <Info className="h-5 w-5 text-muted-foreground" />, label: 'About' },
 ];
 
 export function MoreSheet({ children }: { children?: React.ReactNode }) {

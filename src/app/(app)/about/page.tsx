@@ -11,7 +11,7 @@ const appVersion = "1.7.1";
 const changelog = [
     {
         version: "1.7.1",
-        date: "2026-01-01",
+        date: "2025-12-31",
         changes: [
             { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other forms in the application." },
             { type: 'UI/UX', description: "Improved user feedback by ensuring both 'Save' and 'Save and New' buttons show a loading animation during transaction submission." },

@@ -3,7 +3,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { DashboardSettings } from "@/components/profile/DashboardSettings";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -22,6 +22,9 @@ export default function DashboardSettingsPage() {
                 </Button>
             </PageHeader>
             <Card>
+                <CardHeader>
+                    <CardTitle className="text-base font-semibold">Chart Settings</CardTitle>
+                </CardHeader>
                 <DashboardSettings />
             </Card>
         </div>

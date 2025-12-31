@@ -168,7 +168,7 @@ export function TransactionFieldOrderSettings() {
          <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Transaction List</CardTitle>
+                    <CardTitle className="text-base font-semibold">Transaction List</CardTitle>
                     <CardDescription>Customize how your list of transactions appears.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -209,7 +209,8 @@ export function TransactionFieldOrderSettings() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>AI Features</CardTitle>
+                    <CardTitle className="text-base font-semibold">AI Features</CardTitle>
+                    <CardDescription>Enhance your experience with intelligent suggestions.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
@@ -229,7 +230,7 @@ export function TransactionFieldOrderSettings() {
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Transaction Form Fields</CardTitle>
+                    <CardTitle className="text-base font-semibold">Form Customization</CardTitle>
                     <CardDescription>Customize the fields and behavior of the transaction entry form.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

@@ -221,16 +221,14 @@ export function DataManagementSettings() {
 
     return (
         <Card className="border-destructive/50">
-            <CardHeader className="flex flex-row items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                     <AlertTriangle className="text-destructive h-5 w-5"/>
-                    <div>
-                        <h3 className="text-base font-semibold font-headline text-destructive">Danger Zone</h3>
-                        <CardDescription className="text-sm">These actions are irreversible. Please be certain.</CardDescription>
-                    </div>
+            <CardHeader className="flex flex-row items-start gap-4">
+                <AlertTriangle className="text-destructive h-6 w-6"/>
+                <div>
+                    <CardTitle className="text-destructive font-headline text-base font-semibold">Danger Zone</CardTitle>
+                    <CardDescription>These actions are irreversible. Please be certain.</CardDescription>
                 </div>
             </CardHeader>
-            <CardContent className="p-4 pt-0 space-y-4">
+            <CardContent className="space-y-4">
                 <div className="rounded-lg border border-destructive/50 p-4">
                     <h4 className="font-semibold">Reset Data</h4>
                     <p className="text-sm text-muted-foreground mt-1 mb-3">Permanently delete specific types of data from your account.</p>

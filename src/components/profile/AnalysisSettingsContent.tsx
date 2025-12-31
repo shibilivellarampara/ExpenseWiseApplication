@@ -82,7 +82,7 @@ export function AnalysisSettingsContent() {
                 <>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Summary Card Visibility</CardTitle>
+                            <CardTitle className="text-base font-semibold">Summary Card Visibility</CardTitle>
                             <CardDescription>Control which summary totals appear at the top of the Analysis page.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -115,7 +115,7 @@ export function AnalysisSettingsContent() {
                     
                     <Card>
                         <CardHeader>
-                             <CardTitle>Chart & Insights Visibility</CardTitle>
+                             <CardTitle className="text-base font-semibold">Chart & Insights Visibility</CardTitle>
                             <CardDescription>Show or hide specific charts and cards on the Analysis page.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2">
@@ -134,7 +134,7 @@ export function AnalysisSettingsContent() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Excluded Categories</CardTitle>
+                            <CardTitle className="text-base font-semibold">Excluded Categories</CardTitle>
                             <CardDescription>Select categories to exclude from charts and AI insights for a more focused analysis.</CardDescription>
                         </CardHeader>
                         <CardContent>

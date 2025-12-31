@@ -9,6 +9,7 @@ import { UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function DashboardSettings() {
     const { user } = useUser();
@@ -48,19 +49,21 @@ export function DashboardSettings() {
     const show5YearView = userProfile?.dashboardSettings?.show5YearView ?? false;
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                <div className="space-y-0.5">
-                    <Label>Show 5-Year View</Label>
-                    <p className="text-[0.8rem] text-muted-foreground">
-                        Show a "5 Years" tab in the expense overview chart.
-                    </p>
+        <CardContent>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                        <Label>Show 5-Year View</Label>
+                        <p className="text-[0.8rem] text-muted-foreground">
+                            Show a "5 Years" tab in the expense overview chart.
+                        </p>
+                    </div>
+                    <Switch
+                        checked={show5YearView}
+                        onCheckedChange={(value) => handleSettingChange('show5YearView', value)}
+                    />
                 </div>
-                <Switch
-                    checked={show5YearView}
-                    onCheckedChange={(value) => handleSettingChange('show5YearView', value)}
-                />
             </div>
-        </div>
+        </CardContent>
     );
 }

@@ -204,16 +204,7 @@ export function TransactionFieldOrderSettings() {
                             onCheckedChange={(value) => handleDashboardSettingChange('transactionViewMode', value ? 'compact' : 'normal')}
                         />
                     </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Transaction Form</CardTitle>
-                    <CardDescription>Customize the fields and behavior of the transaction entry form.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
                             <Label>Enable AI Suggestions</Label>
                             <p className="text-[0.8rem] text-muted-foreground">
@@ -225,6 +216,15 @@ export function TransactionFieldOrderSettings() {
                             onCheckedChange={(value) => handleDashboardSettingChange('isAiSuggestionEnabled', value)}
                         />
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Transaction Form</CardTitle>
+                    <CardDescription>Customize the fields and behavior of the transaction entry form.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label>Field Visibility & Order</Label>
                         <p className="text-[0.8rem] text-muted-foreground">

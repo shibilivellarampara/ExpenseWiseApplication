@@ -322,7 +322,7 @@ export function CategorySettings() {
                                                 <Input
                                                     value={editingItem.name}
                                                     onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                                                    className="h-8 text-sm"
+                                                    className="h-8 text-[15px]"
                                                 />
                                                 <Button size="icon" className="h-8 w-8" onClick={handleUpdateItem}>
                                                     {isSaving ? <Loader2 className="animate-spin" /> : <Check className="h-4 w-4" />}
@@ -335,7 +335,7 @@ export function CategorySettings() {
                                             <>
                                                 <div className="flex items-center flex-1 gap-2">
                                                     {renderIcon(item.icon)}
-                                                    <span className="text-sm">{item.name}</span>
+                                                    <span className="text-[15px]">{item.name}</span>
                                                     {SYSTEM_CATEGORIES.includes(item.name) && (
                                                         <Badge variant="secondary">System</Badge>
                                                     )}

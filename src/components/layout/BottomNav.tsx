@@ -86,18 +86,19 @@ export function BottomNav() {
   return (
     <div ref={navRef} className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-sm" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom))' }}>
         <div className="relative mx-auto w-full">
-
+            
             {/* Secondary Navigation Row */}
             <div
                 className={cn(
                     "flex justify-around items-center bg-background/95 backdrop-blur-md border-x border-t rounded-t-2xl h-16 transition-all duration-200 ease-in-out",
+                    "py-1", // Reduced vertical padding
                     isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
                 )}
                 style={{ borderBottomLeftRadius: '0px', borderBottomRightRadius: '0px' }}
             >
                 {secondaryNavItems.map(({ href, icon: Icon, label }) => (
                     <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors h-full w-16" onClick={() => setIsExpanded(false)}>
-                        <Icon className="h-4 w-4" />
+                        <Icon className="h-4 w-4" /> 
                         <span className="text-xs">{label}</span>
                     </Link>
                 ))}
@@ -105,7 +106,7 @@ export function BottomNav() {
 
             {/* Primary Navigation Container */}
             <div className="relative h-16">
-                <div className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center">
+                 <div className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center">
                     <div className="flex justify-around flex-1">
                         <NavLink href="/dashboard" currentPath={pathname}>
                             <LayoutDashboard className="h-5 w-5" />
@@ -138,27 +139,27 @@ export function BottomNav() {
                     </div>
                 </div>
             
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[75%] h-16 w-16 flex items-center justify-center z-10">
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[75%] h-[72px] w-[72px] flex items-center justify-center z-10">
                     {isTransactionsPage ? (
                     <AddExpenseDialog onSaveSuccess={handleDataChange}>
                         <Button
                             size="icon"
-                            className="h-16 w-16 rounded-full bg-primary shadow-lg border-4 border-background"
+                            className="h-[72px] w-[72px] rounded-full bg-primary shadow-lg border-4 border-background"
                             onContextMenu={(e) => e.preventDefault()}
                         >
-                            <Plus className="h-7 w-7" />
+                            <Plus className="h-8 w-8" />
                             <span className="sr-only">Add Transaction</span>
                         </Button>
                     </AddExpenseDialog>
                 ) : (
                     <Button
                         size="icon"
-                        className="h-16 w-16 rounded-full bg-primary shadow-lg border-4 border-background"
+                        className="h-[72px] w-[72px] rounded-full bg-primary shadow-lg border-4 border-background"
                         asChild
                         onContextMenu={(e) => e.preventDefault()}
                     >
                         <Link href={transactionsHref}>
-                            <ArrowRightLeft className="h-6 w-6" />
+                            <ArrowRightLeft className="h-7 w-7" />
                             <span className="sr-only">Go to Transactions</span>
                         </Link>
                     </Button>

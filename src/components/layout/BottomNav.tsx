@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -14,6 +15,7 @@ import {
   HandCoins,
   Settings,
   X,
+  Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -22,11 +24,11 @@ import { doc } from 'firebase/firestore';
 import { AddExpenseDialog } from '@/components/expenses/AddExpenseDialog';
 import { Button } from '@/components/ui/button';
 import { useState, useRef, useEffect } from 'react';
-import { Separator } from '@/components/ui/separator';
 
 const primaryNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/analysis', icon: BarChartHorizontal, label: 'Analysis' },
+  { href: '/accounts', icon: Wallet, label: 'Accounts' },
 ];
 
 const secondaryNavItems = [
@@ -35,6 +37,16 @@ const secondaryNavItems = [
     { href: '/debts', icon: HandCoins, label: 'Debts'},
     { href: '/profile', icon: Settings, label: 'Settings'},
 ];
+
+const NavLink = ({ href, currentPath, children, className }: { href: string; currentPath: string; children: React.ReactNode; className?: string; }) => {
+    const isActive = currentPath.startsWith(href);
+    return (
+        <Link href={href} className={cn("flex flex-col items-center justify-center gap-1 text-xs font-medium w-16 h-full transition-colors", isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary', className)} onContextMenu={(e) => e.preventDefault()}>
+            {children}
+        </Link>
+    )
+};
+
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -70,19 +82,9 @@ export function BottomNav() {
   const transactionsHref = transactionGrouping === 'monthly' ? '/transactions' : '/expenses';
   const isTransactionsPage = pathname.startsWith('/expenses') || pathname.startsWith('/transactions');
   
-  const NavLink = ({ href, currentPath, children, onClick }: { href: string; currentPath: string; children: React.ReactNode; onClick?: () => void }) => {
-      const isActive = currentPath.startsWith(href);
-      return (
-        <Link href={href} onClick={onClick} className={cn("flex flex-col items-center justify-center gap-1 text-xs font-medium w-16 h-full transition-colors", isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary')} onContextMenu={(e) => e.preventDefault()}>
-            {children}
-        </Link>
-      )
-  };
-
-
   return (
-    <div ref={navRef} className="fixed bottom-0 left-0 right-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="relative container mx-auto px-4">
+    <div ref={navRef} className="fixed bottom-4 left-0 right-0 z-40 px-4" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="relative mx-auto w-full max-w-sm">
 
             {/* Secondary Nav - Expands above */}
             <div className={cn(
@@ -91,7 +93,7 @@ export function BottomNav() {
             )}>
                  <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-lg ring-1 ring-black/5 flex justify-around items-center h-16">
                     {secondaryNavItems.map(({ href, icon: Icon, label }) => (
-                         <NavLink key={href} href={href} currentPath={pathname} onClick={() => setIsExpanded(false)}>
+                         <NavLink key={href} href={href} currentPath={pathname} className="w-20" onClick={() => setIsExpanded(false)}>
                             <Icon className="h-5 w-5" />
                             <span>{label}</span>
                         </NavLink>
@@ -115,7 +117,7 @@ export function BottomNav() {
                 </div>
 
                 {/* FAB Spacer */}
-                <div className="w-16 flex-shrink-0" />
+                <div className="w-20 flex-shrink-0" />
 
                 {/* Right side */}
                  <div className="flex justify-around flex-1">
@@ -138,7 +140,7 @@ export function BottomNav() {
             </div>
 
              {/* FAB Container - Centered */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10" style={{top: isExpanded ? 'calc(100% - 4rem)' : '50%'}}>
+            <div className="absolute left-1/2 -translate-x-1/2 top-0 z-10">
                  {isTransactionsPage ? (
                     <AddExpenseDialog onSaveSuccess={handleDataChange}>
                         <Button
@@ -169,3 +171,4 @@ export function BottomNav() {
     </div>
   );
 }
+

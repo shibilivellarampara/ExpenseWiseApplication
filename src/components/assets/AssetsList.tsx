@@ -90,7 +90,6 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                 ...a,
                 lastUpdated: isTimestamp(a.lastUpdated) ? a.lastUpdated.toDate() : a.lastUpdated as Date,
                 startDate: a.startDate && isTimestamp(a.startDate) ? a.startDate.toDate() : a.startDate as Date | undefined,
-                maturityDate: a.maturityDate && isTimestamp(a.maturityDate) ? a.maturityDate.toDate() : a.maturityDate as Date | undefined,
             }
         }) as EnrichedAsset[];
     }, [assets]);
@@ -179,7 +178,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                         return (
                                             <div key={asset.id} className="p-4 flex items-start gap-4 group">
                                                 <div className="flex-grow space-y-1">
-                                                    <div className="font-semibold flex items-center gap-2">
+                                                     <div className="font-semibold flex items-center gap-2">
                                                          {!isFromAccount ? (
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>
@@ -235,7 +234,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                                             </div>
                                                         </>
                                                     ) : (
-                                                         <div className={cn("font-bold text-lg", asset.currentValue >= 0 ? 'text-primary' : 'text-destructive')}>
+                                                         <div className={cn("font-bold text-lg", asset.currentValue >= 0 ? 'text-green-600' : 'text-destructive')}>
                                                             {currencySymbol}{asset.currentValue.toFixed(2)}
                                                         </div>
                                                     )}

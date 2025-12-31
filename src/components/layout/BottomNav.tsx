@@ -93,6 +93,7 @@ export function BottomNav() {
                     "flex justify-around items-center bg-background/95 backdrop-blur-md border-x border-t rounded-t-2xl h-16 transition-all duration-200 ease-in-out",
                     isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
                 )}
+                style={{ borderBottomLeftRadius: '0px', borderBottomRightRadius: '0px' }}
             >
                 {secondaryNavItems.map(({ href, icon: Icon, label }) => (
                     <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors h-full w-16" onClick={() => setIsExpanded(false)}>
@@ -104,7 +105,7 @@ export function BottomNav() {
 
             {/* Primary Navigation Container */}
             <div className="relative h-16">
-                <div className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around">
+                <div className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center">
                     <div className="flex justify-around flex-1">
                         <NavLink href="/dashboard" currentPath={pathname}>
                             <LayoutDashboard className="h-5 w-5" />
@@ -142,7 +143,7 @@ export function BottomNav() {
                     <AddExpenseDialog onSaveSuccess={handleDataChange}>
                         <Button
                             size="icon"
-                            className="h-16 w-16 rounded-full bg-primary shadow-lg"
+                            className="h-16 w-16 rounded-full bg-primary shadow-lg border-4 border-background"
                             onContextMenu={(e) => e.preventDefault()}
                         >
                             <Plus className="h-7 w-7" />
@@ -152,7 +153,7 @@ export function BottomNav() {
                 ) : (
                     <Button
                         size="icon"
-                        className="h-16 w-16 rounded-full bg-primary shadow-lg"
+                        className="h-16 w-16 rounded-full bg-primary shadow-lg border-4 border-background"
                         asChild
                         onContextMenu={(e) => e.preventDefault()}
                     >

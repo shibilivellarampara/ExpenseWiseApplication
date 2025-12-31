@@ -1,3 +1,4 @@
+
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -169,3 +170,5 @@ export type EnrichedAsset = Omit<Asset, 'startDate' | 'maturityDate' | 'lastUpda
     maturityDate?: Date;
     lastUpdated: Date;
 };
+
+    

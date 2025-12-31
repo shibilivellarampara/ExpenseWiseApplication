@@ -28,13 +28,13 @@ import { ASSET_TYPES } from '@/lib/assets';
 import { DateTimePicker } from '../DateTimePicker';
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Label } from '@/components/ui/label';
+import { Label as ShadcnLabel } from '@/components/ui/label';
 
 const assetSchema = z.object({
   name: z.string().min(1, 'Asset name is required.'),
   assetType: z.enum(Object.keys(ASSET_TYPES) as [AssetType, ...AssetType[]]),
-  investedAmount: z.coerce.number({invalid_type_error: "Invested amount is required."}).min(0, "Invested amount cannot be negative."),
-  currentValue: z.coerce.number({invalid_type_error: "Current value is required."}).min(0, "Current value cannot be negative."),
+  investedAmount: z.coerce.number().optional(),
+  currentValue: z.coerce.number().optional(),
   quantity: z.coerce.number().optional(),
   startDate: z.date().optional().nullable(),
   maturityDate: z.date().optional().nullable(),
@@ -65,7 +65,7 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     data-has-value={hasValue}
                     {...props}
                 />
-                <Label
+                <ShadcnLabel
                     htmlFor={id}
                     className={cn(
                         "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
@@ -74,7 +74,7 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     )}
                 >
                     {label}
-                </Label>
+                </ShadcnLabel>
             </div>
         );
     }
@@ -94,7 +94,7 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
                         {children}
                     </SelectContent>
                 </Select>
-                 <Label
+                 <ShadcnLabel
                     htmlFor={id}
                      className={cn(
                         "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
@@ -103,7 +103,7 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
                     )}
                 >
                     {label}
-                </Label>
+                </ShadcnLabel>
             </div>
         )
     }
@@ -172,6 +172,8 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
         const assetData = {
             ...values,
             userId: user.uid,
+            investedAmount: values.investedAmount || 0,
+            currentValue: values.currentValue || 0,
             lastUpdated: serverTimestamp(),
         };
     
@@ -250,7 +252,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                                 render={({ field }) => (
                                     <FormItem>
                                         <FloatingLabelInput
-                                            label="Invested Amount *"
+                                            label="Invested Amount"
                                             id="investedAmount"
                                             type="number"
                                             step="0.01"
@@ -267,7 +269,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                                 render={({ field }) => (
                                     <FormItem>
                                         <FloatingLabelInput
-                                            label="Current Value *"
+                                            label="Current Value"
                                             id="currentValue"
                                             type="number"
                                             step="0.01"
@@ -303,7 +305,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                                 name="startDate"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <Label>Start Date</Label>
+                                        <ShadcnLabel>Start Date</ShadcnLabel>
                                         <DateTimePicker field={field} />
                                         <FormMessage />
                                     </FormItem>
@@ -314,7 +316,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                                 name="maturityDate"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <Label>Maturity Date</Label>
+                                        <ShadcnLabel>Maturity Date</ShadcnLabel>
                                         <DateTimePicker field={field} />
                                         <FormMessage />
                                     </FormItem>
@@ -326,7 +328,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                             name="notes"
                             render={({ field }) => (
                                 <FormItem>
-                                    <Label>Notes</Label>
+                                    <ShadcnLabel>Notes</ShadcnLabel>
                                     <FormControl>
                                         <Textarea placeholder="Any additional notes about this asset..." {...field} value={field.value ?? ''} />
                                     </FormControl>
@@ -346,3 +348,5 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
         </Dialog>
     );
 }
+
+    

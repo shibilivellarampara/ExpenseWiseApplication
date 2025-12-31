@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -9,8 +10,8 @@ import { useMemo, useState } from "react";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { ExcelImporter } from "@/components/import/ExcelImporter";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BackupAndRestore } from "@/components/import/BackupAndRestore";
+import { Separator } from "@/components/ui/separator";
 
 async function fetchAllTransactions(firestore: any, userId: string, accountId?: string): Promise<Expense[]> {
     let expensesQuery;
@@ -157,29 +158,22 @@ export default function DataPage() {
         <div className="w-full space-y-8">
             <PageHeader
                 title="Import & Export"
-                description="Manage your expense data by importing or exporting."
+                description="Manage your expense data by importing, exporting, or creating backups."
             />
-            <Tabs defaultValue="import" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="import">Import from Excel</TabsTrigger>
-                    <TabsTrigger value="export">Export to Excel</TabsTrigger>
-                    <TabsTrigger value="backup">Backup & Restore</TabsTrigger>
-                </TabsList>
-                <TabsContent value="import" className="mt-6">
-                    <ExcelImporter />
-                </TabsContent>
-                <TabsContent value="export" className="mt-6">
-                    <ReportGenerator 
-                        accounts={accounts || []} 
-                        onAction={handleReportAction}
-                        isLoading={isLoading}
-                        progress={progress}
-                    />
-                </TabsContent>
-                 <TabsContent value="backup" className="mt-6">
-                    <BackupAndRestore />
-                </TabsContent>
-            </Tabs>
+            <div className="space-y-8">
+                <ExcelImporter />
+                
+                <ReportGenerator 
+                    accounts={accounts || []} 
+                    onAction={handleReportAction}
+                    isLoading={isLoading}
+                    progress={progress}
+                />
+
+                <Separator />
+                
+                <BackupAndRestore />
+            </div>
         </div>
     );
 }

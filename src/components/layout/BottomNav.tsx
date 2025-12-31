@@ -60,6 +60,7 @@ export function BottomNav() {
                                     <Button
                                         size="icon"
                                         className="h-16 w-16 rounded-full bg-primary shadow-lg ring-4 ring-background"
+                                        onContextMenu={(e) => e.preventDefault()}
                                     >
                                         <Plus className="h-7 w-7" />
                                         <span className="sr-only">Add Transaction</span>
@@ -70,6 +71,7 @@ export function BottomNav() {
                                     size="icon"
                                     className="h-16 w-16 rounded-full bg-primary shadow-lg ring-4 ring-background"
                                     asChild
+                                    onContextMenu={(e) => e.preventDefault()}
                                 >
                                     <Link href={transactionsHref}>
                                         <ArrowRightLeft className="h-7 w-7" />
@@ -87,7 +89,7 @@ export function BottomNav() {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <MoreSheet>
-                                        <div className="flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full text-muted-foreground cursor-pointer">
+                                        <div className="flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full text-muted-foreground cursor-pointer" onContextMenu={(e) => e.preventDefault()}>
                                             <Icon className="h-5 w-5" />
                                             <span>{label}</span>
                                         </div>
@@ -114,6 +116,7 @@ export function BottomNav() {
                                 ? 'text-primary'
                                 : 'text-muted-foreground hover:text-primary'
                         )}
+                        onContextMenu={(e) => e.preventDefault()}
                     >
                         <Icon className="h-5 w-5" />
                         <span>{label}</span>

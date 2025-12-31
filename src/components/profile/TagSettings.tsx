@@ -5,7 +5,7 @@ import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, Fi
 import { Tag } from '@/lib/types';
 import { collection, doc, writeBatch, query, getDocs, where, arrayRemove } from 'firebase/firestore';
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, Merge, Archive, Eye, EyeOff, RotateCw, Search } from 'lucide-react';
@@ -18,90 +18,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { MergeItemsDialog } from '@/components/profile/MergeItemsDialog';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle as DialogTitlePrimitive, DialogTrigger } from '@/components/ui/dialog';
-
-function AddOrEditItemDialog({
-    isOpen,
-    onOpenChange,
-    itemToEdit,
-    onSave,
-    itemType
-}: {
-    isOpen: boolean,
-    onOpenChange: (open: boolean) => void,
-    itemToEdit: { id: string, name: string, icon: string } | null,
-    onSave: (name: string, icon: string) => void,
-    itemType: 'Category' | 'Tag'
-}) {
-    const [name, setName] = useState('');
-    const [icon, setIcon] = useState(itemType === 'Category' ? 'Shapes' : 'Tag');
-    const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-
-    React.useEffect(() => {
-        if (isOpen) {
-            if (itemToEdit) {
-                setName(itemToEdit.name);
-                setIcon(itemToEdit.icon);
-            } else {
-                setName('');
-                setIcon(itemType === 'Category' ? 'Shapes' : 'Tag');
-            }
-        }
-    }, [isOpen, itemToEdit, itemType]);
-
-    const handleSave = async () => {
-        setIsSaving(true);
-        await onSave(name, icon);
-        setIsSaving(false);
-        onOpenChange(false);
-    };
-
-    const renderIcon = (iconName: string) => {
-        const IconComponent = (LucideIcons as any)[iconName];
-        return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitlePrimitive>{itemToEdit ? `Edit ${itemType}` : `Add New ${itemType}`}</DialogTitlePrimitive>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                    <Input
-                        placeholder={`${itemType} Name`}
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        autoFocus
-                    />
-                    <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start">
-                                {renderIcon(icon)}
-                                <span className="ml-2">{icon}</span>
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                            {availableIcons.map(iconName => (
-                                <Button key={iconName} variant="ghost" size="icon" onClick={() => { setIcon(iconName); setIconPopoverOpen(false); }}>
-                                    {renderIcon(iconName)}
-                                </Button>
-                            ))}
-                        </PopoverContent>
-                    </Popover>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={handleSave} disabled={isSaving || !name}>
-                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-}
 
 export function TagSettings() {
     const { user } = useUser();
@@ -114,55 +30,80 @@ export function TagSettings() {
 
     const { data: items, isLoading } = useCollection<Tag>(queryHook);
 
+    const [newItemName, setNewItemName] = useState('');
+    const [newItemIcon, setNewItemIcon] = useState('Tag');
     const [editingItem, setEditingItem] = useState<{ id: string; name: string; icon: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showMergeDialog, setShowMergeDialog] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
 
     const renderIcon = (iconName: string) => {
         const IconComponent = (LucideIcons as any)[iconName];
         return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
     };
 
-    const handleSaveItem = async (name: string, icon: string) => {
-        if (!name || !user || !firestore) return;
-        
+    const handleAddItem = async () => {
+        if (!newItemName || !user || !firestore) return;
+
+        const isDuplicate = items?.some(t => t.name.toLowerCase() === newItemName.toLowerCase());
+        if (isDuplicate) {
+            toast({
+                variant: 'destructive',
+                title: 'Duplicate Tag',
+                description: `A tag named "${newItemName}" already exists.`,
+            });
+            return;
+        }
+
+        setIsSaving(true);
+        const ref = collection(firestore, `users/${user.uid}/tags`);
+        const newDocRef = doc(ref);
+        const tagData = { id: newDocRef.id, name: newItemName, icon: newItemIcon, userId: user.uid, status: 'active' };
+
+        try {
+            await setDocumentNonBlocking(newDocRef, tagData);
+            toast({ title: 'Tag Added' });
+            setNewItemName('');
+            setNewItemIcon('Tag');
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+    
+    const handleUpdateItem = async () => {
+        if (!editingItem || !user || !firestore) return;
+
         const isDuplicate = items?.some(t =>
-            t.name.toLowerCase() === name.toLowerCase() && t.id !== editingItem?.id
+            t.name.toLowerCase() === editingItem.name.toLowerCase() && t.id !== editingItem.id
         );
 
         if (isDuplicate) {
             toast({
                 variant: 'destructive',
                 title: 'Duplicate Tag',
-                description: `A tag named "${name}" already exists.`,
+                description: `A tag named "${editingItem.name}" already exists.`,
             });
             return;
         }
 
         setIsSaving(true);
-        
+        const itemRef = doc(firestore, `users/${user.uid}/tags`, editingItem.id);
+        const updatedData = { name: editingItem.name, icon: editingItem.icon };
+
         try {
-            if (editingItem) {
-                const itemRef = doc(firestore, `users/${user.uid}/tags`, editingItem.id);
-                const updatedData = { name, icon };
-                await setDocumentNonBlocking(itemRef, updatedData, { merge: true });
-                toast({ title: "Tag Updated" });
-            } else {
-                const ref = collection(firestore, `users/${user.uid}/tags`);
-                const newDocRef = doc(ref);
-                const tagData = { id: newDocRef.id, name, icon, userId: user.uid, status: 'active' };
-                await setDocumentNonBlocking(newDocRef, tagData);
-                toast({ title: 'Tag Added' });
-            }
+            await setDocumentNonBlocking(itemRef, updatedData, { merge: true });
+            toast({ title: "Tag Updated" });
+            setEditingItem(null);
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
         } finally {
             setIsSaving(false);
-            setEditingItem(null);
         }
     };
 
@@ -281,21 +222,9 @@ export function TagSettings() {
 
     return (
         <div className="space-y-4">
-             <AddOrEditItemDialog 
-                isOpen={isAddDialogOpen || !!editingItem}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setIsAddDialogOpen(false);
-                        setEditingItem(null);
-                    }
-                }}
-                itemToEdit={editingItem}
-                onSave={handleSaveItem}
-                itemType="Tag"
-            />
             <Card>
-                 <CardHeader>
-                    <div className="flex items-center gap-2">
+                <CardHeader>
+                     <div className="flex items-center gap-2">
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -305,10 +234,6 @@ export function TagSettings() {
                                 className="pl-8"
                             />
                         </div>
-                        <Button onClick={() => { setEditingItem(null); setIsAddDialogOpen(true); }}>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add New
-                        </Button>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -333,37 +258,69 @@ export function TagSettings() {
                                             onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
                                             disabled={isSaving}
                                         />
-                                        <div className="flex items-center flex-1 gap-2">
-                                        {renderIcon(item.icon)}
-                                        <span>{item.name}</span>
-                                        </div>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')}>
-                                            <Archive className="h-4 w-4" />
-                                        </Button>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" type="button">
-                                                    <Trash2 className="h-4 w-4" />
+                                        {editingItem?.id === item.id ? (
+                                            <>
+                                                <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            {renderIcon(editingItem.icon)}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                                                        {availableIcons.map(icon => (
+                                                            <Button key={icon} variant="ghost" size="icon" onClick={() => { setEditingItem({ ...editingItem, icon }); setIconPopoverOpen(false); }}>
+                                                                {renderIcon(icon)}
+                                                            </Button>
+                                                        ))}
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <Input
+                                                    value={editingItem.name}
+                                                    onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                                    className="h-8"
+                                                />
+                                                <Button size="icon" className="h-8 w-8" onClick={handleUpdateItem}>
+                                                    {isSaving ? <Loader2 className="animate-spin" /> : <Check className="h-4 w-4" />}
                                                 </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        This action cannot be undone. This will permanently delete the "{item.name}" tag and remove it from all associated transactions.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleRemoveItem(item.id)} className="bg-destructive hover:bg-destructive/90">
-                                                        {isSaving ? <Loader2 className="animate-spin" /> : "Delete"}
-                                                    </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingItem(null)}>
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="flex items-center flex-1 gap-2">
+                                                    {renderIcon(item.icon)}
+                                                    <span>{item.name}</span>
+                                                </div>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')}>
+                                                    <Archive className="h-4 w-4" />
+                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon" type="button">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This action cannot be undone. This will permanently delete the "{item.name}" tag and remove it from all associated transactions.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleRemoveItem(item.id)} className="bg-destructive hover:bg-destructive/90">
+                                                                {isSaving ? <Loader2 className="animate-spin" /> : "Delete"}
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </>
+                                        )}
                                     </div>
                                      {index === lastSelectedIndex && selectedIds.length > 1 && (
                                         <div className="pt-2 pl-8">
@@ -390,6 +347,31 @@ export function TagSettings() {
                         </>
                     )}
                 </CardContent>
+                <CardFooter className="flex items-center gap-2 border-t pt-6">
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-10 w-10">
+                                {renderIcon(newItemIcon)}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                            {availableIcons.map(icon => (
+                                <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItemIcon(icon)}>
+                                    {renderIcon(icon)}
+                                </Button>
+                            ))}
+                        </PopoverContent>
+                    </Popover>
+                    <Input
+                        placeholder="New Tag Name"
+                        value={newItemName}
+                        onChange={(e) => setNewItemName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
+                    />
+                    <Button onClick={handleAddItem} disabled={isSaving || !newItemName}>
+                        {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
+                    </Button>
+                </CardFooter>
             </Card>
 
             {inactiveTags.length > 0 && (

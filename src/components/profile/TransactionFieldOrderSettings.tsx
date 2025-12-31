@@ -15,7 +15,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import * as LucideIcons from 'lucide-react';
 import { useDebounce } from 'use-debounce';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 
@@ -168,12 +167,12 @@ export function TransactionFieldOrderSettings() {
          <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Transaction List</CardTitle>
-                    <CardDescription>Customize how your list of transactions appears.</CardDescription>
+                    <CardTitle>Transaction List Appearance</CardTitle>
+                    <CardDescription>Customize how your list of transactions appears on the main screen.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="rounded-lg border p-3 shadow-sm space-y-2">
-                        <Label>Default View</Label>
+                        <Label>Default Grouping</Label>
                          <RadioGroup
                             value={transactionGrouping}
                             onValueChange={(value) => handleDashboardSettingChange('transactionGrouping', value)}
@@ -188,9 +187,6 @@ export function TransactionFieldOrderSettings() {
                                 <Label htmlFor="monthly-view" className="font-normal">Group by Month</Label>
                             </div>
                         </RadioGroup>
-                        <p className="text-[0.8rem] text-muted-foreground">
-                            How to group transactions on the main page.
-                        </p>
                     </div>
                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
@@ -204,6 +200,15 @@ export function TransactionFieldOrderSettings() {
                             onCheckedChange={(value) => handleDashboardSettingChange('transactionViewMode', value ? 'compact' : 'normal')}
                         />
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>AI Features</CardTitle>
+                    <CardDescription>Manage AI-powered assistance in the transaction form.</CardDescription>
+                </CardHeader>
+                <CardContent>
                      <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
                             <Label>Enable AI Suggestions</Label>
@@ -221,15 +226,14 @@ export function TransactionFieldOrderSettings() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Transaction Form</CardTitle>
+                    <CardTitle>Transaction Form Fields</CardTitle>
                     <CardDescription>Customize the fields and behavior of the transaction entry form.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label>Field Visibility & Order</Label>
-                        <p className="text-[0.8rem] text-muted-foreground">
+                     <p className="text-sm text-muted-foreground">
                             Drag and drop to reorder fields. Use toggles to show/hide or make fields required.
                         </p>
+                    <div className="space-y-2 rounded-lg border p-3 shadow-sm">
                         {orderedFields.map((field, index) => {
                             const isToggleable = field !== 'accountId';
                             let requiredKey: keyof typeof requiredFields | null = null;
@@ -240,7 +244,7 @@ export function TransactionFieldOrderSettings() {
                             return (
                                 <div
                                     key={field}
-                                    className="flex items-center gap-2 p-2 rounded-md border bg-background flex-wrap"
+                                    className="flex items-center gap-2 p-2 rounded-md bg-background flex-wrap"
                                 >
                                     <span className="flex-1 font-medium min-w-[80px]">{fieldLabels[field]}</span>
                                     

@@ -16,6 +16,7 @@ import * as LucideIcons from 'lucide-react';
 import { useDebounce } from 'use-debounce';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Separator } from "../ui/separator";
 
 
 const allPossibleFields: FieldKey[] = ['description', 'accountId', 'categoryId', 'tagIds'];
@@ -167,12 +168,12 @@ export function TransactionFieldOrderSettings() {
          <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Transaction List Appearance</CardTitle>
-                    <CardDescription>Customize how your list of transactions appears on the main screen.</CardDescription>
+                    <CardTitle>Transaction List</CardTitle>
+                    <CardDescription>Customize how your list of transactions appears.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="rounded-lg border p-3 shadow-sm space-y-2">
-                        <Label>Default Grouping</Label>
+                        <Label>Default View</Label>
                          <RadioGroup
                             value={transactionGrouping}
                             onValueChange={(value) => handleDashboardSettingChange('transactionGrouping', value)}
@@ -187,6 +188,9 @@ export function TransactionFieldOrderSettings() {
                                 <Label htmlFor="monthly-view" className="font-normal">Group by Month</Label>
                             </div>
                         </RadioGroup>
+                         <p className="text-[0.8rem] text-muted-foreground pt-1">
+                            How to group transactions on the main page.
+                        </p>
                     </div>
                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
@@ -206,7 +210,6 @@ export function TransactionFieldOrderSettings() {
             <Card>
                 <CardHeader>
                     <CardTitle>AI Features</CardTitle>
-                    <CardDescription>Manage AI-powered assistance in the transaction form.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
@@ -223,53 +226,37 @@ export function TransactionFieldOrderSettings() {
                     </div>
                 </CardContent>
             </Card>
-
+            
             <Card>
                 <CardHeader>
                     <CardTitle>Transaction Form Fields</CardTitle>
                     <CardDescription>Customize the fields and behavior of the transaction entry form.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <p className="text-sm text-muted-foreground">
-                            Drag and drop to reorder fields. Use toggles to show/hide or make fields required.
-                        </p>
-                    <div className="space-y-2 rounded-lg border p-3 shadow-sm">
-                        {orderedFields.map((field, index) => {
-                            const isToggleable = field !== 'accountId';
-                            let requiredKey: keyof typeof requiredFields | null = null;
-                            if (field === 'description') requiredKey = 'isDescriptionRequired';
-                            if (field === 'categoryId') requiredKey = 'isCategoryRequired';
-                            if (field === 'tagIds') requiredKey = 'isTagRequired';
+                    <div className="rounded-lg border p-4 space-y-4">
+                        <div>
+                             <h4 className="font-semibold text-sm mb-1">Field Visibility & Order</h4>
+                             <p className="text-sm text-muted-foreground">
+                                Drag and drop to reorder fields. Use toggles to show/hide or make fields required.
+                            </p>
+                        </div>
+                        <div className="space-y-2">
+                            {orderedFields.map((field, index) => {
+                                const isToggleable = field !== 'accountId';
+                                let requiredKey: keyof typeof requiredFields | null = null;
+                                if (field === 'description') requiredKey = 'isDescriptionRequired';
+                                if (field === 'categoryId') requiredKey = 'isCategoryRequired';
+                                if (field === 'tagIds') requiredKey = 'isTagRequired';
 
-                            return (
-                                <div
-                                    key={field}
-                                    className="flex items-center gap-2 p-2 rounded-md bg-background flex-wrap"
-                                >
-                                    <span className="flex-1 font-medium min-w-[80px]">{fieldLabels[field]}</span>
-                                    
-                                    {field === 'accountId' ? (
-                                        <div className="flex-1 min-w-[150px]">
-                                            <Select value={defaultAccountId || 'none'} onValueChange={(value) => setDefaultAccountId(value === 'none' ? undefined : value)}>
-                                                <SelectTrigger className="h-8 text-xs">
-                                                    <SelectValue placeholder="Set default..." />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="none">No Default</SelectItem>
-                                                    {accounts?.map(account => (
-                                                        <SelectItem key={account.id} value={account.id}>
-                                                            <div className="flex items-center gap-2">
-                                                                {renderIcon(account.icon)}
-                                                                {account.name}
-                                                            </div>
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            {isToggleable && (
+                                return (
+                                    <div
+                                        key={field}
+                                        className="flex items-center gap-2 p-2 rounded-md bg-background flex-wrap"
+                                    >
+                                        <span className="flex-1 font-medium min-w-[80px]">{fieldLabels[field]}</span>
+                                        
+                                        {isToggleable && (
+                                            <>
                                                 <div className="flex items-center gap-1">
                                                     <Switch
                                                         id={`visible-${field}`}
@@ -278,44 +265,66 @@ export function TransactionFieldOrderSettings() {
                                                     />
                                                     <Label htmlFor={`visible-${field}`} className="text-xs text-muted-foreground">Show</Label>
                                                 </div>
-                                            )}
-                                            
-                                            {requiredKey && (
-                                                <div className="flex items-center gap-1">
-                                                    <Switch
-                                                        id={`required-${field}`}
-                                                        checked={requiredFields[requiredKey]}
-                                                        onCheckedChange={(value) => handleRequiredChange(requiredKey!, value)}
-                                                    />
-                                                    <Label htmlFor={`required-${field}`} className="text-xs text-muted-foreground">Required</Label>
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
+                                                
+                                                {requiredKey && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Switch
+                                                            id={`required-${field}`}
+                                                            checked={requiredFields[requiredKey]}
+                                                            onCheckedChange={(value) => handleRequiredChange(requiredKey!, value)}
+                                                        />
+                                                        <Label htmlFor={`required-${field}`} className="text-xs text-muted-foreground">Required</Label>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
 
-                                    <div className="flex items-center gap-1 ml-auto">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7"
-                                            onClick={() => handleMoveField(index, 'up')}
-                                            disabled={index === 0}
-                                        >
-                                            <ArrowUp className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7"
-                                            onClick={() => handleMoveField(index, 'down')}
-                                            disabled={index === orderedFields.length - 1}
-                                        >
-                                            <ArrowDown className="h-4 w-4" />
-                                        </Button>
+                                        <div className="flex items-center gap-1 ml-auto">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                onClick={() => handleMoveField(index, 'up')}
+                                                disabled={index === 0}
+                                            >
+                                                <ArrowUp className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                onClick={() => handleMoveField(index, 'down')}
+                                                disabled={index === orderedFields.length - 1}
+                                            >
+                                                <ArrowDown className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
-                            )
-                        })}
+                                )
+                            })}
+                        </div>
+                    </div>
+                     <div className="rounded-lg border p-4 space-y-2">
+                        <h4 className="font-semibold text-sm">Default Account</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Automatically select an account when creating a new transaction.
+                        </p>
+                        <Select value={defaultAccountId || 'none'} onValueChange={(value) => setDefaultAccountId(value === 'none' ? undefined : value)}>
+                            <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Set default account..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">No Default</SelectItem>
+                                {accounts?.map(account => (
+                                    <SelectItem key={account.id} value={account.id}>
+                                        <div className="flex items-center gap-2">
+                                            {renderIcon(account.icon)}
+                                            {account.name}
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </CardContent>
             </Card>

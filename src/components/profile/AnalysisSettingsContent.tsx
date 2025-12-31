@@ -10,9 +10,8 @@ import * as LucideIcons from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 
 const renderIcon = (iconName: string) => {
     const IconComponent = (LucideIcons as any)[iconName];
@@ -71,66 +70,76 @@ export function AnalysisSettingsContent() {
         { key: 'showCategoryBarChart', label: 'Top Spending Categories Chart' },
         { key: 'showTagPieChart', label: 'Spending by Tag Chart' },
         { key: 'showIncomePieChart', label: 'Income Sources Chart' },
-        { key: 'showAiInsights', label: 'AI-Powered Insights' },
+        { key: 'showAiInsights', label: 'AI-Powered Insights Card' },
     ];
 
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
              {isLoading ? (
-                <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
+                <div className="flex justify-center pt-10"><Loader2 className="animate-spin h-8 w-8" /></div>
             ) : (
                 <>
-                    <h4 className="font-semibold">Summary Cards</h4>
-                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                            <Label>Show Normal Total</Label>
-                            <p className="text-[0.8rem] text-muted-foreground">
-                                Display the main summary for all transactions.
-                            </p>
-                        </div>
-                        <Switch
-                            checked={analysisSettings?.showNormalTotal ?? true}
-                            onCheckedChange={(value) => handleSettingChange('showNormalTotal', value)}
-                        />
-                    </div>
-                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                            <Label>Show Adjusted Total</Label>
-                            <p className="text-[0.8rem] text-muted-foreground">
-                                Display the summary card for adjusted analysis totals.
-                            </p>
-                        </div>
-                        <Switch
-                            checked={analysisSettings?.showAdjustedTotal ?? true}
-                            onCheckedChange={(value) => handleSettingChange('showAdjustedTotal', value)}
-                        />
-                    </div>
-                    
-                    <Separator />
-                    
-                    <h4 className="font-semibold">Chart Visibility</h4>
-                    <div className="space-y-2">
-                        {chartVisibilitySettings.map(({ key, label }) => (
-                            <div key={key} className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                                <Label htmlFor={`vis-${key}`}>{label}</Label>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Summary Card Visibility</CardTitle>
+                            <CardDescription>Control which summary totals appear at the top of the Analysis page.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                                <div className="space-y-0.5">
+                                    <Label>Show Normal Total</Label>
+                                    <p className="text-[0.8rem] text-muted-foreground">
+                                        Display the main summary for all transactions.
+                                    </p>
+                                </div>
                                 <Switch
-                                    id={`vis-${key}`}
-                                    checked={(analysisSettings?.[key as keyof typeof analysisSettings] as boolean) ?? true}
-                                    onCheckedChange={(value) => handleSettingChange(key as keyof typeof analysisSettings, value)}
+                                    checked={analysisSettings?.showNormalTotal ?? true}
+                                    onCheckedChange={(value) => handleSettingChange('showNormalTotal', value)}
                                 />
                             </div>
-                        ))}
-                    </div>
-
-                    <Separator />
-
-                    <h4 className="font-semibold">Excluded Categories</h4>
-                    <p className="text-sm text-muted-foreground">Select categories to exclude from charts and AI insights.</p>
+                            <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                                <div className="space-y-0.5">
+                                    <Label>Show Adjusted Total</Label>
+                                    <p className="text-[0.8rem] text-muted-foreground">
+                                        Display the summary card for adjusted analysis totals.
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={analysisSettings?.showAdjustedTotal ?? true}
+                                    onCheckedChange={(value) => handleSettingChange('showAdjustedTotal', value)}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                    
                     <Card>
-                        <CardContent className="p-0">
+                        <CardHeader>
+                             <CardTitle>Chart & Insights Visibility</CardTitle>
+                            <CardDescription>Show or hide specific charts and cards on the Analysis page.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {chartVisibilitySettings.map(({ key, label }) => (
+                                <div key={key} className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <Label htmlFor={`vis-${key}`}>{label}</Label>
+                                    <Switch
+                                        id={`vis-${key}`}
+                                        checked={(analysisSettings?.[key as keyof typeof analysisSettings] as boolean) ?? true}
+                                        onCheckedChange={(value) => handleSettingChange(key as keyof typeof analysisSettings, value)}
+                                    />
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Excluded Categories</CardTitle>
+                            <CardDescription>Select categories to exclude from charts and AI insights for a more focused analysis.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
                             <ScrollArea className="h-64 w-full">
-                                <div className="p-4 space-y-2">
+                                <div className="p-1 space-y-2">
                                     {sortedCategories.map((category) => (
                                         <div key={category.id} className="flex items-center space-x-2">
                                             <Checkbox

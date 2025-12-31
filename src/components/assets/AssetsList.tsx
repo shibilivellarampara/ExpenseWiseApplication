@@ -213,12 +213,12 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                                     {!isFromAccount && (
                                                         <div className="flex items-center gap-4 text-sm">
                                                             <div className="flex flex-col">
-                                                                <span className="text-xs text-muted-foreground">Current Value</span>
-                                                                <span className="font-medium">{currencySymbol}{asset.currentValue.toFixed(2)}</span>
-                                                            </div>
-                                                            <div className="flex flex-col">
                                                                 <span className="text-xs text-muted-foreground">Invested</span>
                                                                 <span className="font-medium text-muted-foreground">{currencySymbol}{asset.investedAmount.toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs text-muted-foreground">Current Value</span>
+                                                                <span className="font-medium">{currencySymbol}{asset.currentValue.toFixed(2)}</span>
                                                             </div>
                                                         </div>
                                                     )}
@@ -235,7 +235,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                                             </div>
                                                         </>
                                                     ) : (
-                                                         <div className={cn("font-bold text-lg", asset.currentValue >= 0 ? 'text-green-600' : 'text-red-500')}>
+                                                         <div className={cn("font-bold text-lg", asset.currentValue >= 0 ? 'text-primary' : 'text-destructive')}>
                                                             {currencySymbol}{asset.currentValue.toFixed(2)}
                                                         </div>
                                                     )}

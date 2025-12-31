@@ -10,7 +10,7 @@ import Link from "next/link";
 
 const settingsLinks = [
     { href: '/profile/details', icon: User, title: 'Profile & Security', description: 'Update your personal information and password.' },
-    { href: '/profile/form', icon: List, title: 'Form Customization', description: 'Customize transaction form fields.' },
+    { href: '/profile/form', icon: List, title: 'Transaction Settings', description: 'Customize transaction form and list appearance.' },
     { href: '/profile/dashboard', icon: Palette, title: 'Dashboard Settings', description: 'Customize your dashboard appearance.' },
     { href: '/profile/analysis', icon: BarChart2, title: 'Analysis Settings', description: 'Customize which categories to exclude.' },
     { href: '/profile/categories', icon: Cog, title: 'Categories', description: 'Manage your expense categories.' },

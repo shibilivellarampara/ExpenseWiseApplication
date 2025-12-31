@@ -161,6 +161,8 @@ export function TransactionFieldOrderSettings() {
             </div>
         );
     }
+    
+    const transactionGrouping = dashboardSettings?.transactionGrouping || 'daily';
 
     return (
          <div className="space-y-6">
@@ -170,10 +172,10 @@ export function TransactionFieldOrderSettings() {
                     <CardDescription>Customize how your list of transactions appears.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="rounded-lg border p-3 shadow-sm space-y-2">
+                     <div className="rounded-lg border p-3 shadow-sm space-y-2">
                         <Label>Default View</Label>
-                        <RadioGroup
-                            value={dashboardSettings?.transactionGrouping || 'daily'}
+                         <RadioGroup
+                            value={transactionGrouping}
                             onValueChange={(value) => handleDashboardSettingChange('transactionGrouping', value)}
                             className="flex space-x-4"
                         >

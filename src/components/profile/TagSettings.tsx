@@ -1,10 +1,10 @@
 
 'use client';
 
+import React, { useState, useMemo } from 'react';
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError, setDocumentNonBlocking } from '@/firebase';
 import { Tag } from '@/lib/types';
 import { collection, doc, writeBatch, query, getDocs, where, arrayRemove } from 'firebase/firestore';
-import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { MergeItemsDialog } from '@/components/profile/MergeItemsDialog';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function TagSettings() {
     const { user } = useUser();
@@ -234,18 +235,22 @@ export function TagSettings() {
                         />
                     </div>
                     <div className="flex items-center gap-2">
-                        <Popover>
+                        <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
                             <PopoverTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-10 w-10">
                                     {renderIcon(newItemIcon)}
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                {availableIcons.map(icon => (
-                                    <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItemIcon(icon)}>
-                                        {renderIcon(icon)}
-                                    </Button>
-                                ))}
+                           <PopoverContent className="w-auto p-0">
+                                <ScrollArea className="h-72">
+                                    <div className="grid grid-cols-5 gap-2 p-4">
+                                        {availableIcons.map(iconName => (
+                                            <Button key={iconName} variant="ghost" size="icon" onClick={() => { setNewItemIcon(iconName); setIconPopoverOpen(false); }}>
+                                                {renderIcon(iconName)}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
                             </PopoverContent>
                         </Popover>
                         <Input
@@ -274,6 +279,21 @@ export function TagSettings() {
                                     />
                                     <label htmlFor="select-all-tags" className="text-sm font-medium">Select All</label>
                                 </div>
+                                {selectedIds.length > 1 && (
+                                     <MergeItemsDialog
+                                        open={showMergeDialog}
+                                        onOpenChange={setShowMergeDialog}
+                                        items={items?.filter(c => selectedIds.includes(c.id)) || []}
+                                        itemType="Tag"
+                                        onMerge={handleMerge}
+                                        isSaving={isSaving}
+                                    >
+                                        <Button variant="outline" size="sm">
+                                            <Merge className="mr-2 h-4 w-4" />
+                                            Merge ({selectedIds.length})
+                                        </Button>
+                                    </MergeItemsDialog>
+                                )}
                             </div>
                             {activeTags.map((item, index) => (
                                 <div key={item.id}>
@@ -292,12 +312,16 @@ export function TagSettings() {
                                                             {renderIcon(editingItem.icon)}
                                                         </Button>
                                                     </PopoverTrigger>
-                                                    <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                                        {availableIcons.map(icon => (
-                                                            <Button key={icon} variant="ghost" size="icon" onClick={() => { setEditingItem({ ...editingItem, icon }); setIconPopoverOpen(false); }}>
-                                                                {renderIcon(icon)}
-                                                            </Button>
-                                                        ))}
+                                                    <PopoverContent className="w-auto p-0">
+                                                        <ScrollArea className="h-72">
+                                                            <div className="grid grid-cols-5 gap-2 p-4">
+                                                                {availableIcons.map(iconName => (
+                                                                    <Button key={iconName} variant="ghost" size="icon" onClick={() => { setEditingItem({ ...editingItem, icon: iconName }); setIconPopoverOpen(false); }}>
+                                                                        {renderIcon(iconName)}
+                                                                    </Button>
+                                                                ))}
+                                                            </div>
+                                                        </ScrollArea>
                                                     </PopoverContent>
                                                 </Popover>
                                                 <Input

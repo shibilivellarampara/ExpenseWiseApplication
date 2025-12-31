@@ -11,8 +11,8 @@ export default function FormSettingsPage() {
     return (
         <div className="w-full space-y-8">
              <PageHeader
-                title="Form Customization"
-                description="Customize transaction form fields."
+                title="Transaction Settings"
+                description="Customize transaction form fields and list appearance."
             >
                  <Button variant="outline" asChild>
                     <Link href="/profile">
@@ -21,9 +21,7 @@ export default function FormSettingsPage() {
                     </Link>
                 </Button>
             </PageHeader>
-            <Card>
-                <TransactionFieldOrderSettings />
-            </Card>
+            <TransactionFieldOrderSettings />
         </div>
     )
 }

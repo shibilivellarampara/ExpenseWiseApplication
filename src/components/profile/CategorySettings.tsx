@@ -21,6 +21,7 @@ import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle as DialogTitlePrimitive, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 function AddOrEditItemDialog({
     isOpen,
@@ -84,12 +85,16 @@ function AddOrEditItemDialog({
                                 <span className="ml-2">{icon}</span>
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                            {availableIcons.map(iconName => (
-                                <Button key={iconName} variant="ghost" size="icon" onClick={() => { setIcon(iconName); setIconPopoverOpen(false); }}>
-                                    {renderIcon(iconName)}
-                                </Button>
-                            ))}
+                        <PopoverContent className="w-auto p-0">
+                            <ScrollArea className="h-72">
+                                <div className="grid grid-cols-5 gap-2 p-4">
+                                    {availableIcons.map(iconName => (
+                                        <Button key={iconName} variant="ghost" size="icon" onClick={() => { setIcon(iconName); setIconPopoverOpen(false); }}>
+                                            {renderIcon(iconName)}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </ScrollArea>
                         </PopoverContent>
                     </Popover>
                 </div>
@@ -330,13 +335,30 @@ export function CategorySettings() {
                         <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
                     ) : (
                         <>
-                            <div className="flex items-center gap-2 px-2">
-                                <Checkbox
-                                    id="select-all-categories"
-                                    checked={selectedIds.length === activeCategories.length && activeCategories.length > 0}
-                                    onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.map(c => c.id) : [])}
-                                />
-                                <label htmlFor="select-all-categories" className="text-sm font-medium">Select All</label>
+                            <div className="flex items-center justify-between px-2">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="select-all-categories"
+                                        checked={selectedIds.length === activeCategories.length && activeCategories.length > 0}
+                                        onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.map(c => c.id) : [])}
+                                    />
+                                    <label htmlFor="select-all-categories" className="text-sm font-medium">Select All</label>
+                                </div>
+                                {selectedIds.length > 1 && (
+                                     <MergeItemsDialog
+                                        open={showMergeDialog}
+                                        onOpenChange={setShowMergeDialog}
+                                        items={categories?.filter(c => selectedIds.includes(c.id)) || []}
+                                        itemType="Category"
+                                        onMerge={handleMerge}
+                                        isSaving={isSaving}
+                                    >
+                                        <Button variant="outline" size="sm">
+                                            <Merge className="mr-2 h-4 w-4" />
+                                            Merge ({selectedIds.length})
+                                        </Button>
+                                    </MergeItemsDialog>
+                                )}
                             </div>
                             {activeCategories.map((item, index) => (
                                 <div key={item.id}>
@@ -382,23 +404,6 @@ export function CategorySettings() {
                                             </AlertDialogContent>
                                         </AlertDialog>
                                     </div>
-                                    {index === lastSelectedIndex && selectedIds.length > 1 && (
-                                        <div className="pt-2 pl-8">
-                                            <MergeItemsDialog
-                                                open={showMergeDialog}
-                                                onOpenChange={setShowMergeDialog}
-                                                items={categories?.filter(c => selectedIds.includes(c.id)) || []}
-                                                itemType="Category"
-                                                onMerge={handleMerge}
-                                                isSaving={isSaving}
-                                            >
-                                                <Button variant="outline" size="sm">
-                                                    <Merge className="mr-2 h-4 w-4" />
-                                                    Merge {selectedIds.length} selected categories
-                                                </Button>
-                                            </MergeItemsDialog>
-                                        </div>
-                                    )}
                                 </div>
                             ))}
                              {activeCategories.length === 0 && searchQuery && (

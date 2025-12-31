@@ -336,11 +336,13 @@ export function ProfileForm() {
                                     </button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-80">
-                                    <div className="grid gap-4">
-                                        <h4 className="font-medium leading-none">Change Avatar</h4>
-                                        <p className="text-sm text-muted-foreground">
-                                            Upload a custom photo or select a pre-designed avatar.
-                                        </p>
+                                     <div className="space-y-4">
+                                        <div className="space-y-1">
+                                            <h4 className="font-medium leading-none">Change Avatar</h4>
+                                            <p className="text-sm text-muted-foreground">
+                                                Upload a custom photo or select a pre-designed avatar.
+                                            </p>
+                                        </div>
                                         <Button 
                                             type="button" 
                                             variant="outline" 
@@ -569,3 +571,4 @@ export function ProfileForm() {
         </div>
     );
 }
+

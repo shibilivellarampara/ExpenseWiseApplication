@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -5,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { collection, getDocs, writeBatch, doc, query, where } from 'firebase/firestore';
 import { Loader2, Download, Upload, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -35,7 +36,6 @@ export function BackupAndRestore() {
             
             for (const collectionName of COLLECTIONS_TO_BACKUP) {
                 if (collectionName === 'userProfile') {
-                    const docRef = doc(firestore, `users/${user.uid}`);
                     const docSnap = await getDocs(query(collection(firestore, 'users'), where('id', '==', user.uid)));
                     if (!docSnap.empty) {
                         backupData.userProfile = docSnap.docs[0].data();
@@ -203,6 +203,12 @@ export function BackupAndRestore() {
                 </CardContent>
                 <CardFooter>
                      <AlertDialog open={restoreStep === 'confirm'} onOpenChange={(open) => !open && resetRestore()}>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" onClick={() => document.getElementById('restore-file-input')?.click()} disabled={isRestoring}>
+                                {isRestoring ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                Select Backup File
+                            </Button>
+                        </AlertDialogTrigger>
                         <AlertDialogContent>
                              <AlertDialogHeader>
                                 <AlertDialogTitle>Confirm Restore</AlertDialogTitle>
@@ -216,12 +222,9 @@ export function BackupAndRestore() {
                                     {isRestoring ? <Loader2 className="animate-spin" /> : "Yes, Delete & Restore"}
                                 </AlertDialogAction>
                             </AlertDialogFooter>
-                        </AlertDialog>
-                        <Button variant="destructive" onClick={() => document.getElementById('restore-file-input')?.click()} disabled={isRestoring}>
-                            {isRestoring ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                            Select Backup File
-                        </Button>
-                        <input type="file" id="restore-file-input" accept=".json" className="hidden" onChange={handleFileSelect} />
+                        </AlertDialogContent>
+                    </AlertDialog>
+                    <input type="file" id="restore-file-input" accept=".json" className="hidden" onChange={handleFileSelect} />
                 </CardFooter>
             </Card>
         </div>

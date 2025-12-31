@@ -23,11 +23,6 @@ import { AddExpenseDialog } from '@/components/expenses/AddExpenseDialog';
 import { Button } from '@/components/ui/button';
 import { useState, useRef, useEffect } from 'react';
 
-const primaryNavItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/analysis', icon: BarChartHorizontal, label: 'Analysis' },
-];
-
 const secondaryNavItems = [
     { href: '/debts', icon: HandCoins, label: 'Debts'},
     { href: '/assets', icon: Briefcase, label: 'Assets'},
@@ -85,7 +80,7 @@ export function BottomNav() {
 
         {/* Secondary Navigation Row (conditionally rendered) */}
         <div className={cn(
-          "grid grid-cols-4 items-center bg-background/90 backdrop-blur-md border-t border-b border-border/50 rounded-t-2xl h-16 transition-all duration-200 ease-in-out",
+          "grid grid-cols-4 items-center bg-background/90 backdrop-blur-md border-t border-x border-border/50 rounded-t-2xl h-16 transition-all duration-200 ease-in-out",
           isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
         )}>
           {secondaryNavItems.map(({ href, icon: Icon, label }) => (
@@ -97,10 +92,8 @@ export function BottomNav() {
         </div>
 
         {/* Primary Navigation Container */}
-        <div className="relative h-16">
-          {/* Main Oval Bar */}
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around">
-            {/* Left side */}
+         <div className="relative h-16">
+          <div className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around">
             <div className="flex justify-around flex-1">
               <NavLink href="/dashboard" currentPath={pathname}>
                   <LayoutDashboard className="h-5 w-5" />
@@ -112,10 +105,8 @@ export function BottomNav() {
               </NavLink>
             </div>
 
-            {/* FAB Spacer */}
             <div className="w-20 flex-shrink-0" />
 
-            {/* Right side */}
             <div className="flex justify-around flex-1">
               <NavLink href="/accounts" currentPath={pathname}>
                   <Wallet className="h-5 w-5" />
@@ -134,9 +125,8 @@ export function BottomNav() {
               </button>
             </div>
           </div>
-
-          {/* FAB Container - Absolutely positioned relative to the Primary Navigation Container */}
-          <div className="absolute left-1/2 top-0 -translate-x-1/2 h-16 w-16 flex items-center justify-center z-10">
+          
+           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[60%] h-16 w-16 flex items-center justify-center z-10">
              {isTransactionsPage ? (
                 <AddExpenseDialog onSaveSuccess={handleDataChange}>
                     <Button
@@ -163,7 +153,6 @@ export function BottomNav() {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -140,7 +140,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                 return (
                     <Card key={assetType}>
                         <CardHeader className="flex flex-row justify-between items-start">
-                            <div className="flex items-center gap-3">
+                             <div className="flex items-center gap-3">
                                 {renderIcon(categoryInfo.icon, 'h-6 w-6 text-primary')}
                                 <div>
                                     <CardTitle className="font-headline">{categoryInfo.label}</CardTitle>
@@ -180,7 +180,25 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                             <div key={asset.id} className="p-4 flex items-start gap-4 group">
                                                 <div className="flex-grow space-y-1">
                                                     <div className="font-semibold flex items-center gap-2">
-                                                        {asset.name}
+                                                         {!isFromAccount ? (
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                     <span className="cursor-pointer hover:text-primary transition-colors">{asset.name}</span>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="start">
+                                                                    <AddAssetDialog assetToEdit={asset}>
+                                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                            <Edit className="mr-2 h-4 w-4" />
+                                                                            Edit
+                                                                        </DropdownMenuItem>
+                                                                    </AddAssetDialog>
+                                                                    <DeleteAssetButton asset={asset} />
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        ) : (
+                                                            <span>{asset.name}</span>
+                                                        )}
+
                                                          {isFromAccount && (
                                                             <TooltipProvider>
                                                                 <Tooltip>
@@ -222,26 +240,6 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                                         </div>
                                                     )}
                                                 </div>
-                                                {!isFromAccount && (
-                                                    <div className="flex items-center pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                                    <MoreVertical className="h-4 w-4" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
-                                                                <AddAssetDialog assetToEdit={asset}>
-                                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                                        <Edit className="mr-2 h-4 w-4" />
-                                                                        Edit
-                                                                    </DropdownMenuItem>
-                                                                </AddAssetDialog>
-                                                                <DeleteAssetButton asset={asset} />
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </div>
-                                                )}
                                             </div>
                                         )
                                     })}

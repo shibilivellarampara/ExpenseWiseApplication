@@ -234,7 +234,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                                             </div>
                                                         </>
                                                     ) : (
-                                                         <div className={cn("font-bold text-lg", asset.currentValue >= 0 ? 'text-green-600' : 'text-destructive')}>
+                                                         <div className={cn("font-bold text-lg text-green-600")}>
                                                             {currencySymbol}{asset.currentValue.toFixed(2)}
                                                         </div>
                                                     )}

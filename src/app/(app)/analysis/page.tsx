@@ -408,10 +408,10 @@ export default function AnalysisPage() {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                     <div className="flex items-center gap-1">
+                     <div className="relative flex items-center">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="w-full sm:w-auto justify-between">
+                                <Button variant="outline" className="w-full sm:w-auto justify-between pr-8">
                                     <span>{selectedTags.length > 0 ? `${selectedTags.length} tags selected` : "All Tags"}</span>
                                     <ChevronDown className="h-4 w-4 opacity-50" />
                                 </Button>
@@ -438,7 +438,7 @@ export default function AnalysisPage() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                          {selectedTags.length > 0 && (
-                            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={() => setSelectedTags([])}>
+                            <Button variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground" onClick={() => setSelectedTags([])}>
                                 <X className="h-4 w-4" />
                             </Button>
                         )}

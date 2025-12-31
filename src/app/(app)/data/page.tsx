@@ -12,6 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import { ExcelImporter } from "@/components/import/ExcelImporter";
 import { BackupAndRestore } from "@/components/import/BackupAndRestore";
 import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 async function fetchAllTransactions(firestore: any, userId: string, accountId?: string): Promise<Expense[]> {
     let expensesQuery;
@@ -116,10 +120,7 @@ export default function DataPage() {
                 XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
                 XLSX.writeFile(workbook, `ExpenseWise_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
             } else if (format === 'share') {
-                const headers = Object.keys(dataToExport[0]).join('\t');
-                const rows = dataToExport.map(row => Object.values(row).join('\t')).join('\n');
-                const shareText = `${headers}\n${rows}`;
-                
+                const shareText = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(dataToExport));
                 try {
                     if (navigator.share) {
                         await navigator.share({
@@ -159,19 +160,40 @@ export default function DataPage() {
             <PageHeader
                 title="Import & Export"
                 description="Manage your expense data by importing, exporting, or creating backups."
-            />
+            >
+                <Button variant="outline" asChild>
+                    <Link href="/profile">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Settings
+                    </Link>
+                </Button>
+            </PageHeader>
             <div className="space-y-8">
-                <ExcelImporter />
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Import from Excel</CardTitle>
+                        <CardDescription>Upload an Excel file to add multiple transactions at once.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ExcelImporter />
+                    </CardContent>
+                </Card>
                 
-                <ReportGenerator 
-                    accounts={accounts || []} 
-                    onAction={handleReportAction}
-                    isLoading={isLoading}
-                    progress={progress}
-                />
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Export to Excel</CardTitle>
+                        <CardDescription>Download your transaction history as an Excel spreadsheet.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ReportGenerator 
+                            accounts={accounts || []} 
+                            onAction={handleReportAction}
+                            isLoading={isLoading}
+                            progress={progress}
+                        />
+                    </CardContent>
+                </Card>
 
-                <Separator />
-                
                 <BackupAndRestore />
             </div>
         </div>

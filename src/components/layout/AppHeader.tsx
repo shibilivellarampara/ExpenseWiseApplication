@@ -186,7 +186,7 @@ export function AppHeader() {
   const pageTitle = getPageTitle(pathname);
     
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6">
+    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
         
          <div className="md:hidden">
             <Logo />

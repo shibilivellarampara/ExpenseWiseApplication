@@ -1,3 +1,4 @@
+
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Logo } from '@/components/Logo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +27,7 @@ export default function LoginPage() {
         </CardContent>
       </Card>
        <div className="mt-6 text-center text-xs text-muted-foreground space-y-1">
-            <p>v {appVersion}</p>
+            <p>version v {appVersion}</p>
         </div>
     </div>
   );

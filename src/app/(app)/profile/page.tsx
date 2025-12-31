@@ -11,10 +11,10 @@ import Link from "next/link";
 const settingsLinks = [
     { href: '/profile/details', icon: User, title: 'Profile & Security', description: 'Update your personal information and password.' },
     { href: '/profile/form', icon: List, title: 'Transaction Settings', description: 'Customize transaction form and list appearance.' },
-    { href: '/profile/dashboard', icon: Cog, title: 'Dashboard Settings', description: 'Customize your dashboard appearance.' },
-    { href: '/profile/analysis', icon: BarChart2, title: 'Analysis Settings', description: 'Customize which categories to exclude.' },
     { href: '/profile/categories', icon: Cog, title: 'Categories', description: 'Manage your expense categories.' },
     { href: '/profile/tags', icon: Tags, title: 'Tags', description: 'Manage your expense tags/labels.' },
+    { href: '/profile/dashboard', icon: Cog, title: 'Dashboard Settings', description: 'Customize your dashboard appearance.' },
+    { href: '/profile/analysis', icon: BarChart2, title: 'Analysis Settings', description: 'Customize which categories to exclude.' },
     { href: '/data', icon: FileUp, title: 'Import & Export', description: 'Backup, restore, or import data.' },
     { href: '/about', icon: Info, title: 'About', description: 'View application details and version history.' },
     { href: '/profile/data', icon: Database, title: 'Data Management', description: 'Reset or delete your account data.' },

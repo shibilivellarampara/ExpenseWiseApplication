@@ -1,15 +1,14 @@
 
-
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError, setDocumentNonBlocking } from '@/firebase';
-import { Category, Expense } from '@/lib/types';
-import { collection, doc, writeBatch, query, where, getDocs } from 'firebase/firestore';
-import { useState } from 'react';
+import { Category } from '@/lib/types';
+import { collection, doc, writeBatch, query, getDocs, where } from 'firebase/firestore';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown, Merge, Archive, Eye, EyeOff, RotateCw } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, Merge, Archive, Eye, EyeOff, RotateCw, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { availableIcons } from '@/lib/defaults';
@@ -20,7 +19,90 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { MergeItemsDialog } from '@/components/profile/MergeItemsDialog';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle as DialogTitlePrimitive, DialogTrigger } from '@/components/ui/dialog';
 
+function AddOrEditItemDialog({
+    isOpen,
+    onOpenChange,
+    itemToEdit,
+    onSave,
+    itemType
+}: {
+    isOpen: boolean,
+    onOpenChange: (open: boolean) => void,
+    itemToEdit: { id: string, name: string, icon: string } | null,
+    onSave: (name: string, icon: string) => void,
+    itemType: 'Category' | 'Tag'
+}) {
+    const [name, setName] = useState('');
+    const [icon, setIcon] = useState(itemType === 'Category' ? 'Shapes' : 'Tag');
+    const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            if (itemToEdit) {
+                setName(itemToEdit.name);
+                setIcon(itemToEdit.icon);
+            } else {
+                setName('');
+                setIcon(itemType === 'Category' ? 'Shapes' : 'Tag');
+            }
+        }
+    }, [isOpen, itemToEdit, itemType]);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        await onSave(name, icon);
+        setIsSaving(false);
+        onOpenChange(false);
+    };
+
+    const renderIcon = (iconName: string) => {
+        const IconComponent = (LucideIcons as any)[iconName];
+        return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitlePrimitive>{itemToEdit ? `Edit ${itemType}` : `Add New ${itemType}`}</DialogTitlePrimitive>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <Input
+                        placeholder={`${itemType} Name`}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        autoFocus
+                    />
+                    <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                                {renderIcon(icon)}
+                                <span className="ml-2">{icon}</span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                            {availableIcons.map(iconName => (
+                                <Button key={iconName} variant="ghost" size="icon" onClick={() => { setIcon(iconName); setIconPopoverOpen(false); }}>
+                                    {renderIcon(iconName)}
+                                </Button>
+                            ))}
+                        </PopoverContent>
+                    </Popover>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={isSaving || !name}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 export function CategorySettings() {
     const { user } = useUser();
@@ -29,18 +111,18 @@ export function CategorySettings() {
 
     const categoriesQuery = useMemoFirebase(() =>
         user ? collection(firestore, `users/${user.uid}/categories`) : null
-    , [firestore, user]);
+        , [firestore, user]);
 
     const { data: categories, isLoading } = useCollection<Category>(categoriesQuery);
 
-    const [newItem, setNewItem] = useState<{name: string, icon: string}>({ name: '', icon: 'Shapes' });
     const [editingItem, setEditingItem] = useState<{ id: string; name: string; icon: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showMergeDialog, setShowMergeDialog] = useState(false);
-    const [newItemPopoverOpen, setNewItemPopoverOpen] = useState(false);
-    const [editingItemPopoverOpen, setEditingItemPopoverOpen] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
 
     const SYSTEM_CATEGORIES = ['Credit Limit Upgrade', 'Credit Card Payment', 'Credit Limit Downgrade'];
 
@@ -48,40 +130,48 @@ export function CategorySettings() {
         const IconComponent = (LucideIcons as any)[iconName];
         return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
     };
-
-    const handleAddItem = async () => {
-        if (!newItem.name || !user || !firestore) return;
+    
+    const handleSaveItem = async (name: string, icon: string) => {
+        if (!name || !user || !firestore) return;
         
-        if (categories?.some(c => c.name.toLowerCase() === newItem.name.toLowerCase())) {
+        const isDuplicate = categories?.some(c =>
+            c.name.toLowerCase() === name.toLowerCase() && c.id !== editingItem?.id
+        );
+
+        if (isDuplicate) {
             toast({
                 variant: 'destructive',
                 title: 'Duplicate Category',
-                description: `A category named "${newItem.name}" already exists.`,
+                description: `A category named "${name}" already exists.`,
             });
             return;
         }
         
         setIsSaving(true);
-        const ref = collection(firestore, `users/${user.uid}/categories`);
-        const newDocRef = doc(ref);
-        const categoryData = { id: newDocRef.id, name: newItem.name, icon: newItem.icon, userId: user.uid, status: 'active' };
-
-        setDocumentNonBlocking(newDocRef, categoryData)
-            .then(() => {
-                setNewItem({ name: '', icon: 'Shapes' });
+        
+        try {
+            if (editingItem) {
+                // Update existing item
+                const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
+                const updatedData = { name, icon };
+                await setDocumentNonBlocking(itemRef, updatedData, { merge: true });
+                toast({ title: "Category Updated" });
+            } else {
+                // Add new item
+                const ref = collection(firestore, `users/${user.uid}/categories`);
+                const newDocRef = doc(ref);
+                const categoryData = { id: newDocRef.id, name, icon, userId: user.uid, status: 'active' };
+                await setDocumentNonBlocking(newDocRef, categoryData);
                 toast({ title: 'Category Added' });
-            })
-            .catch(async (serverError) => {
-                errorEmitter.emit('permission-error', new FirestorePermissionError({
-                    path: newDocRef.path,
-                    operation: 'create',
-                    requestResourceData: categoryData,
-                }));
-            })
-            .finally(() => {
-                 setIsSaving(false);
-            });
+            }
+        } catch (error: any) {
+             toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.'});
+        } finally {
+            setIsSaving(false);
+            setEditingItem(null);
+        }
     };
+
 
     const handleRemoveItem = async (itemId: string) => {
         if (!user || !firestore) return;
@@ -99,9 +189,6 @@ export function CategorySettings() {
         batch.delete(itemRef);
 
         batch.commit()
-            .then(() => {
-                toast({ title: 'Category Removed' });
-            })
             .catch(async (serverError) => {
                 errorEmitter.emit('permission-error', new FirestorePermissionError({
                     path: itemRef.path,
@@ -109,6 +196,7 @@ export function CategorySettings() {
                 }));
             })
             .finally(() => {
+                toast({ title: 'Category Removed' });
                 setIsSaving(false);
             });
     };
@@ -130,40 +218,6 @@ export function CategorySettings() {
         });
     }
 
-    const handleSaveEdit = async () => {
-        if (!editingItem || !user || !firestore) return;
-        
-        if (categories?.some(c => c.id !== editingItem.id && c.name.toLowerCase() === editingItem.name.toLowerCase())) {
-            toast({
-                variant: 'destructive',
-                title: 'Duplicate Category',
-                description: `A category named "${editingItem.name}" already exists.`,
-            });
-            return;
-        }
-
-
-        setIsSaving(true);
-        const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
-        const updatedData = { name: editingItem.name, icon: editingItem.icon };
-
-        setDocumentNonBlocking(itemRef, updatedData, { merge: true })
-            .then(() => {
-                toast({ title: "Category Updated" });
-            })
-            .catch(async (serverError) => {
-                errorEmitter.emit('permission-error', new FirestorePermissionError({
-                    path: itemRef.path,
-                    operation: 'update',
-                    requestResourceData: updatedData,
-                }));
-            })
-            .finally(() => {
-                 setEditingItem(null);
-                 setIsSaving(false);
-            });
-    };
-
     const handleMerge = async (target: { id: string } | { name: string; icon: string }) => {
         if (!user || !firestore || selectedIds.length < 2) return;
         setIsSaving(true);
@@ -172,7 +226,6 @@ export function CategorySettings() {
             const batch = writeBatch(firestore);
             let targetId: string;
     
-            // Step 1: Determine target ID (create new category if necessary)
             if ('name' in target) {
                 const newCatRef = doc(collection(firestore, `users/${user.uid}/categories`));
                 targetId = newCatRef.id;
@@ -183,18 +236,15 @@ export function CategorySettings() {
     
             const sourceIds = selectedIds.filter(id => id !== targetId);
     
-            // Step 2: Find all transactions using source categories
             const expensesRef = collection(firestore, `users/${user.uid}/expenses`);
             const q = query(expensesRef, where('categoryId', 'in', sourceIds));
             const expensesToUpdateSnapshot = await getDocs(q);
     
-            // Step 3: Update transactions
             expensesToUpdateSnapshot.forEach(doc => {
                 const expenseRef = doc.ref;
                 batch.update(expenseRef, { categoryId: targetId });
             });
     
-            // Step 4: Delete source categories
             sourceIds.forEach(id => {
                 const catRef = doc(firestore, `users/${user.uid}/categories`, id);
                 batch.delete(catRef);
@@ -212,14 +262,18 @@ export function CategorySettings() {
     };
 
     
-    const { activeCategories, inactiveCategories } = (categories || []).reduce((acc, category) => {
-        if (category.status === 'inactive') {
-            acc.inactiveCategories.push(category);
-        } else {
-            acc.activeCategories.push(category);
-        }
-        return acc;
-    }, { activeCategories: [] as Category[], inactiveCategories: [] as Category[] });
+    const { activeCategories, inactiveCategories } = useMemo(() => {
+        const filtered = (categories || []).filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        return filtered.reduce((acc, category) => {
+            if (category.status === 'inactive') {
+                acc.inactiveCategories.push(category);
+            } else {
+                acc.activeCategories.push(category);
+            }
+            return acc;
+        }, { activeCategories: [] as Category[], inactiveCategories: [] as Category[] });
+    }, [categories, searchQuery]);
+
 
     activeCategories.sort((a,b) => a.name.localeCompare(b.name));
     inactiveCategories.sort((a,b) => a.name.localeCompare(b.name));
@@ -240,58 +294,64 @@ export function CategorySettings() {
 
     return (
         <div className="space-y-4">
-            {isLoading ? (
-                <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
-            ) : (
-                <div className="space-y-2">
+            <AddOrEditItemDialog 
+                isOpen={isAddDialogOpen || !!editingItem}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setIsAddDialogOpen(false);
+                        setEditingItem(null);
+                    }
+                }}
+                itemToEdit={editingItem}
+                onSave={handleSaveItem}
+                itemType="Category"
+            />
+            <Card>
+                <CardHeader>
                     <div className="flex items-center gap-2">
-                        <Checkbox
-                            id="select-all-categories"
-                            checked={selectedIds.length === activeCategories.length && activeCategories.length > 0}
-                            onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.map(c => c.id) : [])}
-                        />
-                        <label htmlFor="select-all-categories" className="text-sm font-medium">Select All</label>
+                        <div className="relative flex-1">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search categories..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-8"
+                            />
+                        </div>
+                        <Button onClick={() => { setEditingItem(null); setIsAddDialogOpen(true); }}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add New
+                        </Button>
                     </div>
-                    {activeCategories.map((item, index) => (
-                        <div key={item.id}>
-                            <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
+                </CardHeader>
+                 <CardContent className="space-y-2">
+                     {isLoading ? (
+                        <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-2 px-2">
                                 <Checkbox
-                                    id={`select-cat-${item.id}`}
-                                    checked={selectedIds.includes(item.id)}
-                                    onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
-                                    disabled={isSaving}
+                                    id="select-all-categories"
+                                    checked={selectedIds.length === activeCategories.length && activeCategories.length > 0}
+                                    onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.map(c => c.id) : [])}
                                 />
-                                {editingItem?.id === item.id ? (
-                                    <div className="flex items-center gap-2 w-full">
-                                        <Popover open={editingItemPopoverOpen} onOpenChange={setEditingItemPopoverOpen}>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                                {availableIcons.map(icon => (
-                                                    <Button key={icon} variant="ghost" size="icon" onClick={() => {setEditingItem({ ...editingItem, icon }); setEditingItemPopoverOpen(false);}}>
-                                                        {renderIcon(icon)}
-                                                    </Button>
-                                                ))}
-                                            </PopoverContent>
-                                        </Popover>
-                                        <Input
-                                            value={editingItem.name}
-                                            onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                                            className="flex-1"
+                                <label htmlFor="select-all-categories" className="text-sm font-medium">Select All</label>
+                            </div>
+                            {activeCategories.map((item, index) => (
+                                <div key={item.id}>
+                                    <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
+                                        <Checkbox
+                                            id={`select-cat-${item.id}`}
+                                            checked={selectedIds.includes(item.id)}
+                                            onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
+                                            disabled={isSaving}
                                         />
-                                        <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
-                                            <Check className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <>
                                         <div className="flex items-center flex-1 gap-2">
                                             {renderIcon(item.icon)}
                                             <span>{item.name}</span>
+                                            {SYSTEM_CATEGORIES.includes(item.name) && (
+                                                <Badge variant="secondary">System</Badge>
+                                            )}
                                         </div>
                                         <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
                                             <Edit className="h-4 w-4" />
@@ -320,52 +380,33 @@ export function CategorySettings() {
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>
-                                    </>
-                                )}
-                            </div>
-                             {index === lastSelectedIndex && selectedIds.length > 1 && (
-                                <div className="pt-2 pl-8">
-                                    <MergeItemsDialog
-                                        open={showMergeDialog}
-                                        onOpenChange={setShowMergeDialog}
-                                        items={categories?.filter(c => selectedIds.includes(c.id)) || []}
-                                        itemType="Category"
-                                        onMerge={handleMerge}
-                                        isSaving={isSaving}
-                                    >
-                                        <Button variant="outline" size="sm">
-                                            <Merge className="mr-2 h-4 w-4" />
-                                            Merge {selectedIds.length} selected categories
-                                        </Button>
-                                    </MergeItemsDialog>
+                                    </div>
+                                    {index === lastSelectedIndex && selectedIds.length > 1 && (
+                                        <div className="pt-2 pl-8">
+                                            <MergeItemsDialog
+                                                open={showMergeDialog}
+                                                onOpenChange={setShowMergeDialog}
+                                                items={categories?.filter(c => selectedIds.includes(c.id)) || []}
+                                                itemType="Category"
+                                                onMerge={handleMerge}
+                                                isSaving={isSaving}
+                                            >
+                                                <Button variant="outline" size="sm">
+                                                    <Merge className="mr-2 h-4 w-4" />
+                                                    Merge {selectedIds.length} selected categories
+                                                </Button>
+                                            </MergeItemsDialog>
+                                        </div>
+                                    )}
                                 </div>
+                            ))}
+                             {activeCategories.length === 0 && searchQuery && (
+                                <p className="text-center text-sm text-muted-foreground py-4">No categories match your search.</p>
                             )}
-                        </div>
-                    ))}
-                </div>
-            )}
-            <div className="flex items-center gap-2 pt-4">
-                <Popover open={newItemPopoverOpen} onOpenChange={setNewItemPopoverOpen}>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" size="icon" className="shrink-0">{renderIcon(newItem.icon)}</Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                        {availableIcons.map(icon => (
-                            <Button key={icon} variant="ghost" size="icon" onClick={() => {setNewItem({...newItem, icon}); setNewItemPopoverOpen(false);}}>
-                                {renderIcon(icon)}
-                            </Button>
-                        ))}
-                    </PopoverContent>
-                </Popover>
-                <Input
-                    value={newItem.name}
-                    onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                    placeholder="Add new category"
-                />
-                <Button type="button" size="icon" onClick={handleAddItem} disabled={isSaving}>
-                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
-                </Button>
-            </div>
+                         </>
+                    )}
+                 </CardContent>
+            </Card>
 
              {inactiveCategories.length > 0 && (
                 <Collapsible open={showArchived} onOpenChange={setShowArchived}>
@@ -373,7 +414,7 @@ export function CategorySettings() {
                     <CollapsibleTrigger asChild>
                         <button className="flex w-full items-center justify-between p-2 text-sm font-medium text-muted-foreground">
                             <span>View {inactiveCategories.length} archived categories</span>
-                            {showArchived ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                             {showArchived ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="space-y-2 p-2 pt-0">

@@ -1,25 +1,108 @@
 
-
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError, setDocumentNonBlocking } from '@/firebase';
-import { Tag, Expense } from '@/lib/types';
-import { collection, doc, writeBatch, query, where, getDocs, arrayRemove, arrayUnion } from 'firebase/firestore';
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tag } from '@/lib/types';
+import { collection, doc, writeBatch, query, getDocs, where, arrayRemove } from 'firebase/firestore';
+import { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, ChevronDown, Merge, Archive, Eye, EyeOff, RotateCw } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, Merge, Archive, Eye, EyeOff, RotateCw, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MergeItemsDialog } from '@/components/profile/MergeItemsDialog';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle as DialogTitlePrimitive, DialogTrigger } from '@/components/ui/dialog';
+import React from 'react';
+
+function AddOrEditItemDialog({
+    isOpen,
+    onOpenChange,
+    itemToEdit,
+    onSave,
+    itemType
+}: {
+    isOpen: boolean,
+    onOpenChange: (open: boolean) => void,
+    itemToEdit: { id: string, name: string, icon: string } | null,
+    onSave: (name: string, icon: string) => void,
+    itemType: 'Category' | 'Tag'
+}) {
+    const [name, setName] = useState('');
+    const [icon, setIcon] = useState(itemType === 'Category' ? 'Shapes' : 'Tag');
+    const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            if (itemToEdit) {
+                setName(itemToEdit.name);
+                setIcon(itemToEdit.icon);
+            } else {
+                setName('');
+                setIcon(itemType === 'Category' ? 'Shapes' : 'Tag');
+            }
+        }
+    }, [isOpen, itemToEdit, itemType]);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        await onSave(name, icon);
+        setIsSaving(false);
+        onOpenChange(false);
+    };
+
+    const renderIcon = (iconName: string) => {
+        const IconComponent = (LucideIcons as any)[iconName];
+        return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitlePrimitive>{itemToEdit ? `Edit ${itemType}` : `Add New ${itemType}`}</DialogTitlePrimitive>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <Input
+                        placeholder={`${itemType} Name`}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        autoFocus
+                    />
+                    <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                                {renderIcon(icon)}
+                                <span className="ml-2">{icon}</span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                            {availableIcons.map(iconName => (
+                                <Button key={iconName} variant="ghost" size="icon" onClick={() => { setIcon(iconName); setIconPopoverOpen(false); }}>
+                                    {renderIcon(iconName)}
+                                </Button>
+                            ))}
+                        </PopoverContent>
+                    </Popover>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={isSaving || !name}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 export function TagSettings() {
     const { user } = useUser();
@@ -32,53 +115,56 @@ export function TagSettings() {
 
     const { data: items, isLoading } = useCollection<Tag>(queryHook);
 
-    const [newItem, setNewItem] = useState<{name: string, icon: string}>({ name: '', icon: 'Tag' });
     const [editingItem, setEditingItem] = useState<{ id: string; name: string; icon: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showMergeDialog, setShowMergeDialog] = useState(false);
-    const [newItemPopoverOpen, setNewItemPopoverOpen] = useState(false);
-    const [editingItemPopoverOpen, setEditingItemPopoverOpen] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
-
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
     const renderIcon = (iconName: string) => {
         const IconComponent = (LucideIcons as any)[iconName];
         return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
     };
 
-    const handleAddItem = async () => {
-        if (!newItem.name || !user || !firestore) return;
+    const handleSaveItem = async (name: string, icon: string) => {
+        if (!name || !user || !firestore) return;
         
-        if (items?.some(t => t.name.toLowerCase() === newItem.name.toLowerCase())) {
+        const isDuplicate = items?.some(t =>
+            t.name.toLowerCase() === name.toLowerCase() && t.id !== editingItem?.id
+        );
+
+        if (isDuplicate) {
             toast({
                 variant: 'destructive',
                 title: 'Duplicate Tag',
-                description: `A tag named "${newItem.name}" already exists.`,
+                description: `A tag named "${name}" already exists.`,
             });
             return;
         }
-        
-        setIsSaving(true);
-        const ref = collection(firestore, `users/${user.uid}/tags`);
-        const newDocRef = doc(ref);
-        const tagData = { id: newDocRef.id, name: newItem.name, icon: newItem.icon, userId: user.uid, status: 'active' };
 
-        setDocumentNonBlocking(newDocRef, tagData)
-            .then(() => {
-                setNewItem({ name: '', icon: 'Tag' });
+        setIsSaving(true);
+        
+        try {
+            if (editingItem) {
+                const itemRef = doc(firestore, `users/${user.uid}/tags`, editingItem.id);
+                const updatedData = { name, icon };
+                await setDocumentNonBlocking(itemRef, updatedData, { merge: true });
+                toast({ title: "Tag Updated" });
+            } else {
+                const ref = collection(firestore, `users/${user.uid}/tags`);
+                const newDocRef = doc(ref);
+                const tagData = { id: newDocRef.id, name, icon, userId: user.uid, status: 'active' };
+                await setDocumentNonBlocking(newDocRef, tagData);
                 toast({ title: 'Tag Added' });
-            })
-            .catch(async (serverError) => {
-                errorEmitter.emit('permission-error', new FirestorePermissionError({
-                    path: newDocRef.path,
-                    operation: 'create',
-                    requestResourceData: tagData,
-                }));
-            })
-            .finally(() => {
-                setIsSaving(false);
-            });
+            }
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
+        } finally {
+            setIsSaving(false);
+            setEditingItem(null);
+        }
     };
 
     const handleRemoveItem = async (itemId: string) => {
@@ -87,7 +173,6 @@ export function TagSettings() {
         const itemRef = doc(firestore, `users/${user.uid}/tags`, itemId);
         const batch = writeBatch(firestore);
 
-        // Find expenses with this tag and remove it from their tagIds array
         const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), where('tagIds', 'array-contains', itemId));
         const expensesSnapshot = await getDocs(expensesQuery);
         expensesSnapshot.forEach(doc => {
@@ -121,36 +206,6 @@ export function TagSettings() {
         });
     }
 
-    const handleSaveEdit = async () => {
-        if (!editingItem || !user || !firestore) return;
-        
-        if (items?.some(t => t.id !== editingItem.id && t.name.toLowerCase() === editingItem.name.toLowerCase())) {
-            toast({
-                variant: 'destructive',
-                title: 'Duplicate Tag',
-                description: `A tag named "${editingItem.name}" already exists.`,
-            });
-            return;
-        }
-
-        setIsSaving(true);
-        const itemRef = doc(firestore, `users/${user.uid}/tags`, editingItem.id);
-        const updatedData = { name: editingItem.name, icon: editingItem.icon };
-        setDocumentNonBlocking(itemRef, updatedData, { merge: true })
-            .catch(async (serverError) => {
-                 errorEmitter.emit('permission-error', new FirestorePermissionError({
-                    path: itemRef.path,
-                    operation: 'update',
-                    requestResourceData: updatedData,
-                }));
-            })
-            .finally(() => {
-                toast({ title: "Tag Updated" });
-                setEditingItem(null);
-                setIsSaving(false);
-            });
-    };
-
     const handleMerge = async (target: { id: string } | { name: string; icon: string }) => {
         if (!user || !firestore || selectedIds.length < 2) return;
         setIsSaving(true);
@@ -176,7 +231,6 @@ export function TagSettings() {
             expensesToUpdateSnapshot.forEach(doc => {
                 const expenseRef = doc.ref;
                 const currentTagIds = doc.data().tagIds || [];
-                // Remove all source tags and add target tag if not present
                 const newTagIds = [...new Set([...currentTagIds.filter((id: string) => !sourceIds.includes(id)), targetId])];
                 batch.update(expenseRef, { tagIds: newTagIds });
             });
@@ -198,19 +252,21 @@ export function TagSettings() {
     };
 
 
-    const { activeTags, inactiveTags } = (items || []).reduce((acc, tag) => {
-        if (tag.status === 'inactive') {
-            acc.inactiveTags.push(tag);
-        } else {
-            acc.activeTags.push(tag);
-        }
-        return acc;
-    }, { activeTags: [] as Tag[], inactiveTags: [] as Tag[] });
+    const { activeTags, inactiveTags } = useMemo(() => {
+        const filtered = (items || []).filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        return filtered.reduce((acc, tag) => {
+            if (tag.status === 'inactive') {
+                acc.inactiveTags.push(tag);
+            } else {
+                acc.activeTags.push(tag);
+            }
+            return acc;
+        }, { activeTags: [] as Tag[], inactiveTags: [] as Tag[] });
+    }, [items, searchQuery]);
 
     activeTags.sort((a,b) => a.name.localeCompare(b.name));
     inactiveTags.sort((a,b) => a.name.localeCompare(b.name));
 
-    
      const handleSelectionChange = (id: string, checked: boolean | string) => {
         if (checked) {
             setSelectedIds(prev => [...prev, id]);
@@ -226,55 +282,58 @@ export function TagSettings() {
 
     return (
         <div className="space-y-4">
-            {isLoading ? (
-                <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
-            ) : (
-                <div className="space-y-2">
+             <AddOrEditItemDialog 
+                isOpen={isAddDialogOpen || !!editingItem}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setIsAddDialogOpen(false);
+                        setEditingItem(null);
+                    }
+                }}
+                itemToEdit={editingItem}
+                onSave={handleSaveItem}
+                itemType="Tag"
+            />
+            <Card>
+                 <CardHeader>
                     <div className="flex items-center gap-2">
-                        <Checkbox
-                            id="select-all-tags"
-                            checked={selectedIds.length === activeTags.length && activeTags.length > 0}
-                            onCheckedChange={(checked) => setSelectedIds(checked ? activeTags.map(c => c.id) : [])}
-                        />
-                        <label htmlFor="select-all-tags" className="text-sm font-medium">Select All</label>
+                        <div className="relative flex-1">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search tags..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-8"
+                            />
+                        </div>
+                        <Button onClick={() => { setEditingItem(null); setIsAddDialogOpen(true); }}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add New
+                        </Button>
                     </div>
-                    {activeTags.map((item, index) => (
-                        <div key={item.id}>
-                            <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
+                </CardHeader>
+                <CardContent className="space-y-2">
+                    {isLoading ? (
+                        <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-2 px-2">
                                 <Checkbox
-                                    id={`select-tag-${item.id}`}
-                                    checked={selectedIds.includes(item.id)}
-                                    onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
-                                    disabled={isSaving}
+                                    id="select-all-tags"
+                                    checked={selectedIds.length === activeTags.length && activeTags.length > 0}
+                                    onCheckedChange={(checked) => setSelectedIds(checked ? activeTags.map(c => c.id) : [])}
                                 />
-                                {editingItem?.id === item.id ? (
-                                    <div className="flex items-center gap-2 w-full">
-                                        <Popover open={editingItemPopoverOpen} onOpenChange={setEditingItemPopoverOpen}>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="outline" size="icon" className="shrink-0">{renderIcon(editingItem.icon)}</Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                                {availableIcons.map(icon => (
-                                                    <Button key={icon} variant="ghost" size="icon" onClick={() => {setEditingItem({ ...editingItem, icon }); setEditingItemPopoverOpen(false);}}>
-                                                        {renderIcon(icon)}
-                                                    </Button>
-                                                ))}
-                                            </PopoverContent>
-                                        </Popover>
-                                        <Input
-                                            value={editingItem.name}
-                                            onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                                            className="flex-1"
+                                <label htmlFor="select-all-tags" className="text-sm font-medium">Select All</label>
+                            </div>
+                            {activeTags.map((item, index) => (
+                                <div key={item.id}>
+                                    <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
+                                        <Checkbox
+                                            id={`select-tag-${item.id}`}
+                                            checked={selectedIds.includes(item.id)}
+                                            onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
+                                            disabled={isSaving}
                                         />
-                                        <Button variant="ghost" size="icon" type="button" onClick={handleSaveEdit} disabled={isSaving}>
-                                            <Check className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(null)}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <>
                                         <div className="flex items-center flex-1 gap-2">
                                         {renderIcon(item.icon)}
                                         <span>{item.name}</span>
@@ -306,53 +365,34 @@ export function TagSettings() {
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>
-                                    </>
-                                )}
-                            </div>
-                             {index === lastSelectedIndex && selectedIds.length > 1 && (
-                                <div className="pt-2 pl-8">
-                                    <MergeItemsDialog
-                                        open={showMergeDialog}
-                                        onOpenChange={setShowMergeDialog}
-                                        items={items?.filter(c => selectedIds.includes(c.id)) || []}
-                                        itemType="Tag"
-                                        onMerge={handleMerge}
-                                        isSaving={isSaving}
-                                    >
-                                        <Button variant="outline" size="sm">
-                                            <Merge className="mr-2 h-4 w-4" />
-                                            Merge {selectedIds.length} selected tags
-                                        </Button>
-                                    </MergeItemsDialog>
+                                    </div>
+                                     {index === lastSelectedIndex && selectedIds.length > 1 && (
+                                        <div className="pt-2 pl-8">
+                                            <MergeItemsDialog
+                                                open={showMergeDialog}
+                                                onOpenChange={setShowMergeDialog}
+                                                items={items?.filter(c => selectedIds.includes(c.id)) || []}
+                                                itemType="Tag"
+                                                onMerge={handleMerge}
+                                                isSaving={isSaving}
+                                            >
+                                                <Button variant="outline" size="sm">
+                                                    <Merge className="mr-2 h-4 w-4" />
+                                                    Merge {selectedIds.length} selected tags
+                                                </Button>
+                                            </MergeItemsDialog>
+                                        </div>
+                                    )}
                                 </div>
+                            ))}
+                             {activeTags.length === 0 && searchQuery && (
+                                <p className="text-center text-sm text-muted-foreground py-4">No tags match your search.</p>
                             )}
-                        </div>
-                    ))}
-                </div>
-            )}
-            <div className="flex items-center gap-2 pt-4">
-                <Popover open={newItemPopoverOpen} onOpenChange={setNewItemPopoverOpen}>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" size="icon" className="shrink-0">{renderIcon(newItem.icon)}</Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                        {availableIcons.map(icon => (
-                            <Button key={icon} variant="ghost" size="icon" onClick={() => {setNewItem({...newItem, icon}); setNewItemPopoverOpen(false);}}>
-                                {renderIcon(icon)}
-                            </Button>
-                        ))}
-                    </PopoverContent>
-                </Popover>
-                <Input
-                    value={newItem.name}
-                    onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                    placeholder="Add new tag"
-                />
-                <Button type="button" size="icon" onClick={handleAddItem} disabled={isSaving}>
-                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
-                </Button>
-            </div>
-            
+                        </>
+                    )}
+                </CardContent>
+            </Card>
+
             {inactiveTags.length > 0 && (
                 <Collapsible open={showArchived} onOpenChange={setShowArchived}>
                     <Separator className="my-4"/>

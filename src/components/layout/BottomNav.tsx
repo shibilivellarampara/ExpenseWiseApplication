@@ -85,11 +85,9 @@ export function BottomNav() {
             {/* Secondary Navigation Row */}
             <div
                 className={cn(
-                    "flex justify-around items-center bg-background/80 backdrop-blur-md border-x border-t rounded-t-2xl h-14 transition-all duration-200 ease-in-out",
-                    "py-1",
+                    "flex justify-around items-center bg-background/80 backdrop-blur-md border rounded-full h-14 transition-all duration-200 ease-in-out py-1 mb-2",
                     isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
                 )}
-                style={{ borderBottomLeftRadius: '0px', borderBottomRightRadius: '0px' }}
             >
                 {secondaryNavItems.map(({ href, icon: Icon, label }) => (
                     <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors h-full w-16" onClick={() => setIsExpanded(false)}>

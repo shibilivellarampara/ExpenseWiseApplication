@@ -13,7 +13,6 @@ import {
   Repeat,
   HandCoins,
   Settings,
-  Notebook,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -70,120 +69,103 @@ export function BottomNav() {
   const transactionGrouping = userProfile?.dashboardSettings?.transactionGrouping || 'daily';
   const transactionsHref = transactionGrouping === 'monthly' ? '/transactions' : '/expenses';
   const isTransactionsPage = pathname.startsWith('/expenses') || pathname.startsWith('/transactions');
+  
+  const NavLink = ({ href, currentPath, children, onClick }: { href: string; currentPath: string; children: React.ReactNode; onClick?: () => void }) => {
+      const isActive = currentPath.startsWith(href);
+      return (
+        <Link href={href} onClick={onClick} className={cn("flex flex-col items-center justify-center gap-1 text-xs font-medium w-16 h-full transition-colors", isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary')} onContextMenu={(e) => e.preventDefault()}>
+            {children}
+        </Link>
+      )
+  };
+
 
   return (
-    <div
-      ref={navRef}
-      className={cn(
-        'fixed bottom-0 left-0 right-0 z-40 bg-background/80 shadow-lg ring-1 ring-black/5 backdrop-blur-md transition-[height] duration-200 ease-in-out rounded-t-2xl',
-        isExpanded ? 'h-36' : 'h-20'
-      )}
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-    >
-      <div className="relative h-full w-full">
-        {/* FAB Container */}
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 z-10">
-         {isTransactionsPage ? (
-            <AddExpenseDialog onSaveSuccess={handleDataChange}>
-                <Button
-                    size="icon"
-                    className="h-16 w-16 rounded-full bg-primary shadow-lg ring-4 ring-background"
-                    onContextMenu={(e) => e.preventDefault()}
-                >
-                    <Plus className="h-7 w-7" />
-                    <span className="sr-only">Add Transaction</span>
-                </Button>
-            </AddExpenseDialog>
-        ) : (
-            <Button
-                size="icon"
-                className="h-16 w-16 rounded-full bg-primary shadow-lg ring-4 ring-background"
-                asChild
-                onContextMenu={(e) => e.preventDefault()}
-            >
-                <Link href={transactionsHref}>
-                    <ArrowRightLeft className="h-7 w-7" />
-                    <span className="sr-only">Go to Transactions</span>
-                </Link>
-            </Button>
-        )}
-      </div>
+    <div ref={navRef} className="fixed bottom-0 left-0 right-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="relative container mx-auto px-4">
 
-        <div className="flex h-full flex-col justify-end">
-          {/* Secondary Row (Top) - Expands */}
-          <div
-            className={cn(
-              'flex h-16 w-full items-center justify-around px-2 transition-opacity duration-150',
-              isExpanded ? 'opacity-100' : 'opacity-0'
-            )}
-          >
-            {secondaryNavItems.map(({ href, icon: Icon, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className="flex flex-col items-center justify-center gap-1 text-xs font-medium w-16 h-full text-muted-foreground"
-                onClick={() => setIsExpanded(false)}
-                onContextMenu={(e) => e.preventDefault()}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{label}</span>
-              </Link>
-            ))}
-          </div>
+            {/* Secondary Nav - Expands above */}
+            <div className={cn(
+                "transition-all duration-200 ease-in-out w-full mb-2",
+                isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+            )}>
+                 <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-lg ring-1 ring-black/5 flex justify-around items-center h-16">
+                    {secondaryNavItems.map(({ href, icon: Icon, label }) => (
+                         <NavLink key={href} href={href} currentPath={pathname} onClick={() => setIsExpanded(false)}>
+                            <Icon className="h-5 w-5" />
+                            <span>{label}</span>
+                        </NavLink>
+                    ))}
+                </div>
+            </div>
 
-         {/* Separator - Only visible when expanded */}
-        {isExpanded && <Separator className="bg-border/50" />}
+            {/* Primary Nav Bar */}
+            <div className="relative bg-background/80 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 h-16 flex items-center justify-around">
 
-        {/* Primary Row (Bottom) - Always visible */}
-        <div className="flex h-16 w-full items-center justify-around">
-          {primaryNavItems.map(({ href, icon: Icon, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
-                pathname.startsWith(href)
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-primary'
-              )}
-              onContextMenu={(e) => e.preventDefault()}
-            >
-              <Icon className="h-5 w-5" />
-              <span>{label}</span>
-            </Link>
-          ))}
+                {/* Left side */}
+                <div className="flex justify-around flex-1">
+                    <NavLink href="/dashboard" currentPath={pathname}>
+                        <LayoutDashboard className="h-5 w-5" />
+                        <span>Dashboard</span>
+                    </NavLink>
+                    <NavLink href="/analysis" currentPath={pathname}>
+                        <BarChartHorizontal className="h-5 w-5" />
+                        <span>Analysis</span>
+                    </NavLink>
+                </div>
 
-          {/* Spacer for FAB */}
-          <div className="w-16" />
+                {/* FAB Spacer */}
+                <div className="w-16 flex-shrink-0" />
 
-          <Link
-            href='/accounts'
-            className={cn(
-              'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
-              pathname.startsWith('/accounts')
-                ? 'text-primary'
-                : 'text-muted-foreground hover:text-primary'
-            )}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            <Wallet className="h-5 w-5" />
-            <span>Accounts</span>
-          </Link>
+                {/* Right side */}
+                 <div className="flex justify-around flex-1">
+                    <NavLink href="/accounts" currentPath={pathname}>
+                        <Wallet className="h-5 w-5" />
+                        <span>Accounts</span>
+                    </NavLink>
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className={cn(
+                        'flex flex-col items-center justify-center gap-1 text-xs font-medium w-16 h-full transition-colors',
+                        isExpanded ? 'text-primary' : 'text-muted-foreground hover:text-primary'
+                        )}
+                        onContextMenu={(e) => e.preventDefault()}
+                    >
+                        {isExpanded ? <X className="h-5 w-5" /> : <MoreHorizontal className="h-5 w-5" />}
+                        <span>{isExpanded ? 'Close' : 'More'}</span>
+                    </button>
+                </div>
+            </div>
 
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className={cn(
-              'flex flex-col items-center justify-center gap-1 text-xs font-medium w-20 h-full transition-colors',
-              isExpanded ? 'text-primary' : 'text-muted-foreground hover:text-primary'
-            )}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            {isExpanded ? <X className="h-5 w-5" /> : <MoreHorizontal className="h-5 w-5" />}
-            <span>{isExpanded ? 'Close' : 'More'}</span>
-          </button>
+             {/* FAB Container - Centered */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10" style={{top: isExpanded ? 'calc(100% - 4rem)' : '50%'}}>
+                 {isTransactionsPage ? (
+                    <AddExpenseDialog onSaveSuccess={handleDataChange}>
+                        <Button
+                            size="icon"
+                            className="h-16 w-16 rounded-full bg-primary shadow-lg"
+                            onContextMenu={(e) => e.preventDefault()}
+                        >
+                            <Plus className="h-7 w-7" />
+                            <span className="sr-only">Add Transaction</span>
+                        </Button>
+                    </AddExpenseDialog>
+                ) : (
+                    <Button
+                        size="icon"
+                        className="h-16 w-16 rounded-full bg-primary shadow-lg"
+                        asChild
+                        onContextMenu={(e) => e.preventDefault()}
+                    >
+                        <Link href={transactionsHref}>
+                            <ArrowRightLeft className="h-7 w-7" />
+                            <span className="sr-only">Go to Transactions</span>
+                        </Link>
+                    </Button>
+                )}
+            </div>
+
         </div>
-        </div>
-      </div>
     </div>
   );
 }

@@ -104,17 +104,16 @@ export default function AssetsPage() {
                                         <p className="text-xs text-muted-foreground">Total Invested: {currencySymbol}{totalInvested.toFixed(2)}</p>
                                     </div>
                                     <div className={cn(
-                                        "flex flex-col items-end text-xs",
-                                        overallGainLoss > 0 && "text-green-600",
-                                        overallGainLoss < 0 && "text-red-500"
+                                        "flex flex-col items-end",
+                                        overallGainLoss >= 0 ? "text-green-600" : "text-red-500"
                                     )}>
-                                        <div className="flex items-center gap-1 font-semibold">
-                                             {overallGainLoss > 0 ? <TrendingUp className="h-4 w-4"/> : overallGainLoss < 0 ? <TrendingDown className="h-4 w-4"/> : null}
-                                             <span>({overallReturn.toFixed(2)}%)</span>
-                                        </div>
-                                        <span>
+                                        <div className="text-lg font-bold">
                                             {overallGainLoss >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(overallGainLoss).toFixed(2)}
-                                        </span>
+                                        </div>
+                                        <div className="text-sm font-semibold flex items-center gap-1">
+                                            {overallGainLoss > 0 ? <TrendingUp className="h-4 w-4"/> : overallGainLoss < 0 ? <TrendingDown className="h-4 w-4"/> : null}
+                                            <span>({overallReturn.toFixed(2)}%)</span>
+                                        </div>
                                     </div>
                                 </div>
                             </CardContent>

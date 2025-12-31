@@ -26,7 +26,6 @@ export default function LoginPage() {
         </CardContent>
       </Card>
        <div className="mt-6 text-center text-xs text-muted-foreground space-y-1">
-            <p>🔒 Your data is encrypted and never shared.</p>
             <p>v {appVersion}</p>
         </div>
     </div>

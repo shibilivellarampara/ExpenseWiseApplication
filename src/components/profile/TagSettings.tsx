@@ -274,21 +274,6 @@ export function TagSettings() {
                                     />
                                     <label htmlFor="select-all-tags" className="text-sm font-medium">Select All</label>
                                 </div>
-                                {selectedIds.length > 1 && (
-                                     <MergeItemsDialog
-                                        open={showMergeDialog}
-                                        onOpenChange={setShowMergeDialog}
-                                        items={items?.filter(c => selectedIds.includes(c.id)) || []}
-                                        itemType="Tag"
-                                        onMerge={handleMerge}
-                                        isSaving={isSaving}
-                                    >
-                                        <Button variant="outline" size="sm">
-                                            <Merge className="mr-2 h-4 w-4" />
-                                            Merge ({selectedIds.length})
-                                        </Button>
-                                    </MergeItemsDialog>
-                                )}
                             </div>
                             {activeTags.map((item, index) => (
                                 <div key={item.id}>
@@ -363,6 +348,23 @@ export function TagSettings() {
                                             </>
                                         )}
                                     </div>
+                                    {index === lastSelectedIndex && selectedIds.length > 1 && (
+                                        <div className="pt-2 pl-8">
+                                            <MergeItemsDialog
+                                                open={showMergeDialog}
+                                                onOpenChange={setShowMergeDialog}
+                                                items={items?.filter(c => selectedIds.includes(c.id)) || []}
+                                                itemType="Tag"
+                                                onMerge={handleMerge}
+                                                isSaving={isSaving}
+                                            >
+                                                <Button variant="outline" size="sm">
+                                                    <Merge className="mr-2 h-4 w-4" />
+                                                    Merge {selectedIds.length} selected tags
+                                                </Button>
+                                            </MergeItemsDialog>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                              {activeTags.length === 0 && searchQuery && (

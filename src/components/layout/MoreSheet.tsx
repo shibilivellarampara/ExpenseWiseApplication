@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -21,7 +22,7 @@ const secondaryNavItems = [
   { href: '/debts', icon: <HandCoins className="h-5 w-5 text-muted-foreground" />, label: 'Debts & Dues' },
   { href: '/assets', icon: <Briefcase className="h-5 w-5 text-muted-foreground" />, label: 'Assets' },
   { href: '/recurring', icon: <Repeat className="h-5 w-5 text-muted-foreground" />, label: 'Recurring' },
-  { href: '/profile', icon: <Settings className="h-5 w-5 text-muted-foreground" />, label: 'All Settings' },
+  { href: '/profile', icon: <Settings className="h-5 w-5 text-muted-foreground" />, label: 'Settings' },
 ];
 
 export function MoreSheet({ children }: { children?: React.ReactNode }) {

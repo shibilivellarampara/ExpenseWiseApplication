@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError, setDocumentNonBlocking } from '@/firebase';
@@ -234,6 +233,31 @@ export function TagSettings() {
                                 className="pl-8"
                             />
                         </div>
+                        <div className="flex items-center gap-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10">
+                                        {renderIcon(newItemIcon)}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                                    {availableIcons.map(icon => (
+                                        <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItemIcon(icon)}>
+                                            {renderIcon(icon)}
+                                        </Button>
+                                    ))}
+                                </PopoverContent>
+                            </Popover>
+                            <Input
+                                placeholder="New Tag Name"
+                                value={newItemName}
+                                onChange={(e) => setNewItemName(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
+                            />
+                            <Button onClick={handleAddItem} disabled={isSaving || !newItemName}>
+                                {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
+                            </Button>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -347,31 +371,6 @@ export function TagSettings() {
                         </>
                     )}
                 </CardContent>
-                <CardFooter className="flex items-center gap-2 border-t pt-6">
-                     <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-10 w-10">
-                                {renderIcon(newItemIcon)}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                            {availableIcons.map(icon => (
-                                <Button key={icon} variant="ghost" size="icon" onClick={() => setNewItemIcon(icon)}>
-                                    {renderIcon(icon)}
-                                </Button>
-                            ))}
-                        </PopoverContent>
-                    </Popover>
-                    <Input
-                        placeholder="New Tag Name"
-                        value={newItemName}
-                        onChange={(e) => setNewItemName(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
-                    />
-                    <Button onClick={handleAddItem} disabled={isSaving || !newItemName}>
-                        {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
-                    </Button>
-                </CardFooter>
             </Card>
 
             {inactiveTags.length > 0 && (

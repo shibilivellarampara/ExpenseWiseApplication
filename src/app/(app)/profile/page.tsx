@@ -6,6 +6,7 @@ import { ProfileForm } from "@/components/profile/ProfileForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronRight, Cog, List, BarChart2, Tags, Database, User, Info, FileUp } from "lucide-react";
 import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
 
 
 const settingsLinks = [
@@ -28,26 +29,27 @@ export default function ProfilePage() {
                 title="Settings"
                 description="Manage your account settings and preferences."
             />
-            <div className="space-y-4">
-                {settingsLinks.map((link) => (
-                    <Link key={link.href} href={link.href} className="block">
-                         <Card className="hover:bg-accent transition-colors">
-                            <CardHeader className="flex flex-row items-center justify-between p-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-muted p-3 rounded-lg">
+             <Card>
+                <CardContent className="p-0">
+                    <div className="space-y-0">
+                        {settingsLinks.map((link, index) => (
+                            <Link key={link.href} href={link.href} className="block">
+                                <div className="p-4 flex items-center gap-4 hover:bg-accent transition-colors">
+                                    <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-muted flex-shrink-0">
                                         <link.icon className="h-5 w-5 text-muted-foreground" />
                                     </div>
-                                    <div>
+                                    <div className="flex-grow">
                                         <h3 className="font-semibold">{link.title}</h3>
                                         <p className="text-sm text-muted-foreground">{link.description}</p>
                                     </div>
+                                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                 </div>
-                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                            </CardHeader>
-                        </Card>
-                    </Link>
-                ))}
-            </div>
+                                {index < settingsLinks.length - 1 && <Separator />}
+                            </Link>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

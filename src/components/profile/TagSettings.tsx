@@ -311,7 +311,7 @@ export function TagSettings() {
                                                 <Input
                                                     value={editingItem.name}
                                                     onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                                                    className="h-8"
+                                                    className="h-8 text-sm"
                                                 />
                                                 <Button size="icon" className="h-8 w-8" onClick={handleUpdateItem}>
                                                     {isSaving ? <Loader2 className="animate-spin" /> : <Check className="h-4 w-4" />}
@@ -324,7 +324,7 @@ export function TagSettings() {
                                             <>
                                                 <div className="flex items-center flex-1 gap-2">
                                                     {renderIcon(item.icon)}
-                                                    <span>{item.name}</span>
+                                                    <span className="text-sm">{item.name}</span>
                                                 </div>
                                                 <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
                                                     <Edit className="h-4 w-4" />
@@ -397,7 +397,7 @@ export function TagSettings() {
                             <div key={item.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
                                 <div className="flex items-center gap-2">
                                     {renderIcon(item.icon)}
-                                    <span className="text-muted-foreground">{item.name}</span>
+                                    <span className="text-muted-foreground text-sm">{item.name}</span>
                                 </div>
                                 <Button variant="ghost" size="sm" onClick={() => handleUpdateStatus(item.id, 'active')}>
                                     <RotateCw className="mr-2 h-4 w-4" />

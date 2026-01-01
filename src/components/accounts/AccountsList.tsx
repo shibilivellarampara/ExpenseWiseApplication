@@ -336,11 +336,12 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     return (
        <div className="grid gap-8">
             <Card>
-                 <CardHeader className="flex flex-row items-start justify-between border-b">
+                 <CardHeader className="flex flex-row items-start justify-between">
                     <div className="flex items-center gap-3">
                         <CreditCard className="h-7 w-7 text-primary"/>
                         <div>
                             <CardTitle className="font-headline">Credit Cards</CardTitle>
+                            <CardDescription>Available: {currencySymbol}{totalAvailableCredit.toFixed(2)}</CardDescription>
                         </div>
                     </div>
                      <div className="text-right">
@@ -423,7 +424,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                     </DropdownMenu>
                                                 </div>
                                             </div>
-                                            <div className="text-sm text-muted-foreground">
+                                            <div className="text-sm text-muted-foreground pt-0.5">
                                                 {item.billingDate ? 
                                                     <span>
                                                         Due: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
@@ -431,7 +432,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                 : <span>No billing date set</span>}
                                             </div>
                                             {limit > 0 && (
-                                                <div className="space-y-1 pt-0.5">
+                                                <div className="space-y-1 pt-1">
                                                     <Progress value={availablePercentage} className="h-1.5" />
                                                     <div className="flex justify-between text-xs text-muted-foreground">
                                                         <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>

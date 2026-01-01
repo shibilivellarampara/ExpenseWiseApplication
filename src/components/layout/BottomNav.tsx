@@ -138,30 +138,32 @@ export function BottomNav() {
             
                 {/* Floating Action Button */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[75%] h-[72px] w-[72px] flex items-center justify-center z-10">
-                     {isTransactionsPage ? (
-                    <AddExpenseDialog onSaveSuccess={handleDataChange}>
+                     <AddExpenseDialog onSaveSuccess={handleDataChange}>
                         <Button
                             size="icon"
-                            className="h-[72px] w-[72px] rounded-full bg-primary shadow-lg border-4 border-background"
+                            className={cn(
+                                "h-[72px] w-[72px] rounded-full bg-primary shadow-lg border-4 border-background relative overflow-hidden",
+                                !isTransactionsPage && "cursor-default" // Prevent AddExpenseDialog from opening on other pages
+                            )}
+                            onClick={(e) => {
+                                if (!isTransactionsPage) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }
+                            }}
                             onContextMenu={(e) => e.preventDefault()}
                         >
-                            <Plus className="h-8 w-8" />
-                            <span className="sr-only">Add Transaction</span>
+                             <Link href={transactionsHref} className={cn("absolute inset-0 flex items-center justify-center transition-all duration-300", isTransactionsPage && "opacity-0 scale-0 rotate-180 pointer-events-none")}>
+                                <ArrowRightLeft className="h-7 w-7" />
+                            </Link>
+
+                             <div className={cn("absolute inset-0 flex items-center justify-center transition-all duration-300", !isTransactionsPage && "opacity-0 scale-0 -rotate-180 pointer-events-none")}>
+                                <Plus className="h-8 w-8" />
+                            </div>
+                            
+                            <span className="sr-only">Add Transaction or Navigate</span>
                         </Button>
                     </AddExpenseDialog>
-                ) : (
-                    <Button
-                        size="icon"
-                        className="h-[72px] w-[72px] rounded-full bg-primary shadow-lg border-4 border-background"
-                        asChild
-                        onContextMenu={(e) => e.preventDefault()}
-                    >
-                        <Link href={transactionsHref}>
-                            <ArrowRightLeft className="h-7 w-7" />
-                            <span className="sr-only">Go to Transactions</span>
-                        </Link>
-                    </Button>
-                )}
                 </div>
             </div>
         </div>

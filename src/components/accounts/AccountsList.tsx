@@ -375,7 +375,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                             </DialogContent>
                                         </Dialog>
 
-                                        <div className="flex-grow min-w-0 space-y-1">
+                                        <div className="flex-grow min-w-0">
                                             <div className="flex justify-between items-start">
                                                 <Link href={`/expenses?accounts=${item.id}`} className="font-semibold truncate transition-transform active:scale-95">
                                                     {item.name}
@@ -433,7 +433,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                 : <span>No billing date set</span>}
                                             </div>
                                             {limit > 0 && (
-                                                <div className="pt-2 space-y-1">
+                                                <div className="pt-1 space-y-1">
                                                     <Progress value={availablePercentage} className="h-1.5" />
                                                     <div className="flex justify-between text-xs text-muted-foreground">
                                                         <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
@@ -529,3 +529,4 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     
 
     
+

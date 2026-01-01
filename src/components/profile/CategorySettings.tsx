@@ -249,7 +249,7 @@ export function CategorySettings() {
                      <div className="flex items-center gap-2">
                         <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" size="icon" className="h-10 w-10">
+                                <Button variant="outline" className="w-14 h-10">
                                     {renderIcon(newItemIcon)}
                                 </Button>
                             </PopoverTrigger>
@@ -272,7 +272,7 @@ export function CategorySettings() {
                             onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
                             className="flex-grow"
                         />
-                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName}>
+                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-24">
                             {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
                         </Button>
                     </div>

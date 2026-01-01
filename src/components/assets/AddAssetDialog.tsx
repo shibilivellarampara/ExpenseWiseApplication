@@ -320,8 +320,8 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                             )}
                         />
                          <DialogFooter className="pt-4 sticky bottom-0 bg-background/90 pb-2">
-                            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                            <Button type="submit" disabled={isLoading}>
+                            <Button type="button" variant="outline" className="w-24" onClick={() => setOpen(false)}>Cancel</Button>
+                            <Button type="submit" disabled={isLoading} className="w-28">
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
                             </Button>
                         </DialogFooter>

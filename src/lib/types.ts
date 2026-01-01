@@ -168,5 +168,3 @@ export type EnrichedAsset = Omit<Asset, 'startDate' | 'lastUpdated'> & {
     startDate?: Date;
     lastUpdated: Date;
 };
-
-    

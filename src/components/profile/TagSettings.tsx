@@ -20,6 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 export function TagSettings() {
     const { user } = useUser();
@@ -239,6 +240,14 @@ export function TagSettings() {
             setSelectedIds([startWithId]);
         }
     };
+    
+     const handleSelectAll = () => {
+        if (selectedIds.length === activeTags.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(activeTags.map(t => t.id));
+        }
+    };
 
 
     return (
@@ -278,9 +287,9 @@ export function TagSettings() {
                             value={newItemName}
                             onChange={(e) => setNewItemName(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
-                            className="flex-grow"
+                            className="flex-grow h-10"
                         />
-                         <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-28 shrink-0">
+                         <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-auto h-10 px-4">
                             {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
                         </Button>
                     </div>
@@ -292,7 +301,14 @@ export function TagSettings() {
                         <>
                              {selectionMode && (
                                 <div className="flex items-center justify-between p-2 bg-muted rounded-md">
-                                    <span className="text-sm font-medium">{selectedIds.length} selected</span>
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox 
+                                            id="select-all"
+                                            checked={selectedIds.length === activeTags.length && activeTags.length > 0}
+                                            onCheckedChange={handleSelectAll}
+                                        />
+                                        <Label htmlFor="select-all" className="text-sm font-medium">{selectedIds.length} selected</Label>
+                                    </div>
                                     <div className="flex items-center gap-2">
                                          <MergeItemsDialog
                                             open={showMergeDialog}
@@ -315,7 +331,7 @@ export function TagSettings() {
 
                             {activeTags.map((item) => (
                                 <div key={item.id}>
-                                    <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50" onClick={() => selectionMode && handleSelectionChange(item.id, !selectedIds.includes(item.id))}>
+                                    <div className={cn("flex items-center gap-2 p-2 rounded-md hover:bg-muted/50", selectionMode && "cursor-pointer")} onClick={() => selectionMode && handleSelectionChange(item.id, !selectedIds.includes(item.id))}>
                                         {selectionMode ? (
                                             <Checkbox
                                                 id={`select-tag-${item.id}`}

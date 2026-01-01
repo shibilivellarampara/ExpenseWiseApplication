@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle as Dialo
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Label } from '@/components/ui/label';
 
 export function CategorySettings() {
     const { user } = useUser();
@@ -259,6 +260,15 @@ export function CategorySettings() {
             setSelectedIds([startWithId]);
         }
     };
+    
+    const handleSelectAll = () => {
+        if (selectedIds.length === activeCategories.length) {
+            setSelectedIds([]);
+        } else {
+            const allActiveIds = activeCategories.filter(c => !SYSTEM_CATEGORIES.includes(c.name)).map(c => c.id);
+            setSelectedIds(allActiveIds);
+        }
+    };
 
 
     return (
@@ -298,9 +308,9 @@ export function CategorySettings() {
                             value={newItemName}
                             onChange={(e) => setNewItemName(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
-                            className="flex-grow"
+                            className="flex-grow h-10"
                         />
-                         <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-28 shrink-0">
+                         <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-auto h-10 px-4">
                             {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
                         </Button>
                     </div>
@@ -312,7 +322,14 @@ export function CategorySettings() {
                         <>
                             {selectionMode && (
                                 <div className="flex items-center justify-between p-2 bg-muted rounded-md">
-                                    <span className="text-sm font-medium">{selectedIds.length} selected</span>
+                                     <div className="flex items-center gap-2">
+                                        <Checkbox 
+                                            id="select-all"
+                                            checked={selectedIds.length === activeCategories.filter(c => !SYSTEM_CATEGORIES.includes(c.name)).length && activeCategories.length > 0}
+                                            onCheckedChange={handleSelectAll}
+                                        />
+                                        <Label htmlFor="select-all" className="text-sm font-medium">{selectedIds.length} selected</Label>
+                                    </div>
                                     <div className="flex items-center gap-2">
                                          <MergeItemsDialog
                                             open={showMergeDialog}
@@ -337,7 +354,7 @@ export function CategorySettings() {
                                  const isSystemCategory = SYSTEM_CATEGORIES.includes(item.name);
                                 return (
                                 <div key={item.id}>
-                                    <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50" onClick={() => selectionMode && !isSystemCategory && handleSelectionChange(item.id, !selectedIds.includes(item.id))}>
+                                    <div className={cn("flex items-center gap-2 p-2 rounded-md", selectionMode && !isSystemCategory && "cursor-pointer hover:bg-muted/50")} onClick={() => selectionMode && !isSystemCategory && handleSelectionChange(item.id, !selectedIds.includes(item.id))}>
                                          {selectionMode ? (
                                             <Checkbox
                                                 id={`select-cat-${item.id}`}

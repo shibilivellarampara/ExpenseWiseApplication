@@ -19,6 +19,7 @@ import { MergeItemsDialog } from '@/components/profile/MergeItemsDialog';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 export function TagSettings() {
     const { user } = useUser();
@@ -41,6 +42,7 @@ export function TagSettings() {
     const [showMergeDialog, setShowMergeDialog] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectionMode, setSelectionMode] = useState(false);
 
 
     const renderIcon = (iconName: string) => {
@@ -192,6 +194,7 @@ export function TagSettings() {
             toast({ title: "Merge Complete", description: `${selectedIds.length} tags merged successfully.` });
             setSelectedIds([]);
             setShowMergeDialog(false);
+            setSelectionMode(false);
         } catch (e: any) {
             toast({ variant: 'destructive', title: "Merge Failed", description: e.message });
         } finally {
@@ -219,13 +222,23 @@ export function TagSettings() {
         if (checked) {
             setSelectedIds(prev => [...prev, id]);
         } else {
-            setSelectedIds(prev => prev.filter(i => i !== id));
+            setSelectedIds(prev => {
+                const newIds = prev.filter(i => i !== id);
+                if (newIds.length === 0) setSelectionMode(false);
+                return newIds;
+            });
         }
     };
     
-    const lastSelectedIndex = activeTags.reduce((lastIndex, item, currentIndex) => {
-        return selectedIds.includes(item.id) ? currentIndex : lastIndex;
-    }, -1);
+    const toggleSelectionMode = (startWithId?: string) => {
+        if (selectionMode) {
+            setSelectionMode(false);
+            setSelectedIds([]);
+        } else if (startWithId) {
+            setSelectionMode(true);
+            setSelectedIds([startWithId]);
+        }
+    };
 
 
     return (
@@ -267,7 +280,7 @@ export function TagSettings() {
                             onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
                             className="flex-grow"
                         />
-                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-24 shrink-0">
+                         <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-28 shrink-0">
                             {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
                         </Button>
                     </div>
@@ -277,24 +290,43 @@ export function TagSettings() {
                         <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
                     ) : (
                         <>
-                            <div className="flex items-center px-2">
-                                <Checkbox
-                                    id="select-all-tags"
-                                    checked={selectedIds.length === activeTags.length && activeTags.length > 0}
-                                    onCheckedChange={(checked) => setSelectedIds(checked ? activeTags.map(c => c.id) : [])}
-                                />
-                                <label htmlFor="select-all-tags" className="text-sm font-medium ml-2">Select All</label>
-                            </div>
-                            {activeTags.map((item, index) => (
+                             {selectionMode && (
+                                <div className="flex items-center justify-between p-2 bg-muted rounded-md">
+                                    <span className="text-sm font-medium">{selectedIds.length} selected</span>
+                                    <div className="flex items-center gap-2">
+                                         <MergeItemsDialog
+                                            open={showMergeDialog}
+                                            onOpenChange={setShowMergeDialog}
+                                            items={items?.filter(c => selectedIds.includes(c.id)) || []}
+                                            itemType="Tag"
+                                            onMerge={handleMerge}
+                                            isSaving={isSaving}
+                                        >
+                                            <Button variant="ghost" size="sm" disabled={selectedIds.length < 2}>
+                                                <Merge className="mr-2 h-4 w-4" /> Merge
+                                            </Button>
+                                        </MergeItemsDialog>
+                                         <Button variant="ghost" size="sm" onClick={() => toggleSelectionMode()}>
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTags.map((item) => (
                                 <div key={item.id}>
-                                    <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
-                                        {editingItem?.id !== item.id && (
+                                    <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50" onClick={() => selectionMode && handleSelectionChange(item.id, !selectedIds.includes(item.id))}>
+                                        {selectionMode ? (
                                             <Checkbox
                                                 id={`select-tag-${item.id}`}
                                                 checked={selectedIds.includes(item.id)}
                                                 onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
                                                 disabled={isSaving}
                                             />
+                                        ) : (
+                                            <button onClick={() => toggleSelectionMode(item.id)}>
+                                                {renderIcon(item.icon)}
+                                            </button>
                                         )}
                                         {editingItem?.id === item.id ? (
                                              <div className="flex w-full items-center gap-2">
@@ -331,7 +363,6 @@ export function TagSettings() {
                                         ) : (
                                             <>
                                                 <div className="flex items-center flex-1 gap-2">
-                                                    {renderIcon(item.icon)}
                                                     <span className="text-[15px]">{item.name}</span>
                                                 </div>
                                                 <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
@@ -364,23 +395,6 @@ export function TagSettings() {
                                             </>
                                         )}
                                     </div>
-                                    {index === lastSelectedIndex && selectedIds.length > 1 && (
-                                        <div className="pt-2 pl-8">
-                                            <MergeItemsDialog
-                                                open={showMergeDialog}
-                                                onOpenChange={setShowMergeDialog}
-                                                items={items?.filter(c => selectedIds.includes(c.id)) || []}
-                                                itemType="Tag"
-                                                onMerge={handleMerge}
-                                                isSaving={isSaving}
-                                            >
-                                                <Button variant="outline" size="sm">
-                                                    <Merge className="mr-2 h-4 w-4" />
-                                                    Merge {selectedIds.length} selected tags
-                                                </Button>
-                                            </MergeItemsDialog>
-                                        </div>
-                                    )}
                                 </div>
                             ))}
                              {activeTags.length === 0 && searchQuery && (

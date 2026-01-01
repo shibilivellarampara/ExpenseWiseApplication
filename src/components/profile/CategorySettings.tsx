@@ -45,6 +45,7 @@ export function CategorySettings() {
     const [showMergeDialog, setShowMergeDialog] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectionMode, setSelectionMode] = useState(false);
 
 
     const SYSTEM_CATEGORIES = ['Credit Limit Upgrade', 'Credit Card Payment', 'Credit Limit Downgrade'];
@@ -211,6 +212,7 @@ export function CategorySettings() {
             toast({ title: "Merge Complete", description: `${selectedIds.length} categories merged successfully.` });
             setSelectedIds([]);
             setShowMergeDialog(false);
+            setSelectionMode(false);
         } catch (e: any) {
             toast({ variant: 'destructive', title: "Merge Failed", description: e.message });
         } finally {
@@ -240,13 +242,23 @@ export function CategorySettings() {
         if (checked) {
             setSelectedIds(prev => [...prev, id]);
         } else {
-            setSelectedIds(prev => prev.filter(i => i !== id));
+            setSelectedIds(prev => {
+                const newIds = prev.filter(i => i !== id);
+                if (newIds.length === 0) setSelectionMode(false);
+                return newIds;
+            });
         }
     };
     
-    const lastSelectedIndex = activeCategories.reduce((lastIndex, item, currentIndex) => {
-        return selectedIds.includes(item.id) ? currentIndex : lastIndex;
-    }, -1);
+    const toggleSelectionMode = (startWithId?: string) => {
+        if (selectionMode) {
+            setSelectionMode(false);
+            setSelectedIds([]);
+        } else if (startWithId) {
+            setSelectionMode(true);
+            setSelectedIds([startWithId]);
+        }
+    };
 
 
     return (
@@ -288,7 +300,7 @@ export function CategorySettings() {
                             onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
                             className="flex-grow"
                         />
-                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-24 shrink-0">
+                         <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-28 shrink-0">
                             {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
                         </Button>
                     </div>
@@ -298,29 +310,50 @@ export function CategorySettings() {
                         <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
                     ) : (
                         <>
-                            <div className="flex items-center px-2">
-                                <Checkbox
-                                    id="select-all-categories"
-                                    checked={selectedIds.length === activeCategories.filter(c => !SYSTEM_CATEGORIES.includes(c.name)).length && activeCategories.length > 0}
-                                    onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.filter(c => !SYSTEM_CATEGORIES.includes(c.name)).map(c => c.id) : [])}
-                                />
-                                <label htmlFor="select-all-categories" className="text-sm font-medium ml-2">Select All</label>
-                            </div>
-                            {activeCategories.map((item, index) => {
+                            {selectionMode && (
+                                <div className="flex items-center justify-between p-2 bg-muted rounded-md">
+                                    <span className="text-sm font-medium">{selectedIds.length} selected</span>
+                                    <div className="flex items-center gap-2">
+                                         <MergeItemsDialog
+                                            open={showMergeDialog}
+                                            onOpenChange={setShowMergeDialog}
+                                            items={categories?.filter(c => selectedIds.includes(c.id)) || []}
+                                            itemType="Category"
+                                            onMerge={handleMerge}
+                                            isSaving={isSaving}
+                                        >
+                                            <Button variant="ghost" size="sm" disabled={selectedIds.length < 2}>
+                                                <Merge className="mr-2 h-4 w-4" /> Merge
+                                            </Button>
+                                        </MergeItemsDialog>
+                                         <Button variant="ghost" size="sm" onClick={() => toggleSelectionMode()}>
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeCategories.map((item) => {
                                  const isSystemCategory = SYSTEM_CATEGORIES.includes(item.name);
                                 return (
                                 <div key={item.id}>
-                                    <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
-                                        {editingItem?.id !== item.id && !isSystemCategory && (
+                                    <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50" onClick={() => selectionMode && !isSystemCategory && handleSelectionChange(item.id, !selectedIds.includes(item.id))}>
+                                         {selectionMode ? (
                                             <Checkbox
                                                 id={`select-cat-${item.id}`}
                                                 checked={selectedIds.includes(item.id)}
                                                 onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
                                                 disabled={isSaving || isSystemCategory}
+                                                className={cn(isSystemCategory && "opacity-50 cursor-not-allowed")}
                                             />
+                                        ) : (
+                                            <button onClick={() => !isSystemCategory && toggleSelectionMode(item.id)} disabled={isSystemCategory}>
+                                                {renderIcon(item.icon)}
+                                            </button>
                                         )}
+
                                         {editingItem?.id === item.id ? (
-                                            <div className={cn("flex w-full items-center gap-2", isSystemCategory && "pl-7")}>
+                                            <div className="flex w-full items-center gap-2">
                                                 <Popover open={editIconPopoverOpen} onOpenChange={setEditIconPopoverOpen}>
                                                     <PopoverTrigger asChild>
                                                         <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
@@ -354,9 +387,7 @@ export function CategorySettings() {
                                             </div>
                                         ) : (
                                             <>
-                                                {!isSystemCategory && <div className="w-4"/> }
                                                 <div className="flex items-center flex-1 gap-2">
-                                                    {renderIcon(item.icon)}
                                                     <TooltipProvider>
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
@@ -405,23 +436,6 @@ export function CategorySettings() {
                                             </>
                                         )}
                                     </div>
-                                    {index === lastSelectedIndex && selectedIds.length > 1 && (
-                                        <div className="pt-2 pl-8">
-                                            <MergeItemsDialog
-                                                open={showMergeDialog}
-                                                onOpenChange={setShowMergeDialog}
-                                                items={categories?.filter(c => selectedIds.includes(c.id)) || []}
-                                                itemType="Category"
-                                                onMerge={handleMerge}
-                                                isSaving={isSaving}
-                                            >
-                                                <Button variant="outline" size="sm">
-                                                    <Merge className="mr-2 h-4 w-4" />
-                                                    Merge {selectedIds.length} selected categories
-                                                </Button>
-                                            </MergeItemsDialog>
-                                        </div>
-                                    )}
                                 </div>
                                 );
                             })}

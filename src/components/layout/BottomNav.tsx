@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   LayoutDashboard,
   Wallet,
@@ -22,7 +23,6 @@ import { UserProfile } from '@/lib/types';
 import { doc } from 'firebase/firestore';
 import { AddExpenseDialog } from '@/components/expenses/AddExpenseDialog';
 import { Button } from '@/components/ui/button';
-import { useState, useRef, useEffect } from 'react';
 
 const secondaryNavItems = [
     { href: '/debts', icon: HandCoins, label: 'Debts'},
@@ -36,16 +36,23 @@ const NavLink = ({ href, currentPath, children }: { href: string; currentPath: s
         ? currentPath.startsWith('/transactions') || currentPath.startsWith('/expenses')
         : currentPath.startsWith(href);
         
+    const childrenArray = React.Children.toArray(children);
+    const icon = childrenArray[0];
+    const label = childrenArray[1];
+
     return (
         <Link 
             href={href} 
             className={cn(
-                "flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-all duration-200 ease-in-out",
-                isActive ? 'text-primary scale-110' : 'text-muted-foreground hover:text-primary'
+                "flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors duration-200 ease-in-out",
+                isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'
             )} 
             onContextMenu={(e) => e.preventDefault()}
         >
-            {children}
+            <div className={cn("transition-transform duration-200 ease-in-out", isActive && "scale-110")}>
+                {icon}
+            </div>
+            {label}
         </Link>
     )
 };
@@ -97,7 +104,7 @@ export function BottomNav() {
                 )}
             >
                 {secondaryNavItems.map(({ href, icon: Icon, label }) => (
-                    <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors h-full w-16" onClick={() => setIsExpanded(false)}>
+                     <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors h-full w-16" onClick={() => setIsExpanded(false)}>
                         <Icon className="h-5 w-5" /> 
                         <span className="text-xs">{label}</span>
                     </Link>
@@ -107,7 +114,7 @@ export function BottomNav() {
             {/* Primary Navigation Container */}
              <div className="relative h-16">
                 {/* Primary Oval Bar */}
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around px-4">
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around px-2">
                     <NavLink href="/dashboard" currentPath={pathname}>
                         <LayoutDashboard className="h-5 w-5" />
                         <span className="text-xs">Dashboard</span>

@@ -289,7 +289,7 @@ export function TagSettings() {
                             onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
                             className="flex-grow h-10"
                         />
-                         <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-auto h-10 px-4">
+                         <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-[104px] h-10 px-4">
                             {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
                         </Button>
                     </div>
@@ -300,7 +300,7 @@ export function TagSettings() {
                     ) : (
                         <>
                              {selectionMode && (
-                                <div className="flex items-center justify-between p-2 bg-muted rounded-md">
+                                <div className="sticky top-0 z-10 flex items-center justify-between p-2 bg-muted/80 backdrop-blur-sm rounded-md mb-2">
                                     <div className="flex items-center gap-2">
                                         <Checkbox 
                                             id="select-all"

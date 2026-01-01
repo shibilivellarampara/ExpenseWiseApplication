@@ -88,14 +88,14 @@ export function CategorySettings() {
     
     const handleUpdateItem = async () => {
         if (!editingItem || !user || !firestore) return;
-
+    
         const isSystemCategory = SYSTEM_CATEGORIES.includes(categories?.find(c => c.id === editingItem.id)?.name || '');
         
         if (!isSystemCategory) {
             const isDuplicate = categories?.some(c =>
                 c.name.toLowerCase() === editingItem.name.toLowerCase() && c.id !== editingItem.id
             );
-
+    
             if (isDuplicate) {
                 toast({
                     variant: 'destructive',
@@ -105,16 +105,15 @@ export function CategorySettings() {
                 return;
             }
         }
-
-
+    
         setIsSaving(true);
         const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
         const updatedData: { name?: string; icon: string } = { icon: editingItem.icon };
-
+    
         if (!isSystemCategory) {
             updatedData.name = editingItem.name;
         }
-
+    
         try {
             await setDocumentNonBlocking(itemRef, updatedData, { merge: true });
             toast({ title: "Category Updated" });
@@ -310,7 +309,7 @@ export function CategorySettings() {
                             onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
                             className="flex-grow h-10"
                         />
-                         <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-auto h-10 px-4">
+                         <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-[104px] h-10 px-4">
                             {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
                         </Button>
                     </div>
@@ -321,7 +320,7 @@ export function CategorySettings() {
                     ) : (
                         <>
                             {selectionMode && (
-                                <div className="flex items-center justify-between p-2 bg-muted rounded-md">
+                                <div className="sticky top-0 z-10 flex items-center justify-between p-2 bg-muted/80 backdrop-blur-sm rounded-md mb-2">
                                      <div className="flex items-center gap-2">
                                         <Checkbox 
                                             id="select-all"

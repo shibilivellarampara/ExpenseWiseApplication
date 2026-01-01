@@ -217,6 +217,15 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none; /* Standard syntax */
+  }
+
+  input, textarea {
+    -webkit-user-select: auto;
+    -ms-user-select: auto;
+    user-select: auto;
   }
   html {
     overflow: hidden;
@@ -226,9 +235,6 @@
     @apply bg-background text-foreground;
     height: 100%;
     overflow: auto;
-    -webkit-user-select: none; /* Safari */
-    -ms-user-select: none; /* IE 10+ */
-    user-select: none; /* Standard syntax */
   }
 
   /* Hide spinner arrows on number inputs */

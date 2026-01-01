@@ -29,6 +29,7 @@ import { TagSpendingChart } from "@/components/analysis/TagSpendingChart";
 import { IncomeBreakdownChart } from "@/components/analysis/IncomeBreakdownChart";
 import { CategoryBarChart } from "@/components/analysis/CategoryBarChart";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { SavingsTrendChart } from "@/components/analysis/SavingsTrendChart";
 
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'custom';
@@ -514,6 +515,17 @@ export default function AnalysisPage() {
                                     </CardHeader>
                                     <CardContent>
                                         <SpendingTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
+                                    </CardContent>
+                                </Card>
+                            )}
+                            {(analysisSettings?.showSavingsTrendChart ?? true) && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Monthly Savings Trend</CardTitle>
+                                        <CardDescription>Your net savings each month.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <SavingsTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
                                     </CardContent>
                                 </Card>
                             )}

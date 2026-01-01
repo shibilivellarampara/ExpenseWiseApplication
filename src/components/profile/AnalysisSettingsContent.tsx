@@ -67,6 +67,7 @@ export function AnalysisSettingsContent() {
     const chartVisibilitySettings = [
         { key: 'showCategoryTable', label: 'Spending by Category Table' },
         { key: 'showTrendChart', label: 'Income vs. Expense Trend Chart' },
+        { key: 'showSavingsTrendChart', label: 'Monthly Savings Trend Chart' },
         { key: 'showCategoryBarChart', label: 'Top Spending Categories Chart' },
         { key: 'showTagPieChart', label: 'Spending by Tag Chart' },
         { key: 'showIncomePieChart', label: 'Income Sources Chart' },

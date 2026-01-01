@@ -33,6 +33,7 @@ export type UserProfile = {
     showTagPieChart?: boolean;
     showIncomePieChart?: boolean;
     showAiInsights?: boolean;
+    showSavingsTrendChart?: boolean;
   };
   transactionFieldOrder?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
   createdAt?: Timestamp;

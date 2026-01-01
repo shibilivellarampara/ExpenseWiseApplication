@@ -144,19 +144,25 @@ export function CategorySettings() {
 
     const handleUpdateStatus = (itemId: string, status: 'active' | 'inactive') => {
         if (!user || !firestore) return;
-
+    
         const item = categories?.find(c => c.id === itemId);
         if (SYSTEM_CATEGORIES.includes(item?.name || '')) {
             toast({ variant: 'destructive', title: 'Action Not Allowed', description: `"${item?.name}" is a system category and cannot be archived.` });
             return;
         }
-
+    
+        setIsSaving(true);
         const itemRef = doc(firestore, `users/${user.uid}/categories`, itemId);
-        setDocumentNonBlocking(itemRef, { status: status }, { merge: true }).then(() => {
-            toast({ title: `Category ${status === 'active' ? 'Restored' : 'Archived'}` });
-        }).catch((err) => {
-             toast({ variant: 'destructive', title: 'Error', description: err.message });
-        });
+        setDocumentNonBlocking(itemRef, { status: status }, { merge: true })
+            .then(() => {
+                toast({ title: `Category ${status === 'active' ? 'Restored' : 'Archived'}` });
+            })
+            .catch((err) => {
+                 toast({ variant: 'destructive', title: 'Error', description: err.message });
+            })
+            .finally(() => {
+                setIsSaving(false);
+            });
     }
 
     const handleMerge = async (target: { id: string } | { name: string; icon: string }) => {
@@ -249,7 +255,7 @@ export function CategorySettings() {
                      <div className="flex items-center gap-2">
                         <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-14 h-10">
+                                <Button variant="outline" className="w-14 h-10 shrink-0">
                                     {renderIcon(newItemIcon)}
                                 </Button>
                             </PopoverTrigger>
@@ -272,7 +278,7 @@ export function CategorySettings() {
                             onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
                             className="flex-grow"
                         />
-                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-24">
+                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-28 shrink-0">
                             {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
                         </Button>
                     </div>
@@ -415,8 +421,8 @@ export function CategorySettings() {
                                     {renderIcon(item.icon)}
                                     <span className="text-muted-foreground text-sm">{item.name}</span>
                                 </div>
-                                <Button variant="ghost" size="sm" onClick={() => handleUpdateStatus(item.id, 'active')}>
-                                    <RotateCw className="mr-2 h-4 w-4" />
+                                <Button variant="ghost" size="sm" onClick={() => handleUpdateStatus(item.id, 'active')} disabled={isSaving}>
+                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCw className="mr-2 h-4 w-4" />}
                                     Restore
                                 </Button>
                             </div>

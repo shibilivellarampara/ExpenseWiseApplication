@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -269,6 +268,10 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
             return orderA - orderB;
         });
     }, [activeAccounts]);
+
+    const totalSavingsBalance = useMemo(() => {
+        return otherAccounts.reduce((sum, acc) => sum + acc.balance, 0);
+    }, [otherAccounts]);
     
     const inactiveCreditCards = inactiveAccounts.filter(acc => acc.type === 'credit_card');
     const inactiveOtherAccounts = inactiveAccounts.filter(acc => acc.type !== 'credit_card');
@@ -331,115 +334,99 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                          <CreditCard className="h-7 w-7 text-primary"/>
                         <CardTitle className="font-headline">Credit Cards</CardTitle>
                     </div>
-                    <CardDescription>Your credit card accounts and their available limits.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="divide-y">
-                        {creditCards.length > 0 ? creditCards.map((item, index) => {
+                        {creditCards.length > 0 ? creditCards.map((item) => {
                             const limit = item.limit || 0;
                             const availableCredit = item.balance;
-                            // Round to 2 decimal places to avoid floating point issues like -0.00
                             const outstandingAmount = Math.round((limit > 0 ? limit - availableCredit : -availableCredit) * 100) / 100;
                             const isPaid = outstandingAmount <= 0;
                             const availablePercentage = limit > 0 && limit > outstandingAmount ? ((limit - outstandingAmount) / limit) * 100 : 0;
                             
                             return (
-                                <div key={item.id} className="p-4 flex items-start gap-4 group hover:bg-muted/50 transition-colors">
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <button className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-muted rounded-full cursor-pointer hover:bg-accent transition-colors">
-                                                {renderIcon(item.icon, "h-7 w-7")}
-                                            </button>
-                                        </DialogTrigger>
-                                        <DialogContent>
-                                            <DialogHeader>
-                                                <DialogTitle>Card Details</DialogTitle>
-                                                <DialogDescription>Non-sensitive card information.</DialogDescription>
-                                            </DialogHeader>
-                                            <CardDisplay account={item} />
-                                        </DialogContent>
-                                    </Dialog>
-                                    <Link href={`/expenses?accounts=${item.id}`} passHref className="flex-grow cursor-pointer">
-                                        <div className="flex items-center justify-between">
-                                            <div className="font-semibold">{item.name}</div>
-                                            <div className="flex items-center gap-2">
-                                                 {isPaid && <Badge variant="default" className="bg-primary/10 text-primary">Paid</Badge>}
-                                                <div className={cn(
-                                                    "font-bold text-lg",
-                                                    outstandingAmount > 0 ? "text-destructive" : "text-primary"
-                                                )}>
-                                                     {outstandingAmount > 0 ? '-' : ''}{currencySymbol}{Math.abs(outstandingAmount).toFixed(2)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                            <span>Outstanding Amount</span>
-                                            <div className="flex items-center gap-2">
-                                                {item.billingDate && (
-                                                    <div className="flex items-center gap-1">
-                                                        <CalendarDays className="h-4 w-4" />
-                                                        <span>Due: {item.billingDate}{getOrdinalSuffix(item.billingDate)}</span>
+                                <Link key={item.id} href={`/expenses?accounts=${item.id}`} passHref>
+                                    <div className="p-4 space-y-3 group hover:bg-muted/50 cursor-pointer transition-colors">
+                                        {/* Row 1: Header */}
+                                        <div className="flex items-start justify-between">
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                     <div className="font-semibold flex items-center gap-2 cursor-pointer hover:text-primary transition-colors" onClick={(e) => e.stopPropagation()}>
+                                                        {item.name}
+                                                        {renderIcon(item.icon, "h-4 w-4")}
                                                     </div>
-                                                )}
+                                                </DialogTrigger>
+                                                <DialogContent>
+                                                    <DialogHeader>
+                                                        <DialogTitle>Card Details</DialogTitle>
+                                                        <DialogDescription>Non-sensitive card information.</DialogDescription>
+                                                    </DialogHeader>
+                                                    <CardDisplay account={item} />
+                                                </DialogContent>
+                                            </Dialog>
+
+                                            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2">
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <AddAccountSheet accountToEdit={item}>
+                                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                <Edit className="mr-2 h-4 w-4" /> Edit
+                                                            </DropdownMenuItem>
+                                                        </AddAccountSheet>
+                                                        <PayBillDialog creditCard={item} paymentAccounts={otherAccounts.filter(a => a.type === 'bank')} outstandingAmount={outstandingAmount}>
+                                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={outstandingAmount <= 0} className={outstandingAmount > 0 ? 'text-primary' : ''}>
+                                                                <Handshake className="mr-2 h-4 w-4" /> Pay Bill
+                                                            </DropdownMenuItem>
+                                                        </PayBillDialog>
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/analysis?accounts=${item.id}`}>
+                                                                <BarChartHorizontal className="mr-2 h-4 w-4" /> Go to Analysis
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/expenses?accounts=${item.id}&type=income`}>
+                                                                <History className="mr-2 h-4 w-4" /> Payment History
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DeactivateAccountButton account={item} />
+                                                        <CloseAccountButton account={item} />
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </div>
                                         </div>
+
+                                        {/* Row 2: Primary Info */}
+                                        <div className="text-sm text-muted-foreground">
+                                            {isPaid ? (
+                                                <span><Badge variant="default" className="bg-primary/10 text-primary mr-2">Paid</Badge> Next bill: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
+                                            ) : (
+                                                <span><span className="font-bold text-destructive">{currencySymbol}{outstandingAmount.toFixed(2)}</span> due • Pay by {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
+                                            )}
+                                        </div>
+
+                                        {/* Row 3: Progress Bar */}
                                         {limit > 0 && (
-                                            <div className="mt-1">
+                                            <div>
                                                 <Progress value={availablePercentage} className="h-2" />
-                                                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                                                    <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
-                                                    <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
-                                                </div>
+                                                <p className="text-xs text-muted-foreground mt-1">Available credit</p>
                                             </div>
                                         )}
-                                    </Link>
-                                    <div className="flex items-center ml-auto pl-2">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <AddAccountSheet accountToEdit={item}>
-                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                        <Edit className="mr-2 h-4 w-4" />
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                </AddAccountSheet>
-                                                 <PayBillDialog
-                                                    creditCard={item}
-                                                    paymentAccounts={otherAccounts.filter(a => a.type === 'bank')}
-                                                    outstandingAmount={outstandingAmount}
-                                                >
-                                                    <DropdownMenuItem
-                                                        onSelect={(e) => e.preventDefault()}
-                                                        disabled={outstandingAmount <= 0}
-                                                        className={outstandingAmount > 0 ? 'text-primary' : ''}
-                                                    >
-                                                        <Handshake className="mr-2 h-4 w-4" />
-                                                        Pay Bill
-                                                    </DropdownMenuItem>
-                                                </PayBillDialog>
-                                                <DropdownMenuItem asChild>
-                                                    <Link href={`/analysis?accounts=${item.id}`}>
-                                                        <BarChartHorizontal className="mr-2 h-4 w-4" />
-                                                        Go to Analysis
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                 <DropdownMenuItem asChild>
-                                                    <Link href={`/expenses?accounts=${item.id}&type=income`}>
-                                                        <History className="mr-2 h-4 w-4" />
-                                                        Payment History
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DeactivateAccountButton account={item} />
-                                                <CloseAccountButton account={item} />
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+
+                                        {/* Row 4: Secondary Info */}
+                                        {limit > 0 && (
+                                            <div className="flex justify-between text-xs text-muted-foreground">
+                                                <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
+                                                <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
+                                </Link>
                             )
                         }) : (
                              <p className="text-muted-foreground text-center p-8">No active credit card accounts yet.</p>
@@ -451,56 +438,58 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
 
              <Card>
                 <CardHeader>
-                     <div className="flex items-center gap-3">
-                        <Landmark className="h-7 w-7 text-primary"/>
-                        <CardTitle className="font-headline">Savings &amp; Other Accounts</CardTitle>
+                     <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Landmark className="h-7 w-7 text-primary"/>
+                            <CardTitle className="font-headline">Savings &amp; Others</CardTitle>
+                        </div>
+                        <div className="text-right">
+                             <p className="text-sm text-muted-foreground">Total balance</p>
+                             <p className="font-bold text-lg">{currencySymbol}{totalSavingsBalance.toFixed(2)}</p>
+                        </div>
                     </div>
-                    <CardDescription>Your bank, wallet, cash, and other accounts.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="divide-y">
                         {otherAccounts.length > 0 ? otherAccounts.map((item, index) => (
                             <Link key={item.id} href={`/expenses?accounts=${item.id}`} passHref>
                                 <div className="p-4 flex items-start gap-4 group hover:bg-muted/50 cursor-pointer transition-colors">
-                                    <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-muted rounded-full">
-                                        {renderIcon(item.icon, "h-7 w-7")}
-                                    </div>
                                     <div className="flex-grow">
                                          <div className="flex items-center justify-between">
                                             <div className="font-semibold">{item.name}</div>
+                                             <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2">
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <AddAccountSheet accountToEdit={item}>
+                                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                <Edit className="mr-2 h-4 w-4" /> Edit
+                                                            </DropdownMenuItem>
+                                                        </AddAccountSheet>
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/analysis?accounts=${item.id}`}>
+                                                                <BarChartHorizontal className="mr-2 h-4 w-4" /> Go to Analysis
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        <DeactivateAccountButton account={item} />
+                                                        <CloseAccountButton account={item} />
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                         </div>
+                                         <div className="flex items-center justify-between text-sm">
+                                            <Badge variant="secondary" className="capitalize text-xs">{item.type.replace('_', ' ')}</Badge>
                                             <div className={cn(
-                                                "font-bold text-lg",
+                                                "font-bold text-base",
                                                 item.balance >= 0 ? "text-primary" : "text-destructive"
                                             )}>
                                                 {currencySymbol}{item.balance.toFixed(2)}
                                             </div>
                                          </div>
-                                        <p className="text-sm text-muted-foreground capitalize">{item.type.replace('_', ' ')}</p>
-                                    </div>
-                                    <div className="flex items-center ml-auto pl-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <AddAccountSheet accountToEdit={item}>
-                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                        <Edit className="mr-2 h-4 w-4" />
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                </AddAccountSheet>
-                                                 <DropdownMenuItem asChild>
-                                                    <Link href={`/analysis?accounts=${item.id}`}>
-                                                        <BarChartHorizontal className="mr-2 h-4 w-4" />
-                                                        Go to Analysis
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DeactivateAccountButton account={item} />
-                                                <CloseAccountButton account={item} />
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
                                     </div>
                                 </div>
                             </Link>

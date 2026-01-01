@@ -1,3 +1,4 @@
+
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
@@ -86,7 +87,7 @@ function Notifications() {
         const currentDay = today.getDate();
 
         creditCards?.forEach(card => {
-            const outstandingAmount = (card.limit || 0) - card.balance;
+            const outstandingAmount = Math.round(((card.limit || 0) - card.balance) * 100) / 100;
 
             if (card.billingDate && outstandingAmount > 0) {
                 const daysUntilBilling = (card.billingDate - currentDay + 30) % 30; // simple days diff

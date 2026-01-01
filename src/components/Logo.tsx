@@ -25,7 +25,7 @@ export function Logo() {
       <Image src="/circlelogo50.png" alt="ExpenseWise Logo" width={28} height={28} className="h-7 w-7" />
       <span className="text-xl font-headline font-semibold text-foreground">ExpenseWise</span>
       {process.env.NODE_ENV === 'development' && (
-        <Badge variant="destructive" className="text-xs">dev</Badge>
+        <Badge variant="destructive" className="text-xs self-center">dev</Badge>
       )}
     </Link>
   );

@@ -14,7 +14,7 @@ const appVersion = "1.7.3";
 const changelog = [
     {
         version: "1.7.3",
-        date: "2026-01-03",
+        date: "2026-01-01",
         changes: [
             { type: 'UI/UX', description: "Improved bulk editing on Category and Tag pages with an intuitive 'selection mode' and a sticky actions header." },
             { type: 'Feature', description: "Added a 'Restore from Backup' option to the welcome card for new users, making it easier to get started." },
@@ -27,7 +27,7 @@ const changelog = [
     },
     {
         version: "1.7.2",
-        date: "2026-01-02",
+        date: "2025-12-31",
         changes: [
             { type: 'UI/UX', description: "Polished the mobile bottom navigation with a more transparent and refined design for a modern look and feel." },
             { type: 'UI/UX', description: "Adjusted the Floating Action Button (FAB) size and positioning for better ergonomics and a more premium aesthetic." },

@@ -489,13 +489,13 @@ export default function AnalysisPage() {
                             <Collapsible defaultOpen>
                                 <Card>
                                     <CollapsibleTrigger asChild>
-                                        <CardHeader className="flex flex-row items-center justify-between cursor-pointer">
+                                        <div className="flex flex-row items-center justify-between cursor-pointer p-6">
                                             <div className="space-y-1">
                                                 <CardTitle>Spending by Category</CardTitle>
                                                 <CardDescription>A summary of your transactions broken down by category for the selected period.</CardDescription>
                                             </div>
                                             <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
-                                        </CardHeader>
+                                        </div>
                                     </CollapsibleTrigger>
                                     <CollapsibleContent>
                                         <CardContent>
@@ -508,77 +508,131 @@ export default function AnalysisPage() {
                         
                         <div className="grid gap-8 md:grid-cols-2">
                             {(analysisSettings?.showTrendChart ?? true) && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Income vs. Expense Trend</CardTitle>
-                                        <CardDescription>Your cash flow over the selected period.</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <SpendingTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
-                                    </CardContent>
-                                </Card>
+                                <Collapsible defaultOpen>
+                                    <Card>
+                                        <CollapsibleTrigger asChild>
+                                            <div className="flex flex-row items-center justify-between cursor-pointer p-6">
+                                                <div className="space-y-1">
+                                                    <CardTitle>Income vs. Expense Trend</CardTitle>
+                                                    <CardDescription>Your cash flow over the selected period.</CardDescription>
+                                                </div>
+                                                <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
+                                            </div>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent>
+                                            <CardContent>
+                                                <SpendingTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
+                                            </CardContent>
+                                        </CollapsibleContent>
+                                    </Card>
+                                </Collapsible>
                             )}
                             {(analysisSettings?.showSavingsTrendChart ?? true) && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Monthly Savings Trend</CardTitle>
-                                        <CardDescription>Your net savings each month.</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <SavingsTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
-                                    </CardContent>
-                                </Card>
+                                <Collapsible defaultOpen>
+                                    <Card>
+                                        <CollapsibleTrigger asChild>
+                                            <div className="flex flex-row items-center justify-between cursor-pointer p-6">
+                                                <div className="space-y-1">
+                                                    <CardTitle>Monthly Savings Trend</CardTitle>
+                                                    <CardDescription>Your net savings each month.</CardDescription>
+                                                </div>
+                                                <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
+                                            </div>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent>
+                                            <CardContent>
+                                                <SavingsTrendChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
+                                            </CardContent>
+                                        </CollapsibleContent>
+                                    </Card>
+                                </Collapsible>
                             )}
                             {(analysisSettings?.showCategoryBarChart ?? true) && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Top Spending Categories</CardTitle>
-                                        <CardDescription>A bar chart showing your top spending categories.</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <CategoryBarChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
-                                    </CardContent>
-                                </Card>
+                                <Collapsible defaultOpen>
+                                    <Card>
+                                        <CollapsibleTrigger asChild>
+                                             <div className="flex flex-row items-center justify-between cursor-pointer p-6">
+                                                <div className="space-y-1">
+                                                    <CardTitle>Top Spending Categories</CardTitle>
+                                                    <CardDescription>A bar chart showing your top spending categories.</CardDescription>
+                                                </div>
+                                                <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
+                                            </div>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent>
+                                            <CardContent>
+                                                <CategoryBarChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
+                                            </CardContent>
+                                        </CollapsibleContent>
+                                    </Card>
+                                </Collapsible>
                             )}
                             {(analysisSettings?.showTagPieChart ?? true) && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Spending by Tag</CardTitle>
-                                        <CardDescription>A breakdown of your expenses by tags.</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <TagSpendingChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
-                                    </CardContent>
-                                </Card>
+                                <Collapsible defaultOpen>
+                                    <Card>
+                                         <CollapsibleTrigger asChild>
+                                             <div className="flex flex-row items-center justify-between cursor-pointer p-6">
+                                                <div className="space-y-1">
+                                                    <CardTitle>Spending by Tag</CardTitle>
+                                                    <CardDescription>A breakdown of your expenses by tags.</CardDescription>
+                                                </div>
+                                                <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
+                                            </div>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent>
+                                            <CardContent>
+                                                <TagSpendingChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
+                                            </CardContent>
+                                        </CollapsibleContent>
+                                    </Card>
+                                </Collapsible>
                             )}
                             {(analysisSettings?.showIncomePieChart ?? true) && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Income Sources</CardTitle>
-                                        <CardDescription>A breakdown of your income by category.</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <IncomeBreakdownChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
-                                    </CardContent>
-                                </Card>
+                                <Collapsible defaultOpen>
+                                    <Card>
+                                         <CollapsibleTrigger asChild>
+                                             <div className="flex flex-row items-center justify-between cursor-pointer p-6">
+                                                <div className="space-y-1">
+                                                    <CardTitle>Income Sources</CardTitle>
+                                                    <CardDescription>A breakdown of your income by category.</CardDescription>
+                                                </div>
+                                                <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
+                                            </div>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent>
+                                            <CardContent>
+                                                <IncomeBreakdownChart expenses={expensesForAnalysis} currency={userProfile?.defaultCurrency} />
+                                            </CardContent>
+                                        </CollapsibleContent>
+                                    </Card>
+                                </Collapsible>
                             )}
                         </div>
                         
                         {(analysisSettings?.showAiInsights ?? true) && (
-                            <Card className="sticky top-24">
-                                <CardHeader>
-                                    <CardTitle>AI-Powered Insights</CardTitle>
-                                    <CardDescription>Let AI analyze your spending and provide personalized advice.</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <AiInsights
-                                        onGenerate={handleGenerateInsights}
-                                        analysis={aiAnalysis}
-                                        isLoading={isAiLoading}
-                                        hasData={expensesForAnalysis.length > 0}
-                                    />
-                                </CardContent>
-                            </Card>
+                            <Collapsible defaultOpen>
+                                <Card className="sticky top-24">
+                                     <CollapsibleTrigger asChild>
+                                         <div className="flex flex-row items-center justify-between cursor-pointer p-6">
+                                            <div className="space-y-1">
+                                                <CardTitle>AI-Powered Insights</CardTitle>
+                                                <CardDescription>Let AI analyze your spending and provide personalized advice.</CardDescription>
+                                            </div>
+                                            <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
+                                        </div>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent>
+                                        <CardContent>
+                                            <AiInsights
+                                                onGenerate={handleGenerateInsights}
+                                                analysis={aiAnalysis}
+                                                isLoading={isAiLoading}
+                                                hasData={expensesForAnalysis.length > 0}
+                                            />
+                                        </CardContent>
+                                    </CollapsibleContent>
+                                </Card>
+                            </Collapsible>
                         )}
                     </div>
                 </>

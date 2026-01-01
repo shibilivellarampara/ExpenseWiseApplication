@@ -381,7 +381,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                 <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                                                     <div className="text-right">
                                                          {isPaid ? (
-                                                            <Badge className="bg-primary text-primary-foreground text-sm">Paid</Badge>
+                                                            <Badge className="bg-primary/10 text-primary text-sm">Paid</Badge>
                                                         ) : (
                                                             <div className={cn("font-semibold text-lg text-destructive")}>
                                                                 {`${currencySymbol}${outstandingAmount.toFixed(2)}`}
@@ -516,3 +516,6 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     )
 }
 
+
+
+    

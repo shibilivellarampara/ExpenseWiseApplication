@@ -20,6 +20,10 @@ import Link from 'next/link';
 import { PlusCircle, Upload } from 'lucide-react';
 import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
 
+type TimeRange = 'week' | 'month' | 'year' | '5year';
+type PieChartGrouping = 'category' | 'account' | 'tag';
+
+
 function WelcomeCard() {
     return (
         <Card className="bg-primary/10 border-primary/50">

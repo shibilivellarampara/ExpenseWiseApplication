@@ -178,7 +178,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
 
   if (data.length === 0) {
     return (
-        <div className="flex h-[350px] w-full items-center justify-center rounded-lg border-2 border-dashed">
+        <div className="flex h-[450px] w-full items-center justify-center rounded-lg border-2 border-dashed">
             <div className="flex flex-col items-center text-center text-muted-foreground">
                 <PieChartIcon className="h-12 w-12" />
                 <p className="mt-4">No expense data for this period.</p>

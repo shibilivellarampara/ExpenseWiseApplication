@@ -362,7 +362,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                         <div className="flex items-center gap-3 flex-grow min-w-0">
                                             <Dialog>
                                                 <DialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-muted flex-shrink-0 cursor-pointer">
+                                                     <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-muted flex-shrink-0 cursor-pointer">
                                                         {renderIcon(item.icon, "h-5 w-5")}
                                                     </Button>
                                                 </DialogTrigger>
@@ -378,10 +378,10 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                             <Link href={`/expenses?accounts=${item.id}`} className="flex-grow min-w-0">
                                                 <div className="font-semibold truncate">{item.name}</div>
                                                 <div className="text-sm text-muted-foreground">
-                                                    {isPaid ? (
+                                                     {isPaid ? (
                                                         <span><Badge variant="default" className="bg-green-600/10 text-green-700 mr-2 py-0">Paid</Badge>Next bill: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
                                                     ) : (
-                                                        <span><span className="font-bold text-destructive">{currencySymbol}{outstandingAmount.toFixed(2)}</span> due • Pay by {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
+                                                        <span>Pay by {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
                                                     )}
                                                 </div>
                                             </Link>
@@ -389,12 +389,8 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
 
                                         <div className="flex items-center gap-1 flex-shrink-0">
                                             <div className="text-right">
-                                                    <div className={cn("font-semibold text-lg", isPaid ? "text-green-600" : "text-destructive")}>
+                                                <div className={cn("font-semibold text-lg", isPaid ? "text-green-600" : "text-destructive")}>
                                                     {isPaid ? "Paid" : `${currencySymbol}${outstandingAmount.toFixed(2)}`}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
-                                                    <CalendarDays className="h-3 w-3" />
-                                                    Due: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}
                                                 </div>
                                             </div>
                                             <DropdownMenu>
@@ -517,5 +513,3 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
        </div>
     )
 }
-
-    

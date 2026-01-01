@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from "@/firebase";
 import { doc, setDoc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 import { Progress } from "../ui/progress";
-import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle, Merge, CreditCardIcon, BarChartHorizontal, Handshake } from "lucide-react";
+import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle, Merge, BarChartHorizontal, Handshake, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
@@ -269,6 +268,12 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
         });
     }, [activeAccounts]);
 
+    const { totalOutstanding, totalAvailableCredit } = useMemo(() => {
+        const outstanding = creditCards.reduce((sum, card) => sum + ((card.limit || 0) - card.balance), 0);
+        const available = creditCards.reduce((sum, card) => sum + card.balance, 0);
+        return { totalOutstanding: outstanding, totalAvailableCredit: available };
+    }, [creditCards]);
+
     const totalSavingsBalance = useMemo(() => {
         return otherAccounts.reduce((sum, acc) => sum + acc.balance, 0);
     }, [otherAccounts]);
@@ -329,10 +334,16 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     return (
        <div className="grid gap-8">
             <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-3">
-                         <CreditCard className="h-7 w-7 text-primary"/>
-                        <CardTitle className="font-headline">Credit Cards</CardTitle>
+                 <CardHeader>
+                    <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                             <CreditCard className="h-7 w-7 text-primary"/>
+                            <CardTitle className="font-headline">Credit Cards</CardTitle>
+                        </div>
+                        <div className="text-right text-sm">
+                            <p className="text-muted-foreground">Total Outstanding: <span className="font-semibold text-destructive">{currencySymbol}{totalOutstanding.toFixed(2)}</span></p>
+                            <p className="text-muted-foreground">Total Available: <span className="font-semibold text-primary">{currencySymbol}{totalAvailableCredit.toFixed(2)}</span></p>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -347,28 +358,46 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                             return (
                                 <Link key={item.id} href={`/expenses?accounts=${item.id}`} passHref>
                                     <div className="p-4 space-y-3 group hover:bg-muted/50 cursor-pointer transition-colors">
-                                        {/* Row 1: Header */}
                                         <div className="flex items-start justify-between">
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                     <div className="font-semibold flex items-center gap-2 cursor-pointer hover:text-primary transition-colors" onClick={(e) => e.stopPropagation()}>
-                                                        {item.name}
-                                                        {renderIcon(item.icon, "h-4 w-4")}
+                                            <div className="flex items-center gap-3">
+                                                 <Dialog>
+                                                    <DialogTrigger asChild>
+                                                         <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0 cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                                                            {renderIcon(item.icon, "h-5 w-5")}
+                                                        </div>
+                                                    </DialogTrigger>
+                                                     <DialogContent>
+                                                        <DialogHeader>
+                                                            <DialogTitle>Card Details</DialogTitle>
+                                                            <DialogDescription>Non-sensitive card information.</DialogDescription>
+                                                        </DialogHeader>
+                                                        <CardDisplay account={item} />
+                                                    </DialogContent>
+                                                </Dialog>
+                                                <div>
+                                                    <div className="font-semibold">{item.name}</div>
+                                                    <div className="text-sm text-muted-foreground">
+                                                        {isPaid ? (
+                                                            <span><Badge variant="default" className="bg-green-600/10 text-green-700 mr-2 py-0">Paid</Badge>Next bill: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
+                                                        ) : (
+                                                            <span><span className="font-bold text-destructive">{currencySymbol}{outstandingAmount.toFixed(2)}</span> due • Pay by {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
+                                                        )}
                                                     </div>
-                                                </DialogTrigger>
-                                                <DialogContent>
-                                                    <DialogHeader>
-                                                        <DialogTitle>Card Details</DialogTitle>
-                                                        <DialogDescription>Non-sensitive card information.</DialogDescription>
-                                                    </DialogHeader>
-                                                    <CardDisplay account={item} />
-                                                </DialogContent>
-                                            </Dialog>
-
-                                            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                                <div className="text-right">
+                                                     <div className={cn("font-semibold text-lg", isPaid ? "text-green-600" : "text-destructive")}>
+                                                        {isPaid ? "Paid" : `${currencySymbol}${outstandingAmount.toFixed(2)}`}
+                                                    </div>
+                                                     <div className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
+                                                        <CalendarDays className="h-3 w-3" />
+                                                        Due: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}
+                                                    </div>
+                                                </div>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
                                                             <MoreVertical className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
@@ -401,28 +430,13 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                             </div>
                                         </div>
 
-                                        {/* Row 2: Primary Info */}
-                                        <div className="text-sm text-muted-foreground">
-                                            {isPaid ? (
-                                                <span><Badge variant="default" className="bg-primary/10 text-primary mr-2">Paid</Badge> Next bill: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
-                                            ) : (
-                                                <span><span className="font-bold text-destructive">{currencySymbol}{outstandingAmount.toFixed(2)}</span> due • Pay by {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
-                                            )}
-                                        </div>
-
-                                        {/* Row 3: Progress Bar */}
                                         {limit > 0 && (
-                                            <div>
-                                                <Progress value={availablePercentage} className="h-2" />
-                                                <p className="text-xs text-muted-foreground mt-1">Available credit</p>
-                                            </div>
-                                        )}
-
-                                        {/* Row 4: Secondary Info */}
-                                        {limit > 0 && (
-                                            <div className="flex justify-between text-xs text-muted-foreground">
-                                                <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
-                                                <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
+                                            <div className="pl-13 space-y-1">
+                                                <Progress value={availablePercentage} className="h-1.5" />
+                                                <div className="flex justify-between text-xs text-muted-foreground">
+                                                    <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
+                                                    <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -443,53 +457,52 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                             <Landmark className="h-7 w-7 text-primary"/>
                             <CardTitle className="font-headline">Savings &amp; Others</CardTitle>
                         </div>
-                        <div className="text-right">
-                             <p className="text-sm text-muted-foreground">Total balance</p>
-                             <p className="font-bold text-lg">{currencySymbol}{totalSavingsBalance.toFixed(2)}</p>
+                        <div className="flex items-center text-lg font-bold text-primary">
+                             <span>{currencySymbol}{totalSavingsBalance.toFixed(2)}</span>
+                             <ChevronRight className="h-5 w-5" />
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="divide-y">
-                        {otherAccounts.length > 0 ? otherAccounts.map((item, index) => (
+                        {otherAccounts.length > 0 ? otherAccounts.map((item) => (
                             <Link key={item.id} href={`/expenses?accounts=${item.id}`} passHref>
-                                <div className="p-4 flex items-start gap-4 group hover:bg-muted/50 cursor-pointer transition-colors">
+                                <div className="p-4 flex items-center gap-4 group hover:bg-muted/50 cursor-pointer transition-colors">
+                                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                                        {renderIcon(item.icon, "h-5 w-5")}
+                                    </div>
                                     <div className="flex-grow">
-                                         <div className="flex items-center justify-between">
-                                            <div className="font-semibold">{item.name}</div>
-                                             <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2">
-                                                            <MoreVertical className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <AddAccountSheet accountToEdit={item}>
-                                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                                <Edit className="mr-2 h-4 w-4" /> Edit
-                                                            </DropdownMenuItem>
-                                                        </AddAccountSheet>
-                                                        <DropdownMenuItem asChild>
-                                                            <Link href={`/analysis?accounts=${item.id}`}>
-                                                                <BarChartHorizontal className="mr-2 h-4 w-4" /> Go to Analysis
-                                                            </Link>
-                                                        </DropdownMenuItem>
-                                                        <DeactivateAccountButton account={item} />
-                                                        <CloseAccountButton account={item} />
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </div>
-                                         </div>
-                                         <div className="flex items-center justify-between text-sm">
-                                            <Badge variant="secondary" className="capitalize text-xs">{item.type.replace('_', ' ')}</Badge>
-                                            <div className={cn(
-                                                "font-bold text-base",
-                                                item.balance >= 0 ? "text-primary" : "text-destructive"
-                                            )}>
-                                                {currencySymbol}{item.balance.toFixed(2)}
-                                            </div>
-                                         </div>
+                                        <div className="font-semibold">{item.name}</div>
+                                        <Badge variant="secondary" className="capitalize text-xs">{item.type.replace('_', ' ')}</Badge>
+                                    </div>
+                                    <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                        <div className={cn(
+                                            "font-bold text-base",
+                                            item.balance >= 0 ? "text-primary" : "text-destructive"
+                                        )}>
+                                            {currencySymbol}{item.balance.toFixed(2)}
+                                        </div>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <AddAccountSheet accountToEdit={item}>
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                        <Edit className="mr-2 h-4 w-4" /> Edit
+                                                    </DropdownMenuItem>
+                                                </AddAccountSheet>
+                                                <DropdownMenuItem asChild>
+                                                    <Link href={`/analysis?accounts=${item.id}`}>
+                                                        <BarChartHorizontal className="mr-2 h-4 w-4" /> Go to Analysis
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DeactivateAccountButton account={item} />
+                                                <CloseAccountButton account={item} />
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 </div>
                             </Link>

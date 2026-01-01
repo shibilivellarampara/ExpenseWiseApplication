@@ -10,7 +10,7 @@ import { Bell, Circle, CheckCheck, RefreshCw } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Badge } from '@/components/ui/badge';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';

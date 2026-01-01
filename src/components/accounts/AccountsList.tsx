@@ -341,7 +341,6 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                         <CreditCard className="h-7 w-7 text-primary"/>
                         <div>
                             <CardTitle className="font-headline">Credit Cards</CardTitle>
-                            <p className="text-sm text-muted-foreground">{currencySymbol}{totalAvailableCredit.toFixed(2)}</p>
                         </div>
                     </div>
                      <div className="text-right">
@@ -433,7 +432,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                 : <span>No billing date set</span>}
                                             </div>
                                             {limit > 0 && (
-                                                <div className="pt-1 space-y-1">
+                                                <div className="space-y-1">
                                                     <Progress value={availablePercentage} className="h-1.5" />
                                                     <div className="flex justify-between text-xs text-muted-foreground">
                                                         <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
@@ -529,4 +528,5 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     
 
     
+
 

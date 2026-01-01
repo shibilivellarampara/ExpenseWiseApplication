@@ -87,22 +87,31 @@ export function CategorySettings() {
     const handleUpdateItem = async () => {
         if (!editingItem || !user || !firestore) return;
 
-        const isDuplicate = categories?.some(c =>
-            c.name.toLowerCase() === editingItem.name.toLowerCase() && c.id !== editingItem.id
-        );
+        const isSystemCategory = SYSTEM_CATEGORIES.includes(categories?.find(c => c.id === editingItem.id)?.name || '');
+        
+        if (!isSystemCategory) {
+            const isDuplicate = categories?.some(c =>
+                c.name.toLowerCase() === editingItem.name.toLowerCase() && c.id !== editingItem.id
+            );
 
-        if (isDuplicate) {
-            toast({
-                variant: 'destructive',
-                title: 'Duplicate Category',
-                description: `A category named "${editingItem.name}" already exists.`,
-            });
-            return;
+            if (isDuplicate) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Duplicate Category',
+                    description: `A category named "${editingItem.name}" already exists.`,
+                });
+                return;
+            }
         }
+
 
         setIsSaving(true);
         const itemRef = doc(firestore, `users/${user.uid}/categories`, editingItem.id);
-        const updatedData = { name: editingItem.name, icon: editingItem.icon };
+        const updatedData: { name?: string; icon: string } = { icon: editingItem.icon };
+
+        if (!isSystemCategory) {
+            updatedData.name = editingItem.name;
+        }
 
         try {
             await setDocumentNonBlocking(itemRef, updatedData, { merge: true });
@@ -301,7 +310,7 @@ export function CategorySettings() {
                                 return (
                                 <div key={item.id}>
                                     <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
-                                        {editingItem?.id !== item.id && (
+                                        {editingItem?.id !== item.id && !isSystemCategory && (
                                             <Checkbox
                                                 id={`select-cat-${item.id}`}
                                                 checked={selectedIds.includes(item.id)}
@@ -333,6 +342,7 @@ export function CategorySettings() {
                                                     value={editingItem.name}
                                                     onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
                                                     className="h-10 text-[15px] flex-grow"
+                                                    disabled={isSystemCategory}
                                                 />
                                                 <Button size="icon" className="h-10 w-10 shrink-0" onClick={handleUpdateItem}>
                                                     {isSaving ? <Loader2 className="animate-spin" /> : <Check />}
@@ -357,13 +367,13 @@ export function CategorySettings() {
                                                             </TooltipTrigger>
                                                             {isSystemCategory && (
                                                                 <TooltipContent>
-                                                                    <p>System category cannot be edited or deleted.</p>
+                                                                    <p>System category. Name cannot be changed.</p>
                                                                 </TooltipContent>
                                                             )}
                                                         </Tooltip>
                                                     </TooltipProvider>
                                                 </div>
-                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)} disabled={isSystemCategory}>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
                                                     <Edit className="h-4 w-4" />
                                                 </Button>
                                                  <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')} disabled={isSystemCategory}>

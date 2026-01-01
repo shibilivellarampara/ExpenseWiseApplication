@@ -107,7 +107,7 @@ export function BottomNav() {
             {/* Primary Navigation Container */}
              <div className="relative h-16">
                 {/* Primary Oval Bar */}
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around">
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around px-4">
                     <NavLink href="/dashboard" currentPath={pathname}>
                         <LayoutDashboard className="h-5 w-5" />
                         <span className="text-xs">Dashboard</span>

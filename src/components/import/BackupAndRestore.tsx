@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, writeBatch, doc, query, where } from 'firebase/firestore';
+import { collection, getDocs, writeBatch, doc, query, where, Timestamp } from 'firebase/firestore';
 import { Loader2, Download, Upload, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -15,6 +15,14 @@ import pkg from '../../../package.json';
 const appVersion = pkg.version;
 
 const COLLECTIONS_TO_BACKUP = ['userProfile', 'accounts', 'categories', 'tags', 'expenses', 'debts', 'assets', 'recurringExpenses'];
+const DATE_FIELDS_BY_COLLECTION: Record<string, string[]> = {
+    expenses: ['date', 'createdAt', 'updatedAt'],
+    debts: ['date', 'settledAt', 'createdAt'],
+    assets: ['startDate', 'lastUpdated'],
+    recurringExpenses: ['startDate', 'nextDueDate', 'lastCreatedDate'],
+    userProfile: ['createdAt'],
+};
+
 
 export function BackupAndRestore() {
     const { user } = useUser();
@@ -36,7 +44,7 @@ export function BackupAndRestore() {
             
             for (const collectionName of COLLECTIONS_TO_BACKUP) {
                 if (collectionName === 'userProfile') {
-                    const docSnap = await getDocs(query(collection(firestore, 'users'), where('id', '==', user.uid)));
+                     const docSnap = await getDocs(query(collection(firestore, 'users'), where('id', '==', user.uid)));
                     if (!docSnap.empty) {
                         backupData.userProfile = docSnap.docs[0].data();
                     }
@@ -59,8 +67,12 @@ export function BackupAndRestore() {
             const blob = new Blob([jsonString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = `expensewise_backup_${new Date().toISOString().split('T')[0]}.ew`;
+            
+            const now = new Date();
+            const dateString = now.toISOString().split('T')[0];
+            const timeString = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+            a.download = `expensewise_backup_${dateString}_${timeString}.ew`;
+
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -121,16 +133,32 @@ export function BackupAndRestore() {
             const restoreBatch = writeBatch(firestore);
             for (const collectionName of COLLECTIONS_TO_BACKUP) {
                 const dataToRestore = restoreData[collectionName];
+                const dateFields = DATE_FIELDS_BY_COLLECTION[collectionName] || [];
+
                 if (dataToRestore) {
+                     const processItem = (item: any) => {
+                        const processedItem = { ...item };
+                        dateFields.forEach(field => {
+                            if (processedItem[field] && typeof processedItem[field] === 'string') {
+                                processedItem[field] = Timestamp.fromDate(new Date(processedItem[field]));
+                            } else if (processedItem[field] && typeof processedItem[field] === 'object' && 'seconds' in processedItem[field]) {
+                                // Already a Firestore-like timestamp object
+                                processedItem[field] = new Timestamp(processedItem[field].seconds, processedItem[field].nanoseconds);
+                            }
+                        });
+                        return processedItem;
+                    };
+
                     if (collectionName === 'userProfile') {
-                        const docRef = doc(firestore, `users/${user.uid}`);
-                        // Exclude sensitive/unchangeable fields
-                        const { id, email, ...profileData } = dataToRestore;
+                        const docRef = doc(firestore, 'users', user.uid);
+                        const { id, email, ...profileData } = processItem(dataToRestore);
                         restoreBatch.set(docRef, profileData, { merge: true });
                     } else {
-                        dataToRestore.forEach((item: any) => {
-                             const itemRef = doc(firestore, `users/${user.uid}/${collectionName}`, item.id);
-                             restoreBatch.set(itemRef, item);
+                        dataToRestore.forEach((itemData: any) => {
+                             if(itemData.id) {
+                                const itemRef = doc(firestore, `users/${user.uid}/${collectionName}`, itemData.id);
+                                restoreBatch.set(itemRef, processItem(itemData));
+                             }
                         });
                     }
                 }

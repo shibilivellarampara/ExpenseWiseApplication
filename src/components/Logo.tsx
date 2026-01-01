@@ -26,7 +26,7 @@ export function Logo() {
       <div className="relative">
         <span className="text-xl font-headline font-semibold text-foreground">ExpenseWise</span>
         {process.env.NODE_ENV === 'development' && (
-          <Badge variant="destructive" className="absolute -top-1 right-[0.4rem] text-[0.5rem] h-auto px-1 py-0 leading-tight">dev</Badge>
+          <Badge variant="destructive" className="absolute -top-1 right-0 text-[0.5rem] h-auto px-1 py-0 leading-tight">dev</Badge>
         )}
       </div>
     </Link>

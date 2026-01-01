@@ -149,7 +149,7 @@ export function BottomNav() {
                             size="icon"
                             className={cn(
                                 "h-[72px] w-[72px] rounded-full bg-primary border-4 border-background relative overflow-hidden",
-                                "shadow-[0_8px_16px_rgba(0,0,0,0.2),_0_4px_8px_rgba(0,0,0,0.1)]", // Magnetic shadow
+                                "shadow-[0_6px_12px_rgba(0,0,0,0.15)]", // Reduced magnetic shadow
                                 !isTransactionsPage && "cursor-default" // Prevent AddExpenseDialog from opening on other pages
                             )}
                             onClick={(e) => {

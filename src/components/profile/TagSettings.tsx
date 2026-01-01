@@ -267,7 +267,7 @@ export function TagSettings() {
                             onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
                             className="flex-grow"
                         />
-                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-28 shrink-0">
+                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-24 shrink-0">
                             {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
                         </Button>
                     </div>

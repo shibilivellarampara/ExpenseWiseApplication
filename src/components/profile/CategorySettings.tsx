@@ -166,11 +166,12 @@ export function CategorySettings() {
         setDocumentNonBlocking(itemRef, { status: status }, { merge: true })
             .then(() => {
                 toast({ title: `Category ${status === 'active' ? 'Restored' : 'Archived'}` });
-                setIsSaving(false);
             })
             .catch((err) => {
                  toast({ variant: 'destructive', title: 'Error', description: err.message });
-                 setIsSaving(false);
+            })
+            .finally(() => {
+                setIsSaving(false);
             });
     }
 
@@ -287,7 +288,7 @@ export function CategorySettings() {
                             onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
                             className="flex-grow"
                         />
-                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-28 shrink-0">
+                        <Button onClick={handleAddItem} disabled={isSaving || !newItemName} className="w-24 shrink-0">
                             {isSaving ? <Loader2 className="animate-spin" /> : 'Add'}
                         </Button>
                     </div>
@@ -319,7 +320,7 @@ export function CategorySettings() {
                                             />
                                         )}
                                         {editingItem?.id === item.id ? (
-                                            <div className="flex w-full items-center gap-2">
+                                            <div className={cn("flex w-full items-center gap-2", isSystemCategory && "pl-7")}>
                                                 <Popover open={editIconPopoverOpen} onOpenChange={setEditIconPopoverOpen}>
                                                     <PopoverTrigger asChild>
                                                         <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
@@ -353,6 +354,7 @@ export function CategorySettings() {
                                             </div>
                                         ) : (
                                             <>
+                                                {!isSystemCategory && <div className="w-4"/> }
                                                 <div className="flex items-center flex-1 gap-2">
                                                     {renderIcon(item.icon)}
                                                     <TooltipProvider>

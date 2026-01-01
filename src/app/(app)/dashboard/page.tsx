@@ -17,26 +17,29 @@ import { getCurrencySymbol } from '@/lib/currencies';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Upload } from 'lucide-react';
 import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
-
-type PieChartGrouping = 'category' | 'account' | 'tag';
-type TimeRange = 'week' | 'month' | 'year' | '5year';
 
 function WelcomeCard() {
     return (
         <Card className="bg-primary/10 border-primary/50">
             <CardHeader>
                 <CardTitle className="font-headline text-primary">Welcome to ExpenseWise!</CardTitle>
-                <CardDescription>It looks like you're new here. To get started, add your first financial account.</CardDescription>
+                <CardDescription>It looks like you're new here. To get started, add your first financial account or restore from a backup.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-wrap gap-4">
                 <AddAccountSheet>
                      <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Your First Account
                     </Button>
                 </AddAccountSheet>
+                <Button variant="outline" asChild>
+                    <Link href="/data">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Restore from Backup
+                    </Link>
+                </Button>
             </CardContent>
         </Card>
     );

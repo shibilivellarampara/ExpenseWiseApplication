@@ -23,10 +23,12 @@ export function Logo() {
   return (
     <Link href={finalHref} className="flex items-center gap-2" prefetch={false}>
       <Image src="/circlelogo50.png" alt="ExpenseWise Logo" width={28} height={28} className="h-7 w-7" />
-      <span className="text-xl font-headline font-semibold text-foreground">ExpenseWise</span>
-      {process.env.NODE_ENV === 'development' && (
-        <Badge variant="destructive" className="text-xs self-center">dev</Badge>
-      )}
+      <div className="relative">
+        <span className="text-xl font-headline font-semibold text-foreground">ExpenseWise</span>
+        {process.env.NODE_ENV === 'development' && (
+          <Badge variant="destructive" className="absolute -top-1 right-[2.1rem] text-[0.5rem] h-auto px-1 py-0 leading-tight">dev</Badge>
+        )}
+      </div>
     </Link>
   );
 }

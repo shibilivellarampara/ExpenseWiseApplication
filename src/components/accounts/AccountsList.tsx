@@ -358,7 +358,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                             const availablePercentage = limit > 0 && limit > outstandingAmount ? ((limit - outstandingAmount) / limit) * 100 : 0;
                             
                             return (
-                                <div key={item.id} className="p-4 space-y-3 group">
+                                <div key={item.id} className="p-4 group">
                                     <div className="flex items-start gap-4">
                                         <Dialog>
                                             <DialogTrigger asChild>
@@ -375,9 +375,9 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                             </DialogContent>
                                         </Dialog>
 
-                                        <div className="flex-grow min-w-0">
+                                        <div className="flex-grow min-w-0 space-y-1">
                                             <div className="flex justify-between items-start">
-                                                <Link href={`/expenses?accounts=${item.id}`} className="font-semibold truncate">
+                                                <Link href={`/expenses?accounts=${item.id}`} className="font-semibold truncate transition-transform active:scale-95">
                                                     {item.name}
                                                 </Link>
                                                 <div className="flex items-center gap-1 flex-shrink-0 ml-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
@@ -392,7 +392,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                     </div>
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 focus-visible:ring-0 focus-visible:ring-offset-0">
                                                                 <MoreVertical className="h-4 w-4" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
@@ -425,11 +425,12 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                 </div>
                                             </div>
                                             <div className="text-sm text-muted-foreground">
-                                                {isPaid ? (
-                                                    <span>Next bill: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
-                                                ) : (
-                                                    <span>Due: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
-                                                )}
+                                                {item.billingDate ? 
+                                                    <span>
+                                                        {isPaid ? 'Next bill: ' : 'Due: '}
+                                                        {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
+                                                    </span> 
+                                                : <span>No billing date set</span>}
                                             </div>
                                             {limit > 0 && (
                                                 <div className="pt-2 space-y-1">
@@ -485,7 +486,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 focus-visible:ring-0 focus-visible:ring-offset-0">
                                                 <MoreVertical className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>

@@ -282,17 +282,19 @@ export function TagSettings() {
                             {activeTags.map((item, index) => (
                                 <div key={item.id}>
                                     <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
-                                        <Checkbox
-                                            id={`select-tag-${item.id}`}
-                                            checked={selectedIds.includes(item.id)}
-                                            onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
-                                            disabled={isSaving}
-                                        />
+                                        {editingItem?.id !== item.id && (
+                                            <Checkbox
+                                                id={`select-tag-${item.id}`}
+                                                checked={selectedIds.includes(item.id)}
+                                                onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
+                                                disabled={isSaving}
+                                            />
+                                        )}
                                         {editingItem?.id === item.id ? (
-                                            <>
+                                             <div className="flex w-full items-center gap-2">
                                                 <Popover open={editIconPopoverOpen} onOpenChange={setEditIconPopoverOpen}>
                                                     <PopoverTrigger asChild>
-                                                        <Button variant="outline" size="icon" className="h-8 w-8">
+                                                        <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
                                                             {renderIcon(editingItem.icon)}
                                                         </Button>
                                                     </PopoverTrigger>
@@ -311,15 +313,15 @@ export function TagSettings() {
                                                 <Input
                                                     value={editingItem.name}
                                                     onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                                                    className="h-8 text-[15px]"
+                                                    className="h-10 text-[15px] flex-grow"
                                                 />
-                                                <Button size="icon" className="h-8 w-8" onClick={handleUpdateItem}>
-                                                    {isSaving ? <Loader2 className="animate-spin" /> : <Check className="h-4 w-4" />}
+                                                <Button size="icon" className="h-10 w-10 shrink-0" onClick={handleUpdateItem}>
+                                                    {isSaving ? <Loader2 className="animate-spin" /> : <Check />}
                                                 </Button>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingItem(null)}>
-                                                    <X className="h-4 w-4" />
+                                                <Button size="icon" variant="ghost" className="h-10 w-10 shrink-0" onClick={() => setEditingItem(null)}>
+                                                    <X />
                                                 </Button>
-                                            </>
+                                            </div>
                                         ) : (
                                             <>
                                                 <div className="flex items-center flex-1 gap-2">

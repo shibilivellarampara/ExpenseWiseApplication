@@ -44,7 +44,7 @@ const NavLink = ({ href, currentPath, children }: { href: string; currentPath: s
         <Link 
             href={href} 
             className={cn(
-                "flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors duration-200 ease-in-out",
+                "flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors duration-200 ease-in-out pointer-events-auto",
                 isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'
             )} 
             onContextMenu={(e) => e.preventDefault()}
@@ -93,13 +93,13 @@ export function BottomNav() {
   const isTransactionsPage = pathname.startsWith('/expenses') || pathname.startsWith('/transactions');
   
   return (
-    <div ref={navRef} className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-sm" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom))' }}>
+    <div ref={navRef} className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-sm pointer-events-none" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom))' }}>
         <div className="relative mx-auto w-full">
             
             {/* Secondary Navigation Row */}
             <div
                 className={cn(
-                    "flex justify-around items-center bg-background/80 backdrop-blur-md border rounded-full h-16 transition-all duration-200 ease-in-out py-1 mb-2",
+                    "flex justify-around items-center bg-background/80 backdrop-blur-md border rounded-full h-16 transition-all duration-200 ease-in-out py-1 mb-2 pointer-events-auto",
                     isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
                 )}
             >
@@ -112,7 +112,7 @@ export function BottomNav() {
             </div>
 
             {/* Primary Navigation Container */}
-             <div className="relative h-16">
+             <div className="relative h-16 pointer-events-auto">
                 {/* Primary Oval Bar */}
                 <div className="absolute inset-0 bg-background/80 backdrop-blur-md rounded-full shadow-[0_6px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 flex items-center justify-around px-4">
                     <NavLink href="/dashboard" currentPath={pathname}>
@@ -133,7 +133,7 @@ export function BottomNav() {
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className={cn(
-                        'flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors',
+                        'flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors pointer-events-auto',
                         isExpanded ? 'text-primary' : 'text-muted-foreground hover:text-primary'
                         )}
                         onContextMenu={(e) => e.preventDefault()}
@@ -144,14 +144,14 @@ export function BottomNav() {
                 </div>
             
                 {/* Floating Action Button */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[75%] h-[72px] w-[72px] flex items-center justify-center z-10">
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[75%] h-[72px] w-[72px] flex items-center justify-center z-10 pointer-events-auto">
                      <AddExpenseDialog onSaveSuccess={handleDataChange}>
                         <Button
                             size="icon"
                             className={cn(
                                 "h-[72px] w-[72px] rounded-full bg-primary border-4 border-background relative overflow-hidden",
-                                "shadow-[0_6px_12px_rgba(0,0,0,0.15)]", // Reduced magnetic shadow
-                                !isTransactionsPage && "cursor-default" // Prevent AddExpenseDialog from opening on other pages
+                                "shadow-[0_4px_8px_rgba(0,0,0,0.1)]", 
+                                !isTransactionsPage && "cursor-default"
                             )}
                             onClick={(e) => {
                                 if (!isTransactionsPage) {

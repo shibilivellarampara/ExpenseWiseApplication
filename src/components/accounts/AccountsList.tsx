@@ -336,15 +336,19 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     return (
        <div className="grid gap-8">
             <Card>
-                 <CardHeader>
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                             <CreditCard className="h-7 w-7 text-primary"/>
-                            <CardTitle className="font-headline">Credit Cards</CardTitle>
+                 <CardHeader className="flex flex-row items-start justify-between">
+                    <div className="flex items-center gap-3">
+                        <CreditCard className="h-7 w-7 text-primary"/>
+                        <CardTitle className="font-headline">Credit Cards</CardTitle>
+                    </div>
+                     <div className="flex items-center gap-6 text-right">
+                        <div>
+                            <p className="text-xs text-muted-foreground">Total Outstanding</p>
+                            <p className="font-semibold text-destructive">{currencySymbol}{totalOutstanding.toFixed(2)}</p>
                         </div>
-                        <div className="text-right text-sm">
-                            <p className="text-muted-foreground">Total Outstanding: <span className="font-semibold text-destructive">{currencySymbol}{totalOutstanding.toFixed(2)}</span></p>
-                            <p className="text-muted-foreground">Total Available: <span className="font-semibold text-primary">{currencySymbol}{totalAvailableCredit.toFixed(2)}</span></p>
+                        <div>
+                            <p className="text-xs text-muted-foreground">Total Available</p>
+                            <p className="font-semibold text-primary">{currencySymbol}{totalAvailableCredit.toFixed(2)}</p>
                         </div>
                     </div>
                 </CardHeader>
@@ -424,7 +428,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                             </div>
                                             <div className="text-sm text-muted-foreground">
                                                 {isPaid ? (
-                                                    <span>Next bill: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
+                                                     <span>Next bill: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
                                                 ) : (
                                                     <span>Due: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
                                                 )}
@@ -432,7 +436,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                              {limit > 0 && (
                                                 <div className="pt-1 space-y-1">
                                                     <Progress value={availablePercentage} className="h-1.5" />
-                                                    <div className="flex justify-between text-xs text-muted-foreground">
+                                                     <div className="flex justify-between text-xs text-muted-foreground">
                                                         <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
                                                         <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
                                                     </div>

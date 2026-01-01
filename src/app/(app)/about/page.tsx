@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import pkg from '../../../../package.json';
 
-const appVersion = "1.7.3";
+const appVersion = pkg.version;
 
 
 const changelog = [

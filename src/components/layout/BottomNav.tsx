@@ -52,7 +52,7 @@ const NavLink = ({ href, currentPath, children }: { href: string; currentPath: s
             <div className={cn("transition-transform duration-200 ease-in-out", isActive && "scale-110")}>
                 {icon}
             </div>
-            {label}
+            <span className="text-xs">{label}</span>
         </Link>
     )
 };
@@ -106,7 +106,6 @@ export function BottomNav() {
                 {secondaryNavItems.map(({ href, icon: Icon, label }) => (
                      <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors h-full w-16" onClick={() => setIsExpanded(false)}>
                         <Icon className="h-5 w-5" /> 
-                        <span className="text-xs">{label}</span>
                     </Link>
                 ))}
             </div>
@@ -114,7 +113,7 @@ export function BottomNav() {
             {/* Primary Navigation Container */}
              <div className="relative h-16">
                 {/* Primary Oval Bar */}
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around px-2">
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around px-4">
                     <NavLink href="/dashboard" currentPath={pathname}>
                         <LayoutDashboard className="h-5 w-5" />
                         <span className="text-xs">Dashboard</span>
@@ -149,7 +148,8 @@ export function BottomNav() {
                         <Button
                             size="icon"
                             className={cn(
-                                "h-[72px] w-[72px] rounded-full bg-primary shadow-lg border-4 border-background relative overflow-hidden",
+                                "h-[72px] w-[72px] rounded-full bg-primary border-4 border-background relative overflow-hidden",
+                                "shadow-[0_8px_16px_rgba(0,0,0,0.2),_0_4px_8px_rgba(0,0,0,0.1)]", // Magnetic shadow
                                 !isTransactionsPage && "cursor-default" // Prevent AddExpenseDialog from opening on other pages
                             )}
                             onClick={(e) => {

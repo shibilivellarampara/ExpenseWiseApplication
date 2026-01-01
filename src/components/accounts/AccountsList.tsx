@@ -336,12 +336,12 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     return (
        <div className="grid gap-8">
             <Card>
-                 <CardHeader className="flex flex-row items-start justify-between">
+                 <CardHeader className="flex flex-row items-start justify-between shadow-sm">
                     <div className="flex items-center gap-3">
                         <CreditCard className="h-7 w-7 text-primary"/>
                         <div>
                             <CardTitle className="font-headline">Credit Cards</CardTitle>
-                            <CardDescription>Available: {currencySymbol}{totalAvailableCredit.toFixed(2)}</CardDescription>
+                             <CardDescription>Available: {currencySymbol}{totalAvailableCredit.toFixed(2)}</CardDescription>
                         </div>
                     </div>
                      <div className="text-right">

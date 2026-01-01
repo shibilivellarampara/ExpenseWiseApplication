@@ -4,11 +4,38 @@
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import pkg from '../../../../package.json';
 
-const appVersion = "1.7.1";
+const appVersion = pkg.version;
 
 
 const changelog = [
+    {
+        version: "1.7.3",
+        date: "2026-01-01",
+        changes: [
+            { type: 'UI/UX', description: "Improved bulk editing on Category and Tag pages with an intuitive 'selection mode' and a sticky actions header." },
+            { type: 'Feature', description: "Added a 'Restore from Backup' option to the welcome card for new users, making it easier to get started." },
+            { type: 'Feature', description: "Expanded the default list of categories for new users to include more common options." },
+            { type: 'DevEx', description: "Added a 'dev' badge to the logo and a reload button in the header, exclusively for the development environment." },
+            { type: 'Fix', description: "Corrected an issue where payment reminders were shown for credit cards that were already paid off." },
+            { type: 'Fix', description: "Fixed a bug in the restore process by correctly parsing date/time values from backup files and added a timestamp to backup filenames for better organization." },
+            { type: 'Fix', description: "Resolved a build error caused by an incorrect import path for the theme toggle component." },
+        ]
+    },
+    {
+        version: "1.7.2",
+        date: "2025-12-31",
+        changes: [
+            { type: 'UI/UX', description: "Polished the mobile bottom navigation with a more transparent and refined design for a modern look and feel." },
+            { type: 'UI/UX', description: "Adjusted the Floating Action Button (FAB) size and positioning for better ergonomics and a more premium aesthetic." },
+            { type: 'UI/UX', description: "Improved the visual hierarchy of the expandable 'More' menu on mobile, creating a cleaner, stacked-pill layout." },
+            { type: 'Fix', description: "Corrected minor alignment issues in the secondary mobile navigation row to ensure perfect spacing." },
+        ]
+    },
     {
         version: "1.7.1",
         date: "2025-12-31",
@@ -450,7 +477,14 @@ export default function AboutPage() {
             <PageHeader
                 title={`About ExpenseWise (v${appVersion})`}
                 description="Track features, updates, and bug fixes for your application."
-            />
+            >
+                <Button variant="outline" asChild>
+                    <Link href="/profile">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Settings
+                    </Link>
+                </Button>
+            </PageHeader>
 
             <div className="space-y-6">
                 {changelog.map(entry => (
@@ -465,7 +499,7 @@ export default function AboutPage() {
                             <ul className="space-y-2">
                                 {entry.changes.map((change, index) => (
                                     <li key={index} className="flex items-start gap-3">
-                                        <Badge variant={change.type === 'Feature' || change.type === 'UI' || change.type === 'UI/UX' || change.type === 'Security' ? 'default' : 'secondary'}>
+                                        <Badge variant={change.type === 'Feature' || change.type === 'UI' || change.type === 'UI/UX' || change.type === 'Security' || change.type === 'DevEx' ? 'default' : 'secondary'}>
                                             {change.type}
                                         </Badge>
                                         <p className="text-sm text-foreground">{change.description}</p>
@@ -480,3 +514,5 @@ export default function AboutPage() {
     );
 
 }
+
+    

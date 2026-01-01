@@ -37,7 +37,14 @@ const NavLink = ({ href, currentPath, children }: { href: string; currentPath: s
         : currentPath.startsWith(href);
         
     return (
-        <Link href={href} className={cn("flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors", isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary')} onContextMenu={(e) => e.preventDefault()}>
+        <Link 
+            href={href} 
+            className={cn(
+                "flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-all duration-200 ease-in-out",
+                isActive ? 'text-primary scale-110' : 'text-muted-foreground hover:text-primary'
+            )} 
+            onContextMenu={(e) => e.preventDefault()}
+        >
             {children}
         </Link>
     )

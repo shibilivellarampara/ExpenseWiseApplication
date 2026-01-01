@@ -378,7 +378,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                         <div className="flex-grow min-w-0">
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-grow">
-                                                     <Link href={`/expenses?accounts=${item.id}`} className="font-semibold truncate hover:underline">{item.name}</Link>
+                                                     <Link href={`/expenses?accounts=${item.id}`} className="font-semibold truncate">{item.name}</Link>
                                                     <div className="text-sm text-muted-foreground">
                                                         {isPaid ? (
                                                             <span>Next bill: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
@@ -468,14 +468,13 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                 <CardContent className="p-0">
                     <div className="divide-y">
                         {otherAccounts.length > 0 ? otherAccounts.map((item) => (
-                            <div key={item.id} className="p-4 flex items-center gap-4 group transition-colors">
+                            <Link key={item.id} href={`/expenses?accounts=${item.id}`} passHref>
+                            <div className="p-4 flex items-center gap-4 group transition-colors hover:bg-accent/50 cursor-pointer">
                                 <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                                 {renderIcon(item.icon, "h-5 w-5")}
                                 </div>
                                 <div className="flex-grow">
-                                    <Link href={`/expenses?accounts=${item.id}`} passHref>
-                                        <span className="font-semibold cursor-pointer hover:underline">{item.name}</span>
-                                    </Link>
+                                        <span className="font-semibold cursor-pointer">{item.name}</span>
                                     <Badge variant="secondary" className="capitalize text-xs">{item.type.replace('_', ' ')}</Badge>
                                 </div>
                                 <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
@@ -508,6 +507,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                     </DropdownMenu>
                                 </div>
                             </div>
+                            </Link>
                         )) : (
                             <p className="text-muted-foreground text-center p-8">No other active accounts yet.</p>
                         )}

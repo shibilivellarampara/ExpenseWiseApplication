@@ -1,4 +1,3 @@
-
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
@@ -7,11 +6,11 @@ import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
-import { Bell, Circle, CheckCheck } from 'lucide-react';
+import { Bell, Circle, CheckCheck, RefreshCw } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Badge } from '@/components/ui/badge';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -179,6 +178,28 @@ function Notifications() {
     )
 }
 
+function DevReloadButton() {
+    const router = useRouter();
+    if (process.env.NODE_ENV !== 'development') {
+        return null;
+    }
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => window.location.reload()}>
+                        <RefreshCw className="h-[1.2rem] w-[1.2rem]" />
+                        <span className="sr-only">Reload</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Reload Page (Dev only)</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    )
+}
+
 export function AppHeader() {
   const pathname = usePathname();
   const { isUserLoading } = useUser();
@@ -202,6 +223,7 @@ export function AppHeader() {
                 <Skeleton className="h-10 w-10 rounded-full" />
             ) : (
                 <>
+                    <DevReloadButton />
                     <Notifications />
                     <ThemeToggle />
                     <UserNav />

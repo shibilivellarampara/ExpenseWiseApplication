@@ -114,20 +114,20 @@ export function BottomNav() {
             {/* Primary Navigation Container */}
              <div className="relative h-16">
                 {/* Primary Oval Bar */}
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-md rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-around px-4">
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-md rounded-full shadow-[0_6px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 flex items-center justify-around px-4">
                     <NavLink href="/dashboard" currentPath={pathname}>
-                        <LayoutDashboard className="h-5 w-5" />
+                        <LayoutDashboard className="h-6 w-6" />
                         <span className="text-xs">Dashboard</span>
                     </NavLink>
                     <NavLink href="/analysis" currentPath={pathname}>
-                        <BarChartHorizontal className="h-5 w-5" />
+                        <BarChartHorizontal className="h-6 w-6" />
                         <span className="text-xs">Analysis</span>
                     </NavLink>
                     
                     <div className="w-20" /> 
 
                     <NavLink href="/accounts" currentPath={pathname}>
-                        <Wallet className="h-5 w-5" />
+                        <Wallet className="h-6 w-6" />
                         <span className="text-xs">Accounts</span>
                     </NavLink>
                     <button
@@ -138,7 +138,7 @@ export function BottomNav() {
                         )}
                         onContextMenu={(e) => e.preventDefault()}
                     >
-                        <MoreHorizontal className={cn("h-5 w-5 transition-transform", isExpanded && "rotate-180")} />
+                        <MoreHorizontal className={cn("h-6 w-6 transition-transform", isExpanded && "rotate-180")} />
                         <span className="text-xs">More</span>
                     </button>
                 </div>

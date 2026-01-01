@@ -218,14 +218,14 @@
   * {
     @apply border-border;
   }
-  html, body {
-    @apply bg-background text-foreground;
-    width: 100%;
-    overflow-x: hidden;
-    margin: 0;
-    padding: 0;
+  html {
+    overflow: hidden;
+    height: 100%;
   }
   body {
+    @apply bg-background text-foreground;
+    height: 100%;
+    overflow: auto;
     -webkit-user-select: none; /* Safari */
     -ms-user-select: none; /* IE 10+ */
     user-select: none; /* Standard syntax */

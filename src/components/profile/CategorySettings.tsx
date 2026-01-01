@@ -22,6 +22,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle as DialogTitlePrimitive, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function CategorySettings() {
     const { user } = useUser();
@@ -156,12 +157,11 @@ export function CategorySettings() {
         setDocumentNonBlocking(itemRef, { status: status }, { merge: true })
             .then(() => {
                 toast({ title: `Category ${status === 'active' ? 'Restored' : 'Archived'}` });
+                setIsSaving(false);
             })
             .catch((err) => {
                  toast({ variant: 'destructive', title: 'Error', description: err.message });
-            })
-            .finally(() => {
-                setIsSaving(false);
+                 setIsSaving(false);
             });
     }
 
@@ -291,12 +291,14 @@ export function CategorySettings() {
                             <div className="flex items-center px-2">
                                 <Checkbox
                                     id="select-all-categories"
-                                    checked={selectedIds.length === activeCategories.length && activeCategories.length > 0}
-                                    onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.map(c => c.id) : [])}
+                                    checked={selectedIds.length === activeCategories.filter(c => !SYSTEM_CATEGORIES.includes(c.name)).length && activeCategories.length > 0}
+                                    onCheckedChange={(checked) => setSelectedIds(checked ? activeCategories.filter(c => !SYSTEM_CATEGORIES.includes(c.name)).map(c => c.id) : [])}
                                 />
                                 <label htmlFor="select-all-categories" className="text-sm font-medium ml-2">Select All</label>
                             </div>
-                            {activeCategories.map((item, index) => (
+                            {activeCategories.map((item, index) => {
+                                 const isSystemCategory = SYSTEM_CATEGORIES.includes(item.name);
+                                return (
                                 <div key={item.id}>
                                     <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
                                         {editingItem?.id !== item.id && (
@@ -304,7 +306,7 @@ export function CategorySettings() {
                                                 id={`select-cat-${item.id}`}
                                                 checked={selectedIds.includes(item.id)}
                                                 onCheckedChange={(checked) => handleSelectionChange(item.id, checked)}
-                                                disabled={isSaving}
+                                                disabled={isSaving || isSystemCategory}
                                             />
                                         )}
                                         {editingItem?.id === item.id ? (
@@ -343,20 +345,33 @@ export function CategorySettings() {
                                             <>
                                                 <div className="flex items-center flex-1 gap-2">
                                                     {renderIcon(item.icon)}
-                                                    <span className="text-[15px]">{item.name}</span>
-                                                    {SYSTEM_CATEGORIES.includes(item.name) && (
-                                                        <Badge variant="secondary">System</Badge>
-                                                    )}
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <span className={cn(
+                                                                    "text-[15px]",
+                                                                    isSystemCategory && "text-muted-foreground italic cursor-default"
+                                                                )}>
+                                                                    {item.name}
+                                                                </span>
+                                                            </TooltipTrigger>
+                                                            {isSystemCategory && (
+                                                                <TooltipContent>
+                                                                    <p>System category cannot be edited or deleted.</p>
+                                                                </TooltipContent>
+                                                            )}
+                                                        </Tooltip>
+                                                    </TooltipProvider>
                                                 </div>
-                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
+                                                <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)} disabled={isSystemCategory}>
                                                     <Edit className="h-4 w-4" />
                                                 </Button>
-                                                 <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')} disabled={SYSTEM_CATEGORIES.includes(item.name)}>
+                                                 <Button variant="ghost" size="icon" type="button" onClick={() => handleUpdateStatus(item.id, 'inactive')} disabled={isSystemCategory}>
                                                     <Archive className="h-4 w-4" />
                                                 </Button>
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" type="button" disabled={SYSTEM_CATEGORIES.includes(item.name)}>
+                                                        <Button variant="ghost" size="icon" type="button" disabled={isSystemCategory}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </AlertDialogTrigger>
@@ -396,7 +411,8 @@ export function CategorySettings() {
                                         </div>
                                     )}
                                 </div>
-                            ))}
+                                );
+                            })}
                              {activeCategories.length === 0 && searchQuery && (
                                 <p className="text-center text-sm text-muted-foreground py-4">No categories match your search.</p>
                             )}

@@ -339,17 +339,14 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                  <CardHeader className="flex flex-row items-start justify-between">
                     <div className="flex items-center gap-3">
                         <CreditCard className="h-7 w-7 text-primary"/>
-                        <CardTitle className="font-headline">Credit Cards</CardTitle>
+                        <div>
+                            <CardTitle className="font-headline">Credit Cards</CardTitle>
+                            <p className="text-sm text-muted-foreground">Total Available: {currencySymbol}{totalAvailableCredit.toFixed(2)}</p>
+                        </div>
                     </div>
-                     <div className="flex items-center gap-6 text-right">
-                        <div>
-                            <p className="text-xs text-muted-foreground">Total Outstanding</p>
-                            <p className="font-semibold text-destructive">{currencySymbol}{totalOutstanding.toFixed(2)}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground">Total Available</p>
-                            <p className="font-semibold text-primary">{currencySymbol}{totalAvailableCredit.toFixed(2)}</p>
-                        </div>
+                     <div className="text-right">
+                        <p className="text-xs text-muted-foreground">Total Outstanding</p>
+                        <p className="font-semibold text-destructive">{currencySymbol}{totalOutstanding.toFixed(2)}</p>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -523,3 +520,4 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
 
 
     
+

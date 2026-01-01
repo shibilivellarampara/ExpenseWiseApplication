@@ -105,7 +105,8 @@ export function BottomNav() {
             >
                 {secondaryNavItems.map(({ href, icon: Icon, label }) => (
                      <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors h-full w-16" onClick={() => setIsExpanded(false)}>
-                        <Icon className="h-5 w-5" /> 
+                        <Icon className="h-5 w-5" />
+                        <span className="text-xs">{label}</span>
                     </Link>
                 ))}
             </div>

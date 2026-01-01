@@ -336,7 +336,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     return (
        <div className="grid gap-8">
             <Card>
-                 <CardHeader className="flex flex-row items-start justify-between">
+                 <CardHeader className="flex flex-row items-start justify-between border-b">
                     <div className="flex items-center gap-3">
                         <CreditCard className="h-7 w-7 text-primary"/>
                         <div>
@@ -426,13 +426,12 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                             <div className="text-sm text-muted-foreground">
                                                 {item.billingDate ? 
                                                     <span>
-                                                        {isPaid ? 'Next bill: ' : 'Due: '}
-                                                        {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
+                                                        Due: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
                                                     </span> 
                                                 : <span>No billing date set</span>}
                                             </div>
                                             {limit > 0 && (
-                                                <div className="space-y-1">
+                                                <div className="space-y-1 pt-0.5">
                                                     <Progress value={availablePercentage} className="h-1.5" />
                                                     <div className="flex justify-between text-xs text-muted-foreground">
                                                         <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
@@ -517,16 +516,3 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
        </div>
     )
 }
-
-
-
-    
-
-
-
-
-    
-
-    
-
-

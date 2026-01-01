@@ -9,7 +9,7 @@ import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from "@/firebase";
 import { doc, setDoc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 import { Progress } from "../ui/progress";
-import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle, Merge, BarChartHorizontal, Handshake, ChevronRight } from "lucide-react";
+import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle, Merge, BarChartHorizontal, Handshake } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
@@ -359,7 +359,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                             
                             return (
                                 <div key={item.id} className="p-4 space-y-3 group">
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-start gap-3">
                                         <Dialog>
                                             <DialogTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-muted flex-shrink-0 cursor-pointer">
@@ -377,20 +377,11 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
 
                                         <div className="flex-grow min-w-0">
                                             <div className="flex justify-between items-start">
-                                                <div className="flex-grow">
-                                                     <Link href={`/expenses?accounts=${item.id}`} className="font-semibold truncate">{item.name}</Link>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        {isPaid ? (
-                                                            <span>Next bill: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
-                                                        ) : (
-                                                            <span>Due: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
-                                                        )}
-                                                    </div>
-                                                </div>
+                                                <Link href={`/expenses?accounts=${item.id}`} className="font-semibold truncate">{item.name}</Link>
                                                 <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                                                     <div className="text-right">
                                                          {isPaid ? (
-                                                            <Badge className="bg-green-600 hover:bg-green-700 text-sm">Paid</Badge>
+                                                            <Badge className="bg-primary text-primary-foreground text-sm">Paid</Badge>
                                                         ) : (
                                                             <div className={cn("font-semibold text-lg text-destructive")}>
                                                                 {`${currencySymbol}${outstandingAmount.toFixed(2)}`}
@@ -431,12 +422,19 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                     </DropdownMenu>
                                                 </div>
                                             </div>
+                                            <div className="text-sm text-muted-foreground">
+                                                {isPaid ? (
+                                                    <span>Next bill: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
+                                                ) : (
+                                                    <span>Due: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
+                                                )}
+                                            </div>
                                              {limit > 0 && (
                                                 <div className="pt-1 space-y-1">
                                                     <Progress value={availablePercentage} className="h-1.5" />
                                                     <div className="flex justify-between text-xs text-muted-foreground">
-                                                        <span>Available Credit</span>
-                                                        <span>{currencySymbol}{availableCredit.toFixed(2)} / {currencySymbol}{limit.toFixed(2)}</span>
+                                                        <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
+                                                        <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -461,7 +459,6 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                         </div>
                         <div className="flex items-center text-lg font-bold text-primary">
                              <span>{currencySymbol}{totalSavingsBalance.toFixed(2)}</span>
-                             <ChevronRight className="h-5 w-5" />
                         </div>
                     </div>
                 </CardHeader>
@@ -518,3 +515,4 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
        </div>
     )
 }
+

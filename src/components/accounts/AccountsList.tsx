@@ -382,15 +382,19 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                         {isPaid ? (
                                                             <span>Next bill: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
                                                         ) : (
-                                                            <span>Pay by {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
+                                                            <span>Due: {item.billingDate ? `${item.billingDate}${getOrdinalSuffix(item.billingDate)}` : 'N/A'}</span>
                                                         )}
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                                                     <div className="text-right">
-                                                         <div className={cn("font-semibold text-lg", isPaid ? "text-green-600" : "text-destructive")}>
-                                                            {isPaid ? "Paid" : `${currencySymbol}${outstandingAmount.toFixed(2)}`}
-                                                        </div>
+                                                         {isPaid ? (
+                                                            <Badge className="bg-green-600 hover:bg-green-700 text-sm">Paid</Badge>
+                                                        ) : (
+                                                            <div className={cn("font-semibold text-lg text-destructive")}>
+                                                                {`${currencySymbol}${outstandingAmount.toFixed(2)}`}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>

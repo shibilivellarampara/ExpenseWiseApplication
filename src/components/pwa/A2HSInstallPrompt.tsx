@@ -7,6 +7,7 @@ import { Download, Share, PlusSquare, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const IOSInstallInstructions = () => (
     <div className="space-y-4 text-center">
@@ -79,34 +80,38 @@ export function A2HSInstallPrompt() {
   }
   
   return (
-    <div className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted transition-colors">
-        <div className="flex-shrink-0 bg-primary/10 text-primary h-8 w-8 rounded-full flex items-center justify-center mt-0.5">
-            <Download className="h-5 w-5" />
-        </div>
-        <div className="flex-grow">
-            <p className="font-semibold text-sm">Install the app (optional)</p>
-            <p className="text-xs text-muted-foreground">For faster access and an app-like experience.</p>
-            <div className="mt-2">
-                {installPrompt && !isIOS && (
-                <Button onClick={handleInstallClick} size="sm">
-                    Add to Home Screen
-                </Button>
-                )}
-                {isIOS && (
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                            <Info className="mr-2 h-4 w-4" />
-                            How to Install on iOS
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <IOSInstallInstructions />
-                    </DialogContent>
-                </Dialog>
-                )}
+    <Card className="shadow-sm">
+        <CardHeader className='p-4'>
+            <div className="flex items-start gap-4">
+                 <div className="flex-shrink-0 bg-primary/10 text-primary h-8 w-8 rounded-full flex items-center justify-center mt-0.5">
+                    <Download className="h-5 w-5" />
+                </div>
+                <div className="flex-grow">
+                    <p className="font-semibold text-sm">Install the app</p>
+                    <p className="text-xs text-muted-foreground">For faster access and an app-like experience.</p>
+                </div>
             </div>
-        </div>
-    </div>
+        </CardHeader>
+        <CardContent className='p-4 pt-0'>
+            {installPrompt && !isIOS && (
+            <Button onClick={handleInstallClick} size="sm" className='w-full'>
+                Add to Home Screen
+            </Button>
+            )}
+            {isIOS && (
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className='w-full'>
+                        <Info className="mr-2 h-4 w-4" />
+                        How to Install on iOS
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <IOSInstallInstructions />
+                </DialogContent>
+            </Dialog>
+            )}
+        </CardContent>
+    </Card>
   );
 }

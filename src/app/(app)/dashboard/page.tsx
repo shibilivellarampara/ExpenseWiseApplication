@@ -86,6 +86,7 @@ function NewUserCheck() {
         return (
             <div className="space-y-6">
                 <WelcomeCard />
+                <A2HSInstallPrompt />
                 <GettingStartedGuide />
             </div>
         );

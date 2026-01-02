@@ -61,7 +61,6 @@ export function GettingStartedGuide() {
                            </div>
                         </Link>
                     ))}
-                    <A2HSInstallPrompt />
                 </CardContent>
             )}
         </Card>

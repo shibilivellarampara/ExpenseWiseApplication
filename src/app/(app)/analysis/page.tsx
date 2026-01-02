@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronDown, Settings, X, XCircle, Calendar as CalendarIcon } from "lucide-react";
+import { Check, ChevronDown, Settings, X, XCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -379,7 +379,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-2 flex-nowrap justify-end">
+                 <div className="flex items-center gap-2 flex-wrap justify-end">
                     
                     <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -387,7 +387,7 @@ export default function AnalysisPage() {
                                 variant="outline"
                                 role="combobox"
                                 aria-expanded={monthPopoverOpen}
-                                className="w-[200px] justify-between"
+                                className="w-full sm:w-[200px] justify-between"
                             >
                                 {timeRangeLabels[timeRangePreset]}
                                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

@@ -230,7 +230,7 @@ export default function DashboardPage() {
         <div className="w-full space-y-8">
             <PageHeader title="Welcome Back!" description="Here's a summary of your financial activity." />
       
-             {!isLoading && accounts?.length === 0 && (
+             {!isLoading && accounts && accounts.length < 2 && (
                 <WelcomeCard />
             )}
 
@@ -315,4 +315,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-

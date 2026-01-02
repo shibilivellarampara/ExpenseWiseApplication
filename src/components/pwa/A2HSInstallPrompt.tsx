@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -44,7 +45,7 @@ export function A2HSInstallPrompt() {
     if (standalone) return; // Don't show prompt if already installed
 
     // Detect iOS
-    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(ios);
 
     // Listen for the beforeinstallprompt event (for Android/Chromium)
@@ -72,8 +73,8 @@ export function A2HSInstallPrompt() {
     setInstallPrompt(null); // Hide the button after the prompt is shown
   };
   
-  // Do not render anything if the app is already installed
-  if (isStandalone) {
+  // Do not render anything if the app is already installed or if there's no way to prompt
+  if (isStandalone || (!installPrompt && !isIOS)) {
     return null;
   }
   
@@ -94,7 +95,7 @@ export function A2HSInstallPrompt() {
             Add to Home Screen
           </Button>
         )}
-        {isIOS && !installPrompt && (
+        {isIOS && (
           <Dialog>
             <DialogTrigger asChild>
                 <Button variant="outline" className="w-full">
@@ -111,4 +112,3 @@ export function A2HSInstallPrompt() {
     </Card>
   );
 }
-

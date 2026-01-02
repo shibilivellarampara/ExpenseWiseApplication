@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -243,8 +244,8 @@ export default function ExpensesPage() {
                     if (expense.account) {
                         const amountChange = expense.type === 'income' ? -expense.amount : expense.amount;
                         accountBalanceUpdates.set(
-                            expense.accountId,
-                            (accountBalanceUpdates.get(expense.accountId) || 0) + amountChange
+                            expense.account.id,
+                            (accountBalanceUpdates.get(expense.account.id) || 0) + amountChange
                         );
                     }
                 }

@@ -4,13 +4,13 @@
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { CategoryPieChart } from '@/components/dashboard/CategoryPieChart';
 import { ExpensesBarChart } from '@/components/dashboard/ExpensesBarChart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { Expense, Category, EnrichedExpense, UserProfile, Account, Tag } from '@/lib/types';
-import { collection, query, where, Timestamp, doc } from 'firebase/firestore';
+import { collection, query, where, Timestamp, doc, getDocs, limit } from 'firebase/firestore';
 import { startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, format, startOfYear, endOfYear, getYear, subYears } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCurrencySymbol } from '@/lib/currencies';
@@ -20,6 +20,7 @@ import Link from 'next/link';
 import { PlusCircle, Upload } from 'lucide-react';
 import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
 import { A2HSInstallPrompt } from '@/components/pwa/A2HSInstallPrompt';
+import { AppLoader } from '@/components/AppLoader';
 
 function WelcomeCard() {
     return (
@@ -47,6 +48,43 @@ function WelcomeCard() {
             </CardContent>
         </Card>
     );
+}
+
+function NewUserCheck() {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const [isNewUser, setIsNewUser] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
+
+    useEffect(() => {
+        const checkUser = async () => {
+            if (user && firestore) {
+                try {
+                    const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), limit(1));
+                    const snapshot = await getDocs(expensesQuery);
+                    setIsNewUser(snapshot.empty);
+                } catch (e) {
+                    // If there's an error, assume not a new user to avoid showing the welcome card incorrectly
+                    setIsNewUser(false);
+                } finally {
+                    setIsChecking(false);
+                }
+            } else if (!user) {
+                setIsChecking(false);
+            }
+        };
+        checkUser();
+    }, [user, firestore]);
+
+    if (isChecking) {
+        return <AppLoader message="Loading your dashboard..." />;
+    }
+
+    if (isNewUser) {
+        return <WelcomeCard />;
+    }
+
+    return null;
 }
 
 export default function DashboardPage() {
@@ -227,10 +265,8 @@ export default function DashboardPage() {
         <div className="w-full space-y-8">
             <PageHeader title="Welcome Back!" description="Here's a summary of your financial activity." />
       
-             {!isLoading && (!thisMonthExpenses || thisMonthExpenses.length === 0) && (
-                <WelcomeCard />
-            )}
-
+            <NewUserCheck />
+            
             {accounts && accounts.length > 0 && (
                 <>
                     <DashboardStats 

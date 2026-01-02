@@ -31,8 +31,6 @@ function WelcomeCard() {
                 <CardDescription>It looks like you're new here. Let's get you started.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <GettingStartedGuide />
-
                 <div className="flex flex-col sm:flex-row gap-4">
                     <AddAccountSheet>
                          <Button className="w-full">
@@ -85,7 +83,12 @@ function NewUserCheck() {
     }
 
     if (isNewUser) {
-        return <WelcomeCard />;
+        return (
+            <div className="space-y-6">
+                <WelcomeCard />
+                <GettingStartedGuide />
+            </div>
+        );
     }
 
     return null; // Don't render anything if it's not a new user
@@ -352,3 +355,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    

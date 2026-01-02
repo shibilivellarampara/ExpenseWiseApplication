@@ -19,8 +19,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronDown, Settings, X, XCircle } from "lucide-react";
+import { Check, ChevronDown, Settings, X, XCircle, Calendar as CalendarIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AnalysisSettingsContent } from "@/components/profile/AnalysisSettingsContent";
@@ -114,6 +115,7 @@ export default function AnalysisPage() {
     const [specificMonth, setSpecificMonth] = useState<Date>(new Date());
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [monthPopoverOpen, setMonthPopoverOpen] = useState(false);
     
     // Load filters from localStorage on initial render
     useEffect(() => {
@@ -357,6 +359,19 @@ export default function AnalysisPage() {
             }
         });
     };
+    
+    const timeRangeLabels: Record<TimeRangePreset, string> = {
+        'week': 'This Week',
+        'month': 'This Month',
+        'last-month': 'Last Month',
+        '3-months': 'Last 3 Months',
+        '6-months': 'Last 6 Months',
+        'year': 'This Year',
+        'last-year': 'Last Year',
+        'all': 'All Time',
+        'specific-month': format(specificMonth, 'MMMM yyyy'),
+        'custom': 'Custom Range'
+    };
 
     return (
         <div className="w-full space-y-8">
@@ -365,23 +380,74 @@ export default function AnalysisPage() {
                 description="A detailed breakdown of your income and spending habits."
             >
                  <div className="flex items-center gap-2 flex-nowrap justify-end">
-                    <Select value={timeRangePreset} onValueChange={handleTimeRangeChange}>
-                        <SelectTrigger className="w-full sm:w-auto">
-                            <SelectValue placeholder="Select a time range" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="week">This Week</SelectItem>
-                            <SelectItem value="month">This Month</SelectItem>
-                            <SelectItem value="last-month">Last Month</SelectItem>
-                            <SelectItem value="3-months">Last 3 Months</SelectItem>
-                            <SelectItem value="6-months">Last 6 Months</SelectItem>
-                            <SelectItem value="year">This Year</SelectItem>
-                            <SelectItem value="last-year">Last Year</SelectItem>
-                            <SelectItem value="all">All Time</SelectItem>
-                             <SelectItem value="specific-month">Specific Month</SelectItem>
-                            <SelectItem value="custom">Custom Range</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    
+                    <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={monthPopoverOpen}
+                                className="w-[200px] justify-between"
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {timeRangeLabels[timeRangePreset]}
+                                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[240px] p-0">
+                            <Command>
+                                <CommandGroup>
+                                    <CommandItem onSelect={() => { handleTimeRangeChange('week'); setMonthPopoverOpen(false); }}>This Week</CommandItem>
+                                    <CommandItem onSelect={() => { handleTimeRangeChange('month'); setMonthPopoverOpen(false); }}>This Month</CommandItem>
+                                    <CommandItem onSelect={() => { handleTimeRangeChange('last-month'); setMonthPopoverOpen(false); }}>Last Month</CommandItem>
+                                    <CommandItem onSelect={() => { handleTimeRangeChange('3-months'); setMonthPopoverOpen(false); }}>Last 3 Months</CommandItem>
+                                    <CommandItem onSelect={() => { handleTimeRangeChange('6-months'); setMonthPopoverOpen(false); }}>Last 6 Months</CommandItem>
+                                    <CommandItem onSelect={() => { handleTimeRangeChange('year'); setMonthPopoverOpen(false); }}>This Year</CommandItem>
+                                    <CommandItem onSelect={() => { handleTimeRangeChange('last-year'); setMonthPopoverOpen(false); }}>Last Year</CommandItem>
+                                    <CommandItem onSelect={() => { handleTimeRangeChange('all'); setMonthPopoverOpen(false); }}>All Time</CommandItem>
+                                </CommandGroup>
+                                <DropdownMenuSeparator />
+                                <CommandGroup>
+                                    <CommandItem onSelect={() => handleTimeRangeChange('specific-month')}>
+                                        <div className="w-full">
+                                            Specific Month
+                                            {timeRangePreset === 'specific-month' && (
+                                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                                    <Select
+                                                        value={getYear(specificMonth).toString()}
+                                                        onValueChange={(year) => {
+                                                            const newDate = new Date(specificMonth);
+                                                            newDate.setFullYear(parseInt(year));
+                                                            setSpecificMonth(newDate);
+                                                        }}
+                                                    >
+                                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                                        <SelectContent>
+                                                            {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <Select
+                                                        value={specificMonth.getMonth().toString()}
+                                                        onValueChange={(month) => {
+                                                            const newDate = new Date(specificMonth);
+                                                            newDate.setMonth(parseInt(month));
+                                                            setSpecificMonth(newDate);
+                                                        }}
+                                                    >
+                                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                                        <SelectContent>
+                                                            {months.map(month => <SelectItem key={month.value} value={month.value.toString()}>{month.label}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </CommandItem>
+                                    <CommandItem onSelect={() => handleTimeRangeChange('custom')}>Custom Range</CommandItem>
+                                </CommandGroup>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                     
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -457,43 +523,6 @@ export default function AnalysisPage() {
                 </div>
             </PageHeader>
             
-            {timeRangePreset === 'specific-month' && (
-                <div className="grid grid-cols-2 gap-2 max-w-sm">
-                    <div className="space-y-1">
-                        <Label htmlFor="year-select" className="text-xs">Year</Label>
-                        <Select
-                            value={getYear(specificMonth).toString()}
-                            onValueChange={(year) => {
-                                const newDate = new Date(specificMonth);
-                                newDate.setFullYear(parseInt(year));
-                                setSpecificMonth(newDate);
-                            }}
-                        >
-                            <SelectTrigger id="year-select"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     <div className="space-y-1">
-                        <Label htmlFor="month-select" className="text-xs">Month</Label>
-                        <Select
-                            value={specificMonth.getMonth().toString()}
-                            onValueChange={(month) => {
-                                const newDate = new Date(specificMonth);
-                                newDate.setMonth(parseInt(month));
-                                setSpecificMonth(newDate);
-                            }}
-                        >
-                            <SelectTrigger id="month-select"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                {months.map(month => <SelectItem key={month.value} value={month.value.toString()}>{month.label}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-            )}
-
             {timeRangePreset === 'custom' && (
                 <div className="grid grid-cols-2 gap-2 max-w-sm">
                    <div className="space-y-1">

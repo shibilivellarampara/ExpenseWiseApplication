@@ -6,7 +6,7 @@ import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@
 import { Expense, Category, EnrichedExpense, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, query, where, Timestamp, doc, orderBy } from 'firebase/firestore';
 import { useMemo, useState, useTransition, useEffect } from "react";
-import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, parse, format, subYears, isValid } from "date-fns";
+import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, parse, format, subYears, isValid, getYear } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { analyzeExpenses } from "@/ai/flows/analyze-expenses";
@@ -32,10 +32,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { SavingsTrendChart } from "@/components/analysis/SavingsTrendChart";
 
 
-type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'custom';
+type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'specific-month' | 'custom';
 type StoredFilters = {
     timeRangePreset: TimeRangePreset;
     customDateRange: { from?: string; to?: string };
+    specificMonth?: string;
     selectedAccounts: string[];
     selectedTags: string[];
 };
@@ -110,6 +111,7 @@ export default function AnalysisPage() {
     const [isAiLoading, startAiTransition] = useTransition();
     const [aiAnalysis, setAiAnalysis] = useState<any>(null);
     const [customDateRange, setCustomDateRange] = useState<{ from?: Date, to?: Date }>({ from: undefined, to: undefined });
+    const [specificMonth, setSpecificMonth] = useState<Date>(new Date());
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     
@@ -128,6 +130,9 @@ export default function AnalysisPage() {
                             from: storedFilters.customDateRange.from ? parse(storedFilters.customDateRange.from, 'yyyy-MM-dd', new Date()) : undefined,
                             to: storedFilters.customDateRange.to ? parse(storedFilters.customDateRange.to, 'yyyy-MM-dd', new Date()) : undefined,
                         });
+                    }
+                    if (storedFilters.specificMonth) {
+                        setSpecificMonth(parse(storedFilters.specificMonth, 'yyyy-MM', new Date()));
                     }
                     // URL params take precedence over stored accounts
                     const accountIdFromUrl = searchParams.get('accounts');
@@ -166,46 +171,39 @@ export default function AnalysisPage() {
                     from: customDateRange.from ? format(customDateRange.from, 'yyyy-MM-dd') : undefined,
                     to: customDateRange.to ? format(customDateRange.to, 'yyyy-MM-dd') : undefined,
                 },
+                specificMonth: format(specificMonth, 'yyyy-MM'),
                 selectedAccounts,
                 selectedTags,
             };
             localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filtersToStore));
         }
-    }, [timeRangePreset, customDateRange, selectedAccounts, selectedTags, user, isInitialLoad, FILTERS_STORAGE_KEY]);
+    }, [timeRangePreset, customDateRange, selectedAccounts, selectedTags, specificMonth, user, isInitialLoad, FILTERS_STORAGE_KEY]);
 
 
     const { dateRangeStart, dateRangeEnd } = useMemo(() => {
         const now = new Date();
         switch (timeRangePreset) {
-            case 'week':
-                return { dateRangeStart: startOfWeek(now), dateRangeEnd: endOfWeek(now) };
-            case 'month':
-                return { dateRangeStart: startOfMonth(now), dateRangeEnd: endOfDay(now) };
+            case 'week': return { dateRangeStart: startOfWeek(now), dateRangeEnd: endOfWeek(now) };
+            case 'month': return { dateRangeStart: startOfMonth(now), dateRangeEnd: endOfDay(now) };
             case 'last-month':
                 const lastMonth = subMonths(now, 1);
                 return { dateRangeStart: startOfMonth(lastMonth), dateRangeEnd: endOfMonth(lastMonth) };
-            case '3-months':
-                return { dateRangeStart: startOfDay(subMonths(now, 3)), dateRangeEnd: endOfDay(now) };
-            case '6-months':
-                return { dateRangeStart: startOfDay(subMonths(now, 6)), dateRangeEnd: endOfDay(now) };
-            case 'year':
-                return { dateRangeStart: startOfYear(now), dateRangeEnd: endOfDay(now) };
+            case '3-months': return { dateRangeStart: startOfDay(subMonths(now, 3)), dateRangeEnd: endOfDay(now) };
+            case '6-months': return { dateRangeStart: startOfDay(subMonths(now, 6)), dateRangeEnd: endOfDay(now) };
+            case 'year': return { dateRangeStart: startOfYear(now), dateRangeEnd: endOfDay(now) };
             case 'last-year':
                 const lastYear = subYears(now, 1);
                 return { dateRangeStart: startOfYear(lastYear), dateRangeEnd: endOfYear(lastYear) };
-            case 'all':
-                return { dateRangeStart: undefined, dateRangeEnd: undefined };
+            case 'specific-month':
+                return { dateRangeStart: startOfMonth(specificMonth), dateRangeEnd: endOfMonth(specificMonth) };
+            case 'all': return { dateRangeStart: undefined, dateRangeEnd: undefined };
             case 'custom':
                  const from = customDateRange.from && isValid(customDateRange.from) ? startOfDay(customDateRange.from) : undefined;
                  const to = customDateRange.to && isValid(customDateRange.to) ? endOfDay(customDateRange.to) : undefined;
-                 return { 
-                    dateRangeStart: from, 
-                    dateRangeEnd: to
-                };
-            default:
-                return { dateRangeStart: startOfDay(subMonths(now, 3)), dateRangeEnd: endOfDay(now) };
+                 return { dateRangeStart: from, dateRangeEnd: to };
+            default: return { dateRangeStart: startOfDay(subMonths(now, 3)), dateRangeEnd: endOfDay(now) };
         }
-    }, [timeRangePreset, customDateRange]);
+    }, [timeRangePreset, customDateRange, specificMonth]);
 
     const expensesQuery = useMemoFirebase(() => {
         if (!user) return null;
@@ -222,18 +220,29 @@ export default function AnalysisPage() {
         return q;
     }, [user, firestore, dateRangeStart, dateRangeEnd]);
     
+    const allTimeExpensesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/expenses`)) : null, [user, firestore]);
+    
     const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [firestore, user]);
     const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [firestore, user]);
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
     const { data: allExpenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
+    const { data: allTimeExpenses, isLoading: allTimeExpensesLoading } = useCollection<Expense>(allTimeExpensesQuery);
     const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
     const { data: allAccounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-    const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || isInitialLoad;
+    const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || isInitialLoad || allTimeExpensesLoading;
+
+    const availableYears = useMemo(() => {
+        if (!allTimeExpenses) return [getYear(new Date()).toString()];
+        const years = new Set(allTimeExpenses.map(e => getYear((e.date as Timestamp).toDate())));
+        return Array.from(years).sort((a,b) => b - a).map(String);
+    }, [allTimeExpenses]);
+    
+    const months = useMemo(() => Array.from({ length: 12 }, (_, i) => ({ value: i, label: format(new Date(0, i), 'MMMM') })), []);
 
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(allAccounts?.map(a => [a.id, a])), [allAccounts]);
@@ -369,6 +378,7 @@ export default function AnalysisPage() {
                             <SelectItem value="year">This Year</SelectItem>
                             <SelectItem value="last-year">Last Year</SelectItem>
                             <SelectItem value="all">All Time</SelectItem>
+                             <SelectItem value="specific-month">Specific Month</SelectItem>
                             <SelectItem value="custom">Custom Range</SelectItem>
                         </SelectContent>
                     </Select>
@@ -447,6 +457,43 @@ export default function AnalysisPage() {
                 </div>
             </PageHeader>
             
+            {timeRangePreset === 'specific-month' && (
+                <div className="grid grid-cols-2 gap-2 max-w-sm">
+                    <div className="space-y-1">
+                        <Label htmlFor="year-select" className="text-xs">Year</Label>
+                        <Select
+                            value={getYear(specificMonth).toString()}
+                            onValueChange={(year) => {
+                                const newDate = new Date(specificMonth);
+                                newDate.setFullYear(parseInt(year));
+                                setSpecificMonth(newDate);
+                            }}
+                        >
+                            <SelectTrigger id="year-select"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-1">
+                        <Label htmlFor="month-select" className="text-xs">Month</Label>
+                        <Select
+                            value={specificMonth.getMonth().toString()}
+                            onValueChange={(month) => {
+                                const newDate = new Date(specificMonth);
+                                newDate.setMonth(parseInt(month));
+                                setSpecificMonth(newDate);
+                            }}
+                        >
+                            <SelectTrigger id="month-select"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                {months.map(month => <SelectItem key={month.value} value={month.value.toString()}>{month.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            )}
+
             {timeRangePreset === 'custom' && (
                 <div className="grid grid-cols-2 gap-2 max-w-sm">
                    <div className="space-y-1">

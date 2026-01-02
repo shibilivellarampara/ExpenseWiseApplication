@@ -465,8 +465,8 @@ export default function AnalysisPage() {
                                     {selectedAccounts.length === 0
                                         ? "All Accounts"
                                         : selectedAccounts.length === 1
-                                        ? "1 account"
-                                        : `${selectedAccounts.length} accounts`}
+                                        ? "1 Account"
+                                        : `${selectedAccounts.length} Accounts`}
                                 </span>
                                 <ChevronDown className="h-4 w-4 opacity-50" />
                             </Button>
@@ -737,3 +737,4 @@ export default function AnalysisPage() {
     
 
     
+

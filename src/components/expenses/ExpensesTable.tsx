@@ -4,12 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Pilcrow, Edit, User as UserIcon, Wallet, AlertTriangle } from "lucide-react";
+import { Pilcrow, Edit, User as UserIcon, Wallet, AlertTriangle, Trash2, X, Loader2 } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { generateColorStyle } from "@/lib/utils";
 import { renderIcon } from '@/lib/render-icon';
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ExpensesTableProps {
   expenses: EnrichedExpense[];
@@ -24,6 +36,10 @@ interface ExpensesTableProps {
   onDataChange: () => void;
   error?: string | null;
   onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void;
+  selectedIds: string[];
+  onSelectionChange: (ids: string[]) => void;
+  isDeleting: boolean;
+  onDeleteSelected: () => void;
 }
 
 const getInitials = (name?: string | null) => {
@@ -40,10 +56,44 @@ const formatAmount = (amount: number) => {
 
 type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense: EnrichedExpense };
 
-function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; }) {
+function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; }) {
     
-    const [openEditDialog, setOpenEditDialog] = useState<string | null>(null);
     const [expandedTags, setExpandedTags] = useState<Record<string, boolean>>({});
+    const [selectionMode, setSelectionMode] = useState(false);
+    const lastLongPressTime = useRef(0);
+
+    useEffect(() => {
+        if(selectedIds.length > 0) {
+            setSelectionMode(true);
+        }
+    }, [selectedIds]);
+
+    const handleToggleSelectionMode = () => {
+        const newMode = !selectionMode;
+        setSelectionMode(newMode);
+        if(!newMode) {
+            onSelectionChange([]);
+        }
+    }
+    
+    const handleSelection = (id: string) => {
+        const newSelectedIds = selectedIds.includes(id)
+            ? selectedIds.filter(i => i !== id)
+            : [...selectedIds, id];
+        onSelectionChange(newSelectedIds);
+    };
+    
+    const handleLongPress = (id: string) => {
+        const now = Date.now();
+        if (now - lastLongPressTime.current < 300) return; // Debounce
+        lastLongPressTime.current = now;
+
+        setSelectionMode(true);
+        if (!selectedIds.includes(id)) {
+            handleSelection(id);
+        }
+    };
+
 
     const allRows = useMemo(() => {
         const rows: VirtualRow[] = [];
@@ -86,151 +136,207 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
             ? (element) => element.getBoundingClientRect().height
             : undefined,
     });
+    
+    const handleSelectAll = (checked: boolean | string) => {
+        if(checked) {
+            onSelectionChange(expenses.map(e => e.id));
+        } else {
+            onSelectionChange([]);
+        }
+    }
+
 
     return (
-        <div ref={parentRef} className="h-[80vh] overflow-y-auto bg-card rounded-lg border">
-            <div
-                style={{
-                    height: `${rowVirtualizer.getTotalSize()}px`,
-                    width: '100%',
-                    position: 'relative',
-                }}
-            >
-                {rowVirtualizer.getVirtualItems().map(virtualItem => {
-                    const row = allRows[virtualItem.index];
-                    const isExpenseRow = row.type === 'expense';
-                    
-                    return (
-                        <div
-                            key={virtualItem.key}
-                            data-index={virtualItem.index}
-                            ref={rowVirtualizer.measureElement}
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                transform: `translateY(${virtualItem.start}px)`,
-                            }}
-                        >
-                            {isExpenseRow ? (
-                                <>
-                                    <div className={cn(
-                                        "flex items-center gap-3 group border-b w-full bg-card",
-                                        viewMode === 'compact' ? 'p-2' : 'p-3'
-                                    )}>
+        <div className="relative">
+            {selectionMode && (
+                <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm p-2 border-b flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="select-all"
+                            checked={selectedIds.length > 0 && selectedIds.length === expenses.length}
+                            onCheckedChange={handleSelectAll}
+                        />
+                        <label htmlFor="select-all" className="font-medium text-sm">{selectedIds.length} selected</label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                         <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" disabled={selectedIds.length === 0 || isDeleting}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>This will permanently delete {selectedIds.length} transaction(s).</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={onDeleteSelected} className="bg-destructive hover:bg-destructive/90">
+                                        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin"/> : "Confirm Delete"}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                        <Button variant="ghost" size="sm" onClick={handleToggleSelectionMode}>Cancel</Button>
+                    </div>
+                </div>
+            )}
+             <div ref={parentRef} className="h-[calc(100vh-280px)] overflow-y-auto bg-card rounded-lg border">
+                <div
+                    style={{
+                        height: `${rowVirtualizer.getTotalSize()}px`,
+                        width: '100%',
+                        position: 'relative',
+                    }}
+                >
+                    {rowVirtualizer.getVirtualItems().map(virtualItem => {
+                        const row = allRows[virtualItem.index];
+                        const isExpenseRow = row.type === 'expense';
+                        
+                        return (
+                            <div
+                                key={virtualItem.key}
+                                data-index={virtualItem.index}
+                                ref={rowVirtualizer.measureElement}
+                                onContextMenu={(e) => { e.preventDefault(); if (isExpenseRow) handleLongPress(row.expense.id); }}
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    transform: `translateY(${virtualItem.start}px)`,
+                                }}
+                            >
+                                {isExpenseRow ? (
+                                    <>
                                         <div className={cn(
-                                            "flex-shrink-0 rounded-full bg-muted flex items-center justify-center",
-                                            viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8'
+                                            "flex items-center gap-3 group border-b w-full bg-card",
+                                            viewMode === 'compact' ? 'p-2' : 'p-3',
+                                            selectionMode && "pl-4",
+                                            selectedIds.includes(row.expense.id) && "bg-muted"
                                         )}>
-                                            {renderIcon(row.expense.category?.icon, cn(row.expense.type === 'income' ? 'text-green-500' : 'text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
-                                        </div>
-                                        <div className="flex-grow space-y-0.5 w-full min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex-1 pr-4">
-                                                    <div className="font-medium text-sm break-words">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
-                                                </div>
-                                                <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
-                                                    <div className="flex items-center">
-                                                        <AddExpenseDialog
-                                                            expenseToEdit={row.expense}
-                                                            onSaveSuccess={onDataChange}
-                                                        >
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7 mr-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <Edit className="h-4 w-4 text-muted-foreground" />
-                                                            </Button>
-                                                        </AddExpenseDialog>
-                                                        <div className={cn(
-                                                            'font-bold',
-                                                            viewMode === 'compact' ? 'text-sm' : 'text-base',
-                                                            row.expense.type === 'income' ? 'text-green-600' : 'text-red-500'
-                                                        )}>
-                                                            {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
+                                            {selectionMode && (
+                                                 <Checkbox
+                                                    checked={selectedIds.includes(row.expense.id)}
+                                                    onCheckedChange={() => handleSelection(row.expense.id)}
+                                                    className="flex-shrink-0"
+                                                />
+                                            )}
+                                            <div className={cn(
+                                                "flex-shrink-0 rounded-full bg-muted flex items-center justify-center",
+                                                viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8'
+                                            )}>
+                                                {renderIcon(row.expense.category?.icon, cn(row.expense.type === 'income' ? 'text-green-500' : 'text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
+                                            </div>
+                                            <div className="flex-grow space-y-0.5 w-full min-w-0">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1 pr-4">
+                                                        <div className="font-medium text-sm break-words">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
+                                                    </div>
+                                                    <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
+                                                        <div className="flex items-center">
+                                                            <AddExpenseDialog
+                                                                expenseToEdit={row.expense}
+                                                                onSaveSuccess={onDataChange}
+                                                            >
+                                                                <Button variant="ghost" size="icon" className="h-7 w-7 mr-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <Edit className="h-4 w-4 text-muted-foreground" />
+                                                                </Button>
+                                                            </AddExpenseDialog>
+                                                            <div className={cn(
+                                                                'font-bold',
+                                                                viewMode === 'compact' ? 'text-sm' : 'text-base',
+                                                                row.expense.type === 'income' ? 'text-green-600' : 'text-red-500'
+                                                            )}>
+                                                                {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <div className="text-xs text-muted-foreground flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        className="flex items-center gap-1 rounded-md px-1 -mx-1 transition-colors hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring"
-                                                        onClick={(e) => { e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}
-                                                        disabled={!row.expense.account}
-                                                    >
-                                                        {renderIcon(row.expense.account?.icon, "h-3 w-3 mr-0")}
-                                                        <span>{row.expense.account?.name}</span>
-                                                    </button>
-                                                    <span className="text-muted-foreground/50">&bull;</span>
-                                                    <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <div className="text-xs text-muted-foreground flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            className="flex items-center gap-1 rounded-md px-1 -mx-1 transition-colors hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring"
+                                                            onClick={(e) => { e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}
+                                                            disabled={!row.expense.account}
+                                                        >
+                                                            {renderIcon(row.expense.account?.icon, "h-3 w-3 mr-0")}
+                                                            <span>{row.expense.account?.name}</span>
+                                                        </button>
+                                                        <span className="text-muted-foreground/50">&bull;</span>
+                                                        <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    </div>
+                                                    {typeof row.expense.runningBalance === 'number' && (
+                                                        <div className="text-muted-foreground">
+                                                            Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {typeof row.expense.runningBalance === 'number' && (
-                                                    <div className="text-muted-foreground">
-                                                        Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
+                                                
+                                                {viewMode === 'normal' && (
+                                                    <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
+                                                        {row.expense.category && (
+                                                            <Badge
+                                                                style={generateColorStyle(row.expense.category.name)}
+                                                                className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                                onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
+                                                            >
+                                                                {renderIcon(row.expense.category.icon, "h-3 w-3 mr-1")}
+                                                                {row.expense.category.name}
+                                                            </Badge>
+                                                        )}
+                                                        
+                                                        {(expandedTags[row.expense.id] ? row.expense.tags : (row.expense.tags || []).slice(0, 3)).map(tag => (
+                                                            <Badge
+                                                                key={tag.id}
+                                                                style={generateColorStyle(tag.name)}
+                                                                className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                                onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
+                                                            >
+                                                                {renderIcon(tag.icon, "h-3 w-3 mr-1")}
+                                                                {tag.name}
+                                                            </Badge>
+                                                        ))}
+                                                        {(row.expense.tags?.length || 0) > 3 && (
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="text-xs px-1.5 py-0 cursor-pointer"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setExpandedTags(prev => ({...prev, [row.expense.id]: !prev[row.expense.id]}));
+                                                                }}
+                                                            >
+                                                                {expandedTags[row.expense.id] ? 'Less' : `+${(row.expense.tags?.length || 0) - 3} more`}
+                                                            </Badge>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
-                                            
-                                            {viewMode === 'normal' && (
-                                                <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
-                                                    {row.expense.category && (
-                                                        <Badge
-                                                            style={generateColorStyle(row.expense.category.name)}
-                                                            className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
-                                                            onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
-                                                        >
-                                                            {renderIcon(row.expense.category.icon, "h-3 w-3 mr-1")}
-                                                            {row.expense.category.name}
-                                                        </Badge>
-                                                    )}
-                                                    
-                                                     {(expandedTags[row.expense.id] ? row.expense.tags : (row.expense.tags || []).slice(0, 3)).map(tag => (
-                                                        <Badge
-                                                            key={tag.id}
-                                                            style={generateColorStyle(tag.name)}
-                                                            className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
-                                                            onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
-                                                        >
-                                                            {renderIcon(tag.icon, "h-3 w-3 mr-1")}
-                                                            {tag.name}
-                                                        </Badge>
-                                                    ))}
-                                                    {(row.expense.tags?.length || 0) > 3 && (
-                                                        <Badge
-                                                            variant="secondary"
-                                                            className="text-xs px-1.5 py-0 cursor-pointer"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setExpandedTags(prev => ({...prev, [row.expense.id]: !prev[row.expense.id]}));
-                                                            }}
-                                                        >
-                                                            {expandedTags[row.expense.id] ? 'Less' : `+${(row.expense.tags?.length || 0) - 3} more`}
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            )}
                                         </div>
+                                    </>
+                                ) : (
+                                    <div className={cn(
+                                        "px-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b",
+                                        viewMode === 'compact' ? 'py-1' : 'py-2'
+                                    )}>
+                                        <h3 className="text-sm font-semibold">
+                                            {new Date(row.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </h3>
                                     </div>
-                                </>
-                            ) : (
-                                <div className={cn(
-                                    "px-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b",
-                                    viewMode === 'compact' ? 'py-1' : 'py-2'
-                                )}>
-                                    <h3 className="text-sm font-semibold">
-                                        {new Date(row.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                    </h3>
-                                </div>
-                            )}
-                        </div>
-                    )
-                })}
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
             </div>
         </div>
     );
 }
 
-export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadgeClick }: ExpensesTableProps) {
+export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadgeClick, selectedIds, onSelectionChange, isDeleting, onDeleteSelected }: ExpensesTableProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -280,5 +386,5 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick}/>;
+  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={onSelectionChange} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} />;
 }

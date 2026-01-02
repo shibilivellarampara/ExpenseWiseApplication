@@ -4,10 +4,10 @@
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
+import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, commitBatchNonBlocking } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc, where, Timestamp }from "firebase/firestore";
-import { Plus, Minus, ArrowUp, ArrowDown } from "lucide-react";
+import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment }from "firebase/firestore";
+import { Plus, Minus, ArrowUp, ArrowDown, Trash2, X } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
@@ -16,12 +16,16 @@ import { useDebounce } from "use-debounce";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const { toast } = useToast();
     const [isScrolled, setIsScrolled] = useState(false);
     const isMobile = useMediaQuery("(max-width: 768px)");
+    const [selectedExpenseIds, setSelectedExpenseIds] = useState<string[]>([]);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const searchParams = useSearchParams();
 
@@ -77,8 +81,14 @@ export default function ExpensesPage() {
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
     const handleDataChange = useCallback(() => {
-        // This is a placeholder for the ExpensesTable. Data is re-fetched automatically by useCollection.
+        setSelectedExpenseIds([]);
     }, []);
+
+    useEffect(() => {
+        if(expensesLoading) {
+            setSelectedExpenseIds([]);
+        }
+    }, [expensesLoading])
 
     const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
 
@@ -115,7 +125,6 @@ export default function ExpensesPage() {
                 return true;
             });
             
-        // Running balance calculation
         const getAmountChange = (tx: Expense, accType: Account['type']) => {
             if (accType === 'credit_card') {
                return tx.type === 'income' ? tx.amount : -tx.amount;
@@ -217,6 +226,49 @@ export default function ExpensesPage() {
         }
     };
     
+    const handleDeleteSelected = async () => {
+        if (!user || !firestore || selectedExpenseIds.length === 0) return;
+
+        setIsDeleting(true);
+        try {
+            const batch = writeBatch(firestore);
+            const accountBalanceUpdates = new Map<string, number>();
+
+            selectedExpenseIds.forEach(id => {
+                const expense = filteredAndEnrichedExpenses.find(e => e.id === id);
+                if (expense) {
+                    const expenseRef = doc(firestore, `users/${user.uid}/expenses`, id);
+                    batch.delete(expenseRef);
+
+                    if (expense.account) {
+                        const amountChange = expense.type === 'income' ? -expense.amount : expense.amount;
+                        accountBalanceUpdates.set(
+                            expense.accountId,
+                            (accountBalanceUpdates.get(expense.accountId) || 0) + amountChange
+                        );
+                    }
+                }
+            });
+
+            accountBalanceUpdates.forEach((change, accountId) => {
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
+                batch.update(accountRef, { balance: increment(change) });
+            });
+
+            await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);
+            toast({
+                title: `${selectedExpenseIds.length} Transaction(s) Deleted`,
+                description: "The selected transactions have been removed.",
+            });
+            setSelectedExpenseIds([]);
+
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Delete Failed', description: error.message });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <div className="w-full space-y-4 pb-24">
             <ExpensesSummary 
@@ -245,6 +297,10 @@ export default function ExpensesPage() {
                 onDataChange={handleDataChange} 
                 error={expensesError ? 'Error loading transactions' : null}
                 onBadgeClick={handleBadgeClick}
+                selectedIds={selectedExpenseIds}
+                onSelectionChange={setSelectedExpenseIds}
+                isDeleting={isDeleting}
+                onDeleteSelected={handleDeleteSelected}
             />
 
              <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">

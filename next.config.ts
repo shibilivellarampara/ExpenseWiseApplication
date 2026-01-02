@@ -3,10 +3,6 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  serverActions: {
-    bodySizeLimit: '4mb',
-    maxDuration: 30,
-  },
   images: {
     remotePatterns: [
       {

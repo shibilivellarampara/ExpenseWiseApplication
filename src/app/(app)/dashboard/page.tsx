@@ -93,6 +93,9 @@ function NewUserCheck() {
     return null; // Don't render anything if it's not a new user
 }
 
+type TimeRange = 'week' | 'month' | 'year' | '5year';
+type PieChartGrouping = 'category' | 'account' | 'tag';
+
 export default function DashboardPage() {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -354,5 +357,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-    

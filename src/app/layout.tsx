@@ -47,6 +47,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
        <head>
         <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="ExpenseWise" />
         <link rel="manifest" href={`/manifest.json?v=${appVersion}`} />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

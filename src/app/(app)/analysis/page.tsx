@@ -379,7 +379,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-2 flex-wrap justify-end">
+                 <div className="flex items-center gap-2 justify-end">
                     
                     <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -387,7 +387,7 @@ export default function AnalysisPage() {
                                 variant="outline"
                                 role="combobox"
                                 aria-expanded={monthPopoverOpen}
-                                className="w-full sm:w-[200px] justify-between"
+                                className="w-full sm:w-auto justify-between"
                             >
                                 {timeRangeLabels[timeRangePreset]}
                                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -715,3 +715,5 @@ export default function AnalysisPage() {
         </div>
     );
 }
+
+    

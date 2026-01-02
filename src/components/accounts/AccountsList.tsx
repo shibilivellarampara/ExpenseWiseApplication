@@ -426,9 +426,15 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                             </div>
                                             <div className="text-sm text-muted-foreground pt-0.5">
                                                 {item.billingDate ? 
-                                                    <span>
-                                                        Next bill: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
-                                                    </span> 
+                                                    !isPaid ? (
+                                                        <span>
+                                                            Due: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
+                                                        </span>
+                                                    ) : (
+                                                         <span>
+                                                            Next bill: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
+                                                        </span>
+                                                    )
                                                 : !isPaid ? <span>No billing date set</span> : null}
                                             </div>
                                             {limit > 0 && (

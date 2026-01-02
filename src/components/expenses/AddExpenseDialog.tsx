@@ -164,8 +164,8 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
 }
 
 // New FloatingLabelInput component
-const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string }>(
-    ({ className, label, id, ...props }, ref) => {
+const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string; onClear?: () => void; }>(
+    ({ className, label, id, onClear, ...props }, ref) => {
         const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
         return (
             <div className="relative">
@@ -175,6 +175,7 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     placeholder=" "
                     className={cn(
                         "peer h-14 pt-5 text-base floating-input", 
+                        onClear && 'pr-8',
                         className
                     )}
                     data-has-value={hasValue}
@@ -190,6 +191,17 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                 >
                     {label}
                 </Label>
+                 {hasValue && onClear && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                        onClick={onClear}
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                )}
             </div>
         );
     }
@@ -498,6 +510,7 @@ function ExpenseForm({
                             id="description"
                             {...field}
                             value={field.value ?? ''}
+                            onClear={() => form.setValue('description', '')}
                             className={cn(isSuggesting && 'animate-pulse border-primary/50')}
                         />
                         <FormMessage />

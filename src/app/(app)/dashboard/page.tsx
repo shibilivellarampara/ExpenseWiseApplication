@@ -21,10 +21,6 @@ import { PlusCircle, Upload } from 'lucide-react';
 import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
 import { A2HSInstallPrompt } from '@/components/pwa/A2HSInstallPrompt';
 
-type TimeRange = 'week' | 'month' | 'year' | '5year';
-type PieChartGrouping = 'category' | 'account' | 'tag';
-
-
 function WelcomeCard() {
     return (
         <Card className="bg-primary/10 border-primary/50">
@@ -230,7 +226,7 @@ export default function DashboardPage() {
         <div className="w-full space-y-8">
             <PageHeader title="Welcome Back!" description="Here's a summary of your financial activity." />
       
-             {!isLoading && accounts && accounts.length < 2 && (
+             {!isLoading && (!thisMonthExpenses || thisMonthExpenses.length === 0) && (
                 <WelcomeCard />
             )}
 

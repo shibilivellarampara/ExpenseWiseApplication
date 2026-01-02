@@ -84,9 +84,9 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         e.stopPropagation();
         if (!selectionMode) {
             setSelectionMode(true);
-            onSelectionChange([id]); // Enter selection mode and select the first item
+            onSelectionChange([id]);
         } else {
-            handleSelection(id); // Just toggle selection if already in mode
+            handleSelection(id);
         }
     };
 
@@ -190,40 +190,40 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 }}
                             >
                                 {isExpenseRow ? (
-                                    <>
-                                        <div 
-                                            onClick={() => selectionMode && handleSelection(row.expense.id)}
+                                    <div 
+                                        onClick={() => selectionMode && handleSelection(row.expense.id)}
+                                        className={cn(
+                                            "flex items-center gap-3 group border-b w-full bg-card",
+                                            viewMode === 'compact' ? 'p-2' : 'p-3',
+                                            selectionMode && 'cursor-pointer',
+                                            selectedIds.includes(row.expense.id) && "bg-muted"
+                                        )}
+                                    >
+                                        {selectionMode && (
+                                                <Checkbox
+                                                checked={selectedIds.includes(row.expense.id)}
+                                                onCheckedChange={() => handleSelection(row.expense.id)}
+                                                className="flex-shrink-0"
+                                            />
+                                        )}
+                                        <button
+                                            onClick={(e) => handleIconClick(e, row.expense.id)}
                                             className={cn(
-                                                "flex items-center gap-3 group border-b w-full bg-card",
-                                                viewMode === 'compact' ? 'p-2' : 'p-3',
-                                                selectionMode && 'cursor-pointer',
-                                                selectedIds.includes(row.expense.id) && "bg-muted"
+                                                "flex-shrink-0 rounded-full bg-muted flex items-center justify-center transition-colors",
+                                                viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8',
+                                                selectionMode && 'hover:bg-primary/20'
                                             )}
                                         >
-                                            {selectionMode && (
-                                                 <Checkbox
-                                                    checked={selectedIds.includes(row.expense.id)}
-                                                    onCheckedChange={() => handleSelection(row.expense.id)}
-                                                    className="flex-shrink-0"
-                                                />
-                                            )}
-                                            <button
-                                                onClick={(e) => handleIconClick(e, row.expense.id)}
-                                                className={cn(
-                                                    "flex-shrink-0 rounded-full bg-muted flex items-center justify-center transition-colors",
-                                                    viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8',
-                                                    selectionMode && 'hover:bg-primary/20'
-                                                )}
-                                            >
-                                                {renderIcon(row.expense.category?.icon, cn(row.expense.type === 'income' ? 'text-green-500' : 'text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
-                                            </button>
-                                            <div className="flex-grow space-y-0.5 w-full min-w-0">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="flex-1 pr-4">
-                                                        <div className="font-medium text-sm break-words">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
-                                                    </div>
-                                                    <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
-                                                        <div className="flex items-center">
+                                            {renderIcon(row.expense.category?.icon, cn(row.expense.type === 'income' ? 'text-green-500' : 'text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
+                                        </button>
+                                        <div className="flex-grow space-y-0.5 w-full min-w-0">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1 pr-4">
+                                                    <div className="font-medium text-sm break-words">{row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}</div>
+                                                </div>
+                                                <div className="text-right flex-shrink-0 w-auto flex flex-col items-end">
+                                                    <div className="flex items-center">
+                                                        {!selectionMode && (
                                                             <AddExpenseDialog
                                                                 expenseToEdit={row.expense}
                                                                 onSaveSuccess={onDataChange}
@@ -232,78 +232,78 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                     <Edit className="h-4 w-4 text-muted-foreground" />
                                                                 </Button>
                                                             </AddExpenseDialog>
-                                                            <div className={cn(
-                                                                'font-bold',
-                                                                viewMode === 'compact' ? 'text-sm' : 'text-base',
-                                                                row.expense.type === 'income' ? 'text-green-600' : 'text-red-500'
-                                                            )}>
-                                                                {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
-                                                            </div>
+                                                        )}
+                                                        <div className={cn(
+                                                            'font-bold',
+                                                            viewMode === 'compact' ? 'text-sm' : 'text-base',
+                                                            row.expense.type === 'income' ? 'text-green-600' : 'text-red-500'
+                                                        )}>
+                                                            {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                <div className="text-xs text-muted-foreground flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            className="flex items-center gap-1 rounded-md px-1 -mx-1 transition-colors hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring"
-                                                            onClick={(e) => { e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}
-                                                            disabled={!row.expense.account}
-                                                        >
-                                                            {renderIcon(row.expense.account?.icon, "h-3 w-3 mr-0")}
-                                                            <span>{row.expense.account?.name}</span>
-                                                        </button>
-                                                        <span className="text-muted-foreground/50">&bull;</span>
-                                                        <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                    </div>
-                                                    {typeof row.expense.runningBalance === 'number' && (
-                                                        <div className="text-muted-foreground">
-                                                            Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
-                                                        </div>
-                                                    )}
+                                            <div className="text-xs text-muted-foreground flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        className="flex items-center gap-1 rounded-md px-1 -mx-1 transition-colors hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring"
+                                                        onClick={(e) => { e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}
+                                                        disabled={!row.expense.account}
+                                                    >
+                                                        {renderIcon(row.expense.account?.icon, "h-3 w-3 mr-0")}
+                                                        <span>{row.expense.account?.name}</span>
+                                                    </button>
+                                                    <span className="text-muted-foreground/50">&bull;</span>
+                                                    <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
-                                                
-                                                {viewMode === 'normal' && (
-                                                    <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
-                                                        {row.expense.category && (
-                                                            <Badge
-                                                                style={generateColorStyle(row.expense.category.name)}
-                                                                className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
-                                                                onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
-                                                            >
-                                                                {renderIcon(row.expense.category.icon, "h-3 w-3 mr-1")}
-                                                                {row.expense.category.name}
-                                                            </Badge>
-                                                        )}
-                                                        
-                                                        {(expandedTags[row.expense.id] ? row.expense.tags : (row.expense.tags || []).slice(0, 3)).map(tag => (
-                                                            <Badge
-                                                                key={tag.id}
-                                                                style={generateColorStyle(tag.name)}
-                                                                className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
-                                                                onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
-                                                            >
-                                                                {renderIcon(tag.icon, "h-3 w-3 mr-1")}
-                                                                {tag.name}
-                                                            </Badge>
-                                                        ))}
-                                                        {(row.expense.tags?.length || 0) > 3 && (
-                                                            <Badge
-                                                                variant="secondary"
-                                                                className="text-xs px-1.5 py-0 cursor-pointer"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setExpandedTags(prev => ({...prev, [row.expense.id]: !prev[row.expense.id]}));
-                                                                }}
-                                                            >
-                                                                {expandedTags[row.expense.id] ? 'Less' : `+${(row.expense.tags?.length || 0) - 3} more`}
-                                                            </Badge>
-                                                        )}
+                                                {typeof row.expense.runningBalance === 'number' && (
+                                                    <div className="text-muted-foreground">
+                                                        Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
                                                     </div>
                                                 )}
                                             </div>
+                                            
+                                            {viewMode === 'normal' && (
+                                                <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
+                                                    {row.expense.category && (
+                                                        <Badge
+                                                            style={generateColorStyle(row.expense.category.name)}
+                                                            className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                            onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
+                                                        >
+                                                            {renderIcon(row.expense.category.icon, "h-3 w-3 mr-1")}
+                                                            {row.expense.category.name}
+                                                        </Badge>
+                                                    )}
+                                                    
+                                                    {(expandedTags[row.expense.id] ? row.expense.tags : (row.expense.tags || []).slice(0, 3)).map(tag => (
+                                                        <Badge
+                                                            key={tag.id}
+                                                            style={generateColorStyle(tag.name)}
+                                                            className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                            onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
+                                                        >
+                                                            {renderIcon(tag.icon, "h-3 w-3 mr-1")}
+                                                            {tag.name}
+                                                        </Badge>
+                                                    ))}
+                                                    {(row.expense.tags?.length || 0) > 3 && (
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="text-xs px-1.5 py-0 cursor-pointer"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setExpandedTags(prev => ({...prev, [row.expense.id]: !prev[row.expense.id]}));
+                                                            }}
+                                                        >
+                                                            {expandedTags[row.expense.id] ? 'Less' : `+${(row.expense.tags?.length || 0) - 3} more`}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    </>
+                                    </div>
                                 ) : (
                                     <div className={cn(
                                         "px-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b",

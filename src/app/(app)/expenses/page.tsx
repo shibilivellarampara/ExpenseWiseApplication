@@ -21,7 +21,6 @@ export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const [isScrolled, setIsScrolled] = useState(false);
-    const [showScrollTop, setShowScrollTop] = useState(false);
     const isMobile = useMediaQuery("(max-width: 768px)");
 
     const searchParams = useSearchParams();
@@ -178,7 +177,6 @@ export default function ExpensesPage() {
             }
 
             setIsScrolled(scrollTop > 10);
-            setShowScrollTop(scrollTop > 200);
         };
         
         const targetElement = mainContentEl || window;
@@ -219,12 +217,6 @@ export default function ExpensesPage() {
         }
     };
     
-    const scrollToTop = () => {
-        const mainContentEl = document.getElementById('main-content');
-        const targetElement = mainContentEl || window;
-        targetElement.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
     return (
         <div className="w-full space-y-4 pb-24">
             <ExpensesSummary 
@@ -254,19 +246,6 @@ export default function ExpensesPage() {
                 error={expensesError ? 'Error loading transactions' : null}
                 onBadgeClick={handleBadgeClick}
             />
-
-            <div className={cn("fixed left-0 right-0 p-4 z-10 md:hidden", isMobile ? 'bottom-20' : 'bottom-4')}>
-                <div className="container mx-auto flex flex-col items-center gap-3">
-                    <div className="flex gap-3">
-                        {showScrollTop && (
-                            <Button onClick={scrollToTop} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
-                                <ArrowUp className="h-6 w-6" />
-                                <span className="sr-only">Scroll to top</span>
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            </div>
 
              <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">
                 <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>

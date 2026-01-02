@@ -461,7 +461,13 @@ export default function AnalysisPage() {
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="w-full sm:w-auto justify-between">
-                                <span>{selectedAccounts.length > 0 ? `${selectedAccounts.length} a/c` : "All a/c"}</span>
+                                <span>
+                                    {selectedAccounts.length === 0
+                                        ? "All Accounts"
+                                        : selectedAccounts.length === 1
+                                        ? "1 account"
+                                        : `${selectedAccounts.length} accounts`}
+                                </span>
                                 <ChevronDown className="h-4 w-4 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>

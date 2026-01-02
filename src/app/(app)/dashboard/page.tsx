@@ -21,24 +21,26 @@ import { PlusCircle, Upload } from 'lucide-react';
 import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
 import { A2HSInstallPrompt } from '@/components/pwa/A2HSInstallPrompt';
 import { AppLoader } from '@/components/AppLoader';
+import { GettingStartedGuide } from '@/components/onboarding/GettingStartedGuide';
 
 function WelcomeCard() {
     return (
-        <Card className="bg-primary/10 border-primary/50">
+        <Card className="bg-primary/5">
             <CardHeader>
                 <CardTitle className="font-headline text-primary">Welcome to ExpenseWise!</CardTitle>
                 <CardDescription>It looks like you're new here. Let's get you started.</CardDescription>
             </CardHeader>
-            <CardContent>
-                 <A2HSInstallPrompt />
-                <div className="flex flex-wrap gap-4 mt-4">
+            <CardContent className="space-y-6">
+                <GettingStartedGuide />
+
+                <div className="flex flex-col sm:flex-row gap-4">
                     <AddAccountSheet>
-                         <Button>
+                         <Button className="w-full">
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Your First Account
                         </Button>
                     </AddAccountSheet>
-                    <Button variant="outline" asChild>
+                    <Button variant="outline" asChild className="w-full">
                         <Link href="/data">
                             <Upload className="mr-2 h-4 w-4" />
                             Restore from Backup
@@ -50,16 +52,18 @@ function WelcomeCard() {
     );
 }
 
+
 function NewUserCheck() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const [isNewUser, setIsNewUser] = useState(false);
+    const [isNewUser, setIsNewUser] = useState(true); // Assume new user initially
     const [isChecking, setIsChecking] = useState(true);
 
     useEffect(() => {
         const checkUser = async () => {
             if (user && firestore) {
                 try {
+                    // A more reliable check for a new user is the absence of any transactions.
                     const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), limit(1));
                     const snapshot = await getDocs(expensesQuery);
                     setIsNewUser(snapshot.empty);
@@ -84,7 +88,7 @@ function NewUserCheck() {
         return <WelcomeCard />;
     }
 
-    return null;
+    return null; // Don't render anything if it's not a new user
 }
 
 export default function DashboardPage() {

@@ -3,10 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download, Share, PlusSquare, Info } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const IOSInstallInstructions = () => (
     <div className="space-y-4 text-center">
@@ -79,36 +79,34 @@ export function A2HSInstallPrompt() {
   }
   
   return (
-    <Card className="my-4 bg-muted/50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Download className="w-5 h-5 text-primary" />
-          Install ExpenseWise App
-        </CardTitle>
-        <CardDescription>
-          For faster access and offline support, add ExpenseWise to your home screen.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-         {installPrompt && !isIOS && (
-          <Button onClick={handleInstallClick} className="w-full">
-            Add to Home Screen
-          </Button>
-        )}
-        {isIOS && (
-          <Dialog>
-            <DialogTrigger asChild>
-                <Button variant="outline" className="w-full">
-                    <Info className="mr-2 h-4 w-4" />
-                    How to Install on iOS
+    <div className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted transition-colors">
+        <div className="flex-shrink-0 bg-primary/10 text-primary h-8 w-8 rounded-full flex items-center justify-center mt-0.5">
+            <Download className="h-5 w-5" />
+        </div>
+        <div className="flex-grow">
+            <p className="font-semibold text-sm">Install the app (optional)</p>
+            <p className="text-xs text-muted-foreground">For faster access and an app-like experience.</p>
+            <div className="mt-2">
+                {installPrompt && !isIOS && (
+                <Button onClick={handleInstallClick} size="sm">
+                    Add to Home Screen
                 </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <IOSInstallInstructions />
-            </DialogContent>
-          </Dialog>
-        )}
-      </CardContent>
-    </Card>
+                )}
+                {isIOS && (
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                            <Info className="mr-2 h-4 w-4" />
+                            How to Install on iOS
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <IOSInstallInstructions />
+                    </DialogContent>
+                </Dialog>
+                )}
+            </div>
+        </div>
+    </div>
   );
 }

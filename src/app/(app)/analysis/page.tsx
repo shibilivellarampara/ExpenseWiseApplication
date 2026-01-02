@@ -412,7 +412,7 @@ export default function AnalysisPage() {
                                         <div className="w-full">
                                             Specific Month
                                             {timeRangePreset === 'specific-month' && (
-                                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <div className="space-y-2 mt-2">
                                                     <Select
                                                         value={getYear(specificMonth).toString()}
                                                         onValueChange={(year) => {

@@ -424,7 +424,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                     </DropdownMenu>
                                                 </div>
                                             </div>
-                                            <div className="text-sm text-muted-foreground pt-0.5">
+                                            <div className="text-sm text-muted-foreground">
                                                 {item.billingDate ? 
                                                     !isPaid ? (
                                                         <span>

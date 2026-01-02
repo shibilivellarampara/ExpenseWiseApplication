@@ -15,7 +15,7 @@ const appVersion = pkg.version;
 const changelog = [
     {
         version: "1.7.6",
-        date: "2026-01-04",
+        date: "2026-01-02",
         changes: [
             { type: 'Feature', description: "Added a 'Getting Started' guide to the new-user screen to introduce core features." },
             { type: 'Feature', description: "Introduced a subtle 'Add to Home Screen' prompt for new users to improve app accessibility." },
@@ -27,7 +27,7 @@ const changelog = [
     },
     {
         version: "1.7.5",
-        date: "2026-01-03",
+        date: "2026-01-02",
         changes: [
             { type: 'UI/UX', description: "Refined the Accounts page with improved alignment and spacing for credit card details, creating a cleaner look." },
             { type: 'UI/UX', description: "Added a subtle shadow to the 'Credit Cards' header for a modern, floating effect." },

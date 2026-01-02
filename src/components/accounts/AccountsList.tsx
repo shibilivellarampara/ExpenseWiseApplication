@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -424,11 +425,11 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                 </div>
                                             </div>
                                             <div className="text-sm text-muted-foreground pt-0.5">
-                                                {item.billingDate ? 
+                                                {!isPaid && item.billingDate ? 
                                                     <span>
-                                                        Due: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
+                                                        Next bill: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
                                                     </span> 
-                                                : <span>No billing date set</span>}
+                                                : !isPaid && !item.billingDate ? <span>No billing date set</span> : null}
                                             </div>
                                             {limit > 0 && (
                                                 <div className="space-y-1 pt-1">

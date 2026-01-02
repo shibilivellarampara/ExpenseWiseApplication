@@ -4,9 +4,9 @@
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
+import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, commitBatchNonBlocking } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc, where, Timestamp }from "firebase/firestore";
+import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment }from "firebase/firestore";
 import { Plus, Minus, ArrowLeft } from "lucide-react";
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
 import { useSearchParams } from 'next/navigation';
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface MonthlyExpensesClientProps {
     year: string;
@@ -28,6 +29,9 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
     const { user } = useUser();
     const firestore = useFirestore();
     const isMobile = useMediaQuery("(max-width: 768px)");
+    const { toast } = useToast();
+    const [selectedExpenseIds, setSelectedExpenseIds] = useState<string[]>([]);
+    const [isDeleting, setIsDeleting] = useState(false);
     
     const pageDate = useMemo(() => {
         if (typeof year === 'string' && typeof month === 'string') {
@@ -71,7 +75,9 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
     const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
-    const handleDataChange = useCallback(() => {}, []);
+    const handleDataChange = useCallback(() => {
+        setSelectedExpenseIds([]);
+    }, []);
 
     const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
 
@@ -175,6 +181,46 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
         }
     };
     
+    const handleDeleteSelected = async () => {
+        if (!user || !firestore || selectedExpenseIds.length === 0) return;
+
+        setIsDeleting(true);
+        try {
+            const batch = writeBatch(firestore);
+            const accountBalanceUpdates = new Map<string, number>();
+
+            selectedExpenseIds.forEach(id => {
+                const expense = filteredAndEnrichedExpenses.find(e => e.id === id);
+                if (expense && expense.account) {
+                    const expenseRef = doc(firestore, `users/${user.uid}/expenses`, id);
+                    batch.delete(expenseRef);
+
+                    const amountChange = expense.type === 'income' ? -expense.amount : expense.amount;
+                    accountBalanceUpdates.set(
+                        expense.account.id,
+                        (accountBalanceUpdates.get(expense.account.id) || 0) + amountChange
+                    );
+                }
+            });
+
+            accountBalanceUpdates.forEach((change, accountId) => {
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
+                batch.update(accountRef, { balance: increment(change) });
+            });
+
+            await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);
+            toast({
+                title: `${selectedExpenseIds.length} Transaction(s) Deleted`,
+                description: "The selected transactions have been removed.",
+            });
+            setSelectedExpenseIds([]);
+
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Delete Failed', description: error.message });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     return (
         <div className="w-full space-y-4 pb-24">
@@ -185,6 +231,20 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                         Back to Months
                     </Link>
                 </Button>
+                 <div className="flex items-center gap-2">
+                    <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
+                        <Button size="sm">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Cash In
+                        </Button>
+                    </AddExpenseDialog>
+                    <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
+                        <Button size="sm" variant="destructive">
+                             <Minus className="mr-2 h-4 w-4" />
+                            Cash Out
+                        </Button>
+                    </AddExpenseDialog>
+                </div>
             </PageHeader>
             <div className="space-y-4 sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm pt-4">
                  <ExpensesSummary 
@@ -208,22 +268,11 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                 onDataChange={handleDataChange} 
                 error={expensesError ? 'Error loading transactions' : null}
                 onBadgeClick={handleBadgeClick}
+                selectedIds={selectedExpenseIds}
+                onSelectionChange={setSelectedExpenseIds}
+                isDeleting={isDeleting}
+                onDeleteSelected={handleDeleteSelected}
             />
-            
-             <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">
-                <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
-                     <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
-                        <Plus className="h-6 w-6" />
-                        <span className="sr-only">Add Income</span>
-                    </Button>
-                </AddExpenseDialog>
-                <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
-                     <Button size="icon" className="h-14 w-14 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg">
-                        <Minus className="h-6 w-6" />
-                        <span className="sr-only">Add Expense</span>
-                    </Button>
-                </AddExpenseDialog>
-            </div>
         </div>
     );
 }

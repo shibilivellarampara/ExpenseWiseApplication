@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Upload } from 'lucide-react';
 import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
+import { A2HSInstallPrompt } from '@/components/pwa/A2HSInstallPrompt';
 
 type TimeRange = 'week' | 'month' | 'year' | '5year';
 type PieChartGrouping = 'category' | 'account' | 'tag';
@@ -29,21 +30,24 @@ function WelcomeCard() {
         <Card className="bg-primary/10 border-primary/50">
             <CardHeader>
                 <CardTitle className="font-headline text-primary">Welcome to ExpenseWise!</CardTitle>
-                <CardDescription>It looks like you're new here. To get started, add your first financial account or restore from a backup.</CardDescription>
+                <CardDescription>It looks like you're new here. Let's get you started.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-wrap gap-4">
-                <AddAccountSheet>
-                     <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Your First Account
+            <CardContent>
+                <A2HSInstallPrompt />
+                <div className="flex flex-wrap gap-4 mt-4">
+                    <AddAccountSheet>
+                         <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Your First Account
+                        </Button>
+                    </AddAccountSheet>
+                    <Button variant="outline" asChild>
+                        <Link href="/data">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Restore from Backup
+                        </Link>
                     </Button>
-                </AddAccountSheet>
-                <Button variant="outline" asChild>
-                    <Link href="/data">
-                        <Upload className="mr-2 h-4 w-4" />
-                        Restore from Backup
-                    </Link>
-                </Button>
+                </div>
             </CardContent>
         </Card>
     );
@@ -311,3 +315,4 @@ export default function DashboardPage() {
         </div>
     );
 }
+

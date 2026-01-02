@@ -359,7 +359,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                             
                             return (
                                 <div key={item.id} className="p-4 group">
-                                    <div className="flex items-start gap-4">
+                                    <div className="flex items-center gap-4">
                                         <Dialog>
                                             <DialogTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-muted flex-shrink-0 cursor-pointer">
@@ -376,10 +376,25 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                         </Dialog>
 
                                         <div className="flex-grow min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <Link href={`/expenses?accounts=${item.id}`} className="font-semibold truncate transition-transform active:scale-95">
-                                                    {item.name}
-                                                </Link>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex-1">
+                                                    <Link href={`/expenses?accounts=${item.id}`} className="font-semibold truncate transition-transform active:scale-95">
+                                                        {item.name}
+                                                    </Link>
+                                                    <div className="text-sm text-muted-foreground">
+                                                        {item.billingDate ? 
+                                                            outstandingAmount > 0 ? (
+                                                                <span>
+                                                                    Due: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
+                                                                </span>
+                                                            ) : (
+                                                                    <span>
+                                                                    Next bill: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
+                                                                </span>
+                                                            )
+                                                        : outstandingAmount > 0 ? <span>No billing date set</span> : null}
+                                                    </div>
+                                                </div>
                                                 <div className="flex items-center gap-1 flex-shrink-0 ml-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                                                     <div className="text-right">
                                                         {isPaid ? (
@@ -423,19 +438,6 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </div>
-                                            </div>
-                                            <div className="text-sm text-muted-foreground">
-                                                {item.billingDate ? 
-                                                    !isPaid ? (
-                                                        <span>
-                                                            Due: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
-                                                        </span>
-                                                    ) : (
-                                                         <span>
-                                                            Next bill: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
-                                                        </span>
-                                                    )
-                                                : !isPaid ? <span>No billing date set</span> : null}
                                             </div>
                                             {limit > 0 && (
                                                 <div className="space-y-1 pt-1">

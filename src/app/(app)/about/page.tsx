@@ -14,6 +14,18 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.7.6",
+        date: "2026-01-04",
+        changes: [
+            { type: 'Feature', description: "Added a 'Getting Started' guide to the new-user screen to introduce core features." },
+            { type: 'Feature', description: "Introduced a subtle 'Add to Home Screen' prompt for new users to improve app accessibility." },
+            { type: 'UI/UX', description: "Implemented one-time callouts (coach marks) to highlight key actions for new users without being intrusive." },
+            { type: 'Fix', description: "Increased server action timeout to resolve errors when uploading large files to Google Drive." },
+            { type: 'Fix', description: "Resolved a 'controlled vs. uncontrolled input' error in forms to improve stability." },
+            { type: 'Fix', description: "Set the correct app name for iOS devices to ensure 'ExpenseWise' appears in Screen Time and on the Home Screen." },
+        ]
+    },
+    {
         version: "1.7.5",
         date: "2026-01-03",
         changes: [
@@ -537,5 +549,7 @@ export default function AboutPage() {
     );
 
 }
+
+    
 
     

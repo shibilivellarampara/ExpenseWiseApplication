@@ -60,12 +60,9 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
     
     const [expandedTags, setExpandedTags] = useState<Record<string, boolean>>({});
     const [selectionMode, setSelectionMode] = useState(false);
-    const lastLongPressTime = useRef(0);
 
     useEffect(() => {
-        if(selectedIds.length > 0) {
-            setSelectionMode(true);
-        }
+        setSelectionMode(selectedIds.length > 0);
     }, [selectedIds]);
 
     const handleToggleSelectionMode = () => {
@@ -82,18 +79,14 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
             : [...selectedIds, id];
         onSelectionChange(newSelectedIds);
     };
-    
-    const handleLongPress = (id: string) => {
-        const now = Date.now();
-        if (now - lastLongPressTime.current < 300) return; // Debounce
-        lastLongPressTime.current = now;
 
-        setSelectionMode(true);
-        if (!selectedIds.includes(id)) {
-            handleSelection(id);
+    const handleIconClick = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (!selectionMode) {
+            setSelectionMode(true);
         }
+        handleSelection(id);
     };
-
 
     const allRows = useMemo(() => {
         const rows: VirtualRow[] = [];
@@ -137,26 +130,12 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
             : undefined,
     });
     
-    const handleSelectAll = (checked: boolean | string) => {
-        if(checked) {
-            onSelectionChange(expenses.map(e => e.id));
-        } else {
-            onSelectionChange([]);
-        }
-    }
-
-
     return (
         <div className="relative">
             {selectionMode && (
                 <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm p-2 border-b flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <Checkbox
-                            id="select-all"
-                            checked={selectedIds.length > 0 && selectedIds.length === expenses.length}
-                            onCheckedChange={handleSelectAll}
-                        />
-                        <label htmlFor="select-all" className="font-medium text-sm">{selectedIds.length} selected</label>
+                        <span className="font-medium text-sm pl-2">{selectedIds.length} selected</span>
                     </div>
                     <div className="flex items-center gap-2">
                          <AlertDialog>
@@ -179,7 +158,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
-                        <Button variant="ghost" size="sm" onClick={handleToggleSelectionMode}>Cancel</Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setSelectionMode(false); onSelectionChange([]); }}>Cancel</Button>
                     </div>
                 </div>
             )}
@@ -200,7 +179,6 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 key={virtualItem.key}
                                 data-index={virtualItem.index}
                                 ref={rowVirtualizer.measureElement}
-                                onContextMenu={(e) => { e.preventDefault(); if (isExpenseRow) handleLongPress(row.expense.id); }}
                                 style={{
                                     position: 'absolute',
                                     top: 0,
@@ -211,12 +189,15 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                             >
                                 {isExpenseRow ? (
                                     <>
-                                        <div className={cn(
-                                            "flex items-center gap-3 group border-b w-full bg-card",
-                                            viewMode === 'compact' ? 'p-2' : 'p-3',
-                                            selectionMode && "pl-4",
-                                            selectedIds.includes(row.expense.id) && "bg-muted"
-                                        )}>
+                                        <div 
+                                            onClick={() => selectionMode && handleSelection(row.expense.id)}
+                                            className={cn(
+                                                "flex items-center gap-3 group border-b w-full bg-card",
+                                                viewMode === 'compact' ? 'p-2' : 'p-3',
+                                                selectionMode && 'cursor-pointer',
+                                                selectedIds.includes(row.expense.id) && "bg-muted"
+                                            )}
+                                        >
                                             {selectionMode && (
                                                  <Checkbox
                                                     checked={selectedIds.includes(row.expense.id)}
@@ -224,12 +205,16 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                     className="flex-shrink-0"
                                                 />
                                             )}
-                                            <div className={cn(
-                                                "flex-shrink-0 rounded-full bg-muted flex items-center justify-center",
-                                                viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8'
-                                            )}>
+                                            <button
+                                                onClick={(e) => handleIconClick(e, row.expense.id)}
+                                                className={cn(
+                                                    "flex-shrink-0 rounded-full bg-muted flex items-center justify-center transition-colors",
+                                                    viewMode === 'compact' ? 'w-7 h-7' : 'w-8 h-8',
+                                                    selectionMode && 'hover:bg-primary/20'
+                                                )}
+                                            >
                                                 {renderIcon(row.expense.category?.icon, cn(row.expense.type === 'income' ? 'text-green-500' : 'text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
-                                            </div>
+                                            </button>
                                             <div className="flex-grow space-y-0.5 w-full min-w-0">
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex-1 pr-4">
@@ -241,7 +226,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                 expenseToEdit={row.expense}
                                                                 onSaveSuccess={onDataChange}
                                                             >
-                                                                <Button variant="ghost" size="icon" className="h-7 w-7 mr-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <Button variant="ghost" size="icon" className="h-7 w-7 mr-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                                                                     <Edit className="h-4 w-4 text-muted-foreground" />
                                                                 </Button>
                                                             </AddExpenseDialog>
@@ -320,7 +305,8 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 ) : (
                                     <div className={cn(
                                         "px-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b",
-                                        viewMode === 'compact' ? 'py-1' : 'py-2'
+                                        viewMode === 'compact' ? 'py-1' : 'py-2',
+                                        selectionMode && 'pt-12' 
                                     )}>
                                         <h3 className="text-sm font-semibold">
                                             {new Date(row.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

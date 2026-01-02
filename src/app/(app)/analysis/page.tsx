@@ -369,7 +369,7 @@ export default function AnalysisPage() {
         'year': 'This Year',
         'last-year': 'Last Year',
         'all': 'All Time',
-        'specific-month': format(specificMonth, 'MMMM yyyy'),
+        'specific-month': format(specificMonth, 'MMM yy'),
         'custom': 'Custom Range'
     };
 
@@ -389,7 +389,6 @@ export default function AnalysisPage() {
                                 aria-expanded={monthPopoverOpen}
                                 className="w-[200px] justify-between"
                             >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
                                 {timeRangeLabels[timeRangePreset]}
                                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>

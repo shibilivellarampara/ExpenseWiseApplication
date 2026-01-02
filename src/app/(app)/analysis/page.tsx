@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -246,6 +247,16 @@ export default function AnalysisPage() {
     
     const months = useMemo(() => Array.from({ length: 12 }, (_, i) => ({ value: i, label: format(new Date(0, i), 'MMMM') })), []);
 
+    useEffect(() => {
+        if (availableYears.length > 0 && getYear(specificMonth) !== parseInt(availableYears[0])) {
+            const newDate = new Date(specificMonth);
+            newDate.setFullYear(parseInt(availableYears[0]));
+            setSpecificMonth(newDate);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [availableYears]);
+
+
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(allAccounts?.map(a => [a.id, a])), [allAccounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
@@ -411,7 +422,7 @@ export default function AnalysisPage() {
                                         <div className="w-full">
                                             Specific Month
                                             {timeRangePreset === 'specific-month' && (
-                                                <div className="space-y-2 mt-2">
+                                                <div className="grid grid-cols-2 gap-2 mt-2">
                                                     <Select
                                                         value={getYear(specificMonth).toString()}
                                                         onValueChange={(year) => {

@@ -29,7 +29,7 @@ function WelcomeCard() {
                 <CardDescription>It looks like you're new here. Let's get you started.</CardDescription>
             </CardHeader>
             <CardContent>
-                <A2HSInstallPrompt />
+                 <A2HSInstallPrompt />
                 <div className="flex flex-wrap gap-4 mt-4">
                     <AddAccountSheet>
                          <Button>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
         <div className="w-full space-y-8">
             <PageHeader title="Welcome Back!" description="Here's a summary of your financial activity." />
       
-             {!isLoading && (!thisMonthExpenses || thisMonthExpenses.length === 0) && (
+             {!isLoading && (!accounts || accounts.length === 0 || !thisMonthExpenses || thisMonthExpenses.length === 0) && (
                 <WelcomeCard />
             )}
 

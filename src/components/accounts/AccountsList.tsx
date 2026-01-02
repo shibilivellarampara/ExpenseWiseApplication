@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -458,9 +457,6 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                         <div className="flex items-center gap-3">
                             <Landmark className="h-7 w-7 text-primary"/>
                             <CardTitle className="font-headline">Savings &amp; Others</CardTitle>
-                        </div>
-                        <div className="flex items-center text-lg font-bold text-primary">
-                             <span>{currencySymbol}{totalSavingsBalance.toFixed(2)}</span>
                         </div>
                     </div>
                 </CardHeader>

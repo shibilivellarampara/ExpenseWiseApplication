@@ -21,7 +21,6 @@ import { PlusCircle, Upload } from 'lucide-react';
 import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
 import { A2HSInstallPrompt } from '@/components/pwa/A2HSInstallPrompt';
 import { AppLoader } from '@/components/AppLoader';
-import { GettingStartedGuide } from '@/components/onboarding/GettingStartedGuide';
 
 function WelcomeCard() {
     return (
@@ -87,7 +86,6 @@ function NewUserCheck() {
             <div className="space-y-6">
                 <WelcomeCard />
                 <A2HSInstallPrompt />
-                <GettingStartedGuide />
             </div>
         );
     }

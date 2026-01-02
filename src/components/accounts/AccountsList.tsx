@@ -336,7 +336,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     return (
        <div className="grid gap-8">
             <Card>
-                <CardHeader className="flex flex-row items-start justify-between bg-card shadow-sm p-4">
+                <CardHeader className="flex flex-row items-start justify-between bg-card shadow-sm p-4 rounded-t-lg">
                     <div className="flex items-center gap-3">
                         <CreditCard className="h-7 w-7 text-primary"/>
                         <div>

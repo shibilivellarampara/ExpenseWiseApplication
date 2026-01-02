@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,13 +41,17 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
         });
 
         let topCategory = 'None';
+        let topCategoryAmount = 0;
         if (categorySpending.size > 0) {
-           topCategory = [...categorySpending.entries()].reduce((a, b) => b[1] > a[1] ? b : a)[0];
+           const [name, amount] = [...categorySpending.entries()].reduce((a, b) => b[1] > a[1] ? b : a);
+           topCategory = name;
+           topCategoryAmount = amount;
         }
 
         return {
             totalExpense: totalCurrent,
             topCategory: topCategory,
+            topCategoryAmount: topCategoryAmount,
             monthOverMonthChange: momChange
         }
     }, [currentMonthExpenses, lastMonthExpenses]);
@@ -74,7 +79,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.topCategory}</div>
-                    <p className="text-xs text-muted-foreground">Most spent category this month</p>
+                    <p className="text-xs text-muted-foreground">{currencySymbol}{stats.topCategoryAmount.toFixed(2)} spent this month</p>
                 </CardContent>
             </Card>
             <Card>

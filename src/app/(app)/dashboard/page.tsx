@@ -176,8 +176,9 @@ export default function DashboardPage() {
             if (grouping === 'tag') {
                 expenseOnly.forEach(item => {
                     if (item.tags.length > 0) {
+                        const amountPerTag = item.amount / item.tags.length;
                         item.tags.forEach(tag => {
-                            dataMap.set(tag.name, (dataMap.get(tag.name) || 0) + item.amount);
+                            dataMap.set(tag.name, (dataMap.get(tag.name) || 0) + amountPerTag);
                         });
                     } else {
                         dataMap.set('Untagged', (dataMap.get('Untagged') || 0) + item.amount);
@@ -226,7 +227,7 @@ export default function DashboardPage() {
         <div className="w-full space-y-8">
             <PageHeader title="Welcome Back!" description="Here's a summary of your financial activity." />
       
-             {!isLoading && (!accounts || accounts.length === 0 || !thisMonthExpenses || thisMonthExpenses.length === 0) && (
+             {!isLoading && (!thisMonthExpenses || thisMonthExpenses.length === 0) && (
                 <WelcomeCard />
             )}
 

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Sector } from 'recharts';
@@ -178,7 +179,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
 
   if (data.length === 0) {
     return (
-        <div className="flex h-[450px] w-full items-center justify-center rounded-lg border-2 border-dashed">
+        <div className="flex h-[350px] w-full items-center justify-center rounded-lg border-2 border-dashed">
             <div className="flex flex-col items-center text-center text-muted-foreground">
                 <PieChartIcon className="h-12 w-12" />
                 <p className="mt-4">No expense data for this period.</p>
@@ -192,7 +193,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
   const safeColors = CHART_COLORS.slice(0, 11);
 
   return (
-    <div className="w-full flex flex-col h-[450px]">
+    <div className="w-full flex flex-col h-[350px]">
         <div className="h-[250px] w-full overflow-visible">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart

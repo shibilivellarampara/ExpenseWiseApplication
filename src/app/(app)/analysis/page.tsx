@@ -381,7 +381,7 @@ export default function AnalysisPage() {
         'last-year': 'Last Year',
         'all': 'All Time',
         'specific-month': format(specificMonth, 'MMM yy'),
-        'custom': 'Custom Range'
+        'custom': 'Custom...'
     };
 
     return (

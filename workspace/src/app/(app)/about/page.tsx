@@ -14,6 +14,29 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.7.5",
+        date: "2026-01-03",
+        changes: [
+            { type: 'UI/UX', description: "Refined the Accounts page with improved alignment and spacing for credit card details, creating a cleaner look." },
+            { type: 'UI/UX', description: "Added a subtle shadow to the 'Credit Cards' header for a modern, floating effect." },
+            { type: 'Fix', description: "Resolved an issue where the main application header would disappear on some pages." },
+            { type: 'Fix', description: "Corrected a layout bug that created a gap between the header and page content." },
+            { type: 'UI/UX', description: "Simplified the 'Savings & Others' card by removing the total balance from the header for a cleaner look." },
+            { type: 'UI/UX', description: "Improved clarity on the Accounts page by showing 'Due' for cards with a balance and 'Next bill' for paid cards." },
+        ]
+    },
+    {
+        version: "1.7.4",
+        date: "2026-01-02",
+        changes: [
+            { type: 'Feature', description: "Added a 'Monthly Savings Trend' chart to the Analysis page to visualize net savings over time." },
+            { type: 'UI/UX', description: "Made all chart and insight cards on the Analysis page collapsible for a cleaner, more customizable view." },
+            { type: 'UI/UX', description: "Added text labels to the secondary navigation menu (the 'More' pop-up) on mobile for better clarity." },
+            { type: 'UI/UX', description: "Increased the size of the main icons in the bottom navigation bar for improved visibility and easier tapping." },
+            { type: 'Fix', description: "Shortened the description on the 'Spending by Category' card on the Analysis page to be more concise." },
+        ]
+    },
+    {
         version: "1.7.3",
         date: "2026-01-01",
         changes: [
@@ -514,5 +537,7 @@ export default function AboutPage() {
     );
 
 }
+
+    
 
     

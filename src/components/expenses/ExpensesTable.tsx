@@ -84,8 +84,10 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         e.stopPropagation();
         if (!selectionMode) {
             setSelectionMode(true);
+            onSelectionChange([id]); // Enter selection mode and select the first item
+        } else {
+            handleSelection(id); // Just toggle selection if already in mode
         }
-        handleSelection(id);
     };
 
     const allRows = useMemo(() => {

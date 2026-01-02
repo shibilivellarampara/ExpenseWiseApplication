@@ -248,7 +248,7 @@ export default function AnalysisPage() {
     const months = useMemo(() => Array.from({ length: 12 }, (_, i) => ({ value: i, label: format(new Date(0, i), 'MMMM') })), []);
 
     useEffect(() => {
-        if (availableYears.length > 0 && getYear(specificMonth) !== parseInt(availableYears[0])) {
+        if (availableYears.length > 0 && !availableYears.includes(getYear(specificMonth).toString())) {
             const newDate = new Date(specificMonth);
             newDate.setFullYear(parseInt(availableYears[0]));
             setSpecificMonth(newDate);
@@ -375,8 +375,8 @@ export default function AnalysisPage() {
         'week': 'This Week',
         'month': 'This Month',
         'last-month': 'Last Month',
-        '3-months': 'Last 3 Months',
-        '6-months': 'Last 6 Months',
+        '3-months': 'Last 3 mo',
+        '6-months': 'Last 6 mo',
         'year': 'This Year',
         'last-year': 'Last Year',
         'all': 'All Time',
@@ -390,7 +390,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-2 justify-end">
+                 <div className="flex items-center gap-1 flex-nowrap">
                     
                     <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -398,7 +398,7 @@ export default function AnalysisPage() {
                                 variant="outline"
                                 role="combobox"
                                 aria-expanded={monthPopoverOpen}
-                                className="w-full sm:w-auto justify-between"
+                                className="w-auto justify-between"
                             >
                                 {timeRangeLabels[timeRangePreset]}
                                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -416,13 +416,13 @@ export default function AnalysisPage() {
                                     <CommandItem onSelect={() => { handleTimeRangeChange('last-year'); setMonthPopoverOpen(false); }}>Last Year</CommandItem>
                                     <CommandItem onSelect={() => { handleTimeRangeChange('all'); setMonthPopoverOpen(false); }}>All Time</CommandItem>
                                 </CommandGroup>
-                                <DropdownMenuSeparator />
-                                <CommandGroup>
+                                <CommandGroup className="border-t">
+                                     <CommandItem onSelect={() => handleTimeRangeChange('custom')}>Custom Range</CommandItem>
                                     <CommandItem onSelect={() => handleTimeRangeChange('specific-month')}>
                                         <div className="w-full">
                                             Specific Month
                                             {timeRangePreset === 'specific-month' && (
-                                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <div className="grid grid-cols-1 gap-2 mt-2">
                                                     <Select
                                                         value={getYear(specificMonth).toString()}
                                                         onValueChange={(year) => {
@@ -453,7 +453,6 @@ export default function AnalysisPage() {
                                             )}
                                         </div>
                                     </CommandItem>
-                                    <CommandItem onSelect={() => handleTimeRangeChange('custom')}>Custom Range</CommandItem>
                                 </CommandGroup>
                             </Command>
                         </PopoverContent>
@@ -462,7 +461,7 @@ export default function AnalysisPage() {
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="w-full sm:w-auto justify-between">
-                                <span>{selectedAccounts.length > 0 ? `${selectedAccounts.length} accounts` : "All Accounts"}</span>
+                                <span>{selectedAccounts.length > 0 ? `${selectedAccounts.length} a/c` : "All a/c"}</span>
                                 <ChevronDown className="h-4 w-4 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -726,6 +725,8 @@ export default function AnalysisPage() {
         </div>
     );
 }
+
+    
 
     
 

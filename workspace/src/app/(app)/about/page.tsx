@@ -14,6 +14,19 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.7.7",
+        date: "2026-01-03",
+        changes: [
+            { type: 'UI/UX', description: "Refactored all data-entry forms (e.g., Add Transaction) to use native-style bottom sheets on mobile devices for a more app-like feel." },
+            { type: 'UI/UX', description: "Converted all confirmation dialogs to use centered, inset modals on mobile, improving clarity and aesthetics." },
+            { type: 'UI/UX', description: "Made filter controls on the Analysis page responsive, preventing horizontal overflow on mobile by truncating text." },
+            { type: 'UI/UX', description: "Added account icons to dropdown menus for easier visual identification." },
+            { type: 'Fix', description: "Ensured consistent rounded corners across all modals, popups, and input fields." },
+            { type: 'Fix', description: "Improved form validation to show a user-friendly error message for the amount field." },
+            { type: 'Feature', description: "Made the 'Total Monthly Expense' card on the dashboard a direct link to the pre-filtered Analysis page." },
+        ]
+    },
+    {
         version: "1.7.6",
         date: "2026-01-02",
         changes: [
@@ -549,3 +562,5 @@ export default function AboutPage() {
     );
 
 }
+
+    

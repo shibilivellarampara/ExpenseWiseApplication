@@ -266,7 +266,7 @@ export default function AnalysisPage() {
 
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(allAccounts?.map(a => [a.id, a])), [allAccounts]);
-    const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
+    const tagMap = useMemo(() to new Map(tags?.map(t => [t.id, t])), [tags]);
     
     const analysisSettings = userProfile?.analysisSettings;
 
@@ -397,7 +397,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-2 flex-wrap justify-end">
+                 <div className="flex items-center gap-2 justify-end flex-nowrap">
                     
                     <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -405,9 +405,9 @@ export default function AnalysisPage() {
                                 variant="outline"
                                 role="combobox"
                                 aria-expanded={monthPopoverOpen}
-                                className="w-auto justify-between"
+                                className="w-auto justify-between flex-shrink-0"
                             >
-                                {timeRangeLabels[timeRangePreset]}
+                                <span className="truncate">{timeRangeLabels[timeRangePreset]}</span>
                                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -467,8 +467,8 @@ export default function AnalysisPage() {
                     
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full sm:w-auto justify-between">
-                                <span>
+                            <Button variant="outline" className="w-auto sm:w-auto justify-between flex-shrink-0">
+                                <span className="truncate">
                                     {selectedAccounts.length === 0
                                         ? "All Accounts"
                                         : selectedAccounts.length === 1
@@ -507,11 +507,11 @@ export default function AnalysisPage() {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                     <div className="relative flex items-center">
+                     <div className="relative flex items-center flex-shrink-0">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="w-full sm:w-auto justify-between pr-8">
-                                    <span>{selectedTags.length === 0 ? "All Tags" : selectedTags.length === 1 ? "1 Tag" : `${selectedTags.length} Tags`}</span>
+                                <Button variant="outline" className="w-auto sm:w-auto justify-between pr-8">
+                                    <span className="truncate">{selectedTags.length === 0 ? "All Tags" : selectedTags.length === 1 ? "1 Tag" : `${selectedTags.length} Tags`}</span>
                                     <ChevronDown className="h-4 w-4 opacity-50" />
                                 </Button>
                             </DropdownMenuTrigger>
@@ -747,5 +747,7 @@ export default function AnalysisPage() {
 
 
 
+
+    
 
     

@@ -228,7 +228,7 @@ export function DataManagementSettings() {
 
     return (
         <Card className="border-destructive/30">
-            <CardHeader className="flex flex-row items-start gap-4">
+            <CardHeader className="flex flex-row items-center gap-4">
                 <AlertTriangle className="text-destructive h-6 w-6"/>
                 <div>
                     <CardTitle className="text-destructive font-headline text-lg">Danger Zone</CardTitle>

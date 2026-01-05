@@ -93,7 +93,7 @@ export function BottomNav() {
   const isTransactionsPage = pathname.startsWith('/expenses') || pathname.startsWith('/transactions');
   
   return (
-    <div ref={navRef} className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-sm pointer-events-none p-4" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
+    <div ref={navRef} className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-sm pointer-events-none" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))', paddingLeft: '1rem', paddingRight: '1rem' }}>
         <div className="relative mx-auto w-full">
             
             {/* Secondary Navigation Row */}

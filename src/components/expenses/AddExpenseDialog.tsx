@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -58,7 +59,7 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
   let schema = z.object({
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
-    amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
+    amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
     
     categoryId: z.string().optional(),

@@ -726,7 +726,7 @@ export function AddExpenseDialog({
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                                            {submitState === 'saving-save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -741,12 +741,23 @@ export function AddExpenseDialog({
                     </div>
                     <div className="flex gap-2 justify-end">
                          {!isEditMode && (
-                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isSaving} variant="outline" className="min-w-[120px]">
+                            <Button
+                                type="button"
+                                onClick={onSaveAndNewSubmit}
+                                disabled={isSaving}
+                                variant="outline"
+                                className="min-w-[120px]"
+                            >
                                 {submitState === 'saving-save-new' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 Save and New
                             </Button>
                          )}
-                         <Button type="submit" form={formId} disabled={isSaving} className="min-w-[120px]">
+                         <Button
+                            type="submit"
+                            form={formId}
+                            disabled={isSaving}
+                            className="min-w-[120px]"
+                        >
                             {submitState === 'saving-save' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {isEditMode ? 'Save Changes' : 'Save'}
                         </Button>

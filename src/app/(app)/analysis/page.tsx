@@ -397,7 +397,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-2 flex-nowrap shrink-0">
+                 <div className="flex items-center gap-2 flex-nowrap">
                     
                     <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -542,6 +542,20 @@ export default function AnalysisPage() {
                             </Button>
                         )}
                     </div>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="md:hidden">
+                                <Settings className="h-5 w-5" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Analysis Settings</DialogTitle>
+                                <DialogDescription>Customize which categories and charts to show.</DialogDescription>
+                            </DialogHeader>
+                            <AnalysisSettingsContent />
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </PageHeader>
             

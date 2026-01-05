@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -164,8 +163,8 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
 }
 
 // New FloatingLabelInput component
-const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string; onClear?: () => void; }>(
-    ({ className, label, id, onClear, ...props }, ref) => {
+const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string }>(
+    ({ className, label, id, ...props }, ref) => {
         const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
         return (
             <div className="relative">
@@ -175,7 +174,6 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     placeholder=" "
                     className={cn(
                         "peer h-14 pt-5 text-base floating-input", 
-                        onClear && 'pr-8',
                         className
                     )}
                     data-has-value={hasValue}
@@ -191,17 +189,6 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                 >
                     {label}
                 </Label>
-                 {hasValue && onClear && (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
-                        onClick={onClear}
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
-                )}
             </div>
         );
     }
@@ -510,7 +497,6 @@ function ExpenseForm({
                             id="description"
                             {...field}
                             value={field.value ?? ''}
-                            onClear={() => form.setValue('description', '')}
                             className={cn(isSuggesting && 'animate-pulse border-primary/50')}
                         />
                         <FormMessage />
@@ -686,15 +672,13 @@ export function AddExpenseDialog({
 }) {
     const [open, setOpen] = useState(false);
     
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, submitState, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen, 
         expenseToEdit, 
         initialType,
         open,
         onSaveSuccess,
     });
-
-    const isSaving = submitState !== 'idle';
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -711,7 +695,7 @@ export function AddExpenseDialog({
                         {isEditMode ? (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button type="button" variant="destructive" disabled={isSaving}>
+                                    <Button type="button" variant="destructive" disabled={isLoading}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Delete
                                     </Button>
@@ -726,14 +710,14 @@ export function AddExpenseDialog({
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                            {submitState === 'saving-save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
                         ) : (
                              <DialogClose asChild>
-                                <Button type="button" variant="outline" disabled={isSaving}>
+                                <Button type="button" variant="outline">
                                     Cancel
                                 </Button>
                             </DialogClose>
@@ -741,24 +725,13 @@ export function AddExpenseDialog({
                     </div>
                     <div className="flex gap-2 justify-end">
                          {!isEditMode && (
-                            <Button
-                                type="button"
-                                onClick={onSaveAndNewSubmit}
-                                disabled={isSaving}
-                                variant="outline"
-                                className="min-w-[120px]"
-                            >
-                                {submitState === 'saving-save-new' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                Save and New
+                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline" className="min-w-[120px]">
+                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Save & New
                             </Button>
                          )}
-                         <Button
-                            type="submit"
-                            form={formId}
-                            disabled={isSaving}
-                            className="min-w-[120px]"
-                        >
-                            {submitState === 'saving-save' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                         <Button type="submit" form={formId} disabled={isLoading} className="min-w-[120px]">
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {isEditMode ? 'Save Changes' : 'Save'}
                         </Button>
                     </div>
@@ -776,9 +749,6 @@ interface UseExpenseFormProps {
     onSaveSuccess?: () => void;
 }
 
-type SubmitState = 'idle' | 'saving-save' | 'saving-save-new';
-
-
 // Shared hook for form logic
 function useExpenseForm({
     setOpen,
@@ -788,7 +758,7 @@ function useExpenseForm({
     onSaveSuccess,
 }: UseExpenseFormProps) {
     const { toast } = useToast();
-    const [submitState, setSubmitState] = useState<SubmitState>('idle');
+    const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
     const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
@@ -864,6 +834,7 @@ function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Required data (categories) is not loaded.' });
             return false;
         }
+        setIsLoading(true);
 
         try {
             const batch = writeBatch(firestore);
@@ -882,10 +853,12 @@ function useExpenseForm({
             if (isCreditCardPayment) {
                 if (selectedAccount?.type === 'credit_card' && values.type !== 'income') {
                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments to a credit card must be an "income" transaction for that card.' });
+                    setIsLoading(false);
                     return false;
                 }
                 if (selectedAccount?.type !== 'credit_card' && values.type !== 'expense') {
                      toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments from a bank account for a credit card must be an "expense" transaction.' });
+                     setIsLoading(false);
                      return false;
                 }
             }
@@ -968,11 +941,13 @@ function useExpenseForm({
             
             if (isCreditLimitUpgrade) {
                 if (!handleLimitChange('upgrade', values, expenseToEdit)) {
+                    setIsLoading(false);
                     return false;
                 }
             }
             if (isCreditLimitDowngrade) {
                 if (!handleLimitChange('downgrade', values, expenseToEdit)) {
+                    setIsLoading(false);
                     return false;
                 }
             }
@@ -1025,6 +1000,8 @@ function useExpenseForm({
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Could Not Save Transaction', description: 'An unexpected error occurred. Please check your inputs and try again.' });
              return false;
+        } finally {
+            setIsLoading(false);
         }
     }
     
@@ -1035,26 +1012,16 @@ function useExpenseForm({
 
 
     const onFinalSubmit = form.handleSubmit(async (values) => {
-        setSubmitState('saving-save');
-        try {
-            const success = await handleTransactionSave(values);
-            if (success) {
-                setOpen(false);
-            }
-        } finally {
-            setSubmitState('idle');
+        const success = await handleTransactionSave(values);
+        if (success) {
+            setOpen(false);
         }
     });
 
     const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
-        setSubmitState('saving-save-new');
-        try {
-            const success = await handleTransactionSave(values);
-            if (success) {
-                resetForm(values.date, values.accountId);
-            }
-        } finally {
-            setSubmitState('idle');
+        const success = await handleTransactionSave(values);
+        if (success) {
+            resetForm(values.date, values.accountId);
         }
     });
 
@@ -1063,7 +1030,7 @@ function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction. Required data missing.' });
             return;
         }
-        setSubmitState('saving-save'); // Reuse saving state for delete
+        setIsLoading(true);
         try {
             const batch = writeBatch(firestore);
             const collectionPath = `users/${user.uid}/expenses`;
@@ -1103,10 +1070,10 @@ function useExpenseForm({
             toast({ title: 'Transaction Deleted', description: 'The transaction has been permanently removed.' });
             onSaveSuccess?.();
             setOpen(false);
-        } catch (error) {
-             toast({ variant: 'destructive', title: 'Delete Failed', description: "There was an unexpected error. Please try again." });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Delete Failed', description: "There was an unexpected error. Please try again." });
         } finally {
-            setSubmitState('idle');
+            setIsLoading(false);
         }
     };
 
@@ -1116,7 +1083,7 @@ function useExpenseForm({
       onFinalSubmit, 
       onSaveAndNewSubmit, 
       handleDelete, 
-      submitState, 
+      isLoading, 
       isEditMode, 
       formId,
       accounts: accounts || [],

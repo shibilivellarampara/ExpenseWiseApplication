@@ -542,20 +542,6 @@ export default function AnalysisPage() {
                             </Button>
                         )}
                     </div>
-                     <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="md:hidden">
-                                <Settings className="h-5 w-5" />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Analysis Settings</DialogTitle>
-                                <DialogDescription>Customize which categories and charts to show.</DialogDescription>
-                            </DialogHeader>
-                            <AnalysisSettingsContent />
-                        </DialogContent>
-                    </Dialog>
                 </div>
             </PageHeader>
             

@@ -266,7 +266,7 @@ export default function AnalysisPage() {
 
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(allAccounts?.map(a => [a.id, a])), [allAccounts]);
-    const tagMap = useMemo(() to new Map(tags?.map(t => [t.id, t])), [tags]);
+    const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
     const analysisSettings = userProfile?.analysisSettings;
 
@@ -397,7 +397,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-2 justify-end flex-nowrap">
+                 <div className="flex items-center gap-2 flex-nowrap shrink-0">
                     
                     <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -747,6 +747,8 @@ export default function AnalysisPage() {
 
 
 
+
+    
 
     
 

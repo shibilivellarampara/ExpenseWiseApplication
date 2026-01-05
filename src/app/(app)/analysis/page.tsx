@@ -118,46 +118,53 @@ export default function AnalysisPage() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [monthPopoverOpen, setMonthPopoverOpen] = useState(false);
     
-    // Load filters from localStorage on initial render
+    // Load filters from localStorage or URL on initial render
     useEffect(() => {
         if (user) {
-            const storedFiltersRaw = localStorage.getItem(FILTERS_STORAGE_KEY);
-            if (storedFiltersRaw) {
-                try {
-                    const storedFilters: StoredFilters = JSON.parse(storedFiltersRaw);
-                    if (storedFilters.timeRangePreset) {
-                        setTimeRangePreset(storedFilters.timeRangePreset);
-                    }
-                    if (storedFilters.customDateRange) {
-                        setCustomDateRange({
-                            from: storedFilters.customDateRange.from ? parse(storedFilters.customDateRange.from, 'yyyy-MM-dd', new Date()) : undefined,
-                            to: storedFilters.customDateRange.to ? parse(storedFilters.customDateRange.to, 'yyyy-MM-dd', new Date()) : undefined,
-                        });
-                    }
-                    if (storedFilters.specificMonth) {
-                        setSpecificMonth(parse(storedFilters.specificMonth, 'yyyy-MM', new Date()));
-                    }
-                    // URL params take precedence over stored accounts
-                    const accountIdFromUrl = searchParams.get('accounts');
-                    if (accountIdFromUrl) {
-                        setSelectedAccounts([accountIdFromUrl]);
-                    } else if (storedFilters.selectedAccounts) {
-                        setSelectedAccounts(storedFilters.selectedAccounts);
-                    }
-                    
-                    if (storedFilters.selectedTags) {
-                        setSelectedTags(storedFilters.selectedTags);
-                    }
+            const timeRangeFromUrl = searchParams.get('timeRangePreset') as TimeRangePreset;
+            const accountsFromUrl = searchParams.get('accounts');
 
-                } catch (e) {
-                    console.error("Failed to parse stored filters", e);
-                    localStorage.removeItem(FILTERS_STORAGE_KEY);
+            if (timeRangeFromUrl) {
+                setTimeRangePreset(timeRangeFromUrl);
+            }
+            
+            if (accountsFromUrl) {
+                 if (accountsFromUrl === 'all') {
+                    setSelectedAccounts([]);
+                } else {
+                    setSelectedAccounts(accountsFromUrl.split(','));
                 }
-            } else {
-                 // Check URL params even if no stored filters
-                const accountIdFromUrl = searchParams.get('accounts');
-                if (accountIdFromUrl) {
-                    setSelectedAccounts([accountIdFromUrl]);
+            }
+
+
+            if (!timeRangeFromUrl && !accountsFromUrl) {
+                const storedFiltersRaw = localStorage.getItem(FILTERS_STORAGE_KEY);
+                if (storedFiltersRaw) {
+                    try {
+                        const storedFilters: StoredFilters = JSON.parse(storedFiltersRaw);
+                        if (storedFilters.timeRangePreset) {
+                            setTimeRangePreset(storedFilters.timeRangePreset);
+                        }
+                        if (storedFilters.customDateRange) {
+                            setCustomDateRange({
+                                from: storedFilters.customDateRange.from ? parse(storedFilters.customDateRange.from, 'yyyy-MM-dd', new Date()) : undefined,
+                                to: storedFilters.customDateRange.to ? parse(storedFilters.customDateRange.to, 'yyyy-MM-dd', new Date()) : undefined,
+                            });
+                        }
+                        if (storedFilters.specificMonth) {
+                            setSpecificMonth(parse(storedFilters.specificMonth, 'yyyy-MM', new Date()));
+                        }
+                        if (storedFilters.selectedAccounts) {
+                            setSelectedAccounts(storedFilters.selectedAccounts);
+                        }
+                        if (storedFilters.selectedTags) {
+                            setSelectedTags(storedFilters.selectedTags);
+                        }
+
+                    } catch (e) {
+                        console.error("Failed to parse stored filters", e);
+                        localStorage.removeItem(FILTERS_STORAGE_KEY);
+                    }
                 }
             }
             setIsInitialLoad(false);
@@ -737,4 +744,5 @@ export default function AnalysisPage() {
     
 
     
+
 

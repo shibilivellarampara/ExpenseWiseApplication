@@ -8,6 +8,8 @@ import { EnrichedExpense } from "@/lib/types";
 import { TrendingUp, Tag, TrendingDown, Minus } from "lucide-react";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface DashboardStatsProps {
     currentMonthExpenses: EnrichedExpense[];
@@ -62,16 +64,18 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
 
     return (
         <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Monthly Expense</CardTitle>
-                    <span className="text-muted-foreground font-bold">{currencySymbol}</span>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalExpense.toFixed(2)}</div>
-                    <p className="text-xs text-muted-foreground">Cash out this month</p>
-                </CardContent>
-            </Card>
+            <Link href="/analysis?timeRangePreset=month&accounts=all">
+                <Card className="hover:bg-accent transition-colors">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Monthly Expense</CardTitle>
+                        <span className="text-muted-foreground font-bold">{currencySymbol}</span>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats.totalExpense.toFixed(2)}</div>
+                        <p className="text-xs text-muted-foreground">Cash out this month</p>
+                    </CardContent>
+                </Card>
+            </Link>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Top Spending Category</CardTitle>
@@ -94,7 +98,10 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                     )}
                 </CardHeader>
                 <CardContent>
-                     <div className={`text-2xl font-bold ${stats.monthOverMonthChange > 0 ? 'text-red-500' : stats.monthOverMonthChange < 0 ? 'text-green-500' : ''}`}>
+                     <div className={cn(
+                        "text-2xl font-bold",
+                        stats.monthOverMonthChange > 0 ? 'text-red-500' : stats.monthOverMonthChange < 0 ? 'text-green-500' : ''
+                     )}>
                         {stats.monthOverMonthChange > 0 ? '+' : ''}{stats.monthOverMonthChange.toFixed(1)}%
                     </div>
                     <p className="text-xs text-muted-foreground">vs. last month</p>

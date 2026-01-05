@@ -397,7 +397,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-2 flex-nowrap">
+                 <div className="flex items-center gap-2 flex-nowrap min-w-0">
                     
                     <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -408,7 +408,7 @@ export default function AnalysisPage() {
                                 className="w-auto flex-shrink-0 gap-1"
                             >
                                 <span className="truncate">{timeRangeLabels[timeRangePreset]}</span>
-                                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                <ChevronDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
@@ -475,7 +475,7 @@ export default function AnalysisPage() {
                                         ? "1 Account"
                                         : `${selectedAccounts.length} Accounts`}
                                 </span>
-                                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                <ChevronDown className="ml-1 h-4 w-4 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
@@ -512,7 +512,7 @@ export default function AnalysisPage() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="w-auto sm:w-auto gap-1 pr-8">
                                     <span className="truncate">{selectedTags.length === 0 ? "All Tags" : selectedTags.length === 1 ? "1 Tag" : `${selectedTags.length} Tags`}</span>
-                                    <ChevronDown className="h-4 w-4 opacity-50 ml-2" />
+                                    <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
@@ -767,5 +767,8 @@ export default function AnalysisPage() {
     
 
     
+
+    
+
 
     

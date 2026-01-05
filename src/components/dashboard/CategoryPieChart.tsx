@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
+
 interface PieChartDataPoint {
   name: string;
   value: number;
@@ -193,7 +194,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
   const safeColors = CHART_COLORS.slice(0, 11);
 
   return (
-    <div className="w-full flex flex-col h-[350px]">
+    <div className="w-full flex flex-col h-full min-h-[450px]">
         <div className="h-[250px] w-full overflow-visible">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart

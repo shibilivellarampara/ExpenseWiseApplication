@@ -223,9 +223,9 @@ export default function DashboardPage() {
             if (grouping === 'tag') {
                 expenseOnly.forEach(item => {
                     if (item.tags.length > 0) {
-                        const amountPerTag = item.amount / item.tags.length;
+                        // Apply the full amount to each tag
                         item.tags.forEach(tag => {
-                            dataMap.set(tag.name, (dataMap.get(tag.name) || 0) + amountPerTag);
+                            dataMap.set(tag.name, (dataMap.get(tag.name) || 0) + item.amount);
                         });
                     } else {
                         dataMap.set('Untagged', (dataMap.get('Untagged') || 0) + item.amount);

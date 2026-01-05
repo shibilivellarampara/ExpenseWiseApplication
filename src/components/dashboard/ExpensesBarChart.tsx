@@ -272,7 +272,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
     
     if (!expenseOnlyData.length) {
         return (
-            <div className="flex h-[350px] w-full items-center justify-center rounded-lg border-2 border-dashed">
+            <div className="flex h-full min-h-[350px] w-full items-center justify-center rounded-lg border-2 border-dashed">
                 <div className="flex flex-col items-center text-center text-muted-foreground">
                     <BarChartIcon className="h-12 w-12" />
                     <p className="mt-4">No expense data for this period.</p>
@@ -283,7 +283,7 @@ export function ExpensesBarChart({ expenses, allCategories, timeRange, currencyS
     }
 
     return (
-        <div className="w-full flex flex-col h-[450px]">
+        <div className="w-full flex flex-col h-full min-h-[450px]">
             <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={chartData}>

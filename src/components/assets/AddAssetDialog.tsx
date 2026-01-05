@@ -137,8 +137,8 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                  form.reset({
                     name: assetToEdit.name,
                     assetType: assetToEdit.assetType,
-                    investedAmount: assetToEdit.investedAmount,
-                    currentValue: assetToEdit.currentValue,
+                    investedAmount: assetToEdit.investedAmount || undefined,
+                    currentValue: assetToEdit.currentValue || undefined,
                     quantity: assetToEdit.quantity || undefined,
                     startDate: assetToEdit.startDate,
                     notes: assetToEdit.notes || '',
@@ -147,9 +147,9 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                 form.reset({
                     name: '',
                     assetType: initialAssetType || 'mutual_funds',
-                    investedAmount: '' as any,
-                    currentValue: '' as any,
-                    quantity: '' as any,
+                    investedAmount: undefined,
+                    currentValue: undefined,
+                    quantity: undefined,
                     startDate: null,
                     notes: '',
                 });
@@ -331,5 +331,3 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
         </Dialog>
     );
 }
-
-    

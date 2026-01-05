@@ -686,13 +686,15 @@ export function AddExpenseDialog({
 }) {
     const [open, setOpen] = useState(false);
     
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, submitState, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen, 
         expenseToEdit, 
         initialType,
         open,
         onSaveSuccess,
     });
+
+    const isSaving = submitState !== 'idle';
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -709,7 +711,7 @@ export function AddExpenseDialog({
                         {isEditMode ? (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button type="button" variant="destructive" disabled={isLoading}>
+                                    <Button type="button" variant="destructive" disabled={isSaving}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Delete
                                     </Button>
@@ -724,14 +726,14 @@ export function AddExpenseDialog({
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
                         ) : (
                              <DialogClose asChild>
-                                <Button type="button" variant="outline">
+                                <Button type="button" variant="outline" disabled={isSaving}>
                                     Cancel
                                 </Button>
                             </DialogClose>
@@ -739,13 +741,13 @@ export function AddExpenseDialog({
                     </div>
                     <div className="flex gap-2 justify-end">
                          {!isEditMode && (
-                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline" className="min-w-[120px]">
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isSaving} variant="outline" className="min-w-[120px]">
+                                {submitState === 'saving-save-new' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 Save and New
                             </Button>
                          )}
-                         <Button type="submit" form={formId} disabled={isLoading} className="min-w-[120px]">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                         <Button type="submit" form={formId} disabled={isSaving} className="min-w-[120px]">
+                            {submitState === 'saving-save' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {isEditMode ? 'Save Changes' : 'Save'}
                         </Button>
                     </div>
@@ -763,6 +765,9 @@ interface UseExpenseFormProps {
     onSaveSuccess?: () => void;
 }
 
+type SubmitState = 'idle' | 'saving-save' | 'saving-save-new';
+
+
 // Shared hook for form logic
 function useExpenseForm({
     setOpen,
@@ -772,7 +777,7 @@ function useExpenseForm({
     onSaveSuccess,
 }: UseExpenseFormProps) {
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
+    const [submitState, setSubmitState] = useState<SubmitState>('idle');
     const { user } = useUser();
     const firestore = useFirestore();
     const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
@@ -848,7 +853,6 @@ function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Required data (categories) is not loaded.' });
             return false;
         }
-        setIsLoading(true);
 
         try {
             const batch = writeBatch(firestore);
@@ -867,12 +871,10 @@ function useExpenseForm({
             if (isCreditCardPayment) {
                 if (selectedAccount?.type === 'credit_card' && values.type !== 'income') {
                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments to a credit card must be an "income" transaction for that card.' });
-                    setIsLoading(false);
                     return false;
                 }
                 if (selectedAccount?.type !== 'credit_card' && values.type !== 'expense') {
                      toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments from a bank account for a credit card must be an "expense" transaction.' });
-                     setIsLoading(false);
                      return false;
                 }
             }
@@ -955,13 +957,11 @@ function useExpenseForm({
             
             if (isCreditLimitUpgrade) {
                 if (!handleLimitChange('upgrade', values, expenseToEdit)) {
-                    setIsLoading(false);
                     return false;
                 }
             }
             if (isCreditLimitDowngrade) {
                 if (!handleLimitChange('downgrade', values, expenseToEdit)) {
-                    setIsLoading(false);
                     return false;
                 }
             }
@@ -1014,8 +1014,6 @@ function useExpenseForm({
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Could Not Save Transaction', description: 'An unexpected error occurred. Please check your inputs and try again.' });
              return false;
-        } finally {
-            setIsLoading(false);
         }
     }
     
@@ -1026,16 +1024,26 @@ function useExpenseForm({
 
 
     const onFinalSubmit = form.handleSubmit(async (values) => {
-        const success = await handleTransactionSave(values);
-        if (success) {
-            setOpen(false);
+        setSubmitState('saving-save');
+        try {
+            const success = await handleTransactionSave(values);
+            if (success) {
+                setOpen(false);
+            }
+        } finally {
+            setSubmitState('idle');
         }
     });
 
     const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
-        const success = await handleTransactionSave(values);
-        if (success) {
-            resetForm(values.date, values.accountId);
+        setSubmitState('saving-save-new');
+        try {
+            const success = await handleTransactionSave(values);
+            if (success) {
+                resetForm(values.date, values.accountId);
+            }
+        } finally {
+            setSubmitState('idle');
         }
     });
 
@@ -1044,7 +1052,7 @@ function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction. Required data missing.' });
             return;
         }
-        setIsLoading(true);
+        setSubmitState('saving-save'); // Reuse saving state for delete
         try {
             const batch = writeBatch(firestore);
             const collectionPath = `users/${user.uid}/expenses`;
@@ -1087,7 +1095,7 @@ function useExpenseForm({
         } catch (error) {
              toast({ variant: 'destructive', title: 'Delete Failed', description: "There was an unexpected error. Please try again." });
         } finally {
-            setIsLoading(false);
+            setSubmitState('idle');
         }
     };
 
@@ -1097,7 +1105,7 @@ function useExpenseForm({
       onFinalSubmit, 
       onSaveAndNewSubmit, 
       handleDelete, 
-      isLoading, 
+      submitState, 
       isEditMode, 
       formId,
       accounts: accounts || [],

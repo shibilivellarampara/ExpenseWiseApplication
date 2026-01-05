@@ -470,10 +470,10 @@ export default function AnalysisPage() {
                             <Button variant="outline" className="w-auto sm:w-auto flex-shrink-0 gap-1">
                                 <span className="truncate">
                                     {selectedAccounts.length === 0
-                                        ? "All Accounts"
+                                        ? "All Accts"
                                         : selectedAccounts.length === 1
-                                        ? "1 Account"
-                                        : `${selectedAccounts.length} Accounts`}
+                                        ? "1 Acct"
+                                        : `${selectedAccounts.length} Accts`}
                                 </span>
                                 <ChevronDown className="ml-1 h-4 w-4 opacity-50" />
                             </Button>

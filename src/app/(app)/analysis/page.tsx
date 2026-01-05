@@ -405,7 +405,7 @@ export default function AnalysisPage() {
                                 variant="outline"
                                 role="combobox"
                                 aria-expanded={monthPopoverOpen}
-                                className="w-auto justify-between flex-shrink-0"
+                                className="w-auto flex-shrink-0 gap-1"
                             >
                                 <span className="truncate">{timeRangeLabels[timeRangePreset]}</span>
                                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -467,7 +467,7 @@ export default function AnalysisPage() {
                     
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-auto sm:w-auto justify-between flex-shrink-0">
+                            <Button variant="outline" className="w-auto sm:w-auto flex-shrink-0 gap-1">
                                 <span className="truncate">
                                     {selectedAccounts.length === 0
                                         ? "All Accounts"
@@ -475,7 +475,7 @@ export default function AnalysisPage() {
                                         ? "1 Account"
                                         : `${selectedAccounts.length} Accounts`}
                                 </span>
-                                <ChevronDown className="h-4 w-4 opacity-50" />
+                                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
@@ -510,9 +510,9 @@ export default function AnalysisPage() {
                      <div className="relative flex items-center flex-shrink-0">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="w-auto sm:w-auto justify-between pr-8">
+                                <Button variant="outline" className="w-auto sm:w-auto gap-1 pr-8">
                                     <span className="truncate">{selectedTags.length === 0 ? "All Tags" : selectedTags.length === 1 ? "1 Tag" : `${selectedTags.length} Tags`}</span>
-                                    <ChevronDown className="h-4 w-4 opacity-50" />
+                                    <ChevronDown className="h-4 w-4 opacity-50 ml-2" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
@@ -747,6 +747,8 @@ export default function AnalysisPage() {
 
 
 
+
+    
 
     
 

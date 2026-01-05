@@ -1,10 +1,14 @@
 
 'use client';
 
+import pkg from '../../package.json';
+const appVersion = pkg.version;
+
+
 export function registerSW() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').then(registration => {
+      navigator.serviceWorker.register(`/sw.js?v=${appVersion}`).then(registration => {
         // Check for updates on page load
         registration.update();
 

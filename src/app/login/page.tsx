@@ -27,7 +27,7 @@ export default function LoginPage() {
         </CardContent>
       </Card>
        <div className="mt-6 text-center text-xs text-muted-foreground space-y-1">
-            <p>version v {appVersion}</p>
+            <p>version v{appVersion}</p>
         </div>
     </div>
   );

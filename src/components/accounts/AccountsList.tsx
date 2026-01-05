@@ -479,7 +479,6 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                 </div>
                                 <div className="flex-grow">
                                         <span className="font-semibold">{item.name}</span>
-                                    <Badge variant="secondary" className="capitalize text-xs">{item.type.replace('_', ' ')}</Badge>
                                 </div>
                                 <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                                     <div className={cn(

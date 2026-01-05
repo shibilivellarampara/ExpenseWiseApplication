@@ -397,7 +397,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-1 flex-nowrap">
+                 <div className="flex items-center gap-2 flex-wrap justify-end">
                     
                     <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -746,3 +746,6 @@ export default function AnalysisPage() {
     
 
 
+
+
+    

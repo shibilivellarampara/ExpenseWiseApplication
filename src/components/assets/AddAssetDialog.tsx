@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -10,6 +11,17 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
+
 import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,6 +41,7 @@ import { DateTimePicker } from '../DateTimePicker';
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Label as ShadcnLabel } from '@/components/ui/label';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 const assetSchema = z.object({
   name: z.string().min(1, 'Asset name is required.'),
@@ -109,6 +122,141 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
 );
 FloatingLabelSelect.displayName = 'FloatingLabelSelect';
 
+function AssetForm({ form, onSubmit, isLoading, isEditMode }: { form: any; onSubmit: (values: AssetFormData) => void; isLoading: boolean; isEditMode: boolean; }) {
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4 max-h-[70vh] overflow-y-auto pr-2">
+                <FormField
+                    control={form.control}
+                    name="assetType"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FloatingLabelSelect
+                                label="Asset Type *"
+                                id="assetType"
+                                onValueChange={field.onChange}
+                                value={field.value}
+                                disabled={isEditMode}
+                            >
+                                {Object.entries(ASSET_TYPES).filter(([key]) => key !== 'savings_cash').map(([key, { label }]) => (
+                                     <SelectItem key={key} value={key}>{label}</SelectItem>
+                                ))}
+                            </FloatingLabelSelect>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FloatingLabelInput
+                                label="Asset Name *"
+                                id="name"
+                                {...field}
+                                value={field.value ?? ''}
+                            />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="investedAmount"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FloatingLabelInput
+                                    label="Invested Amount"
+                                    id="investedAmount"
+                                    type="number"
+                                    step="0.01"
+                                    {...field}
+                                    value={field.value ?? ''}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="currentValue"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FloatingLabelInput
+                                    label="Current Value"
+                                    id="currentValue"
+                                    type="number"
+                                    step="0.01"
+                                    {...field}
+                                    value={field.value ?? ''}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                
+                 <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FloatingLabelInput
+                                label="Quantity"
+                                id="quantity"
+                                type="number"
+                                step="0.001"
+                                {...field}
+                                value={field.value ?? ''}
+                            />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                        <FormItem>
+                            <ShadcnLabel>Start Date</ShadcnLabel>
+                            <DateTimePicker field={field} />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                        <FormItem>
+                            <ShadcnLabel>Notes</ShadcnLabel>
+                            <FormControl>
+                                <Textarea placeholder="Any additional notes about this asset..." {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <DrawerFooter className="pt-4 px-0 flex-row justify-end gap-2 sm:hidden">
+                    <DrawerClose asChild>
+                        <Button type="button" variant="outline" className="w-24">Cancel</Button>
+                    </DrawerClose>
+                    <Button type="submit" disabled={isLoading} className="w-28">
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
+                    </Button>
+                </DrawerFooter>
+                 <DialogFooter className="pt-4 hidden sm:flex">
+                    <Button type="button" variant="outline" className="w-24" onClick={() => form.handleCancel()}>Cancel</Button>
+                    <Button type="submit" disabled={isLoading} className="w-28">
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
+                    </Button>
+                </DialogFooter>
+            </form>
+        </Form>
+    );
+}
 
 export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSaveSuccess }: AddAssetDialogProps) {
     const [open, setOpen] = useState(false);
@@ -117,6 +265,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
     const { user } = useUser();
     const firestore = useFirestore();
     const isEditMode = !!assetToEdit;
+    const isDesktop = useMediaQuery("(min-width: 768px)");
 
     const form = useForm<AssetFormData>({
         resolver: zodResolver(assetSchema),
@@ -130,6 +279,8 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
             notes: '',
         },
     });
+
+    (form as any).handleCancel = () => setOpen(false);
 
     useEffect(() => {
         if(open) {
@@ -193,6 +344,25 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
             setIsLoading(false);
         }
     }
+    
+    if (!isDesktop) {
+        return (
+            <Drawer open={open} onOpenChange={setOpen}>
+                <DrawerTrigger asChild>{children}</DrawerTrigger>
+                <DrawerContent>
+                    <DrawerHeader className="text-left">
+                        <DrawerTitle className="font-headline">{isEditMode ? 'Edit Asset' : 'Add New Asset'}</DrawerTitle>
+                        <DrawerDescription>
+                            {isEditMode ? 'Update the details for your asset.' : 'Add a new asset to track its value.'}
+                        </DrawerDescription>
+                    </DrawerHeader>
+                    <div className="px-4">
+                        <AssetForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode}/>
+                    </div>
+                </DrawerContent>
+            </Drawer>
+        );
+    }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -204,129 +374,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
                         {isEditMode ? 'Update the details for your asset.' : 'Add a new asset to track its value.'}
                     </DialogDescription>
                 </DialogHeader>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4 max-h-[70vh] overflow-y-auto pr-2">
-                        <FormField
-                            control={form.control}
-                            name="assetType"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FloatingLabelSelect
-                                        label="Asset Type *"
-                                        id="assetType"
-                                        onValueChange={field.onChange}
-                                        value={field.value}
-                                        disabled={isEditMode}
-                                    >
-                                        {Object.entries(ASSET_TYPES).filter(([key]) => key !== 'savings_cash').map(([key, { label }]) => (
-                                             <SelectItem key={key} value={key}>{label}</SelectItem>
-                                        ))}
-                                    </FloatingLabelSelect>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FloatingLabelInput
-                                        label="Asset Name *"
-                                        id="name"
-                                        {...field}
-                                        value={field.value ?? ''}
-                                    />
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="investedAmount"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FloatingLabelInput
-                                            label="Invested Amount"
-                                            id="investedAmount"
-                                            type="number"
-                                            step="0.01"
-                                            {...field}
-                                            value={field.value ?? ''}
-                                        />
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="currentValue"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FloatingLabelInput
-                                            label="Current Value"
-                                            id="currentValue"
-                                            type="number"
-                                            step="0.01"
-                                            {...field}
-                                            value={field.value ?? ''}
-                                        />
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        
-                         <FormField
-                            control={form.control}
-                            name="quantity"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FloatingLabelInput
-                                        label="Quantity"
-                                        id="quantity"
-                                        type="number"
-                                        step="0.001"
-                                        {...field}
-                                        value={field.value ?? ''}
-                                    />
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="startDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <ShadcnLabel>Start Date</ShadcnLabel>
-                                    <DateTimePicker field={field} />
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="notes"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <ShadcnLabel>Notes</ShadcnLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="Any additional notes about this asset..." {...field} value={field.value ?? ''} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <DialogFooter className="pt-4 sticky bottom-0 bg-background/90 pb-2">
-                            <Button type="button" variant="outline" className="w-24" onClick={() => setOpen(false)}>Cancel</Button>
-                            <Button type="submit" disabled={isLoading} className="w-28">
-                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </Form>
+                <AssetForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode}/>
             </DialogContent>
         </Dialog>
     );

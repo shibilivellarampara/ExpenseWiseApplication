@@ -3,13 +3,24 @@
 'use client';
 
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 import { Button } from '../ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,6 +40,7 @@ import { Account, Category, CardDetails } from '@/lib/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 const cardDetailsSchema = z.object({
     cardNickname: z.string().optional(),
@@ -71,6 +83,252 @@ interface AddAccountSheetProps {
     accountToEdit?: Account;
 }
 
+function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onSubmit: (values: AccountFormData) => void, isLoading: boolean, isEditMode: boolean }) {
+    const accountType = form.watch('type');
+    const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
+    
+    const renderIcon = (iconName: string) => {
+        const IconComponent = (LucideIcons as any)[iconName];
+        return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
+    };
+
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-6">
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Account Name</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., Savings Account" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Account Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isEditMode}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select an account type" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="bank">Bank Account</SelectItem>
+                                <SelectItem value="credit_card">Credit Card</SelectItem>
+                                <SelectItem value="wallet">Digital Wallet</SelectItem>
+                                <SelectItem value="cash">Cash</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                {accountType === 'credit_card' && (
+                     <>
+                        <FormField
+                            control={form.control}
+                            name="limit"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Credit Limit</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" step="0.01" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                     </>
+                )}
+                <FormField
+                    control={form.control}
+                    name="balance"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>
+                                {accountType === 'credit_card' ? 'Current Outstanding Amount' : 'Current Balance'}
+                            </FormLabel>
+                            <FormControl>
+                                <Input type="number" step="0.01" placeholder="0.00" {...field} disabled={isEditMode} />
+                            </FormControl>
+                             {accountType !== 'credit_card' && !isEditMode && <FormDescription>An initial transaction will be created for this amount.</FormDescription>}
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                {accountType === 'credit_card' && (
+                    <>
+                         <FormField
+                            control={form.control}
+                            name="cardDetails.statementDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Statement Date (Day of Month)</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" min="1" max="31" placeholder="e.g., 10" {...field} value={field.value ?? ''}/>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="billingDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Payment Due Date (Day of Month)</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" min="1" max="31" placeholder="e.g., 25" {...field} value={field.value ?? ''} />
+                                    </FormControl>
+                                     <FormDescription>Set the day your credit card bill is due.</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </>
+                )}
+                 <FormField
+                    control={form.control}
+                    name="icon"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Icon</FormLabel>
+                            <FormControl>
+                                 <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start">
+                                            {renderIcon(field.value)}
+                                            <span className="ml-2">{field.value}</span>
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto grid grid-cols-5 gap-2">
+                                        {availableIcons.map(icon => (
+                                            <Button key={icon} variant="ghost" size="icon" onClick={() => {field.onChange(icon); setIconPopoverOpen(false);}}>
+                                                {renderIcon(icon)}
+                                            </Button>
+                                        ))}
+                                    </PopoverContent>
+                                </Popover>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {accountType === 'credit_card' && (
+                     <Collapsible>
+                        <CollapsibleTrigger asChild>
+                            <Button variant="link" className="p-0 h-auto flex items-center gap-1">
+                                <ChevronDown className="h-4 w-4" />
+                                Add Card Details (Optional)
+                            </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-4 pt-4">
+                            <Separator />
+                             <FormField
+                                control={form.control}
+                                name="cardDetails.cardNickname"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Card Nickname</FormLabel>
+                                        <FormControl><Input placeholder="e.g., Personal HDFC Card" {...field} value={field.value ?? ''} /></FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="cardDetails.last4Digits"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Last 4 Digits</FormLabel>
+                                        <FormControl><Input placeholder="1234" maxLength={4} {...field} value={field.value ?? ''} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="cardDetails.cardholderName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Cardholder Name</FormLabel>
+                                        <FormControl><Input placeholder="John Doe" {...field} value={field.value ?? ''} /></FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="cardDetails.expiryMonth"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Expiry Month</FormLabel>
+                                            <FormControl><Input type="number" min="1" max="12" placeholder="MM" {...field} value={field.value ?? ''} /></FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="cardDetails.expiryYear"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Expiry Year</FormLabel>
+                                            <FormControl><Input type="number" placeholder="YYYY" {...field} value={field.value ?? ''} /></FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <FormField
+                                control={form.control}
+                                name="cardDetails.network"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Card Network</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select network..." /></SelectTrigger></FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="visa">Visa</SelectItem>
+                                                <SelectItem value="mastercard">Mastercard</SelectItem>
+                                                <SelectItem value="amex">American Express</SelectItem>
+                                                <SelectItem value="discover">Discover</SelectItem>
+                                                <SelectItem value="rupay">RuPay</SelectItem>
+                                                <SelectItem value="other">Other</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </FormItem>
+                                )}
+                            />
+
+                        </CollapsibleContent>
+                    </Collapsible>
+                )}
+
+                <DrawerFooter className="pt-4 px-0 flex-row justify-end gap-2 sm:hidden">
+                    <DrawerClose asChild>
+                        <Button type="button" variant="outline">Cancel</Button>
+                    </DrawerClose>
+                    <Button type="submit" disabled={isLoading} className="w-full">
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Account"}
+                    </Button>
+                </DrawerFooter>
+                 <DialogFooter className="pt-4 hidden sm:flex">
+                     <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Account"}
+                    </Button>
+                </DialogFooter>
+            </form>
+        </Form>
+    );
+}
+
 export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProps) {
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
@@ -78,13 +336,10 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
     const { user } = useUser();
     const firestore = useFirestore();
     const isEditMode = !!accountToEdit;
-    const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
+    const isDesktop = useMediaQuery("(min-width: 768px)");
     
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
     const { data: accounts } = useCollection<Account>(accountsQuery);
-
-    const categoriesQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/categories`) : null, [user, firestore]);
-    const { data: categories } = useCollection<Category>(categoriesQuery);
 
     const form = useForm<AccountFormData>({
         resolver: zodResolver(accountSchema.refine(
@@ -110,10 +365,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
             cardDetails: { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined, statementDate: undefined }
         },
     });
-
-    const accountType = form.watch('type');
-    const statementDate = form.watch('cardDetails.statementDate');
-
 
     useEffect(() => {
         if(open) {
@@ -238,246 +489,37 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
         }
     }
     
-    const renderIcon = (iconName: string) => {
-        const IconComponent = (LucideIcons as any)[iconName];
-        return IconComponent ? <IconComponent className="h-5 w-5" /> : <Pilcrow className="h-5 w-5" />;
-    };
-
+    if (!isDesktop) {
+        return (
+            <Drawer open={open} onOpenChange={setOpen}>
+                <DrawerTrigger asChild>{children}</DrawerTrigger>
+                <DrawerContent>
+                    <DrawerHeader className="text-left">
+                        <DrawerTitle className="font-headline">{isEditMode ? 'Edit Account' : 'Add New Account'}</DrawerTitle>
+                        <DrawerDescription>
+                            {isEditMode ? 'Update the details for your account.' : 'Create a new account to track your finances.'}
+                        </DrawerDescription>
+                    </DrawerHeader>
+                    <div className="overflow-y-auto px-4">
+                        <AccountForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode}/>
+                    </div>
+                </DrawerContent>
+            </Drawer>
+        );
+    }
+    
     return (
-        <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>{children}</SheetTrigger>
-            <SheetContent className="overflow-y-auto">
-                <SheetHeader>
-                    <SheetTitle className="font-headline">{isEditMode ? 'Edit Account' : 'Add New Account'}</SheetTitle>
-                    <SheetDescription>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent className="overflow-y-auto max-h-[90vh]">
+                <DialogHeader>
+                    <DialogTitle className="font-headline">{isEditMode ? 'Edit Account' : 'Add New Account'}</DialogTitle>
+                    <DialogDescription>
                         {isEditMode ? 'Update the details for your account.' : 'Create a new account to track your finances.'}
-                    </SheetDescription>
-                </SheetHeader>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-6">
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Account Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g., Savings Account" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="type"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Account Type</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isEditMode}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select an account type" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="bank">Bank Account</SelectItem>
-                                        <SelectItem value="credit_card">Credit Card</SelectItem>
-                                        <SelectItem value="wallet">Digital Wallet</SelectItem>
-                                        <SelectItem value="cash">Cash</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        {accountType === 'credit_card' && (
-                             <>
-                                <FormField
-                                    control={form.control}
-                                    name="limit"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Credit Limit</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" step="0.01" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                             </>
-                        )}
-                        <FormField
-                            control={form.control}
-                            name="balance"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>
-                                        {accountType === 'credit_card' ? 'Current Outstanding Amount' : 'Current Balance'}
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input type="number" step="0.01" placeholder="0.00" {...field} disabled={isEditMode} />
-                                    </FormControl>
-                                     {accountType !== 'credit_card' && !isEditMode && <FormDescription>An initial transaction will be created for this amount.</FormDescription>}
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        {accountType === 'credit_card' && (
-                            <>
-                                 <FormField
-                                    control={form.control}
-                                    name="cardDetails.statementDate"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Statement Date (Day of Month)</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" min="1" max="31" placeholder="e.g., 10" {...field} value={field.value ?? ''}/>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="billingDate"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Payment Due Date (Day of Month)</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" min="1" max="31" placeholder="e.g., 25" {...field} value={field.value ?? ''} />
-                                            </FormControl>
-                                             <FormDescription>Set the day your credit card bill is due.</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </>
-                        )}
-                         <FormField
-                            control={form.control}
-                            name="icon"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Icon</FormLabel>
-                                    <FormControl>
-                                         <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="outline" className="w-full justify-start">
-                                                    {renderIcon(field.value)}
-                                                    <span className="ml-2">{field.value}</span>
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                                {availableIcons.map(icon => (
-                                                    <Button key={icon} variant="ghost" size="icon" onClick={() => {field.onChange(icon); setIconPopoverOpen(false);}}>
-                                                        {renderIcon(icon)}
-                                                    </Button>
-                                                ))}
-                                            </PopoverContent>
-                                        </Popover>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {accountType === 'credit_card' && (
-                             <Collapsible>
-                                <CollapsibleTrigger asChild>
-                                    <Button variant="link" className="p-0 h-auto flex items-center gap-1">
-                                        <ChevronDown className="h-4 w-4" />
-                                        Add Card Details (Optional)
-                                    </Button>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="space-y-4 pt-4">
-                                    <Separator />
-                                     <FormField
-                                        control={form.control}
-                                        name="cardDetails.cardNickname"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Card Nickname</FormLabel>
-                                                <FormControl><Input placeholder="e.g., Personal HDFC Card" {...field} value={field.value ?? ''} /></FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="cardDetails.last4Digits"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Last 4 Digits</FormLabel>
-                                                <FormControl><Input placeholder="1234" maxLength={4} {...field} value={field.value ?? ''} /></FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                     <FormField
-                                        control={form.control}
-                                        name="cardDetails.cardholderName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Cardholder Name</FormLabel>
-                                                <FormControl><Input placeholder="John Doe" {...field} value={field.value ?? ''} /></FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="cardDetails.expiryMonth"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Expiry Month</FormLabel>
-                                                    <FormControl><Input type="number" min="1" max="12" placeholder="MM" {...field} value={field.value ?? ''} /></FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="cardDetails.expiryYear"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Expiry Year</FormLabel>
-                                                    <FormControl><Input type="number" placeholder="YYYY" {...field} value={field.value ?? ''} /></FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                    <FormField
-                                        control={form.control}
-                                        name="cardDetails.network"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Card Network</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select network..." /></SelectTrigger></FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="visa">Visa</SelectItem>
-                                                        <SelectItem value="mastercard">Mastercard</SelectItem>
-                                                        <SelectItem value="amex">American Express</SelectItem>
-                                                        <SelectItem value="discover">Discover</SelectItem>
-                                                        <SelectItem value="rupay">RuPay</SelectItem>
-                                                        <SelectItem value="other">Other</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                </CollapsibleContent>
-                            </Collapsible>
-                        )}
-
-
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Account"}
-                        </Button>
-                    </form>
-                </Form>
-            </SheetContent>
-        </Sheet>
+                    </DialogDescription>
+                </DialogHeader>
+                <AccountForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode}/>
+            </DialogContent>
+        </Dialog>
     );
 }

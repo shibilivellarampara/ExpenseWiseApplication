@@ -10,5 +10,9 @@ interface MonthlyExpensesPageProps {
 }
 
 export default function MonthlyExpensesPage({ params }: MonthlyExpensesPageProps) {
-  return <MonthlyExpensesClient year={params.year} month={params.month} />;
+  return (
+    <div className="w-full h-full flex flex-col">
+        <MonthlyExpensesClient year={params.year} month={params.month} />
+    </div>
+  );
 }

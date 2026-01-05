@@ -23,7 +23,6 @@ export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
-    const [isScrolled, setIsScrolled] = useState(false);
     const isMobile = useMediaQuery("(max-width: 768px)");
     const [selectedExpenseIds, setSelectedExpenseIds] = useState<string[]>([]);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -175,29 +174,6 @@ export default function ExpensesPage() {
 
     }, [allExpenses, filters, debouncedSearchQuery, categoryMap, accountMap, tagMap, accounts]);
     
-     useEffect(() => {
-        const mainContentEl = document.getElementById('main-content');
-
-        const handleScroll = () => {
-            let scrollTop;
-            if (mainContentEl) {
-                scrollTop = mainContentEl.scrollTop;
-            } else {
-                scrollTop = window.scrollY;
-            }
-
-            setIsScrolled(scrollTop > 10);
-        };
-        
-        const targetElement = mainContentEl || window;
-        targetElement.addEventListener('scroll', handleScroll, { passive: true });
-        handleScroll(); // Initial check
-
-        return () => {
-            targetElement.removeEventListener('scroll', handleScroll);
-        };
-    }, []);
-
     const handleFiltersChange = (newFilters: Filters) => {
         setFilters(newFilters);
     };
@@ -271,7 +247,7 @@ export default function ExpensesPage() {
     };
 
     return (
-        <div className="w-full space-y-4 pb-24">
+        <div className="w-full space-y-4">
             <ExpensesSummary 
                 expenses={filteredAndEnrichedExpenses}
                 currency={userProfile?.defaultCurrency} 
@@ -279,18 +255,13 @@ export default function ExpensesPage() {
                 selectedAccount={selectedAccount} 
             />
 
-            <div className={cn(
-                "sticky top-0 z-20 bg-background/95 backdrop-blur-sm -mx-4 px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 pt-2",
-                 isScrolled ? "pb-2 shadow-sm rounded-b-lg" : "pb-0"
-            )}>
-                 <ExpensesFilters 
-                    filters={filters}
-                    onFiltersChange={handleFiltersChange}
-                    accounts={accounts || []}
-                    categories={categories || []}
-                    tags={tags || []}
-                />
-            </div>
+            <ExpensesFilters 
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                accounts={accounts || []}
+                categories={categories || []}
+                tags={tags || []}
+            />
             
             <ExpensesTable 
                 expenses={filteredAndEnrichedExpenses} 
@@ -320,6 +291,4 @@ export default function ExpensesPage() {
             </div>
         </div>
     );
-
-    
 }

@@ -51,7 +51,7 @@ export default function TransactionsByMonthPage() {
     }, [expenses]);
     
     return (
-        <div className="w-full space-y-8 pb-24">
+        <div className="w-full space-y-8">
             <PageHeader
                 title="Transactions by Month"
                 description="Select a month to view all its transactions."

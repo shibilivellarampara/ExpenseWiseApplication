@@ -60,6 +60,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
     
     const [expandedTags, setExpandedTags] = useState<Record<string, boolean>>({});
     const [selectionMode, setSelectionMode] = useState(false);
+    const parentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setSelectionMode(selectedIds.length > 0);
@@ -109,9 +110,6 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         });
         return rows;
     }, [expenses]);
-
-
-    const parentRef = useRef<HTMLDivElement>(null);
 
     const rowVirtualizer = useVirtualizer({
         count: allRows.length,
@@ -164,7 +162,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                     </div>
                 </div>
             )}
-             <div ref={parentRef} className="h-[calc(100vh-280px)] overflow-y-auto bg-card rounded-lg border">
+             <div ref={parentRef} style={{ height: `calc(100dvh - 280px)`, overflow: 'auto' }} className="rounded-lg border bg-card">
                 <div
                     style={{
                         height: `${rowVirtualizer.getTotalSize()}px`,

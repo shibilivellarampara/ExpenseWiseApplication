@@ -55,26 +55,42 @@ function NewUserCheck() {
     const [isNewUser, setIsNewUser] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
 
-    const expensesQuery = useMemoFirebase(() =>
-        user ? query(collection(firestore, `users/${user.uid}/expenses`), limit(1)) : null
-    , [user, firestore]);
+    const expensesQuery = useMemoFirebase(() => {
+        // Only run the query if we haven't checked this session
+        if (!user || (typeof window !== 'undefined' && window.sessionStorage.getItem('hasCheckedNewUser'))) {
+            return null;
+        }
+        return query(collection(firestore, `users/${user.uid}/expenses`), limit(1));
+    }, [user, firestore]);
 
     const { data: expenses, isLoading } = useCollection<Expense>(expensesQuery);
-
+    
     useEffect(() => {
+        if (typeof window !== 'undefined' && window.sessionStorage.getItem('hasCheckedNewUser')) {
+            setIsChecking(false);
+            setIsNewUser(false);
+            return;
+        }
+
+        // If the query is not running (either because it's done or was skipped), we stop checking.
         if (!isLoading) {
             setIsChecking(false);
             if (expenses) {
-                setIsNewUser(expenses.length === 0);
+                const newUserStatus = expenses.length === 0;
+                setIsNewUser(newUserStatus);
+                 // Once we have a result, set the flag in session storage
+                if (typeof window !== 'undefined') {
+                    window.sessionStorage.setItem('hasCheckedNewUser', 'true');
+                }
             } else {
-                // If there's an error or no user, assume not a new user to avoid showing welcome card.
                 setIsNewUser(false);
             }
         }
     }, [expenses, isLoading]);
 
+
     if (isChecking) {
-        return (
+         return (
             <div className="space-y-6">
                 <Skeleton className="h-44 w-full" />
                 <Skeleton className="h-24 w-full" />
@@ -91,7 +107,7 @@ function NewUserCheck() {
         );
     }
 
-    return null; // Don't render anything if it's not a new user
+    return null; // Don't render anything if it's not a new user or check is complete
 }
 
 type TimeRange = 'week' | 'month' | 'year' | '5year';
@@ -358,3 +374,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    

@@ -20,7 +20,6 @@ import Link from 'next/link';
 import { PlusCircle, Upload } from 'lucide-react';
 import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
 import { A2HSInstallPrompt } from '@/components/pwa/A2HSInstallPrompt';
-import { AppLoader } from '@/components/AppLoader';
 
 function WelcomeCard() {
     return (
@@ -53,32 +52,34 @@ function WelcomeCard() {
 function NewUserCheck() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const [isNewUser, setIsNewUser] = useState(true); // Assume new user initially
+    const [isNewUser, setIsNewUser] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
 
+    const expensesQuery = useMemoFirebase(() =>
+        user ? query(collection(firestore, `users/${user.uid}/expenses`), limit(1)) : null
+    , [user, firestore]);
+
+    const { data: expenses, isLoading } = useCollection<Expense>(expensesQuery);
+
     useEffect(() => {
-        const checkUser = async () => {
-            if (user && firestore) {
-                try {
-                    // A more reliable check for a new user is the absence of any transactions.
-                    const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), limit(1));
-                    const snapshot = await getDocs(expensesQuery);
-                    setIsNewUser(snapshot.empty);
-                } catch (e) {
-                    // If there's an error, assume not a new user to avoid showing the welcome card incorrectly
-                    setIsNewUser(false);
-                } finally {
-                    setIsChecking(false);
-                }
-            } else if (!user) {
-                setIsChecking(false);
+        if (!isLoading) {
+            setIsChecking(false);
+            if (expenses) {
+                setIsNewUser(expenses.length === 0);
+            } else {
+                // If there's an error or no user, assume not a new user to avoid showing welcome card.
+                setIsNewUser(false);
             }
-        };
-        checkUser();
-    }, [user, firestore]);
+        }
+    }, [expenses, isLoading]);
 
     if (isChecking) {
-        return <AppLoader message="Loading your dashboard..." />;
+        return (
+            <div className="space-y-6">
+                <Skeleton className="h-44 w-full" />
+                <Skeleton className="h-24 w-full" />
+            </div>
+        );
     }
 
     if (isNewUser) {

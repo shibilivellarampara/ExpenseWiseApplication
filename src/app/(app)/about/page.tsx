@@ -14,6 +14,15 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.7.8",
+        date: "2026-01-07",
+        changes: [
+            { type: 'UI/UX', description: "Refactored all data-entry forms (e.g., Add Account, Add Debt) to use the modern, consistent floating-label style from the transaction form." },
+            { type: 'UI/UX', description: "Standardized all pop-up forms to use a centered dialog on all screen sizes, removing the inconsistent bottom-sheet behavior on mobile for a more uniform experience." },
+            { type: 'Fix', description: "Resolved multiple build errors caused by incorrect relative import paths in several components, ensuring a stable and reliable build process." },
+        ]
+    },
+    {
         version: "1.7.7",
         date: "2026-01-03",
         changes: [
@@ -567,3 +576,6 @@ export default function AboutPage() {
 
     
 
+
+
+    

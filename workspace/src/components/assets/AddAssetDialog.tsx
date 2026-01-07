@@ -34,7 +34,7 @@ import { useState, useEffect } from 'react';
 import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp, doc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Asset, AssetType, EnrichedAsset } from '@/lib/types';
 import { ASSET_TYPES } from '@/lib/assets';
 import { DateTimePicker } from '../DateTimePicker';
@@ -265,7 +265,6 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
     const { user } = useUser();
     const firestore = useFirestore();
     const isEditMode = !!assetToEdit;
-    const isDesktop = useMediaQuery("(min-width: 768px)");
 
     const form = useForm<AssetFormData>({
         resolver: zodResolver(assetSchema),
@@ -343,27 +342,10 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
         }
     }
     
-    if (!isDesktop) {
-        return (
-            <Drawer open={open} onOpenChange={setOpen}>
-                <DrawerTrigger asChild>{children}</DrawerTrigger>
-                <DrawerContent>
-                    <DrawerHeader className="text-left">
-                        <DrawerTitle className="font-headline">{isEditMode ? 'Edit Asset' : 'Add New Asset'}</DrawerTitle>
-                        <DrawerDescription>
-                            {isEditMode ? 'Update the details for your asset.' : 'Add a new asset to track its value.'}
-                        </DrawerDescription>
-                    </DrawerHeader>
-                    <AssetForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode} onCancel={() => setOpen(false)}/>
-                </DrawerContent>
-            </Drawer>
-        );
-    }
-
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="font-headline">{isEditMode ? 'Edit Asset' : 'Add New Asset'}</DialogTitle>
                     <DialogDescription>

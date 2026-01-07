@@ -19,6 +19,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
+  DrawerClose as VaulDrawerClose,
 } from "@/components/ui/drawer"
 import {
   AlertDialog,
@@ -730,9 +731,9 @@ export function AddExpenseDialog({
                                     </AlertDialogContent>
                                 </AlertDialog>
                             ) : (
-                                <DrawerClose asChild>
+                                <VaulDrawerClose asChild>
                                     <Button type="button" variant="outline">Cancel</Button>
-                                </DrawerClose>
+                                </VaulDrawerClose>
                             )}
                         </div>
                         <div className="flex gap-2 justify-end">

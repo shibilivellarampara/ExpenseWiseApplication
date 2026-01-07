@@ -98,12 +98,12 @@ export function BottomNav() {
         className="fixed bottom-0 left-0 right-0 z-40 w-full pointer-events-none" 
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px))' }}
     >
-        <div className="relative mx-auto w-full px-4">
+        <div className="relative mx-auto w-full max-w-lg px-4">
             
             {/* Secondary Navigation Row */}
             <div
                 className={cn(
-                    "flex justify-around items-center bg-background/80 backdrop-blur-md border rounded-full h-16 transition-all duration-200 ease-in-out py-1 mb-2 pointer-events-auto",
+                    "flex justify-around items-center bg-background/80 dark:bg-background/100 backdrop-blur-md border rounded-full h-16 transition-all duration-200 ease-in-out py-1 mb-2 pointer-events-auto",
                     isExpanded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
                 )}
             >
@@ -118,7 +118,7 @@ export function BottomNav() {
             {/* Primary Navigation Container */}
              <div className="relative h-16 pointer-events-auto">
                 {/* Primary Oval Bar */}
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-md rounded-full shadow-[0_6px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 flex items-center justify-around px-4">
+                <div className="absolute inset-0 bg-background/80 dark:bg-background/100 backdrop-blur-md rounded-full shadow-[0_6px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 flex items-center justify-around px-4">
                     <NavLink href="/dashboard" currentPath={pathname}>
                         <LayoutDashboard className="h-6 w-6" />
                         <span className="text-xs">Dashboard</span>

@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -52,14 +50,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
-import { DateTimePicker } from '@/components/DateTimePicker';
+import { DateTimePicker } from '../DateTimePicker';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
   let schema = z.object({
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
-    amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
+    amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
     
     categoryId: z.string().optional(),
@@ -728,7 +726,7 @@ export function AddExpenseDialog({
                          {!isEditMode && (
                             <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline" className="min-w-[120px]">
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save and New
+                                Save & New
                             </Button>
                          )}
                          <Button type="submit" form={formId} disabled={isLoading} className="min-w-[120px]">
@@ -1092,4 +1090,3 @@ function useExpenseForm({
       tags: tags || []
     };
 }
-

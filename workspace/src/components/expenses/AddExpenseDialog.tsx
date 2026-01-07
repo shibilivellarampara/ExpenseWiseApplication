@@ -1,3 +1,5 @@
+
+
 'use client';
 
 import {
@@ -9,6 +11,15 @@ import {
   DialogTitle,
   DialogClose,
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -670,7 +681,8 @@ export function AddExpenseDialog({
     onSaveSuccess?: () => void;
 }) {
     const [open, setOpen] = useState(false);
-    
+    const isDesktop = useMediaQuery("(min-width: 768px)");
+
     const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen, 
         expenseToEdit, 
@@ -678,6 +690,68 @@ export function AddExpenseDialog({
         open,
         onSaveSuccess,
     });
+    
+    const FormContent = () => (
+        <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} />
+    );
+    
+    if (!isDesktop) {
+        return (
+            <Drawer open={open} onOpenChange={setOpen}>
+                <DrawerTrigger asChild>{children}</DrawerTrigger>
+                <DrawerContent>
+                     <DrawerHeader className="text-left">
+                        <DrawerTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add New Transaction'}</DrawerTitle>
+                    </DrawerHeader>
+                    <div className="px-4 overflow-y-auto">
+                        <FormContent />
+                    </div>
+                     <DrawerFooter className="pt-4 flex-row justify-between w-full">
+                        <div className="flex items-center">
+                            {isEditMode ? (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button type="button" variant="destructive" disabled={isLoading}>
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>This will permanently delete this transaction.</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            ) : (
+                                <DrawerClose asChild>
+                                    <Button type="button" variant="outline">Cancel</Button>
+                                </DrawerClose>
+                            )}
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                            {!isEditMode && (
+                                <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline" className="min-w-[120px]">
+                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Save & New
+                                </Button>
+                            )}
+                            <Button type="submit" form={formId} disabled={isLoading} className="min-w-[120px]">
+                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {isEditMode ? 'Save Changes' : 'Save'}
+                            </Button>
+                        </div>
+                    </DrawerFooter>
+                </DrawerContent>
+            </Drawer>
+        );
+    }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -687,7 +761,7 @@ export function AddExpenseDialog({
                     <DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} />
+                    <FormContent />
                 </div>
                  <DialogFooter className="flex-row justify-between w-full">
                     <div className="flex items-center">
@@ -702,9 +776,7 @@ export function AddExpenseDialog({
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete this transaction.
-                                        </AlertDialogDescription>
+                                        <AlertDialogDescription>This will permanently delete this transaction.</AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>

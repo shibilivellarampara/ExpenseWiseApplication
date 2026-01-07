@@ -10,17 +10,8 @@ import {
   DialogTitle,
   DialogFooter,
   DialogTrigger,
+  DialogClose,
 } from '@/components/ui/dialog';
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
 import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -342,16 +333,11 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                     </Collapsible>
                 )}
 
-                <DrawerFooter className="pt-4 px-0 flex-row justify-end gap-2 sm:hidden">
-                    <DrawerClose asChild>
+                 <DialogFooter className="pt-4">
+                     <DialogClose asChild>
                         <Button type="button" variant="outline">Cancel</Button>
-                    </DrawerClose>
-                    <Button type="submit" disabled={isLoading} className="w-full">
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Account"}
-                    </Button>
-                </DrawerFooter>
-                 <DialogFooter className="pt-4 hidden sm:flex">
-                     <Button type="submit" className="w-full" disabled={isLoading}>
+                     </DialogClose>
+                     <Button type="submit" disabled={isLoading}>
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Account"}
                     </Button>
                 </DialogFooter>
@@ -367,7 +353,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
     const { user } = useUser();
     const firestore = useFirestore();
     const isEditMode = !!accountToEdit;
-    const isDesktop = useMediaQuery("(min-width: 768px)");
     
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
     const { data: accounts } = useCollection<Account>(accountsQuery);
@@ -518,25 +503,6 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
         } finally {
             setIsLoading(false);
         }
-    }
-    
-    if (!isDesktop) {
-        return (
-            <Drawer open={open} onOpenChange={setOpen}>
-                <DrawerTrigger asChild>{children}</DrawerTrigger>
-                <DrawerContent>
-                    <DrawerHeader className="text-left">
-                        <DrawerTitle className="font-headline">{isEditMode ? 'Edit Account' : 'Add New Account'}</DrawerTitle>
-                        <DrawerDescription>
-                            {isEditMode ? 'Update the details for your account.' : 'Create a new account to track your finances.'}
-                        </DrawerDescription>
-                    </DrawerHeader>
-                    <div className="overflow-y-auto px-4">
-                        <AccountForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode}/>
-                    </div>
-                </DrawerContent>
-            </Drawer>
-        );
     }
     
     return (

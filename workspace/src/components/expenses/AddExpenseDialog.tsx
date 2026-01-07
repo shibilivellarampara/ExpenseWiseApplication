@@ -12,16 +12,6 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-  DrawerClose as VaulDrawerClose,
-} from "@/components/ui/drawer"
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -682,7 +672,6 @@ export function AddExpenseDialog({
     onSaveSuccess?: () => void;
 }) {
     const [open, setOpen] = useState(false);
-    const isDesktop = useMediaQuery("(min-width: 768px)");
 
     const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen, 
@@ -696,64 +685,6 @@ export function AddExpenseDialog({
         <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} />
     );
     
-    if (!isDesktop) {
-        return (
-            <Drawer open={open} onOpenChange={setOpen}>
-                <DrawerTrigger asChild>{children}</DrawerTrigger>
-                <DrawerContent>
-                     <DrawerHeader className="text-left">
-                        <DrawerTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add New Transaction'}</DrawerTitle>
-                    </DrawerHeader>
-                    <div className="px-4 overflow-y-auto">
-                        <FormContent />
-                    </div>
-                     <DrawerFooter className="pt-4 flex-row justify-between w-full">
-                        <div className="flex items-center">
-                            {isEditMode ? (
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button type="button" variant="destructive" disabled={isLoading}>
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Delete
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>This will permanently delete this transaction.</AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            ) : (
-                                <VaulDrawerClose asChild>
-                                    <Button type="button" variant="outline">Cancel</Button>
-                                </VaulDrawerClose>
-                            )}
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                            {!isEditMode && (
-                                <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline" className="min-w-[120px]">
-                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Save & New
-                                </Button>
-                            )}
-                            <Button type="submit" form={formId} disabled={isLoading} className="min-w-[120px]">
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {isEditMode ? 'Save Changes' : 'Save'}
-                            </Button>
-                        </div>
-                    </DrawerFooter>
-                </DrawerContent>
-            </Drawer>
-        );
-    }
-
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>

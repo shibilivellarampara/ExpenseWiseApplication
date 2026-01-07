@@ -10,17 +10,8 @@ import {
   DialogTitle,
   DialogFooter,
   DialogTrigger,
+  DialogClose,
 } from '@/components/ui/dialog';
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
 import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -188,16 +179,10 @@ function DebtForm({ form, onSubmit, isLoading, personName, onCancel }: { form: a
                         </FormItem>
                     )}
                 />
-                 <DrawerFooter className="pt-4 px-0 flex-row justify-end gap-2 sm:hidden">
-                    <DrawerClose asChild>
+                 <DialogFooter className="pt-4">
+                    <DialogClose asChild>
                         <Button type="button" variant="outline">Cancel</Button>
-                    </DrawerClose>
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
-                    </Button>
-                </DrawerFooter>
-                 <DialogFooter className="pt-4 hidden sm:flex">
-                    <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+                    </DialogClose>
                     <Button type="submit" disabled={isLoading}>
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
                     </Button>
@@ -212,7 +197,6 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
-    const isDesktop = useMediaQuery("(min-width: 768px)");
     
     // Internal state for uncontrolled component
     const [internalOpen, setInternalOpen] = useState(false);
@@ -280,37 +264,18 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
         }
     }
     
-    if (isDesktop) {
-        return (
-            <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogTrigger asChild>{children}</DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt or Due'}</DialogTitle>
-                        <DialogDescription>
-                            Track money you've lent to others or borrowed from them.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} personName={personName} onCancel={() => onOpenChange(false)}/>
-                </DialogContent>
-            </Dialog>
-        );
-    }
-    
     return (
-        <Drawer open={open} onOpenChange={onOpenChange}>
-            <DrawerTrigger asChild>{children}</DrawerTrigger>
-            <DrawerContent>
-                 <DrawerHeader className="text-left">
-                    <DrawerTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt or Due'}</DrawerTitle>
-                    <DrawerDescription>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt or Due'}</DialogTitle>
+                    <DialogDescription>
                         Track money you've lent to others or borrowed from them.
-                    </DrawerDescription>
-                </DrawerHeader>
-                 <div className="px-4">
-                    <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} personName={personName} onCancel={() => onOpenChange(false)}/>
-                </div>
-            </DrawerContent>
-        </Drawer>
+                    </DialogDescription>
+                </DialogHeader>
+                <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} personName={personName} onCancel={() => onOpenChange(false)}/>
+            </DialogContent>
+        </Dialog>
     );
 }

@@ -95,7 +95,7 @@ export function BottomNav() {
   return (
     <div 
         ref={navRef} 
-        className="fixed bottom-0 left-0 right-0 z-40 w-full max-w-sm mx-auto pointer-events-none" 
+        className="fixed bottom-0 left-0 right-0 z-40 w-full pointer-events-none" 
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px))' }}
     >
         <div className="relative mx-auto w-full px-4">

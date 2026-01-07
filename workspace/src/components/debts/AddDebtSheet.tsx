@@ -291,7 +291,7 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
                             Track money you've lent to others or borrowed from them.
                         </DialogDescription>
                     </DialogHeader>
-                    <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} personName={personName} onCancel={() => onOpenChange(false)}/>
+                    <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} personName={personName} onCancel={() => onOpenChange(false)} />
                 </DialogContent>
             </Dialog>
         );

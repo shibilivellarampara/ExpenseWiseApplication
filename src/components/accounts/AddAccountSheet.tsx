@@ -10,8 +10,18 @@ import {
   DialogTitle,
   DialogFooter,
   DialogTrigger,
-  DialogClose,
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
+
 import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,6 +42,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import React from 'react';
 
 const cardDetailsSchema = z.object({
     cardNickname: z.string().optional(),
@@ -47,7 +58,7 @@ const cardDetailsSchema = z.object({
 const accountSchemaBase = z.object({
     name: z.string().min(1, 'Account name is required.'),
     type: z.enum(['bank', 'credit_card', 'wallet', 'cash']),
-    balance: z.coerce.number().step(0.01).optional(),
+    balance: z.coerce.number({invalid_type_error: "Please enter a valid amount"}).step(0.01).optional(),
     limit: z.coerce.number().optional(),
     billingDate: z.coerce.number().min(1).max(31).optional(),
     icon: z.string().min(1, "Icon is required."),
@@ -110,7 +121,16 @@ const FloatingLabelSelect = forwardRef<HTMLButtonElement, React.ComponentProps<t
             <div className="relative">
                  <Select onValueChange={onValueChange} value={value}>
                     <SelectTrigger ref={ref} id={id} className={cn("peer h-14 pt-4 text-base floating-input", className)} data-has-value={hasValue} {...props}>
-                        <SelectValue placeholder=" "/>
+                        <div className="flex items-center gap-2">
+                            {value && (
+                                <div className="flex items-center gap-2">
+                                    {(value === 'bank' || value === 'credit_card' || value === 'wallet' || value === 'cash') && (
+                                         <LucideIcons.Landmark className="h-4 w-4" />
+                                    )}
+                                    <SelectValue placeholder=" "/>
+                                </div>
+                            )}
+                        </div>
                     </SelectTrigger>
                     <SelectContent>
                         {children}
@@ -132,7 +152,7 @@ const FloatingLabelSelect = forwardRef<HTMLButtonElement, React.ComponentProps<t
 );
 FloatingLabelSelect.displayName = 'FloatingLabelSelect';
 
-function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onSubmit: (values: AccountFormData) => void, isLoading: boolean, isEditMode: boolean }) {
+function AccountForm({ form, onSubmit, isLoading, isEditMode, onCancel }: { form: any, onSubmit: (values: AccountFormData) => void, isLoading: boolean, isEditMode: boolean, onCancel: () => void }) {
     const accountType = form.watch('type');
     const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
     
@@ -160,10 +180,26 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                     render={({ field }) => (
                         <FormItem>
                              <FloatingLabelSelect label="Account Type *" id="type" onValueChange={field.onChange} value={field.value} disabled={isEditMode}>
-                                <SelectItem value="bank">Bank Account</SelectItem>
-                                <SelectItem value="credit_card">Credit Card</SelectItem>
-                                <SelectItem value="wallet">Digital Wallet</SelectItem>
-                                <SelectItem value="cash">Cash</SelectItem>
+                                <SelectItem value="bank">
+                                    <div className="flex items-center gap-2">
+                                        <LucideIcons.Landmark className="h-4 w-4" /> Bank Account
+                                    </div>
+                                </SelectItem>
+                                <SelectItem value="credit_card">
+                                     <div className="flex items-center gap-2">
+                                        <LucideIcons.CreditCard className="h-4 w-4" /> Credit Card
+                                    </div>
+                                </SelectItem>
+                                <SelectItem value="wallet">
+                                     <div className="flex items-center gap-2">
+                                        <LucideIcons.Wallet className="h-4 w-4" /> Digital Wallet
+                                    </div>
+                                </SelectItem>
+                                <SelectItem value="cash">
+                                     <div className="flex items-center gap-2">
+                                        <LucideIcons.HandCoins className="h-4 w-4" /> Cash
+                                    </div>
+                                </SelectItem>
                              </FloatingLabelSelect>
                         <FormMessage />
                         </FormItem>
@@ -332,12 +368,18 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                         </CollapsibleContent>
                     </Collapsible>
                 )}
-
-                 <DialogFooter className="pt-4">
-                     <DialogClose asChild>
-                        <Button type="button" variant="outline">Cancel</Button>
-                     </DialogClose>
-                     <Button type="submit" disabled={isLoading}>
+                
+                 <DrawerFooter className="pt-4 px-0 flex-row justify-end gap-2 sm:hidden">
+                    <DrawerClose asChild>
+                        <Button type="button" variant="outline" className="w-24">Cancel</Button>
+                    </DrawerClose>
+                    <Button type="submit" disabled={isLoading} className="w-28">
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Account"}
+                    </Button>
+                </DrawerFooter>
+                 <DialogFooter className="pt-4 hidden sm:flex">
+                    <Button type="button" variant="outline" className="w-24" onClick={onCancel}>Cancel</Button>
+                    <Button type="submit" disabled={isLoading} className="w-28">
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Account"}
                     </Button>
                 </DialogFooter>
@@ -353,6 +395,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
     const { user } = useUser();
     const firestore = useFirestore();
     const isEditMode = !!accountToEdit;
+    const isMobile = useMediaQuery("(max-width: 640px)");
     
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
     const { data: accounts } = useCollection<Account>(accountsQuery);
@@ -505,6 +548,25 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
         }
     }
     
+    if (isMobile) {
+        return (
+            <Drawer open={open} onOpenChange={setOpen}>
+                <DrawerTrigger asChild>{children}</DrawerTrigger>
+                <DrawerContent>
+                     <DrawerHeader>
+                        <DrawerTitle className="font-headline">{isEditMode ? 'Edit Account' : 'Add New Account'}</DrawerTitle>
+                        <DrawerDescription>
+                            {isEditMode ? 'Update the details for your account.' : 'Create a new account to track your finances.'}
+                        </DrawerDescription>
+                    </DrawerHeader>
+                    <div className="overflow-y-auto px-4">
+                        <AccountForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode} onCancel={() => setOpen(false)}/>
+                    </div>
+                </DrawerContent>
+            </Drawer>
+        );
+    }
+    
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
@@ -515,7 +577,7 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                         {isEditMode ? 'Update the details for your account.' : 'Create a new account to track your finances.'}
                     </DialogDescription>
                 </DialogHeader>
-                <AccountForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode}/>
+                <AccountForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode} onCancel={() => setOpen(false)}/>
             </DialogContent>
         </Dialog>
     );

@@ -35,7 +35,7 @@ import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
-import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy, where, getDocs } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy, where, getDocs, deleteField } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import * as LucideIcons from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
@@ -53,6 +53,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import { DateTimePicker } from '../DateTimePicker';
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -672,6 +673,7 @@ export function AddExpenseDialog({
     onSaveSuccess?: () => void;
 }) {
     const [open, setOpen] = useState(false);
+    const isMobile = useMediaQuery("(max-width: 640px)");
 
     const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen, 
@@ -685,6 +687,66 @@ export function AddExpenseDialog({
         <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} />
     );
     
+    if (isMobile) {
+        return (
+            <Drawer open={open} onOpenChange={setOpen}>
+                <DrawerTrigger asChild>{children}</DrawerTrigger>
+                <DrawerContent>
+                    <DrawerHeader>
+                        <DrawerTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add Transaction'}</DrawerTitle>
+                    </DrawerHeader>
+                    <div className="px-4 overflow-y-auto">
+                        <FormContent />
+                    </div>
+                    <DrawerFooter className="pt-2 flex-row justify-between w-full">
+                        <div className="flex items-center">
+                            {isEditMode ? (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button type="button" variant="destructive" disabled={isLoading}>
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>This will permanently delete this transaction.</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            ) : (
+                                <DrawerClose asChild>
+                                    <Button type="button" variant="outline">
+                                        Cancel
+                                    </Button>
+                                </DrawerClose>
+                            )}
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                            {!isEditMode && (
+                                <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline" className="min-w-[120px]">
+                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Save & New
+                                </Button>
+                            )}
+                             <Button type="submit" form={formId} disabled={isLoading} className="min-w-[120px]">
+                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {isEditMode ? 'Save Changes' : 'Save'}
+                            </Button>
+                        </div>
+                    </DrawerFooter>
+                </DrawerContent>
+            </Drawer>
+        )
+    }
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>

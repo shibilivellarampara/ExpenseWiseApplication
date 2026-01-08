@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -50,9 +51,6 @@ export function AddExpenseDialog({
         isLoading, 
         isEditMode, 
         formId,
-        accounts,
-        categories,
-        tags,
     } = useExpenseForm({
         setOpen, 
         expenseToEdit, 
@@ -73,9 +71,6 @@ export function AddExpenseDialog({
                         form={form} 
                         onSubmit={onFinalSubmit} 
                         id={formId}
-                        accounts={accounts}
-                        categories={categories}
-                        tags={tags}
                     />
                 </div>
                  <DialogFooter className="flex-row justify-between w-full">

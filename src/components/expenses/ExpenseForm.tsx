@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useForm, UseFormReturn } from 'react-hook-form';
@@ -664,9 +665,11 @@ export function useExpenseForm({
     
     const userCategoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [user, firestore]);
     const userAccountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [user, firestore]);
+    const userTagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [user, firestore]);
 
     const { data: userCategories } = useCollection<Category>(userCategoriesQuery);
     const { data: userAccounts } = useCollection<Account>(userAccountsQuery);
+    const { data: userTags } = useCollection<Tag>(userTagsQuery);
 
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
     

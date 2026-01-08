@@ -28,6 +28,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '../DateTimePicker';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -971,6 +972,9 @@ export function useExpenseForm({
       handleDelete, 
       isLoading, 
       isEditMode, 
-      formId
+      formId,
+      accounts: userAccounts || [],
+      categories: userCategories || [],
+      tags: userTags || []
     };
 }

@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useForm, UseFormReturn } from 'react-hook-form';
@@ -344,12 +342,9 @@ interface ExpenseFormProps {
   form: UseFormReturn<any>;
   onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
   id: string;
-  accounts: Account[];
-  categories: Category[];
-  tags: Tag[];
 }
 
-export const ExpenseForm = React.memo(({ form, onSubmit, id, accounts, categories, tags }: ExpenseFormProps) => {
+export const ExpenseForm = React.memo(({ form, onSubmit, id }: ExpenseFormProps) => {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -357,6 +352,13 @@ export const ExpenseForm = React.memo(({ form, onSubmit, id, accounts, categorie
     // Fetch user-specific data
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+    const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [user, firestore]);
+    const accountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [user, firestore]);
+    const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [user, firestore]);
+    const { data: categories } = useCollection<Category>(categoriesQuery);
+    const { data: accounts } = useCollection<Account>(accountsQuery);
+    const { data: tags } = useCollection<Tag>(tagsQuery);
     
     const transactionType = form.watch('type');
     const descriptionValue = form.watch('description');
@@ -636,7 +638,6 @@ interface UseExpenseFormProps {
     setOpen: (open: boolean) => void;
     expenseToEdit?: EnrichedExpense; 
     initialType?: 'income' | 'expense';
-    open: boolean;
     onSaveSuccess?: () => void;
 }
 
@@ -644,7 +645,6 @@ export function useExpenseForm({
     setOpen,
     expenseToEdit,
     initialType,
-    open,
     onSaveSuccess,
 }: UseExpenseFormProps) {
     const { toast } = useToast();
@@ -654,21 +654,11 @@ export function useExpenseForm({
     const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
     const isEditMode = !!expenseToEdit;
 
-    // Fetch user-specific data
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-    
-    const userCategoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [user, firestore]);
-    const userAccountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [user, firestore]);
-    const userTagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [user, firestore]);
-
-    const { data: userCategories } = useCollection<Category>(userCategoriesQuery);
-    const { data: userAccounts } = useCollection<Account>(userAccountsQuery);
-    const { data: userTags } = useCollection<Tag>(userTagsQuery);
 
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
     
-    // Function to get clean default values
     const getNewFormValues = useCallback((keepDate?: Date, keepAccount?: string) => {
         let type: 'income' | 'expense' = 'expense';
         if (initialType) {
@@ -691,24 +681,21 @@ export function useExpenseForm({
         defaultValues: getNewFormValues(),
     });
     
-    // Effect to reset the form when the dialog opens
     useEffect(() => {
-        if (open) {
-            if (isEditMode && expenseToEdit) {
-                form.reset({
-                    type: expenseToEdit.type,
-                    amount: expenseToEdit.amount,
-                    date: expenseToEdit.date,
-                    accountId: expenseToEdit.account?.id || '',
-                    categoryId: expenseToEdit.category?.id || '',
-                    description: expenseToEdit.description || '',
-                    tagIds: expenseToEdit.tags?.map(t => t.id) || [],
-                });
-            } else {
-                 form.reset(getNewFormValues());
-            }
+        if (isEditMode && expenseToEdit) {
+            form.reset({
+                type: expenseToEdit.type,
+                amount: expenseToEdit.amount,
+                date: expenseToEdit.date,
+                accountId: expenseToEdit.account?.id || '',
+                categoryId: expenseToEdit.category?.id || '',
+                description: expenseToEdit.description || '',
+                tagIds: expenseToEdit.tags?.map(t => t.id) || [],
+            });
+        } else {
+             form.reset(getNewFormValues());
         }
-    }, [open, isEditMode, expenseToEdit, form, getNewFormValues]);
+    }, [isEditMode, expenseToEdit, form, getNewFormValues]);
 
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
@@ -716,17 +703,18 @@ export function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Authentication not ready.' });
             return false;
         }
-        if (!userCategories) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Required data (categories) is not loaded.' });
-            return false;
-        }
+       
         setIsLoading(true);
 
         try {
             const batch = writeBatch(firestore);
             const collectionPath = `users/${user.uid}/expenses`;
-            const allCategories = userCategories || [];
-            const allAccounts = userAccounts || [];
+
+            const categoriesSnapshot = await getDocs(collection(firestore, `users/${user.uid}/categories`));
+            const allCategories = categoriesSnapshot.docs.map(doc => doc.data() as Category);
+
+            const accountsSnapshot = await getDocs(collection(firestore, `users/${user.uid}/accounts`));
+            const allAccounts = accountsSnapshot.docs.map(doc => doc.data() as Account);
 
             const finalCategoryId = values.categoryId === '__none__' ? undefined : values.categoryId;
             const selectedCategory = allCategories.find(c => c.id === finalCategoryId);
@@ -801,7 +789,7 @@ export function useExpenseForm({
                     if (!previousExpense) { // New transaction
                         batch.update(accountRef, updatePayload);
                     } else { // Editing transaction
-                        const oldCategoryName = userCategories?.find(c => c.id === previousExpense.category?.id)?.name;
+                        const oldCategoryName = allCategories?.find(c => c.id === previousExpense.category?.id)?.name;
                         const oldType = previousExpense.type;
                         const oldAmount = previousExpense.amount;
                         
@@ -912,18 +900,21 @@ export function useExpenseForm({
     });
 
     const handleDelete = async () => {
-        if (!firestore || !user || !isEditMode || !expenseToEdit || !userAccounts || !userCategories) {
+        if (!firestore || !user || !isEditMode || !expenseToEdit) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction. Required data missing.' });
             return;
         }
+
+        const categoriesSnapshot = await getDocs(collection(firestore, `users/${user.uid}/categories`));
+        const allCategories = categoriesSnapshot.docs.map(doc => doc.data() as Category);
+        const accountsSnapshot = await getDocs(collection(firestore, `users/${user.uid}/accounts`));
+        const allAccounts = accountsSnapshot.docs.map(doc => doc.data() as Account);
+
         setIsLoading(true);
         try {
             const batch = writeBatch(firestore);
             const collectionPath = `users/${user.uid}/expenses`;
             const expenseRef = doc(firestore, collectionPath, expenseToEdit.id);
-
-            const allCategories = userCategories || [];
-            const allAccounts = userAccounts || [];
 
             const selectedCategory = allCategories.find(c => c.id === expenseToEdit.category?.id);
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
@@ -971,8 +962,5 @@ export function useExpenseForm({
       isLoading, 
       isEditMode, 
       formId,
-      accounts: userAccounts || [],
-      categories: userCategories || [],
-      tags: userTags || []
     };
 }

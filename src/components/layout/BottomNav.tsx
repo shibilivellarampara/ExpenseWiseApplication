@@ -170,7 +170,7 @@ export function BottomNav() {
                             </Link>
 
                              <div className={cn("absolute inset-0 flex items-center justify-center transition-all duration-300", !isTransactionsPage && "opacity-0 scale-0 -rotate-180 pointer-events-none")}>
-                                <Plus className="h-8 w-8" />
+                                <Plus className="h-7 w-7" />
                             </div>
                             
                             <span className="sr-only">Add Transaction or Navigate</span>

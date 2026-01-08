@@ -344,9 +344,12 @@ interface ExpenseFormProps {
   form: UseFormReturn<any>;
   onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
   id: string;
+  accounts: Account[];
+  categories: Category[];
+  tags: Tag[];
 }
 
-export const ExpenseForm = React.memo(({ form, onSubmit, id }: ExpenseFormProps) => {
+export const ExpenseForm = React.memo(({ form, onSubmit, id, accounts, categories, tags }: ExpenseFormProps) => {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -355,14 +358,6 @@ export const ExpenseForm = React.memo(({ form, onSubmit, id }: ExpenseFormProps)
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     
-    const userCategoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [user, firestore]);
-    const userAccountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [user, firestore]);
-    const userTagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [user, firestore]);
-
-    const { data: categories } = useCollection<Category>(userCategoriesQuery);
-    const { data: accounts } = useCollection<Account>(userAccountsQuery);
-    const { data: tags } = useCollection<Tag>(userTagsQuery);
-
     const transactionType = form.watch('type');
     const descriptionValue = form.watch('description');
     const categoryIdValue = form.watch('categoryId');

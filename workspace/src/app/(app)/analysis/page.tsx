@@ -248,7 +248,7 @@ export default function AnalysisPage() {
     const months = useMemo(() => Array.from({ length: 12 }, (_, i) => ({ value: i, label: format(new Date(0, i), 'MMMM') })), []);
 
     useEffect(() => {
-        if (availableYears.length > 0 && getYear(specificMonth) !== parseInt(availableYears[0])) {
+        if (availableYears.length > 0 && !availableYears.includes(getYear(specificMonth).toString())) {
             const newDate = new Date(specificMonth);
             newDate.setFullYear(parseInt(availableYears[0]));
             setSpecificMonth(newDate);
@@ -375,13 +375,13 @@ export default function AnalysisPage() {
         'week': 'This Week',
         'month': 'This Month',
         'last-month': 'Last Month',
-        '3-months': 'Last 3 Months',
-        '6-months': 'Last 6 Months',
+        '3-months': 'Last 3 mo',
+        '6-months': 'Last 6 mo',
         'year': 'This Year',
         'last-year': 'Last Year',
         'all': 'All Time',
         'specific-month': format(specificMonth, 'MMM yy'),
-        'custom': 'Custom Range'
+        'custom': 'Custom...'
     };
 
     return (
@@ -390,7 +390,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-1 justify-end">
+                 <div className="flex items-center gap-1 flex-nowrap">
                     
                     <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -416,8 +416,8 @@ export default function AnalysisPage() {
                                     <CommandItem onSelect={() => { handleTimeRangeChange('last-year'); setMonthPopoverOpen(false); }}>Last Year</CommandItem>
                                     <CommandItem onSelect={() => { handleTimeRangeChange('all'); setMonthPopoverOpen(false); }}>All Time</CommandItem>
                                 </CommandGroup>
-                                <DropdownMenuSeparator />
-                                <CommandGroup>
+                                <CommandGroup className="border-t">
+                                     <CommandItem onSelect={() => handleTimeRangeChange('custom')}>Custom Range</CommandItem>
                                     <CommandItem onSelect={() => handleTimeRangeChange('specific-month')}>
                                         <div className="w-full">
                                             Specific Month
@@ -453,7 +453,6 @@ export default function AnalysisPage() {
                                             )}
                                         </div>
                                     </CommandItem>
-                                    <CommandItem onSelect={() => handleTimeRangeChange('custom')}>Custom Range</CommandItem>
                                 </CommandGroup>
                             </Command>
                         </PopoverContent>
@@ -462,7 +461,13 @@ export default function AnalysisPage() {
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="w-full sm:w-auto justify-between">
-                                <span>{selectedAccounts.length > 0 ? `${selectedAccounts.length} a/c` : "All a/c"}</span>
+                                <span>
+                                    {selectedAccounts.length === 0
+                                        ? "All Accts"
+                                        : selectedAccounts.length === 1
+                                        ? "1 Acct"
+                                        : `${selectedAccounts.length} Accts`}
+                                </span>
                                 <ChevronDown className="h-4 w-4 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -499,7 +504,7 @@ export default function AnalysisPage() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="w-full sm:w-auto justify-between pr-8">
-                                    <span>{selectedTags.length > 0 ? `${selectedTags.length} tags` : "All Tags"}</span>
+                                    <span>{selectedTags.length === 0 ? "All Tags" : selectedTags.length === 1 ? "1 Tag" : `${selectedTags.length} Tags`}</span>
                                     <ChevronDown className="h-4 w-4 opacity-50" />
                                 </Button>
                             </DropdownMenuTrigger>
@@ -730,3 +735,8 @@ export default function AnalysisPage() {
     
 
     
+
+    
+
+
+

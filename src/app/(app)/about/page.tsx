@@ -14,6 +14,17 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.7.7",
+        date: "2026-01-11",
+        changes: [
+            { type: 'Feature', description: "Added robust filtering and sorting options to the 'Debts & Dues' page." },
+            { type: 'UI/UX', description: "Consolidated debt filters into a single, clean row of dropdowns for a better user experience." },
+            { type: 'UI/UX', description: "Disabled text selection across the app to provide a more native, app-like feel." },
+            { type: 'UI/UX', description: "Shortened the 'Accounts' filter label on the Analysis page to 'Acct' for a more concise layout." },
+            { type: 'Fix', description: "Resolved a critical build error caused by an incorrect stylesheet import path." },
+        ]
+    },
+    {
         version: "1.7.6",
         date: "2026-01-02",
         changes: [

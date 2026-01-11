@@ -30,7 +30,7 @@ export function DebtsFilters({ filters, onFilterChange, sortBy, onSortChange }: 
     };
 
     return (
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex gap-2">
             <div className="flex gap-2 flex-grow">
                  <Select value={filters.status} onValueChange={(value) => handleStatusChange(value as any)}>
                     <SelectTrigger className="w-full sm:w-[150px]">

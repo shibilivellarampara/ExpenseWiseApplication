@@ -1,8 +1,8 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Filter, ArrowUpDown } from "lucide-react";
 
 export type DebtFilterState = {
@@ -32,20 +32,26 @@ export function DebtsFilters({ filters, onFilterChange, sortBy, onSortChange }: 
     return (
         <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex gap-2 flex-grow">
-                <Tabs value={filters.status} onValueChange={(value) => handleStatusChange(value as any)} className="w-full sm:w-auto">
-                    <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="all">All</TabsTrigger>
-                        <TabsTrigger value="pending">Pending</TabsTrigger>
-                        <TabsTrigger value="settled">Settled</TabsTrigger>
-                    </TabsList>
-                </Tabs>
-                 <Tabs value={filters.type} onValueChange={(value) => handleTypeChange(value as any)} className="w-full sm:w-auto">
-                    <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="all">All Types</TabsTrigger>
-                        <TabsTrigger value="lent">Lent</TabsTrigger>
-                        <TabsTrigger value="borrowed">Borrowed</TabsTrigger>
-                    </TabsList>
-                </Tabs>
+                 <Select value={filters.status} onValueChange={(value) => handleStatusChange(value as any)}>
+                    <SelectTrigger className="w-full sm:w-[150px]">
+                        <SelectValue placeholder="Filter by status..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="settled">Settled</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select value={filters.type} onValueChange={(value) => handleTypeChange(value as any)}>
+                    <SelectTrigger className="w-full sm:w-[150px]">
+                        <SelectValue placeholder="Filter by type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="lent">Lent</SelectItem>
+                        <SelectItem value="borrowed">Borrowed</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
 
             <Select value={sortBy} onValueChange={(value) => onSortChange(value as DebtSortState)}>

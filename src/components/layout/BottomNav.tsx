@@ -47,7 +47,6 @@ const NavLink = ({ href, currentPath, children }: { href: string; currentPath: s
                 "flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors duration-200 ease-in-out pointer-events-auto",
                 isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'
             )} 
-            onContextMenu={(e) => e.preventDefault()}
         >
             <div className={cn("transition-transform duration-200 ease-in-out", isActive && "scale-110")}>
                 {icon}
@@ -95,7 +94,7 @@ export function BottomNav() {
   return (
     <div 
         ref={navRef} 
-        className="fixed bottom-0 left-0 right-0 z-40 w-full max-w-md mx-auto pointer-events-none" 
+        className="fixed bottom-0 left-0 right-0 z-40 w-full max-w-lg mx-auto pointer-events-none" 
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px))' }}
     >
         <div className="relative mx-auto w-full px-4">
@@ -108,7 +107,7 @@ export function BottomNav() {
                 )}
             >
                 {secondaryNavItems.map(({ href, icon: Icon, label }) => (
-                     <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors h-full w-16" onClick={() => setIsExpanded(false)} onContextMenu={(e) => e.preventDefault()}>
+                     <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors h-full w-16" onClick={() => setIsExpanded(false)}>
                         <Icon className="h-5 w-5" />
                         <span className="text-xs">{label}</span>
                     </Link>
@@ -140,7 +139,6 @@ export function BottomNav() {
                         'flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors pointer-events-auto',
                         isExpanded ? 'text-primary' : 'text-muted-foreground hover:text-primary'
                         )}
-                        onContextMenu={(e) => e.preventDefault()}
                     >
                         <MoreHorizontal className={cn("h-6 w-6 transition-transform", isExpanded && "rotate-180")} />
                         <span className="text-xs">More</span>
@@ -163,7 +161,6 @@ export function BottomNav() {
                                     e.stopPropagation();
                                 }
                             }}
-                            onContextMenu={(e) => e.preventDefault()}
                         >
                              <Link href={transactionsHref} className={cn("absolute inset-0 flex items-center justify-center transition-all duration-300", isTransactionsPage && "opacity-0 scale-0 rotate-180 pointer-events-none")}>
                                 <ArrowRightLeft className="h-7 w-7" />

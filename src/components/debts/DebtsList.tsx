@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -409,7 +407,8 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
             });
         });
 
-        return Object.values(groups).sort((a, b) => b.lastTransactionDate.getTime() - a.lastTransactionDate.getTime());
+        // This component no longer sorts, it just groups. Sorting is done on the parent page.
+        return Object.values(groups);
     }, [debts]);
 
     if (isLoading) {
@@ -429,7 +428,7 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         return (
             <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg">
                 <h3 className="text-xl font-semibold">No Debts or Dues</h3>
-                <p className="text-muted-foreground mt-2">Click "Add Debt/Due" to start tracking.</p>
+                <p className="text-muted-foreground mt-2">Click "Add Debt/Due" to start tracking, or adjust your filters.</p>
             </div>
         );
     }
@@ -442,6 +441,3 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         </div>
     );
 }
-    
-
-    

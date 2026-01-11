@@ -55,7 +55,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
         <Script src="https://apis.google.com/js/api.js" async defer />
       </head>
-      <body className={cn('font-body antialiased min-h-screen')}>
+      <body className={cn('font-body antialiased min-h-screen select-none')}>
         <ThemeProvider
           attribute="class"
           defaultTheme="fintech"

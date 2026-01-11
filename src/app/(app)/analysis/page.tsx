@@ -463,10 +463,10 @@ export default function AnalysisPage() {
                             <Button variant="outline" className="w-full sm:w-auto justify-between">
                                 <span>
                                     {selectedAccounts.length === 0
-                                        ? "All Accounts"
+                                        ? "All Accts"
                                         : selectedAccounts.length === 1
-                                        ? "1 Account"
-                                        : `${selectedAccounts.length} Accounts`}
+                                        ? "1 Acct"
+                                        : `${selectedAccounts.length} Accts`}
                                 </span>
                                 <ChevronDown className="h-4 w-4 opacity-50" />
                             </Button>
@@ -737,4 +737,5 @@ export default function AnalysisPage() {
     
 
     
+
 

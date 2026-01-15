@@ -33,19 +33,22 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
         setPersistence(firebaseSdks.auth, browserLocalPersistence)
             .then(() => {
                 setSdks(firebaseSdks as FirebaseSDKs);
-                // First-time auth state check
+                // The onAuthStateChanged listener in FirebaseProvider will handle setting the user.
+                // We just need to wait for the very first auth state to be determined.
                 const unsubscribe = onAuthStateChanged(firebaseSdks.auth, (user) => {
                     setIsAuthReady(true);
-                    unsubscribe(); // Unsubscribe after the first auth state check
+                    unsubscribe(); // We only need to know when the initial check is done.
                 });
             })
             .catch((error) => {
                 console.error("Error setting Firebase auth persistence:", error);
+                // Still set sdks and mark as ready to not block the app on persistence failure.
                 setSdks(firebaseSdks as FirebaseSDKs);
-                setIsAuthReady(true); // Mark as ready even if persistence fails
+                setIsAuthReady(true);
             });
     } else {
-        setIsAuthReady(true); // Mark as ready if Firebase isn't configured
+        // If Firebase isn't configured, we can proceed without it.
+        setIsAuthReady(true);
     }
   }, []);
 
@@ -53,8 +56,8 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     registerSW();
   }, []);
 
+  // Show a loader until both Firebase SDKs are initialized AND the initial auth state is resolved.
   if (!sdks || !isAuthReady) {
-    // Show a loader while Firebase and Auth state are initializing
     return (
         <div className="flex h-screen items-center justify-center bg-background">
             <AppLoader message="Connecting..." />

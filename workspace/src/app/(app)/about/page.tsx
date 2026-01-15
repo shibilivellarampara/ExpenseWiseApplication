@@ -14,6 +14,14 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.7.8",
+        date: "2026-01-12",
+        changes: [
+            { type: 'Feature', description: "Introduced a new 'Budget' page to set and track monthly spending for each category." },
+            { type: 'UI/UX', description: "Added a link to the new 'Budget' page in the secondary mobile navigation menu for easy access." },
+        ]
+    },
+    {
         version: "1.7.7",
         date: "2026-01-11",
         changes: [
@@ -560,7 +568,5 @@ export default function AboutPage() {
     );
 
 }
-
-    
 
     

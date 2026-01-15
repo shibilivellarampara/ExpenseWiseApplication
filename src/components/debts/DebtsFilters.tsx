@@ -30,36 +30,34 @@ export function DebtsFilters({ filters, onFilterChange, sortBy, onSortChange }: 
     };
 
     return (
-        <div className="flex gap-2">
-            <div className="flex gap-2 flex-grow">
-                 <Select value={filters.status} onValueChange={(value) => handleStatusChange(value as any)}>
-                    <SelectTrigger className="w-full sm:w-[150px]">
-                        <SelectValue placeholder="Filter by status..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="settled">Settled</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Select value={filters.type} onValueChange={(value) => handleTypeChange(value as any)}>
-                    <SelectTrigger className="w-full sm:w-[150px]">
-                        <SelectValue placeholder="Filter by type..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="lent">Lent</SelectItem>
-                        <SelectItem value="borrowed">Borrowed</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+        <div className="flex items-center gap-2">
+            <Select value={filters.status} onValueChange={(value) => handleStatusChange(value as any)}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                    <SelectValue placeholder="Filter by status..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="settled">Settled</SelectItem>
+                </SelectContent>
+            </Select>
+            <Select value={filters.type} onValueChange={(value) => handleTypeChange(value as any)}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                    <SelectValue placeholder="Filter by type..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="lent">Lent</SelectItem>
+                    <SelectItem value="borrowed">Borrowed</SelectItem>
+                </SelectContent>
+            </Select>
 
             <Select value={sortBy} onValueChange={(value) => onSortChange(value as DebtSortState)}>
-                <SelectTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
-                        <ArrowUpDown className="h-4 w-4" />
-                        <span className="sr-only">Sort by</span>
-                    </Button>
+                <SelectTrigger
+                    className="h-10 w-10 shrink-0 px-2"
+                >
+                    <ArrowUpDown className="h-4 w-4" />
+                    <span className="sr-only">Sort by</span>
                 </SelectTrigger>
                 <SelectContent align="end">
                     <SelectItem value="recent">Recent Activity</SelectItem>

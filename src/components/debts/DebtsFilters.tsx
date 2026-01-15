@@ -55,11 +55,13 @@ export function DebtsFilters({ filters, onFilterChange, sortBy, onSortChange }: 
             </div>
 
             <Select value={sortBy} onValueChange={(value) => onSortChange(value as DebtSortState)}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                    <ArrowUpDown className="mr-2 h-4 w-4" />
-                    <SelectValue placeholder="Sort by..." />
+                <SelectTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
+                        <ArrowUpDown className="h-4 w-4" />
+                        <span className="sr-only">Sort by</span>
+                    </Button>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent align="end">
                     <SelectItem value="recent">Recent Activity</SelectItem>
                     <SelectItem value="name">Person's Name (A-Z)</SelectItem>
                     <SelectItem value="owedToYou">Owed to You (High to Low)</SelectItem>

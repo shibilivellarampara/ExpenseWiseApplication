@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "UserProfile": {
@@ -224,6 +223,22 @@
         "settledAt": { "type": "string", "format": "date-time", "description": "The date when the debt was settled." }
       },
       "required": ["id", "userId", "personName", "amount", "type", "date", "status"]
+    },
+    "Budget": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Budget",
+      "type": "object",
+      "description": "Represents a user's budget for a specific period and category.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "period": { "type": "string", "description": "The budget period in 'YYYY-MM' format." },
+        "categoryId": { "type": "string", "description": "Reference to the Category document ID." },
+        "amount": { "type": "number", "description": "The budgeted amount." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "period", "categoryId", "amount"]
     }
   },
   "auth": {
@@ -261,6 +276,10 @@
     "/users/{userId}/assets/{assetId}": {
         "schema": { "$ref": "#/entities/Asset" },
         "description": "Stores user's financial assets."
+    },
+    "/users/{userId}/budgets/{budgetId}": {
+        "schema": { "$ref": "#/entities/Budget" },
+        "description": "Stores user's monthly budgets for categories."
     },
     "/admin/{adminId}": {
         "schema": { "$ref": "#/entities/UserProfile" },

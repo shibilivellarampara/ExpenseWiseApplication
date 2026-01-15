@@ -169,3 +169,13 @@ export type EnrichedAsset = Omit<Asset, 'startDate' | 'lastUpdated'> & {
     startDate?: Date;
     lastUpdated: Date;
 };
+
+export type Budget = {
+  id: string;
+  userId: string;
+  period: string; // YYYY-MM
+  categoryId: string;
+  amount: number;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}

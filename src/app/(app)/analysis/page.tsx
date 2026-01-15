@@ -118,46 +118,53 @@ export default function AnalysisPage() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [monthPopoverOpen, setMonthPopoverOpen] = useState(false);
     
-    // Load filters from localStorage on initial render
+    // Load filters from localStorage or URL on initial render
     useEffect(() => {
         if (user) {
-            const storedFiltersRaw = localStorage.getItem(FILTERS_STORAGE_KEY);
-            if (storedFiltersRaw) {
-                try {
-                    const storedFilters: StoredFilters = JSON.parse(storedFiltersRaw);
-                    if (storedFilters.timeRangePreset) {
-                        setTimeRangePreset(storedFilters.timeRangePreset);
-                    }
-                    if (storedFilters.customDateRange) {
-                        setCustomDateRange({
-                            from: storedFilters.customDateRange.from ? parse(storedFilters.customDateRange.from, 'yyyy-MM-dd', new Date()) : undefined,
-                            to: storedFilters.customDateRange.to ? parse(storedFilters.customDateRange.to, 'yyyy-MM-dd', new Date()) : undefined,
-                        });
-                    }
-                    if (storedFilters.specificMonth) {
-                        setSpecificMonth(parse(storedFilters.specificMonth, 'yyyy-MM', new Date()));
-                    }
-                    // URL params take precedence over stored accounts
-                    const accountIdFromUrl = searchParams.get('accounts');
-                    if (accountIdFromUrl) {
-                        setSelectedAccounts([accountIdFromUrl]);
-                    } else if (storedFilters.selectedAccounts) {
-                        setSelectedAccounts(storedFilters.selectedAccounts);
-                    }
-                    
-                    if (storedFilters.selectedTags) {
-                        setSelectedTags(storedFilters.selectedTags);
-                    }
+            const timeRangeFromUrl = searchParams.get('timeRangePreset') as TimeRangePreset;
+            const accountsFromUrl = searchParams.get('accounts');
 
-                } catch (e) {
-                    console.error("Failed to parse stored filters", e);
-                    localStorage.removeItem(FILTERS_STORAGE_KEY);
+            if (timeRangeFromUrl) {
+                setTimeRangePreset(timeRangeFromUrl);
+            }
+            
+            if (accountsFromUrl) {
+                 if (accountsFromUrl === 'all') {
+                    setSelectedAccounts([]);
+                } else {
+                    setSelectedAccounts(accountsFromUrl.split(','));
                 }
-            } else {
-                 // Check URL params even if no stored filters
-                const accountIdFromUrl = searchParams.get('accounts');
-                if (accountIdFromUrl) {
-                    setSelectedAccounts([accountIdFromUrl]);
+            }
+
+
+            if (!timeRangeFromUrl && !accountsFromUrl) {
+                const storedFiltersRaw = localStorage.getItem(FILTERS_STORAGE_KEY);
+                if (storedFiltersRaw) {
+                    try {
+                        const storedFilters: StoredFilters = JSON.parse(storedFiltersRaw);
+                        if (storedFilters.timeRangePreset) {
+                            setTimeRangePreset(storedFilters.timeRangePreset);
+                        }
+                        if (storedFilters.customDateRange) {
+                            setCustomDateRange({
+                                from: storedFilters.customDateRange.from ? parse(storedFilters.customDateRange.from, 'yyyy-MM-dd', new Date()) : undefined,
+                                to: storedFilters.customDateRange.to ? parse(storedFilters.customDateRange.to, 'yyyy-MM-dd', new Date()) : undefined,
+                            });
+                        }
+                        if (storedFilters.specificMonth) {
+                            setSpecificMonth(parse(storedFilters.specificMonth, 'yyyy-MM', new Date()));
+                        }
+                        if (storedFilters.selectedAccounts) {
+                            setSelectedAccounts(storedFilters.selectedAccounts);
+                        }
+                        if (storedFilters.selectedTags) {
+                            setSelectedTags(storedFilters.selectedTags);
+                        }
+
+                    } catch (e) {
+                        console.error("Failed to parse stored filters", e);
+                        localStorage.removeItem(FILTERS_STORAGE_KEY);
+                    }
                 }
             }
             setIsInitialLoad(false);
@@ -390,7 +397,7 @@ export default function AnalysisPage() {
                 title="Expense Analysis"
                 description="A detailed breakdown of your income and spending habits."
             >
-                 <div className="flex items-center gap-1 flex-nowrap">
+                 <div className="flex items-center gap-2 flex-nowrap min-w-0">
                     
                     <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -398,10 +405,10 @@ export default function AnalysisPage() {
                                 variant="outline"
                                 role="combobox"
                                 aria-expanded={monthPopoverOpen}
-                                className="w-auto justify-between"
+                                className="w-auto flex-shrink-0 gap-1"
                             >
-                                {timeRangeLabels[timeRangePreset]}
-                                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                <span className="truncate">{timeRangeLabels[timeRangePreset]}</span>
+                                <ChevronDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
@@ -460,15 +467,15 @@ export default function AnalysisPage() {
                     
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full sm:w-auto justify-between">
-                                <span>
+                            <Button variant="outline" className="w-auto sm:w-auto flex-shrink-0 gap-1">
+                                <span className="truncate">
                                     {selectedAccounts.length === 0
                                         ? "All Accts"
                                         : selectedAccounts.length === 1
                                         ? "1 Acct"
                                         : `${selectedAccounts.length} Accts`}
                                 </span>
-                                <ChevronDown className="h-4 w-4 opacity-50" />
+                                <ChevronDown className="ml-1 h-4 w-4 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
@@ -500,12 +507,12 @@ export default function AnalysisPage() {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                     <div className="relative flex items-center">
+                     <div className="relative flex items-center flex-shrink-0">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="w-full sm:w-auto justify-between pr-8">
-                                    <span>{selectedTags.length === 0 ? "All Tags" : selectedTags.length === 1 ? "1 Tag" : `${selectedTags.length} Tags`}</span>
-                                    <ChevronDown className="h-4 w-4 opacity-50" />
+                                <Button variant="outline" className="w-auto sm:w-auto gap-1 pr-8">
+                                    <span className="truncate">{selectedTags.length === 0 ? "All Tags" : selectedTags.length === 1 ? "1 Tag" : `${selectedTags.length} Tags`}</span>
+                                    <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
@@ -739,3 +746,18 @@ export default function AnalysisPage() {
     
 
 
+<<<<<<< HEAD
+=======
+
+
+    
+
+    
+
+    
+
+    
+
+
+    
+>>>>>>> a431787086ce88faf30e3f5542c2307e9990b49b

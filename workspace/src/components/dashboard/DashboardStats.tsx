@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,13 +62,13 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
 
     return (
         <div className="grid gap-4 md:grid-cols-3">
-             <Card className="hover:bg-accent transition-colors">
-                <Link href="/analysis?timeRangePreset=month&accounts=all" className="flex flex-col h-full">
+            <Card className="hover:bg-accent transition-colors">
+                <Link href="/analysis?timeRangePreset=month&accounts=all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Monthly Expense</CardTitle>
                         <span className="text-muted-foreground font-bold">{currencySymbol}</span>
                     </CardHeader>
-                    <CardContent className="flex-grow flex flex-col justify-center">
+                    <CardContent>
                         <div className="text-2xl font-bold">{stats.totalExpense.toFixed(2)}</div>
                         <p className="text-xs text-muted-foreground">Cash out this month</p>
                     </CardContent>

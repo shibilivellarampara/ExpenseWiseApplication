@@ -1,35 +1,12 @@
 
-
 'use client';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTrigger,
-  DialogTitle,
-  DialogClose,
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
-import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, Check, Calendar as CalendarIcon, Clock, ChevronDown } from 'lucide-react';
+import { Loader2, Pilcrow, Sparkles, PlusCircle, X, Check, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
@@ -38,7 +15,6 @@ import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocum
 import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy, where, getDocs, deleteField } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import * as LucideIcons from 'lucide-react';
-import { useMediaQuery } from '@/hooks/use-media-query';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -49,11 +25,10 @@ import { Badge } from '@/components/ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import { DateTimePicker } from '../DateTimePicker';
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -62,11 +37,8 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
-    
     categoryId: z.string().optional(),
-    
     description: z.string().optional(),
-    
     tagIds: z.array(z.string()).optional(),
   });
 
@@ -367,24 +339,27 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
 };
 
 
-function ExpenseForm({
-  form,
-  onSubmit,
-  id,
-  accounts,
-  categories,
-  tags,
-}: {
+interface ExpenseFormProps {
   form: UseFormReturn<any>;
   onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
   id: string;
-  accounts: Account[];
-  categories: Category[];
-  tags: Tag[];
-}) {
+}
+
+export const ExpenseForm = React.memo(({ form, onSubmit, id }: ExpenseFormProps) => {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    
+    // Fetch user-specific data
+    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+    const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+    const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [user, firestore]);
+    const accountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [user, firestore]);
+    const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [user, firestore]);
+    const { data: categories } = useCollection<Category>(categoriesQuery);
+    const { data: accounts } = useCollection<Account>(accountsQuery);
+    const { data: tags } = useCollection<Tag>(tagsQuery);
     
     const transactionType = form.watch('type');
     const descriptionValue = form.watch('description');
@@ -396,9 +371,6 @@ function ExpenseForm({
     const [debouncedTagIds] = useDebounce(tagIdsValue, 500);
     
     const [isSuggesting, startSuggestionTransition] = useTransition();
-
-    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-    const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
      
     const activeAccounts = useMemo(() => accounts?.filter(acc => acc.status === 'active' || acc.status === undefined) || [], [accounts]);
     const activeCategories = useMemo(() => categories?.filter(c => c.status === 'active' || c.status === undefined) || [], [categories]);
@@ -659,167 +631,21 @@ function ExpenseForm({
             </form>
         </Form>
     );
-}
+});
+ExpenseForm.displayName = 'ExpenseForm';
 
-export function AddExpenseDialog({ 
-    children, 
-    expenseToEdit,
-    initialType,
-    onSaveSuccess,
-}: { 
-    children: React.ReactNode, 
-    expenseToEdit?: EnrichedExpense,
-    initialType?: 'income' | 'expense';
-    onSaveSuccess?: () => void;
-}) {
-    const [open, setOpen] = useState(false);
-    const isMobile = useMediaQuery("(max-width: 640px)");
-
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
-        setOpen, 
-        expenseToEdit, 
-        initialType,
-        open,
-        onSaveSuccess,
-    });
-    
-    const FormContent = () => (
-        <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} />
-    );
-    
-    if (isMobile) {
-        return (
-            <Drawer open={open} onOpenChange={setOpen}>
-                <DrawerTrigger asChild>{children}</DrawerTrigger>
-                <DrawerContent>
-                    <DrawerHeader>
-                        <DrawerTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add Transaction'}</DrawerTitle>
-                    </DrawerHeader>
-                    <div className="px-4 overflow-y-auto">
-                        <FormContent />
-                    </div>
-                    <DrawerFooter className="pt-2 flex-row justify-between w-full">
-                        <div className="flex items-center">
-                            {isEditMode ? (
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button type="button" variant="destructive" disabled={isLoading}>
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Delete
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>This will permanently delete this transaction.</AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            ) : (
-                                <DrawerClose asChild>
-                                    <Button type="button" variant="outline">
-                                        Cancel
-                                    </Button>
-                                </DrawerClose>
-                            )}
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                            {!isEditMode && (
-                                <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline" className="min-w-[120px]">
-                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Save & New
-                                </Button>
-                            )}
-                             <Button type="submit" form={formId} disabled={isLoading} className="min-w-[120px]">
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {isEditMode ? 'Save Changes' : 'Save'}
-                            </Button>
-                        </div>
-                    </DrawerFooter>
-                </DrawerContent>
-            </Drawer>
-        )
-    }
-
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]">
-                <DialogHeader>
-                    <DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle>
-                </DialogHeader>
-                <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                    <FormContent />
-                </div>
-                 <DialogFooter className="flex-row justify-between w-full">
-                    <div className="flex items-center">
-                        {isEditMode ? (
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button type="button" variant="destructive" disabled={isLoading}>
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>This will permanently delete this transaction.</AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        ) : (
-                             <DialogClose asChild>
-                                <Button type="button" variant="outline">
-                                    Cancel
-                                </Button>
-                            </DialogClose>
-                        )}
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                         {!isEditMode && (
-                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline" className="min-w-[120px]">
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save & New
-                            </Button>
-                         )}
-                         <Button type="submit" form={formId} disabled={isLoading} className="min-w-[120px]">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditMode ? 'Save Changes' : 'Save'}
-                        </Button>
-                    </div>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-}
 
 interface UseExpenseFormProps {
     setOpen: (open: boolean) => void;
     expenseToEdit?: EnrichedExpense; 
     initialType?: 'income' | 'expense';
-    open: boolean;
     onSaveSuccess?: () => void;
 }
 
-// Shared hook for form logic
-function useExpenseForm({
+export function useExpenseForm({
     setOpen,
     expenseToEdit,
     initialType,
-    open,
     onSaveSuccess,
 }: UseExpenseFormProps) {
     const { toast } = useToast();
@@ -829,25 +655,11 @@ function useExpenseForm({
     const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
     const isEditMode = !!expenseToEdit;
 
-    // Fetch user-specific data
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-    
-    const userCategoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [user, firestore]);
-    const userAccountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [user, firestore]);
-    const userTagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [user, firestore]);
-
-    const { data: userCategories } = useCollection<Category>(userCategoriesQuery);
-    const { data: userAccounts } = useCollection<Account>(userAccountsQuery);
-    const { data: userTags } = useCollection<Tag>(userTagsQuery);
-
-    const accounts = userAccounts || [];
-    const categories = userCategories || [];
-    const tags = userTags || [];
 
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
     
-    // Function to get clean default values
     const getNewFormValues = useCallback((keepDate?: Date, keepAccount?: string) => {
         let type: 'income' | 'expense' = 'expense';
         if (initialType) {
@@ -870,24 +682,21 @@ function useExpenseForm({
         defaultValues: getNewFormValues(),
     });
     
-    // Effect to reset the form when the dialog opens
     useEffect(() => {
-        if (open) {
-            if (isEditMode && expenseToEdit) {
-                form.reset({
-                    type: expenseToEdit.type,
-                    amount: expenseToEdit.amount,
-                    date: expenseToEdit.date,
-                    accountId: expenseToEdit.account?.id || '',
-                    categoryId: expenseToEdit.category?.id || '',
-                    description: expenseToEdit.description || '',
-                    tagIds: expenseToEdit.tags?.map(t => t.id) || [],
-                });
-            } else {
-                 form.reset(getNewFormValues());
-            }
+        if (isEditMode && expenseToEdit) {
+            form.reset({
+                type: expenseToEdit.type,
+                amount: expenseToEdit.amount,
+                date: expenseToEdit.date,
+                accountId: expenseToEdit.account?.id || '',
+                categoryId: expenseToEdit.category?.id || '',
+                description: expenseToEdit.description || '',
+                tagIds: expenseToEdit.tags?.map(t => t.id) || [],
+            });
+        } else {
+             form.reset(getNewFormValues());
         }
-    }, [open, isEditMode, expenseToEdit, form, getNewFormValues]);
+    }, [isEditMode, expenseToEdit, form, getNewFormValues]);
 
 
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
@@ -895,17 +704,18 @@ function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Authentication not ready.' });
             return false;
         }
-        if (!userCategories) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Required data (categories) is not loaded.' });
-            return false;
-        }
+       
         setIsLoading(true);
 
         try {
             const batch = writeBatch(firestore);
             const collectionPath = `users/${user.uid}/expenses`;
-            const allCategories = userCategories || [];
-            const allAccounts = userAccounts || [];
+
+            const categoriesSnapshot = await getDocs(collection(firestore, `users/${user.uid}/categories`));
+            const allCategories = categoriesSnapshot.docs.map(doc => doc.data() as Category);
+
+            const accountsSnapshot = await getDocs(collection(firestore, `users/${user.uid}/accounts`));
+            const allAccounts = accountsSnapshot.docs.map(doc => doc.data() as Account);
 
             const finalCategoryId = values.categoryId === '__none__' ? undefined : values.categoryId;
             const selectedCategory = allCategories.find(c => c.id === finalCategoryId);
@@ -952,7 +762,7 @@ function useExpenseForm({
             };
             
             if (!expenseData.categoryId) {
-                delete expenseData.categoryId;
+                expenseData.categoryId = deleteField();
             }
             
             const handleLimitChange = (
@@ -980,7 +790,7 @@ function useExpenseForm({
                     if (!previousExpense) { // New transaction
                         batch.update(accountRef, updatePayload);
                     } else { // Editing transaction
-                        const oldCategoryName = userCategories?.find(c => c.id === previousExpense.category?.id)?.name;
+                        const oldCategoryName = allCategories?.find(c => c.id === previousExpense.category?.id)?.name;
                         const oldType = previousExpense.type;
                         const oldAmount = previousExpense.amount;
                         
@@ -1091,18 +901,21 @@ function useExpenseForm({
     });
 
     const handleDelete = async () => {
-        if (!firestore || !user || !isEditMode || !expenseToEdit || !userAccounts || !userCategories) {
+        if (!firestore || !user || !isEditMode || !expenseToEdit) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction. Required data missing.' });
             return;
         }
+
+        const categoriesSnapshot = await getDocs(collection(firestore, `users/${user.uid}/categories`));
+        const allCategories = categoriesSnapshot.docs.map(doc => doc.data() as Category);
+        const accountsSnapshot = await getDocs(collection(firestore, `users/${user.uid}/accounts`));
+        const allAccounts = accountsSnapshot.docs.map(doc => doc.data() as Account);
+
         setIsLoading(true);
         try {
             const batch = writeBatch(firestore);
             const collectionPath = `users/${user.uid}/expenses`;
             const expenseRef = doc(firestore, collectionPath, expenseToEdit.id);
-
-            const allCategories = userCategories || [];
-            const allAccounts = userAccounts || [];
 
             const selectedCategory = allCategories.find(c => c.id === expenseToEdit.category?.id);
             const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
@@ -1142,7 +955,6 @@ function useExpenseForm({
         }
     };
 
-
     return { 
       form, 
       onFinalSubmit, 
@@ -1151,8 +963,5 @@ function useExpenseForm({
       isLoading, 
       isEditMode, 
       formId,
-      accounts: accounts || [],
-      categories: categories || [],
-      tags: tags || []
     };
 }

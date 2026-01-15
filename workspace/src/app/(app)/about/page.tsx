@@ -15,14 +15,23 @@ const appVersion = pkg.version;
 const changelog = [
     {
         version: "1.7.8",
+<<<<<<< HEAD
         date: "2026-01-12",
         changes: [
             { type: 'Feature', description: "Introduced a new 'Budget' page to set and track monthly spending for each category." },
             { type: 'UI/UX', description: "Added a link to the new 'Budget' page in the secondary mobile navigation menu for easy access." },
+=======
+        date: "2026-01-07",
+        changes: [
+            { type: 'UI/UX', description: "Refactored all data-entry forms (e.g., Add Account, Add Debt) to use the modern, consistent floating-label style from the transaction form." },
+            { type: 'UI/UX', description: "Standardized all pop-up forms to use a centered dialog on all screen sizes, removing the inconsistent bottom-sheet behavior on mobile for a more uniform experience." },
+            { type: 'Fix', description: "Resolved multiple build errors caused by incorrect relative import paths in several components, ensuring a stable and reliable build process." },
+>>>>>>> a431787086ce88faf30e3f5542c2307e9990b49b
         ]
     },
     {
         version: "1.7.7",
+<<<<<<< HEAD
         date: "2026-01-11",
         changes: [
             { type: 'Feature', description: "Added robust filtering and sorting options to the 'Debts & Dues' page." },
@@ -30,6 +39,17 @@ const changelog = [
             { type: 'UI/UX', description: "Disabled text selection across the app to provide a more native, app-like feel." },
             { type: 'UI/UX', description: "Shortened the 'Accounts' filter label on the Analysis page to 'Acct' for a more concise layout." },
             { type: 'Fix', description: "Resolved a critical build error caused by an incorrect stylesheet import path." },
+=======
+        date: "2026-01-03",
+        changes: [
+            { type: 'UI/UX', description: "Refactored all data-entry forms (e.g., Add Transaction) to use native-style bottom sheets on mobile devices for a more app-like feel." },
+            { type: 'UI/UX', description: "Converted all confirmation dialogs to use centered, inset modals on mobile, improving clarity and aesthetics." },
+            { type: 'UI/UX', description: "Made filter controls on the Analysis page responsive, preventing horizontal overflow on mobile by truncating text." },
+            { type: 'UI/UX', description: "Added account icons to dropdown menus for easier visual identification." },
+            { type: 'Fix', description: "Ensured consistent rounded corners across all modals, popups, and input fields." },
+            { type: 'Fix', description: "Improved form validation to show a user-friendly error message for the amount field." },
+            { type: 'Feature', description: "Made the 'Total Monthly Expense' card on the dashboard a direct link to the pre-filtered Analysis page." },
+>>>>>>> a431787086ce88faf30e3f5542c2307e9990b49b
         ]
     },
     {
@@ -569,4 +589,13 @@ export default function AboutPage() {
 
 }
 
+<<<<<<< HEAD
+=======
+    
+
+    
+
+
+
+>>>>>>> a431787086ce88faf30e3f5542c2307e9990b49b
     

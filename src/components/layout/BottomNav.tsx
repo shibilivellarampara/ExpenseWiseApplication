@@ -16,6 +16,7 @@ import {
   HandCoins,
   Settings,
   X,
+  PiggyBank,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -25,6 +26,7 @@ import { AddExpenseDialog } from '@/components/expenses/AddExpenseDialog';
 import { Button } from '@/components/ui/button';
 
 const secondaryNavItems = [
+    { href: '/budget', icon: PiggyBank, label: 'Budget'},
     { href: '/debts', icon: HandCoins, label: 'Debts'},
     { href: '/assets', icon: Briefcase, label: 'Assets'},
     { href: '/recurring', icon: Repeat, label: 'Recurring'},

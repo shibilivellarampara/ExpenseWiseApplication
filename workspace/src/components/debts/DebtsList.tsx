@@ -408,7 +408,18 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         });
 
         // This component no longer sorts, it just groups. Sorting is done on the parent page.
-        return Object.values(groups).sort((a,b) => b.lastTransactionDate.getTime() - a.lastTransactionDate.getTime());
+        return Object.values(groups).sort((a, b) => {
+            const aIsSettled = a.netAmount === 0;
+            const bIsSettled = b.netAmount === 0;
+
+            if (aIsSettled && !bIsSettled) {
+                return 1;
+            }
+            if (!aIsSettled && bIsSettled) {
+                return -1;
+            }
+            return b.lastTransactionDate.getTime() - a.lastTransactionDate.getTime();
+        });
     }, [debts]);
 
     if (isLoading) {

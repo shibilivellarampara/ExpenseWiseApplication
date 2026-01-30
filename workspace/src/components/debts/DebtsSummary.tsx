@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -52,7 +53,7 @@ export function DebtsSummary({ debts, isLoading }: DebtsSummaryProps) {
                 >
                     <div className="flex-1 text-center border-r pr-4">
                          <p className="text-sm text-muted-foreground">You are Owed</p>
-                         <p className="text-2xl font-bold text-green-600">{currencySymbol}{totalOwedToUser.toFixed(2)}</p>
+                         <p className="text-2xl font-bold text-primary">{currencySymbol}{totalOwedToUser.toFixed(2)}</p>
                     </div>
                      <div className="flex-1 text-center">
                          <p className="text-sm text-muted-foreground">You Owe</p>
@@ -68,7 +69,7 @@ export function DebtsSummary({ debts, isLoading }: DebtsSummaryProps) {
                         <Separator className="my-4" />
                         <div className="text-center">
                             <p className="text-sm text-muted-foreground">Net Position</p>
-                            <p className={cn("text-2xl font-bold", netBalance >= 0 ? "text-green-600" : "text-destructive")}>
+                            <p className={cn("text-2xl font-bold", netBalance >= 0 ? "text-primary" : "text-destructive")}>
                                 {netBalance >= 0 ? `${currencySymbol}${netBalance.toFixed(2)}` : `-${currencySymbol}${Math.abs(netBalance).toFixed(2)}`}
                             </p>
                             <p className="text-xs text-muted-foreground">

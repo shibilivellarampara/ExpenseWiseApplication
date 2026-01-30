@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EnrichedDebt, UserProfile } from '@/lib/types';
@@ -21,6 +21,7 @@ export function DebtsSummary({ debts, isLoading }: DebtsSummaryProps) {
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
+    const [showNet, setShowNet] = useState(false);
 
     const { totalOwedToUser, totalUserOwes, netBalance } = useMemo(() => {
         const pendingDebts = debts.filter(d => d.status === 'pending');
@@ -39,13 +40,16 @@ export function DebtsSummary({ debts, isLoading }: DebtsSummaryProps) {
     }, [debts]);
 
     if (isLoading) {
-        return <Skeleton className="h-32" />;
+        return <Skeleton className="h-24" />;
     }
 
     return (
         <Card>
             <CardContent className="p-4">
-                <div className="flex items-center justify-center">
+                <div 
+                    className="flex items-center justify-center cursor-pointer"
+                    onClick={() => setShowNet(prev => !prev)}
+                >
                     <div className="flex-1 text-center border-r pr-4">
                          <p className="text-sm text-muted-foreground">You are Owed</p>
                          <p className="text-2xl font-bold text-green-600">{currencySymbol}{totalOwedToUser.toFixed(2)}</p>
@@ -55,15 +59,23 @@ export function DebtsSummary({ debts, isLoading }: DebtsSummaryProps) {
                          <p className="text-2xl font-bold text-destructive">{currencySymbol}{totalUserOwes.toFixed(2)}</p>
                     </div>
                 </div>
-                <Separator className="my-4" />
-                <div className="text-center">
-                     <p className="text-sm text-muted-foreground">Net Position</p>
-                     <p className={cn("text-2xl font-bold", netBalance >= 0 ? "text-green-600" : "text-destructive")}>
-                        {netBalance >= 0 ? `${currencySymbol}${netBalance.toFixed(2)}` : `-${currencySymbol}${Math.abs(netBalance).toFixed(2)}`}
-                     </p>
-                      <p className="text-xs text-muted-foreground">
-                            {netBalance > 0 ? "Overall, you are owed money." : netBalance < 0 ? "Overall, you owe money." : "Overall, you are settled."}
-                      </p>
+
+                <div className={cn(
+                    "transition-all duration-300 ease-in-out grid",
+                    showNet ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                )}>
+                    <div className="overflow-hidden">
+                        <Separator className="my-4" />
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground">Net Position</p>
+                            <p className={cn("text-2xl font-bold", netBalance >= 0 ? "text-green-600" : "text-destructive")}>
+                                {netBalance >= 0 ? `${currencySymbol}${netBalance.toFixed(2)}` : `-${currencySymbol}${Math.abs(netBalance).toFixed(2)}`}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                    {netBalance > 0 ? "Overall, you are owed money." : netBalance < 0 ? "Overall, you owe money." : "Overall, you are settled."}
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </CardContent>
         </Card>

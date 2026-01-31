@@ -143,7 +143,7 @@ export default function DebtsPage() {
                      <AddDebtDialog>
                          <Button className="shrink-0">
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Debt/Due
+                            Add Debt
                         </Button>
                     </AddDebtDialog>
                 </div>
@@ -160,3 +160,5 @@ export default function DebtsPage() {
         </div>
     )
 }
+
+    

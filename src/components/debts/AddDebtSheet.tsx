@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -288,7 +287,7 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
                 {children && <DialogTrigger asChild>{children}</DialogTrigger>}
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt or Due'}</DialogTitle>
+                        <DialogTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt'}</DialogTitle>
                         <DialogDescription>
                             Track money you've lent to others or borrowed from them.
                         </DialogDescription>
@@ -304,7 +303,7 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
             {children && <DrawerTrigger asChild>{children}</DrawerTrigger>}
             <DrawerContent>
                  <DrawerHeader className="text-left">
-                    <DrawerTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt or Due'}</DrawerTitle>
+                    <DrawerTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt'}</DrawerTitle>
                     <DrawerDescription>
                         Track money you've lent to others or borrowed from them.
                     </DrawerDescription>
@@ -316,3 +315,5 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
         </Drawer>
     );
 }
+
+    

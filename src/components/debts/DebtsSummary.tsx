@@ -78,7 +78,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
 
                 <div>
                     <Separator className="my-0" />
-                    <div className="p-4 flex items-center justify-center gap-2">
+                    <div className="p-2 flex items-center justify-center gap-2">
                         <p className="text-sm text-muted-foreground">Net Position:</p>
                         <p className={cn("text-lg font-bold", netBalance >= 0 ? "text-primary" : "text-destructive")}>
                             {netBalance >= 0 ? `${currencySymbol}${formatAmount(netBalance)}` : `-${currencySymbol}${formatAmount(Math.abs(netBalance))}`}

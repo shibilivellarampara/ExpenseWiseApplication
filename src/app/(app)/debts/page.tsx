@@ -120,14 +120,7 @@ export default function DebtsPage() {
 
     return (
         <div className="w-full space-y-8">
-            <PageHeader title="Debts & Dues" description="Track money you've borrowed or lent to others.">
-                <AddDebtDialog>
-                     <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Debt/Due
-                    </Button>
-                </AddDebtDialog>
-            </PageHeader>
+            <PageHeader title="Debts & Dues" description="Track money you've borrowed or lent to others." />
             
             <div className="space-y-4">
                 <DebtsSummary 
@@ -137,14 +130,22 @@ export default function DebtsPage() {
                     activeFilter={typeFilter}
                 />
                 
-                <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search by name..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-8 w-full"
-                    />
+                <div className="flex gap-2 items-center">
+                    <div className="relative flex-grow">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by name..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-8 w-full"
+                        />
+                    </div>
+                     <AddDebtDialog>
+                         <Button className="shrink-0">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Debt/Due
+                        </Button>
+                    </AddDebtDialog>
                 </div>
             </div>
 

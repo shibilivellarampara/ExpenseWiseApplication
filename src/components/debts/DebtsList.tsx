@@ -463,5 +463,6 @@ export function DebtsList({ debts, isLoading, selectedPersonNames, onSelectionCh
         </div>
     );
 }
+    
 
     

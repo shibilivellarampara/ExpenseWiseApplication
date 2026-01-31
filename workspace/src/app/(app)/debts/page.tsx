@@ -51,10 +51,10 @@ export default function DebtsPage() {
         const filteredPersonNames = Object.keys(groups).filter(personName => {
             const group = groups[personName];
             if (typeFilter === 'lent') {
-                return group.netAmount > 0;
+                return group.netAmount < 0;
             }
             if (typeFilter === 'borrowed') {
-                return group.netAmount < 0;
+                return group.netAmount > 0;
             }
             return false;
         });

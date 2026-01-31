@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -71,9 +70,6 @@ export function DebtsSummary({ debts, isLoading }: DebtsSummaryProps) {
                             <p className="text-sm text-muted-foreground">Net Position</p>
                             <p className={cn("text-2xl font-bold", netBalance >= 0 ? "text-primary" : "text-destructive")}>
                                 {netBalance >= 0 ? `${currencySymbol}${netBalance.toFixed(2)}` : `-${currencySymbol}${Math.abs(netBalance).toFixed(2)}`}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                    {netBalance > 0 ? "Overall, you are owed money." : netBalance < 0 ? "Overall, you owe money." : "Overall, you are settled."}
                             </p>
                         </div>
                     </div>

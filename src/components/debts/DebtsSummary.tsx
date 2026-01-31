@@ -91,5 +91,3 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
         </Card>
     );
 }
-
-    

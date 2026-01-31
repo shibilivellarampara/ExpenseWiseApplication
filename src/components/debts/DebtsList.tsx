@@ -1,18 +1,16 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { EnrichedDebt, UserProfile, EnrichedDebtWithBalance } from "@/lib/types";
-import { Skeleton } from "@/components/ui/skeleton";
-import { getCurrencySymbol } from "@/lib/currencies";
-import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { useMemo, useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { EnrichedDebt, UserProfile, EnrichedDebtWithBalance } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
-import { Badge } from "@/components/ui/badge";
-import { cn, formatAmount } from "@/lib/utils";
-import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useState, useMemo, useEffect } from "react";
+import { Badge } from '@/components/ui/badge';
+import { cn, formatAmount } from '@/lib/utils';
+import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +28,7 @@ import { AddDebtDialog } from "@/components/debts/AddDebtSheet";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 
 interface DebtsListProps {
@@ -464,3 +463,5 @@ export function DebtsList({ debts, isLoading, selectedPersonNames, onSelectionCh
         </div>
     );
 }
+
+    

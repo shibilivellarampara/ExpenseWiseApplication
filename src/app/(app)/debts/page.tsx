@@ -1,24 +1,30 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
 import { AddDebtDialog } from "@/components/debts/AddDebtSheet";
 import { DebtsList } from "@/components/debts/DebtsList";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useUser, useMemoFirebase, commitBatchNonBlocking } from "@/firebase";
 import { Debt, EnrichedDebt } from "@/lib/types";
-import { collection, orderBy, query } from "firebase/firestore";
+import { collection, orderBy, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { PlusCircle, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { DebtsSummary } from "@/components/debts/DebtsSummary";
 import { useDebounce } from "use-debounce";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 export default function DebtsPage() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const { toast } = useToast();
     const [typeFilter, setTypeFilter] = useState<'all' | 'lent' | 'borrowed'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
+
+    const [selectedPersonNames, setSelectedPersonNames] = useState<string[]>([]);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const debtsQuery = useMemoFirebase(() => {
         if (!user) return null;
@@ -35,6 +41,39 @@ export default function DebtsPage() {
     const handleFilterChange = (type: 'lent' | 'borrowed') => {
         setTypeFilter(current => current === type ? 'all' : type);
     };
+    
+    const handleDeleteSelected = async () => {
+        if (!user || !firestore || selectedPersonNames.length === 0) return;
+
+        setIsDeleting(true);
+        try {
+            const batch = writeBatch(firestore);
+            
+            const debtsRef = collection(firestore, `users/${user.uid}/debts`);
+            const q = query(debtsRef, where('personName', 'in', selectedPersonNames));
+            
+            const snapshot = await getDocs(q);
+            
+            if (snapshot.empty) {
+                toast({ variant: "destructive", title: "No records found for the selected person(s)." });
+            } else {
+                snapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
+                toast({
+                    title: `${selectedPersonNames.length} Person(s) Removed`,
+                    description: `All debt records for the selected people have been deleted.`,
+                });
+            }
+            setSelectedPersonNames([]);
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: "Error Removing Records", description: "Could not remove records. Please try again." });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
 
     const filteredDebts = useMemo(() => {
         let filtered = enrichedDebts;
@@ -109,7 +148,14 @@ export default function DebtsPage() {
                 </div>
             </div>
 
-            <DebtsList debts={filteredDebts} isLoading={isLoading} />
+            <DebtsList 
+                debts={filteredDebts} 
+                isLoading={isLoading}
+                selectedPersonNames={selectedPersonNames}
+                onSelectionChange={setSelectedPersonNames}
+                onDeleteSelected={handleDeleteSelected}
+                isDeleting={isDeleting}
+             />
         </div>
     )
 }

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { Badge } from "../ui/badge";
 import { cn, formatAmount } from "@/lib/utils";
 import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,11 +28,17 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { Separator } from "../ui/separator";
 import { AddDebtDialog } from "./AddDebtSheet";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
+import { Checkbox } from "../ui/checkbox";
+import { Label } from "../ui/label";
 
 
 interface DebtsListProps {
     debts: EnrichedDebt[];
     isLoading?: boolean;
+    selectedPersonNames: string[];
+    onSelectionChange: (names: string[]) => void;
+    onDeleteSelected: () => void;
+    isDeleting: boolean;
 }
 
 interface GroupedDebt {
@@ -136,62 +143,6 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
     );
 }
 
-function DeletePersonButton({ personName, open, onOpenChange }: { personName: string; open: boolean; onOpenChange: (open: boolean) => void; }) {
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const [isDeleting, setIsDeleting] = useState(false);
-    const { toast } = useToast();
-
-    const handleDelete = async () => {
-        if (!user || !firestore) return;
-        setIsDeleting(true);
-
-        try {
-            const batch = writeBatch(firestore);
-            const debtsQuery = query(collection(firestore, `users/${user.uid}/debts`), where('personName', '==', personName));
-            const snapshot = await getDocs(debtsQuery);
-            
-            if (snapshot.empty) {
-                toast({ variant: "destructive", title: "No records found for this person." });
-            } else {
-                snapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
-                toast({
-                    title: "Person Removed",
-                    description: `All debt records for "${personName}" have been deleted.`,
-                });
-            }
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: "Error Removing Person", description: "Could not remove person and their records. Please try again." });
-        } finally {
-            setIsDeleting(false);
-            onOpenChange(false);
-        }
-    };
-
-    return (
-        <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will permanently delete "{personName}" and all associated debt records. This action cannot be undone.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                        {isDeleting ? <Loader2 className="animate-spin" /> : `Yes, delete ${personName}`}
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-    );
-}
-
-
 function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt, currencySymbol: string }) {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -250,50 +201,67 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
     );
 }
 
-function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymbol: string }) {
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+function DebtGroup({ group, currencySymbol, onSelect, isSelected, selectionMode }: { group: GroupedDebt, currencySymbol: string, onSelect: (name: string) => void, isSelected: boolean, selectionMode: boolean }) {
+
+    const handleIconClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onSelect(group.personName);
+    };
 
     return (
          <Collapsible key={group.personName} className="border rounded-lg bg-card overflow-hidden">
             <CollapsibleTrigger asChild>
                 <div
-                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50"
-                     onContextMenu={(e) => {
-                        e.preventDefault();
-                        setShowDeleteDialog(true);
-                    }}
+                    className={cn("flex items-center justify-between p-4 hover:bg-accent/50", selectionMode && "cursor-pointer")}
+                    onClick={() => selectionMode && onSelect(group.personName)}
                 >
-                    <div className="flex-grow">
-                        <h3 className="font-semibold text-[15px]">{group.personName}</h3>
-                        <p className={cn("font-semibold text-sm",
-                            group.netAmount > 0 && "text-primary",
-                            group.netAmount < 0 && "text-destructive",
-                            group.netAmount === 0 && "text-muted-foreground"
-                        )}>
-                            {group.netAmount > 0 ? `Owes you ${currencySymbol}${formatAmount(group.netAmount)}` : group.netAmount < 0 ? `You owe ${currencySymbol}${formatAmount(Math.abs(group.netAmount))}` : `All Settled`}
-                        </p>
+                     <div className="flex items-center gap-3 flex-grow min-w-0">
+                        {selectionMode ? (
+                            <Checkbox 
+                                checked={isSelected} 
+                                onCheckedChange={() => onSelect(group.personName)}
+                                onClick={(e) => e.stopPropagation()} 
+                                className="flex-shrink-0"
+                            />
+                        ) : (
+                             <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 -ml-2" onClick={handleIconClick}>
+                                <User className="h-5 w-5 text-muted-foreground" />
+                            </Button>
+                        )}
+                        <div className="flex-grow">
+                            <h3 className="font-semibold text-[15px] truncate">{group.personName}</h3>
+                            <p className={cn("font-semibold text-sm",
+                                group.netAmount > 0 && "text-primary",
+                                group.netAmount < 0 && "text-destructive",
+                                group.netAmount === 0 && "text-muted-foreground"
+                            )}>
+                                {group.netAmount > 0 ? `Owes you ${currencySymbol}${formatAmount(group.netAmount)}` : group.netAmount < 0 ? `You owe ${currencySymbol}${formatAmount(Math.abs(group.netAmount))}` : `All Settled`}
+                            </p>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                        <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                        <AddDebtDialog personName={group.personName}>
-                             <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className="h-8 w-8"
-                                        >
-                                            <PlusCircle className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Add transaction for {group.personName}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </AddDebtDialog>
-                    </div>
+                    {!selectionMode && (
+                        <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <SettleUpButton group={group} currencySymbol={currencySymbol} />
+                            <AddDebtDialog personName={group.personName}>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-8 w-8"
+                                            >
+                                                <PlusCircle className="h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Add transaction for {group.personName}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </AddDebtDialog>
+                        </div>
+                    )}
                 </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
@@ -326,17 +294,18 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                     ))}
                 </div>
             </CollapsibleContent>
-            <DeletePersonButton personName={group.personName} open={showDeleteDialog} onOpenChange={setShowDeleteDialog} />
         </Collapsible>
     );
 }
 
-export function DebtsList({ debts, isLoading }: DebtsListProps) {
+export function DebtsList({ debts, isLoading, selectedPersonNames, onSelectionChange, onDeleteSelected, isDeleting }: DebtsListProps) {
     const { user } = useUser();
     const firestore = useFirestore();
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
+
+    const selectionMode = selectedPersonNames.length > 0;
 
     const groupedDebts = useMemo((): GroupedDebt[] => {
         if (!debts) return [];
@@ -361,7 +330,6 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
             group.records.push(debt);
         });
         
-        // Calculate running balance and other stats for each group
         Object.values(groups).forEach(group => {
             let runningBalance = 0;
             const recordsWithBalance = group.records
@@ -396,7 +364,6 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
             });
         });
 
-        // This component no longer sorts, it just groups. Sorting is done on the parent page.
         return Object.values(groups).sort((a, b) => {
             const aIsSettled = a.netAmount === 0;
             const bIsSettled = b.netAmount === 0;
@@ -411,6 +378,14 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
         });
     }, [debts]);
 
+    const handleSelectAll = () => {
+        if (selectedPersonNames.length === groupedDebts.length) {
+            onSelectionChange([]);
+        } else {
+            onSelectionChange(groupedDebts.map(g => g.personName));
+        }
+    };
+    
     if (isLoading) {
         return (
             <div className="space-y-4">
@@ -434,10 +409,58 @@ export function DebtsList({ debts, isLoading }: DebtsListProps) {
     }
 
     return (
-        <div className="space-y-3">
-            {groupedDebts.map((group) => (
-                <DebtGroup key={group.personName} group={group} currencySymbol={currencySymbol} />
-            ))}
+        <div className="relative">
+             {selectionMode && (
+                <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm p-2 border-b flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="select-all-debts"
+                            checked={selectedPersonNames.length === groupedDebts.length && groupedDebts.length > 0}
+                            onCheckedChange={handleSelectAll}
+                        />
+                        <Label htmlFor="select-all-debts" className="font-medium text-sm">{selectedPersonNames.length} selected</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                         <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" disabled={selectedPersonNames.length === 0 || isDeleting}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>This will permanently delete all records for {selectedPersonNames.length} person(s).</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={onDeleteSelected} className="bg-destructive hover:bg-destructive/90">
+                                        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin"/> : "Confirm Delete"}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                        <Button variant="ghost" size="sm" onClick={() => onSelectionChange([])}>Cancel</Button>
+                    </div>
+                </div>
+            )}
+            <div className="space-y-3">
+                {groupedDebts.map((group) => (
+                    <DebtGroup
+                        key={group.personName}
+                        group={group}
+                        currencySymbol={currencySymbol}
+                        isSelected={selectedPersonNames.includes(group.personName)}
+                        onSelect={(name) => onSelectionChange(
+                            selectedPersonNames.includes(name)
+                                ? selectedPersonNames.filter(n => n !== name)
+                                : [...selectedPersonNames, name]
+                        )}
+                        selectionMode={selectionMode}
+                    />
+                ))}
+            </div>
         </div>
     );
 }

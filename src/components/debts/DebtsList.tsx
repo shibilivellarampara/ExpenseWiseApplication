@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -137,14 +136,13 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
     );
 }
 
-function DeletePersonButton({ personName }: { personName: string }) {
+function DeletePersonButton({ personName, open, onOpenChange }: { personName: string; open: boolean; onOpenChange: (open: boolean) => void; }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const [isDeleting, setIsDeleting] = useState(false);
     const { toast } = useToast();
 
-    const handleDelete = async (e: React.MouseEvent) => {
-        e.stopPropagation();
+    const handleDelete = async () => {
         if (!user || !firestore) return;
         setIsDeleting(true);
 
@@ -155,43 +153,26 @@ function DeletePersonButton({ personName }: { personName: string }) {
             
             if (snapshot.empty) {
                 toast({ variant: "destructive", title: "No records found for this person." });
-                setIsDeleting(false);
-                return;
+            } else {
+                snapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
+                toast({
+                    title: "Person Removed",
+                    description: `All debt records for "${personName}" have been deleted.`,
+                });
             }
-
-            snapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-
-            await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
-            
-            toast({
-                title: "Person Removed",
-                description: `All debt records for "${personName}" have been deleted.`,
-            });
         } catch (error: any) {
             toast({ variant: 'destructive', title: "Error Removing Person", description: "Could not remove person and their records. Please try again." });
         } finally {
             setIsDeleting(false);
+            onOpenChange(false);
         }
     };
 
     return (
-        <AlertDialog>
-             <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </AlertDialogTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Delete all records for {personName}</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+        <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -209,6 +190,7 @@ function DeletePersonButton({ personName }: { personName: string }) {
         </AlertDialog>
     );
 }
+
 
 function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt, currencySymbol: string }) {
     const { user } = useUser();
@@ -269,10 +251,18 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
 }
 
 function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymbol: string }) {
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
     return (
          <Collapsible key={group.personName} className="border rounded-lg bg-card overflow-hidden">
             <CollapsibleTrigger asChild>
-                <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50">
+                <div
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50"
+                     onContextMenu={(e) => {
+                        e.preventDefault();
+                        setShowDeleteDialog(true);
+                    }}
+                >
                     <div className="flex-grow">
                         <h3 className="font-semibold text-[15px]">{group.personName}</h3>
                         <p className={cn("font-semibold text-sm",
@@ -303,7 +293,6 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                                 </Tooltip>
                             </TooltipProvider>
                         </AddDebtDialog>
-                        <DeletePersonButton personName={group.personName} />
                     </div>
                 </div>
             </CollapsibleTrigger>
@@ -337,6 +326,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                     ))}
                 </div>
             </CollapsibleContent>
+            <DeletePersonButton personName={group.personName} open={showDeleteDialog} onOpenChange={setShowDeleteDialog} />
         </Collapsible>
     );
 }

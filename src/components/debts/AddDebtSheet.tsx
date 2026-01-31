@@ -51,7 +51,7 @@ const debtSchema = z.object({
 type DebtFormData = z.infer<typeof debtSchema>;
 
 interface AddDebtDialogProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     personName?: string;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -285,7 +285,7 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
     if (isDesktop) {
         return (
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogTrigger asChild>{children}</DialogTrigger>
+                {children && <DialogTrigger asChild>{children}</DialogTrigger>}
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt or Due'}</DialogTitle>
@@ -301,7 +301,7 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
     
     return (
         <Drawer open={open} onOpenChange={onOpenChange}>
-            <DrawerTrigger asChild>{children}</DrawerTrigger>
+            {children && <DrawerTrigger asChild>{children}</DrawerTrigger>}
             <DrawerContent>
                  <DrawerHeader className="text-left">
                     <DrawerTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt or Due'}</DrawerTitle>

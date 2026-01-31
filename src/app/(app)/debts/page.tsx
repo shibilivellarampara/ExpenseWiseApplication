@@ -7,14 +7,18 @@ import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Debt, EnrichedDebt } from "@/lib/types";
 import { collection, orderBy, query } from "firebase/firestore";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { DebtsSummary } from "@/components/debts/DebtsSummary";
+import { useDebounce } from "use-debounce";
+import { Input } from "@/components/ui/input";
 
 export default function DebtsPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const [typeFilter, setTypeFilter] = useState<'all' | 'lent' | 'borrowed'>('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
 
     const debtsQuery = useMemoFirebase(() => {
         if (!user) return null;
@@ -33,34 +37,46 @@ export default function DebtsPage() {
     };
 
     const filteredDebts = useMemo(() => {
-        if (typeFilter === 'all') {
-            return enrichedDebts;
+        let filtered = enrichedDebts;
+
+        if (typeFilter !== 'all') {
+             const groups = enrichedDebts.reduce((acc, debt) => {
+                if (!acc[debt.personName]) {
+                    acc[debt.personName] = { netAmount: 0, records: [] };
+                }
+                if (debt.status === 'pending') {
+                     acc[debt.personName].netAmount += (debt.type === 'lent' ? debt.amount : -debt.amount);
+                }
+                acc[debt.personName].records.push(debt);
+                return acc;
+            }, {} as { [key: string]: { netAmount: number; records: EnrichedDebt[] } });
+
+            const filteredPersonNames = Object.keys(groups).filter(personName => {
+                const group = groups[personName];
+                if (typeFilter === 'lent') {
+                    return group.netAmount > 0;
+                }
+                if (typeFilter === 'borrowed') {
+                    return group.netAmount < 0;
+                }
+                return false;
+            });
+            filtered = enrichedDebts.filter(debt => filteredPersonNames.includes(debt.personName));
+        }
+        
+        if (debouncedSearchQuery) {
+            const lowercasedQuery = debouncedSearchQuery.toLowerCase();
+            const personNames = new Set(
+                enrichedDebts
+                    .filter(debt => debt.personName.toLowerCase().includes(lowercasedQuery))
+                    .map(debt => debt.personName)
+            );
+            filtered = filtered.filter(debt => personNames.has(debt.personName));
         }
 
-        const groups = enrichedDebts.reduce((acc, debt) => {
-            if (!acc[debt.personName]) {
-                acc[debt.personName] = { netAmount: 0, records: [] };
-            }
-            if (debt.status === 'pending') {
-                 acc[debt.personName].netAmount += (debt.type === 'lent' ? debt.amount : -debt.amount);
-            }
-            acc[debt.personName].records.push(debt);
-            return acc;
-        }, {} as { [key: string]: { netAmount: number; records: EnrichedDebt[] } });
 
-        const filteredPersonNames = Object.keys(groups).filter(personName => {
-            const group = groups[personName];
-            if (typeFilter === 'lent') {
-                return group.netAmount > 0;
-            }
-            if (typeFilter === 'borrowed') {
-                return group.netAmount < 0;
-            }
-            return false;
-        });
-
-        return enrichedDebts.filter(debt => filteredPersonNames.includes(debt.personName));
-    }, [enrichedDebts, typeFilter]);
+        return filtered;
+    }, [enrichedDebts, typeFilter, debouncedSearchQuery]);
 
 
     return (
@@ -74,12 +90,24 @@ export default function DebtsPage() {
                 </AddDebtDialog>
             </PageHeader>
             
-            <DebtsSummary 
-                debts={enrichedDebts} 
-                isLoading={isLoading}
-                onFilterChange={handleFilterChange}
-                activeFilter={typeFilter}
-            />
+            <div className="space-y-4">
+                <DebtsSummary 
+                    debts={enrichedDebts} 
+                    isLoading={isLoading}
+                    onFilterChange={handleFilterChange}
+                    activeFilter={typeFilter}
+                />
+                
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by name..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-8 w-full"
+                    />
+                </div>
+            </div>
 
             <DebtsList debts={filteredDebts} isLoading={isLoading} />
         </div>

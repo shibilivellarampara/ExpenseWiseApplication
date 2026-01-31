@@ -10,7 +10,7 @@ import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking,
 import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
 import { Badge } from "../ui/badge";
 import { cn, formatAmount } from "@/lib/utils";
-import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2, History, MoreVertical } from "lucide-react";
+import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
 import {
@@ -28,7 +28,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { Separator } from "../ui/separator";
 import { AddDebtDialog } from "./AddDebtSheet";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 
 interface DebtsListProps {
@@ -106,12 +105,20 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
 
     return (
         <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <Handshake className="mr-2 h-4 w-4"/>
-                    <span>Settle Balance</span>
-                </DropdownMenuItem>
-            </AlertDialogTrigger>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <AlertDialogTrigger asChild>
+                             <Button size="icon" variant="ghost" className="h-8 w-8">
+                                <Handshake className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Settle outstanding balance</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Settle balance with {group.personName}?</AlertDialogTitle>
@@ -171,12 +178,20 @@ function DeletePersonButton({ personName }: { personName: string }) {
 
     return (
         <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4"/>
-                    <span>Delete Person &amp; Records</span>
-                </DropdownMenuItem>
-            </AlertDialogTrigger>
+             <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Delete all records for {personName}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -254,7 +269,6 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
 }
 
 function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymbol: string }) {
-    const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
     return (
          <Collapsible key={group.personName} className="border rounded-lg bg-card overflow-hidden">
             <CollapsibleTrigger asChild>
@@ -270,23 +284,26 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                         </p>
                     </div>
                     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                        <AddDebtDialog personName={group.personName} open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen} />
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setIsAddSheetOpen(true)}>
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    Add Transaction
-                                </DropdownMenuItem>
-                                {group.netAmount !== 0 && <SettleUpButton group={group} currencySymbol={currencySymbol} />}
-                                <DropdownMenuSeparator />
-                                <DeletePersonButton personName={group.personName} />
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <SettleUpButton group={group} currencySymbol={currencySymbol} />
+                        <AddDebtDialog personName={group.personName}>
+                             <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8"
+                                        >
+                                            <PlusCircle className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Add transaction for {group.personName}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </AddDebtDialog>
+                        <DeletePersonButton personName={group.personName} />
                     </div>
                 </div>
             </CollapsibleTrigger>

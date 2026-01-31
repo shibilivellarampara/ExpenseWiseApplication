@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -267,7 +268,6 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
 }
 
 function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymbol: string }) {
-    const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
     return (
          <Collapsible key={group.personName} className="border rounded-lg bg-card overflow-hidden">
             <CollapsibleTrigger asChild>
@@ -284,7 +284,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                     </div>
                     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                         <AddDebtDialog personName={group.personName} open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
+                        <AddDebtDialog personName={group.personName}>
                              <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -292,7 +292,6 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8"
-                                            onClick={(e) => { e.stopPropagation(); setIsAddSheetOpen(true); }}
                                         >
                                             <PlusCircle className="h-4 w-4" />
                                         </Button>

@@ -15,7 +15,7 @@ import { X } from 'lucide-react';
 interface DebtsSummaryProps {
     debts: EnrichedDebt[];
     isLoading: boolean;
-    onFilterChange: (type: 'all' | 'lent' | 'borrowed') => void;
+    onFilterChange: (type: 'lent' | 'borrowed') => void;
     activeFilter: 'all' | 'lent' | 'borrowed';
 }
 
@@ -47,6 +47,11 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
         return <Skeleton className="h-24" />;
     }
 
+    const handleSectionClick = (type: 'lent' | 'borrowed') => {
+        onFilterChange(type);
+        setShowNet(true);
+    };
+
     return (
         <Card>
             <CardContent className="p-0 relative">
@@ -61,7 +66,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                 >
                     <div 
                         className={cn("flex-1 text-center p-4 cursor-pointer transition-colors rounded-l-lg", activeFilter === 'lent' ? 'bg-primary/10' : 'hover:bg-accent/50')}
-                        onClick={() => onFilterChange('lent')}
+                        onClick={() => handleSectionClick('lent')}
                     >
                          <p className="text-sm text-muted-foreground">You are Owed</p>
                          <p className="text-2xl font-bold text-primary">{currencySymbol}{totalOwedToUser.toFixed(2)}</p>
@@ -69,7 +74,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                     <Separator orientation="vertical" className="h-16" />
                      <div 
                         className={cn("flex-1 text-center p-4 cursor-pointer transition-colors rounded-r-lg", activeFilter === 'borrowed' ? 'bg-destructive/10' : 'hover:bg-accent/50')}
-                        onClick={() => onFilterChange('borrowed')}
+                        onClick={() => handleSectionClick('borrowed')}
                      >
                          <p className="text-sm text-muted-foreground">You Owe</p>
                          <p className="text-2xl font-bold text-destructive">{currencySymbol}{totalUserOwes.toFixed(2)}</p>
@@ -79,7 +84,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                 <div className={cn(
                     "transition-all duration-300 ease-in-out grid cursor-pointer",
                     showNet ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                )} onClick={() => setShowNet(!showNet)}>
+                )} onClick={() => setShowNet(false)}>
                     <div className="overflow-hidden">
                         <Separator className="my-0" />
                         <div className="text-center p-4">

@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 import { writeBatch, collection, doc, serverTimestamp, increment, query } from 'firebase/firestore';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Input } from '../ui/input';
+import { formatAmount } from '@/lib/utils';
 
 interface PayBillDialogProps {
   children: React.ReactNode;
@@ -131,7 +132,7 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
         <DialogHeader>
           <DialogTitle>Pay Bill for {creditCard.name}</DialogTitle>
           <DialogDescription>
-            The total outstanding amount is {outstandingAmount.toFixed(2)}.
+            The total outstanding amount is {formatAmount(outstandingAmount)}.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
@@ -144,7 +145,7 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
                     <SelectContent>
                     {paymentAccounts.map(acc => (
                         <SelectItem key={acc.id} value={acc.id}>
-                        {acc.name} (Balance: {acc.balance.toFixed(2)})
+                        {acc.name} (Balance: {formatAmount(acc.balance)})
                         </SelectItem>
                     ))}
                     </SelectContent>
@@ -178,7 +179,7 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
           <Button onClick={handlePayBill} disabled={isProcessing || !selectedPaymentAccountId || amountToPay <= 0}>
-            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : `Pay ${amountToPay > 0 ? amountToPay.toFixed(2) : ''}`}
+            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : `Pay ${amountToPay > 0 ? formatAmount(amountToPay) : ''}`}
           </Button>
         </DialogFooter>
       </DialogContent>

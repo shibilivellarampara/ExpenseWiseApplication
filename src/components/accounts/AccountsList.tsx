@@ -10,7 +10,7 @@ import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking,
 import { doc, setDoc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 import { Progress } from "../ui/progress";
 import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle, Merge, BarChartHorizontal, Handshake } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
@@ -341,11 +341,11 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                         <CreditCard className="h-7 w-7 text-primary"/>
                         <div>
                             <CardTitle className="font-headline">Credit Cards</CardTitle>
-                            <CardDescription>Available: {currencySymbol}{totalAvailableCredit.toFixed(2)}</CardDescription>
+                            <CardDescription>Available: {currencySymbol}{formatAmount(totalAvailableCredit)}</CardDescription>
                         </div>
                     </div>
                      <div className="text-right">
-                        <p className="font-bold text-xl text-destructive">{currencySymbol}{totalOutstanding.toFixed(2)}</p>
+                        <p className="font-bold text-xl text-destructive">{currencySymbol}{formatAmount(totalOutstanding)}</p>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -401,7 +401,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                             <Badge className="bg-primary/10 text-primary text-sm">Paid</Badge>
                                                         ) : (
                                                             <div className={cn("font-semibold text-lg text-destructive")}>
-                                                                {`${currencySymbol}${outstandingAmount.toFixed(2)}`}
+                                                                {`${currencySymbol}${formatAmount(outstandingAmount)}`}
                                                             </div>
                                                         )}
                                                     </div>
@@ -443,8 +443,8 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                 <div className="space-y-1 pt-1">
                                                     <Progress value={availablePercentage} className="h-1.5" />
                                                     <div className="flex justify-between text-xs text-muted-foreground">
-                                                        <span>Limit: {currencySymbol}{limit.toFixed(2)}</span>
-                                                        <span>Available: {currencySymbol}{availableCredit.toFixed(2)}</span>
+                                                        <span>Limit: {currencySymbol}{formatAmount(limit)}</span>
+                                                        <span>Available: {currencySymbol}{formatAmount(availableCredit)}</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -485,7 +485,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                         "font-bold text-base",
                                         item.balance >= 0 ? "text-primary" : "text-destructive"
                                     )}>
-                                        {currencySymbol}{item.balance.toFixed(2)}
+                                        {currencySymbol}{formatAmount(item.balance)}
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>

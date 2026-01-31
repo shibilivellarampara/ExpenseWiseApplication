@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { getCurrencySymbol } from "@/lib/currencies";
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
 import { Badge } from "../ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
@@ -98,8 +99,8 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
     if(group.netAmount === 0) return null;
 
     const settlementActionText = group.netAmount > 0 
-        ? `This will create a new settled record of you receiving ${currencySymbol}${group.netAmount.toFixed(2)} from ${group.personName} and mark all other pending transactions with them as settled.`
-        : `This will create a new settled record of you giving ${currencySymbol}${Math.abs(group.netAmount).toFixed(2)} to ${group.personName} and mark all other pending transactions with them as settled.`;
+        ? `This will create a new settled record of you receiving ${currencySymbol}${formatAmount(group.netAmount)} from ${group.personName} and mark all other pending transactions with them as settled.`
+        : `This will create a new settled record of you giving ${currencySymbol}${formatAmount(Math.abs(group.netAmount))} to ${group.personName} and mark all other pending transactions with them as settled.`;
 
     return (
         <AlertDialog>
@@ -252,7 +253,7 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                 <AlertDialogHeader>
                     <AlertDialogTitle>Delete this transaction?</AlertDialogTitle>
                     <AlertDialogDescription>
-                       You are about to permanently delete the transaction: "{debt.description || 'Transaction'}" of {currencySymbol}{debt.amount.toFixed(2)}. This cannot be undone.
+                       You are about to permanently delete the transaction: "{debt.description || 'Transaction'}" of {currencySymbol}{formatAmount(debt.amount)}. This cannot be undone.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -279,7 +280,7 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                             group.netAmount < 0 && "text-destructive",
                             group.netAmount === 0 && "text-muted-foreground"
                         )}>
-                            {group.netAmount > 0 ? `Owes you ${currencySymbol}${group.netAmount.toFixed(2)}` : group.netAmount < 0 ? `You owe ${currencySymbol}${Math.abs(group.netAmount).toFixed(2)}` : `All Settled`}
+                            {group.netAmount > 0 ? `Owes you ${currencySymbol}${formatAmount(group.netAmount)}` : group.netAmount < 0 ? `You owe ${currencySymbol}${formatAmount(Math.abs(group.netAmount))}` : `All Settled`}
                         </p>
                     </div>
                     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -324,10 +325,10 @@ function DebtGroup({ group, currencySymbol }: { group: GroupedDebt, currencySymb
                             </div>
                             <div className="text-right">
                                 <p className={cn("font-semibold", record.type === 'lent' ? 'text-destructive' : 'text-primary')}>
-                                    {currencySymbol}{record.amount.toFixed(2)}
+                                    {currencySymbol}{formatAmount(record.amount)}
                                 </p>
                                 {typeof record.runningBalance === 'number' && (
-                                    <p className="text-xs text-muted-foreground">Bal: {currencySymbol}{record.runningBalance.toFixed(2)}</p>
+                                    <p className="text-xs text-muted-foreground">Bal: {currencySymbol}{formatAmount(record.runningBalance)}</p>
                                 )}
                             </div>
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">

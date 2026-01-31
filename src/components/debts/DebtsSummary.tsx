@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -8,7 +9,7 @@ import { getCurrencySymbol } from '@/lib/currencies';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { cn, formatAmount } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { X } from 'lucide-react';
 
@@ -69,7 +70,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                         onClick={() => handleSectionClick('lent')}
                     >
                          <p className="text-sm text-muted-foreground">You are Owed</p>
-                         <p className="text-2xl font-bold text-primary">{currencySymbol}{totalOwedToUser.toFixed(2)}</p>
+                         <p className="text-2xl font-bold text-primary">{currencySymbol}{formatAmount(totalOwedToUser)}</p>
                     </div>
                     <Separator orientation="vertical" className="h-16" />
                      <div 
@@ -77,7 +78,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                         onClick={() => handleSectionClick('borrowed')}
                      >
                          <p className="text-sm text-muted-foreground">You Owe</p>
-                         <p className="text-2xl font-bold text-destructive">{currencySymbol}{totalUserOwes.toFixed(2)}</p>
+                         <p className="text-2xl font-bold text-destructive">{currencySymbol}{formatAmount(totalUserOwes)}</p>
                     </div>
                 </div>
 
@@ -90,7 +91,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                         <div className="text-center p-4">
                             <p className="text-sm text-muted-foreground">Net Position</p>
                              <p className={cn("text-xl font-bold", netBalance >= 0 ? "text-primary" : "text-destructive")}>
-                                {netBalance >= 0 ? `${currencySymbol}${netBalance.toFixed(2)}` : `-${currencySymbol}${Math.abs(netBalance).toFixed(2)}`}
+                                {netBalance >= 0 ? `${currencySymbol}${formatAmount(netBalance)}` : `-${currencySymbol}${formatAmount(Math.abs(netBalance))}`}
                             </p>
                         </div>
                     </div>

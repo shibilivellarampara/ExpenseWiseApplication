@@ -8,6 +8,7 @@ import { EnrichedExpense } from "@/lib/types";
 import { TrendingUp, Tag, TrendingDown, Minus } from "lucide-react";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
+import { formatAmount } from "@/lib/utils";
 
 interface DashboardStatsProps {
     currentMonthExpenses: EnrichedExpense[];
@@ -68,7 +69,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                     <span className="text-muted-foreground font-bold">{currencySymbol}</span>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalExpense.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">{formatAmount(stats.totalExpense)}</div>
                     <p className="text-xs text-muted-foreground">Cash out this month</p>
                 </CardContent>
             </Card>
@@ -79,7 +80,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.topCategory}</div>
-                    <p className="text-xs text-muted-foreground">{currencySymbol}{stats.topCategoryAmount.toFixed(2)} spent this month</p>
+                    <p className="text-xs text-muted-foreground">{currencySymbol}{formatAmount(stats.topCategoryAmount)} spent this month</p>
                 </CardContent>
             </Card>
             <Card>
@@ -95,7 +96,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                 </CardHeader>
                 <CardContent>
                      <div className={`text-2xl font-bold ${stats.monthOverMonthChange > 0 ? 'text-red-500' : stats.monthOverMonthChange < 0 ? 'text-green-500' : ''}`}>
-                        {stats.monthOverMonthChange > 0 ? '+' : ''}{stats.monthOverMonthChange.toFixed(1)}%
+                        {stats.monthOverMonthChange > 0 ? '+' : ''}{formatAmount(stats.monthOverMonthChange)}%
                     </div>
                     <p className="text-xs text-muted-foreground">vs. last month</p>
                 </CardContent>

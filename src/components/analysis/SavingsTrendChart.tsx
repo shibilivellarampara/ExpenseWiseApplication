@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Bar, BarChart as RechartsBarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from 'recharts';
@@ -6,6 +7,7 @@ import { EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { BarChart as BarChartIcon } from 'lucide-react';
 import { format, eachMonthOfInterval, startOfMonth, endOfMonth, getYear } from 'date-fns';
+import { formatAmount } from '@/lib/utils';
 
 interface SavingsTrendChartProps {
     expenses: EnrichedExpense[];
@@ -75,7 +77,7 @@ export function SavingsTrendChart({ expenses, currency }: SavingsTrendChartProps
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "var(--radius)"
                     }}
-                    formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
+                    formatter={(value: number) => `${currencySymbol}${formatAmount(value)}`}
                     cursor={{ fill: 'hsl(var(--muted))' }}
                 />
                 <Bar dataKey="savings" name="Monthly Savings">

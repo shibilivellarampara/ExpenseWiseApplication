@@ -36,3 +36,10 @@ export const getInitials = (name?: string | null) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 };
+
+export const formatAmount = (amount: number): string => {
+    if (amount % 1 === 0) {
+        return amount.toString();
+    }
+    return amount.toFixed(2);
+};

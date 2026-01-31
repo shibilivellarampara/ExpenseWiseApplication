@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { ScrollArea } from "../ui/scroll-area";
 import * as LucideIcons from 'lucide-react';
-import { cn } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import { Badge } from "../ui/badge";
 import { generateColorStyle } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -84,7 +84,7 @@ const TransactionList = ({ transactions, currencySymbol }: { transactions: Enric
                             <div className="flex justify-between items-start">
                                 <span className="font-medium break-all">{tx.description}</span>
                                 <span className={cn("font-semibold whitespace-nowrap", tx.type === 'income' ? 'text-green-600' : 'text-red-500')}>
-                                    {tx.type === 'income' ? '+' : '-'}{currencySymbol}{tx.amount.toFixed(2)}
+                                    {tx.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(tx.amount)}
                                 </span>
                             </div>
                             <p className="text-xs text-muted-foreground">{tx.date.toLocaleDateString()}</p>
@@ -215,11 +215,11 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
                                         <TransactionList transactions={filteredTransactions} currencySymbol={currencySymbol} />
                                     </TransactionDialog>
                                 </div>
-                                {isNetView && 'income' in stat && <div className="hidden md:block text-right w-28 text-green-600">{currencySymbol}{stat.income.toFixed(2)}</div>}
-                                {isNetView && 'expense' in stat && <div className="hidden md:block text-right w-28 text-red-500">{currencySymbol}{stat.expense.toFixed(2)}</div>}
+                                {isNetView && 'income' in stat && <div className="hidden md:block text-right w-28 text-green-600">{currencySymbol}{formatAmount(stat.income)}</div>}
+                                {isNetView && 'expense' in stat && <div className="hidden md:block text-right w-28 text-red-500">{currencySymbol}{formatAmount(stat.expense)}</div>}
                                 <div className={cn("text-right font-bold w-28", amountColor)}>
                                     {stat.total > 0 && isNetView ? '+' : ''}
-                                    {currencySymbol}{stat.total.toFixed(2)}
+                                    {currencySymbol}{formatAmount(stat.total)}
                                 </div>
                                 <div className="hidden md:block text-right w-28">{stat.count}</div>
                             </div>
@@ -239,7 +239,7 @@ const renderStatsTable = (stats: (Stat | NetStat)[], currencySymbol: string, all
                                                         </div>
                                                         <span className={cn("font-mono", isNetView ? tagAmountColor : 'text-muted-foreground')}>
                                                             {isNetView && tag.total > 0 ? '+' : ''}
-                                                            {currencySymbol}{tag.total.toFixed(2)}
+                                                            {currencySymbol}{formatAmount(tag.total)}
                                                         </span>
                                                     </div>
                                                      {!isNetView && <Progress value={tag.percentage} className="h-1" />}

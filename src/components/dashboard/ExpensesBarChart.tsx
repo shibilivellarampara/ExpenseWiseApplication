@@ -9,7 +9,7 @@ import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfM
 import { BarChart as BarChartIcon } from 'lucide-react';
 import { CHART_COLORS } from '@/lib/colors';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
+import { cn, formatAmount } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,7 @@ const CustomTooltip = ({ active, payload, label, currencySymbol }: any) => {
                                 <div className="h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
                                 <span>{p.name}:</span>
                             </div>
-                            <span className="font-mono font-medium">{currencySymbol}{p.value.toFixed(2)}</span>
+                            <span className="font-mono font-medium">{currencySymbol}{formatAmount(p.value)}</span>
                         </div>
                     ))}
                 </div>
@@ -51,7 +51,7 @@ const CustomTooltip = ({ active, payload, label, currencySymbol }: any) => {
                         <div className="my-1.5 h-px bg-border" />
                         <div className="flex justify-between font-bold">
                             <span>Total:</span>
-                            <span>{currencySymbol}{total.toFixed(2)}</span>
+                            <span>{currencySymbol}{formatAmount(total)}</span>
                         </div>
                     </>
                 )}
@@ -90,7 +90,7 @@ const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpe
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Badge variant="secondary" className="font-mono">
-                                            {currencySymbol}{value.toFixed(2)}
+                                            {currencySymbol}{formatAmount(value)}
                                         </Badge>
                                         <span className="text-xs text-muted-foreground w-12 text-right">
                                             ({percentage.toFixed(1)}%)
@@ -109,7 +109,7 @@ const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpe
                                         <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-md">
                                             <span>{item.name}</span>
                                             <Badge variant="secondary" className="font-mono">
-                                                {currencySymbol}{item.value.toFixed(2)}
+                                                {currencySymbol}{formatAmount(item.value)}
                                             </Badge>
                                         </div>
                                     ))}
@@ -132,7 +132,7 @@ const CustomLegend = ({ onLegendClick, categoryColors, categoryTotals, totalExpe
                         </div>
                         <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="font-mono">
-                                {currencySymbol}{value.toFixed(2)}
+                                {currencySymbol}{formatAmount(value)}
                             </Badge>
                              <span className="text-xs text-muted-foreground w-12 text-right">
                                 ({percentage.toFixed(1)}%)

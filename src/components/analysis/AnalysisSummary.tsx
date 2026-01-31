@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EnrichedExpense, UserProfile } from "@/lib/types";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { cn } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import { Separator } from "../ui/separator";
 
 interface AnalysisSummaryProps {
@@ -70,15 +70,15 @@ export function AnalysisSummary({ isLoading, currency, allExpenses, analysisExpe
                         "text-lg font-bold",
                         summary.netFlow >= 0 ? "text-green-600" : "text-red-500"
                     )}>
-                        {currencySymbol}{summary.netFlow.toFixed(2)}
+                        {currencySymbol}{formatAmount(summary.netFlow)}
                     </p>
                 </div>
                 <div className="text-right">
                     <p className="text-green-600">
-                       <span className="text-muted-foreground">IN:</span> {currencySymbol}{summary.totalIn.toFixed(2)}
+                       <span className="text-muted-foreground">IN:</span> {currencySymbol}{formatAmount(summary.totalIn)}
                     </p>
                      <p className="text-red-500">
-                       <span className="text-muted-foreground">OUT:</span> {currencySymbol}{summary.totalOut.toFixed(2)}
+                       <span className="text-muted-foreground">OUT:</span> {currencySymbol}{formatAmount(summary.totalOut)}
                     </p>
                 </div>
             </div>

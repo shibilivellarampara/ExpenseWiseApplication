@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Bar, BarChart as RechartsBarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -6,6 +7,7 @@ import { EnrichedExpense } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { BarChart as BarChartIcon } from 'lucide-react';
 import { CHART_COLORS } from '@/lib/colors';
+import { formatAmount } from '@/lib/utils';
 
 interface CategoryBarChartProps {
     expenses: EnrichedExpense[];
@@ -53,7 +55,7 @@ export function CategoryBarChart({ expenses, currency }: CategoryBarChartProps) 
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "var(--radius)"
                     }}
-                    formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
+                    formatter={(value: number) => `${currencySymbol}${formatAmount(value)}`}
                     cursor={{ fill: 'hsl(var(--muted))' }}
                 />
                 <Bar dataKey="value" name="Total Spent" fill={CHART_COLORS[1]} radius={[0, 4, 4, 0]} />

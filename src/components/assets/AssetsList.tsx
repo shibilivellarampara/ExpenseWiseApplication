@@ -8,7 +8,7 @@ import { Skeleton } from '../ui/skeleton';
 import { useDoc, useFirestore, useUser, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { TrendingUp, Edit, Trash2, Loader2, MoreVertical, PlusCircle, Link as LinkIcon, Info } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatAmount } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -143,7 +143,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                 {renderIcon(categoryInfo.icon, 'h-6 w-6 text-primary')}
                                 <div>
                                     <CardTitle className="font-headline">{categoryInfo.label}</CardTitle>
-                                    <CardDescription>{currencySymbol}{categoryTotal.toFixed(2)}</CardDescription>
+                                    <CardDescription>{currencySymbol}{formatAmount(categoryTotal)}</CardDescription>
                                 </div>
                             </div>
                            <div className="flex items-center">
@@ -213,11 +213,11 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                                         <div className="flex items-center gap-4 text-sm">
                                                             <div className="flex flex-col">
                                                                 <span className="text-xs text-muted-foreground">Invested</span>
-                                                                <span className="font-medium text-muted-foreground">{currencySymbol}{asset.investedAmount.toFixed(2)}</span>
+                                                                <span className="font-medium text-muted-foreground">{currencySymbol}{formatAmount(asset.investedAmount)}</span>
                                                             </div>
                                                             <div className="flex flex-col">
                                                                 <span className="text-xs text-muted-foreground">Current Value</span>
-                                                                <span className="font-medium">{currencySymbol}{asset.currentValue.toFixed(2)}</span>
+                                                                <span className="font-medium">{currencySymbol}{formatAmount(asset.currentValue)}</span>
                                                             </div>
                                                         </div>
                                                     )}
@@ -226,7 +226,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                                     {!isFromAccount ? (
                                                         <>
                                                             <div className={cn("font-bold text-lg", gainLoss >= 0 ? 'text-green-600' : 'text-red-500')}>
-                                                                {gainLoss >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(gainLoss).toFixed(2)}
+                                                                {gainLoss >= 0 ? '+' : '-'}{currencySymbol}{formatAmount(Math.abs(gainLoss))}
                                                             </div>
                                                             <div className={cn("text-xs flex items-center", gainLoss >= 0 ? 'text-green-600' : 'text-red-500')}>
                                                                 <TrendingUp className="h-3 w-3 mr-1" />
@@ -235,7 +235,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                                         </>
                                                     ) : (
                                                          <div className={cn("font-bold text-lg text-green-600")}>
-                                                            {currencySymbol}{asset.currentValue.toFixed(2)}
+                                                            {currencySymbol}{formatAmount(asset.currentValue)}
                                                         </div>
                                                     )}
                                                 </div>

@@ -10,7 +10,7 @@ import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { useMemo, useRef, useState, useCallback, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -45,13 +45,6 @@ interface ExpensesTableProps {
 const getInitials = (name?: string | null) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-};
-
-const formatAmount = (amount: number) => {
-    if (amount % 1 === 0) {
-        return amount.toString();
-    }
-    return amount.toFixed(2);
 };
 
 type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense: EnrichedExpense };

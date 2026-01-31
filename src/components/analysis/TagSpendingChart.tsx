@@ -9,6 +9,7 @@ import { getCurrencySymbol } from '@/lib/currencies';
 import { CHART_COLORS } from '@/lib/colors';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { formatAmount } from '@/lib/utils';
 
 interface PieChartDataPoint {
   name: string;
@@ -51,7 +52,7 @@ const renderActiveShape = (props: any, currencySymbol: string) => {
       />
       <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
       <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} textAnchor={textAnchor} className="text-sm fill-foreground">{`${currencySymbol}${value?.toFixed(2)}`}</text>
+      <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} textAnchor={textAnchor} className="text-sm fill-foreground">{`${currencySymbol}${formatAmount(value)}`}</text>
       <text x={ex + (cos >= 0 ? 1 : -1) * 8} y={ey} dy={18} textAnchor={textAnchor} className="text-xs fill-muted-foreground">
         {`(${(percent || 0 * 100).toFixed(2)}%)`}
       </text>
@@ -138,7 +139,7 @@ export function TagSpendingChart({ expenses, currency }: TagSpendingChartProps) 
                                 border: "1px solid hsl(var(--border))",
                                 borderRadius: "var(--radius)"
                             }}
-                            formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`}
+                            formatter={(value: number) => `${currencySymbol}${formatAmount(value)}`}
                         />
                     </RechartsPieChart>
                 </ResponsiveContainer>
@@ -154,7 +155,7 @@ export function TagSpendingChart({ expenses, currency }: TagSpendingChartProps) 
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Badge variant="secondary" className="font-mono">
-                                        {currencySymbol}{item.value.toFixed(2)}
+                                        {currencySymbol}{formatAmount(item.value)}
                                     </Badge>
                                     <span className="text-xs text-muted-foreground w-12 text-right">
                                         ({((item.value / totalAmount) * 100).toFixed(1)}%)

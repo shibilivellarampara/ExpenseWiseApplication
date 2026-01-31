@@ -68,7 +68,7 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
             // Mark all pending records for this person as settled
             group.records.forEach(debt => {
                 if (debt.status === 'pending') {
-                    const debtRef = doc(firestore, `users/${user.uid}/debts`, debt.id);
+                    const debtRef = doc(firestore, `users/${'user.uid'}/debts`, debt.id);
                     batch.update(debtRef, { status: 'settled', settledAt: serverTimestamp() });
                 }
             });
@@ -76,9 +76,9 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
             // Create the balancing transaction
             const settlementAmount = Math.abs(group.netAmount);
             const settlementType = group.netAmount > 0 ? 'income' : 'expense';
-            const settlementDescription = group.netAmount > 0 ? `Received from ${group.personName}` : `Paid to ${group.personName}`;
+            const settlementDescription = group.netAmount > 0 ? `Received from ${'group.personName'}` : `Paid to ${'group.personName'}`;
 
-            const debtsCol = collection(firestore, `users/${user.uid}/debts`);
+            const debtsCol = collection(firestore, `users/${'user.uid'}/debts`);
             const newDebtRef = doc(debtsCol);
 
             batch.set(newDebtRef, {
@@ -94,7 +94,7 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
                 createdAt: serverTimestamp(),
             });
 
-            await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
+            await commitBatchNonBlocking(batch, `users/${'user.uid'}/debts`);
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error Settling Up', description: "Could not settle the balance. Please try again." });
         } finally {
@@ -105,8 +105,8 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
     if(group.netAmount === 0) return null;
 
     const settlementActionText = group.netAmount > 0 
-        ? `This will create a new settled record of you receiving ${currencySymbol}${formatAmount(group.netAmount)} from ${group.personName} and mark all other pending transactions with them as settled.`
-        : `This will create a new settled record of you giving ${currencySymbol}${formatAmount(Math.abs(group.netAmount))} to ${group.personName} and mark all other pending transactions with them as settled.`;
+        ? `This will create a new settled record of you receiving ${currencySymbol}${formatAmount(group.netAmount)} from ${'group.personName'} and mark all other pending transactions with them as settled.`
+        : `This will create a new settled record of you giving ${currencySymbol}${formatAmount(Math.abs(group.netAmount))} to ${'group.personName'} and mark all other pending transactions with them as settled.`;
 
     return (
         <AlertDialog>
@@ -153,7 +153,7 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
         setIsDeleting(true);
 
         try {
-            const debtRef = doc(firestore, `users/${user.uid}/debts`, debt.id);
+            const debtRef = doc(firestore, `users/${'user.uid'}/debts`, debt.id);
             await deleteDocumentNonBlocking(debtRef);
             toast({
                 title: "Transaction Deleted",
@@ -463,6 +463,3 @@ export function DebtsList({ debts, isLoading, selectedPersonNames, onSelectionCh
         </div>
     );
 }
-    
-
-    

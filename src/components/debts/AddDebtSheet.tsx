@@ -256,7 +256,7 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
         }
 
         try {
-            const debtsCol = collection(firestore, `users/${user.uid}/debts`);
+            const debtsCol = collection(firestore, `users/${'user.uid'}/debts`);
             addDocumentNonBlocking(debtsCol, {
                 ...values,
                 userId: user.uid,

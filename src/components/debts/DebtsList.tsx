@@ -403,7 +403,7 @@ export function DebtsList({ debts, isLoading, selectedPersonNames, onSelectionCh
         return (
             <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg">
                 <h3 className="text-xl font-semibold">No Debts or Dues</h3>
-                <p className="text-muted-foreground mt-2">Click "Add Debt/Due" to start tracking.</p>
+                <p className="text-muted-foreground mt-2">Click "Add Debt" to start tracking.</p>
             </div>
         );
     }

@@ -28,7 +28,7 @@ export default function DebtsPage() {
 
     const debtsQuery = useMemoFirebase(() => {
         if (!user) return null;
-        return query(collection(firestore, `users/${'user.uid'}/debts`), orderBy('date', 'desc'))
+        return query(collection(firestore, `users/${user.uid}/debts`), orderBy('date', 'desc'))
     }, [firestore, user]);
 
     const { data: debts, isLoading } = useCollection<Debt>(debtsQuery);
@@ -49,7 +49,7 @@ export default function DebtsPage() {
         try {
             const batch = writeBatch(firestore);
             
-            const debtsRef = collection(firestore, `users/${'user.uid'}/debts`);
+            const debtsRef = collection(firestore, `users/${user.uid}/debts`);
             const q = query(debtsRef, where('personName', 'in', selectedPersonNames));
             
             const snapshot = await getDocs(q);
@@ -60,7 +60,7 @@ export default function DebtsPage() {
                 snapshot.forEach(doc => {
                     batch.delete(doc.ref);
                 });
-                await commitBatchNonBlocking(batch, `users/${'user.uid'}/debts`);
+                await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
                 toast({
                     title: `${selectedPersonNames.length} Person(s) Removed`,
                     description: `All debt records for the selected people have been deleted.`,

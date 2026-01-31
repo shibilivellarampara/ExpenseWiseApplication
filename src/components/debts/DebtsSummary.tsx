@@ -9,13 +9,17 @@ import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { Button } from '../ui/button';
+import { X } from 'lucide-react';
 
 interface DebtsSummaryProps {
     debts: EnrichedDebt[];
     isLoading: boolean;
+    onFilterChange: (type: 'lent' | 'borrowed') => void;
+    activeFilter: 'all' | 'lent' | 'borrowed';
 }
 
-export function DebtsSummary({ debts, isLoading }: DebtsSummaryProps) {
+export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }: DebtsSummaryProps) {
     const { user } = useUser();
     const firestore = useFirestore();
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -45,30 +49,42 @@ export function DebtsSummary({ debts, isLoading }: DebtsSummaryProps) {
 
     return (
         <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-0 relative">
+                 {activeFilter !== 'all' && (
+                    <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-8 w-8 z-10" onClick={() => onFilterChange(activeFilter === 'lent' ? 'lent' : 'borrowed')}>
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Clear filter</span>
+                    </Button>
+                )}
                 <div 
-                    className="flex items-center justify-center cursor-pointer"
-                    onClick={() => setShowNet(prev => !prev)}
+                    className="flex items-center justify-center"
                 >
-                    <div className="flex-1 text-center border-r pr-4">
+                    <div 
+                        className={cn("flex-1 text-center p-4 cursor-pointer transition-colors rounded-l-lg", activeFilter === 'lent' ? 'bg-primary/10' : 'hover:bg-accent/50')}
+                        onClick={() => onFilterChange('lent')}
+                    >
                          <p className="text-sm text-muted-foreground">You are Owed</p>
                          <p className="text-2xl font-bold text-primary">{currencySymbol}{totalOwedToUser.toFixed(2)}</p>
                     </div>
-                     <div className="flex-1 text-center">
+                    <Separator orientation="vertical" className="h-16" />
+                     <div 
+                        className={cn("flex-1 text-center p-4 cursor-pointer transition-colors rounded-r-lg", activeFilter === 'borrowed' ? 'bg-destructive/10' : 'hover:bg-accent/50')}
+                        onClick={() => onFilterChange('borrowed')}
+                     >
                          <p className="text-sm text-muted-foreground">You Owe</p>
                          <p className="text-2xl font-bold text-destructive">{currencySymbol}{totalUserOwes.toFixed(2)}</p>
                     </div>
                 </div>
 
                 <div className={cn(
-                    "transition-all duration-300 ease-in-out grid",
+                    "transition-all duration-300 ease-in-out grid cursor-pointer",
                     showNet ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                )}>
+                )} onClick={() => setShowNet(!showNet)}>
                     <div className="overflow-hidden">
-                        <Separator className="my-4" />
-                        <div className="text-center">
+                        <Separator className="my-0" />
+                        <div className="text-center p-4">
                             <p className="text-sm text-muted-foreground">Net Position</p>
-                            <p className={cn("text-2xl font-bold", netBalance >= 0 ? "text-primary" : "text-destructive")}>
+                             <p className={cn("text-xl font-bold", netBalance >= 0 ? "text-primary" : "text-destructive")}>
                                 {netBalance >= 0 ? `${currencySymbol}${netBalance.toFixed(2)}` : `-${currencySymbol}${Math.abs(netBalance).toFixed(2)}`}
                             </p>
                         </div>

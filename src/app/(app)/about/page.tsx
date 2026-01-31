@@ -14,6 +14,15 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.7.8",
+        date: "2026-01-31",
+        changes: [
+            { type: 'Fix', description: "Resolved a critical build failure caused by incorrect component import paths on the 'Debts & Dues' page." },
+            { type: 'UI/UX', description: "Clarified the 'Net Position' label on the Debts summary to dynamically show 'Net Owed' or 'You Owe'." },
+            { type: 'UI/UX', description: "Made the Debts summary card more compact for a cleaner look." },
+        ]
+    },
+    {
         version: "1.7.7",
         date: "2026-01-11",
         changes: [
@@ -198,6 +207,8 @@ const changelog = [
             { type: 'UI', description: "Clarified labels in the debt form to 'You are giving money'/'You are receiving money' and in the list to 'Given'/'Received' for better clarity." },
             { type: 'Feature', description: "Consolidated transaction list and form settings into a single, convenient 'Transaction Settings' section in the user profile menu." },
             { type: 'UI', description: "Disabled text selection on mobile devices to provide a cleaner, more app-like feel." },
+            { type: 'Fix', description: "Resolved a build error in the 'Add Asset' form caused by a missing component import." },
+            { type: 'Fix', description: "Corrected the Google Drive export to open the file link in the same tab instead of a new one." },
         ]
     },
     {
@@ -560,7 +571,3 @@ export default function AboutPage() {
     );
 
 }
-
-    
-
-    

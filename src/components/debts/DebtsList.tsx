@@ -4,11 +4,11 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EnrichedDebt, UserProfile, EnrichedDebtWithBalance } from "@/lib/types";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
-import { Badge } from "../ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { cn, formatAmount } from "@/lib/utils";
 import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -24,12 +24,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
-import { Separator } from "../ui/separator";
-import { AddDebtDialog } from "./AddDebtSheet";
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
-import { Checkbox } from "../ui/checkbox";
-import { Label } from "../ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
+import { AddDebtDialog } from "@/components/debts/AddDebtSheet";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 
 interface DebtsListProps {

@@ -1,27 +1,25 @@
+
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Asset, EnrichedAsset, UserProfile, AssetType, EnrichedDebt, EnrichedDebtWithBalance } from '@/lib/types';
+import { EnrichedDebt, UserProfile, EnrichedDebtWithBalance } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDoc, useFirestore, useUser, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
+import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
-import { TrendingUp, Edit, Trash2, Loader2, MoreVertical, PlusCircle, Link as LinkIcon, Info, Handshake, User, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from 'lucide-react';
 import { cn, formatAmount } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { getCurrencySymbol } from '@/lib/currencies';
-import { AddAssetDialog } from '@/components/assets/AddAssetDialog';
-import { ASSET_TYPES } from '@/lib/assets';
-import { renderIcon } from '@/lib/render-icon';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from "@/components/ui/separator";
 import { AddDebtDialog } from '@/components/debts/AddDebtSheet';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 
 interface DebtsListProps {

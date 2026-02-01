@@ -6,10 +6,11 @@ import { useMemo, useState } from 'react';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { CHART_COLORS } from '@/lib/colors';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
+import { cn, formatAmount } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+
 
 interface PieChartDataPoint {
   name: string;
@@ -74,7 +75,7 @@ const renderActiveShape = (
   const MAX_X = SVG_WIDTH - CHART_PADDING;
 
   // Estimated text width (rough but reliable)
-  const labelText = `${currencySymbol}${value.toFixed(2)}`;
+  const labelText = `${currencySymbol}${formatAmount(value)}`;
   const estimatedTextWidth = labelText.length * 7;
 
   let ex = mx + (cos >= 0 ? 12 : -12);
@@ -192,7 +193,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
   const safeColors = CHART_COLORS.slice(0, 11);
 
   return (
-    <div className="w-full flex flex-col h-[750px]">
+    <div className="w-full flex flex-col h-full min-h-[450px]">
         <div className="h-[250px] w-full overflow-visible">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart
@@ -238,7 +239,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Badge variant="secondary" className="font-mono">
-                                                    {currencySymbol}{item.value.toFixed(2)}
+                                                    {currencySymbol}{formatAmount(item.value)}
                                                 </Badge>
                                                 {totalAmount > 0 && (
                                                 <span className="text-xs text-muted-foreground w-12 text-right">
@@ -258,7 +259,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
                                                     <div key={otherItem.name} className="flex justify-between items-center text-sm p-2 rounded-md">
                                                         <span>{otherItem.name}</span>
                                                         <Badge variant="secondary" className="font-mono">
-                                                            {currencySymbol}{otherItem.value.toFixed(2)}
+                                                            {currencySymbol}{formatAmount(otherItem.value)}
                                                         </Badge>
                                                     </div>
                                                 ))}
@@ -278,7 +279,7 @@ export function CategoryPieChart({ data, allData, currencySymbol, totalAmountFor
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Badge variant="secondary" className="font-mono">
-                                            {currencySymbol}{item.value.toFixed(2)}
+                                            {currencySymbol}{formatAmount(item.value)}
                                         </Badge>
                                         {totalAmount > 0 && (
                                         <span className="text-xs text-muted-foreground w-12 text-right">

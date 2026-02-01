@@ -111,20 +111,11 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
 
     return (
         <AlertDialog>
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <AlertDialogTrigger asChild>
-                             <Button size="icon" variant="ghost" className="h-8 w-8">
-                                <Handshake className="h-4 w-4" />
-                            </Button>
-                        </AlertDialogTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Settle outstanding balance</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+            <AlertDialogTrigger asChild>
+                 <Button size="icon" variant="ghost" className="h-8 w-8">
+                    <Handshake className="h-4 w-4" />
+                </Button>
+            </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Settle balance with {group.personName}?</AlertDialogTitle>
@@ -169,20 +160,11 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
 
     return (
         <AlertDialog>
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <AlertDialogTrigger asChild>
-                             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </AlertDialogTrigger>
-                    </TooltipTrigger>
-                     <TooltipContent>
-                        <p>Delete this transaction</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+            <AlertDialogTrigger asChild>
+                 <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Delete this transaction?</AlertDialogTitle>
@@ -242,24 +224,15 @@ function DebtGroup({ group, currencySymbol, onSelect, isSelected, selectionMode 
                     {!selectionMode && (
                         <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                             <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                             <TooltipProvider>
-                                <Tooltip>
-                                    <AddDebtDialog personName={group.personName}>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="h-8 w-8"
-                                            >
-                                                <PlusCircle className="h-4 w-4" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                    </AddDebtDialog>
-                                    <TooltipContent>
-                                        <p>Add transaction for {group.personName}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                            <AddDebtDialog personName={group.personName}>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8"
+                                >
+                                    <PlusCircle className="h-4 w-4" />
+                                </Button>
+                            </AddDebtDialog>
                         </div>
                     )}
                 </div>

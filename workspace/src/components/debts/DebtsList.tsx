@@ -282,7 +282,7 @@ export function DebtsList({ debts, isLoading, selectedPersonNames, onSelectionCh
     const groupedDebts = useMemo((): GroupedDebt[] => {
         if (!debts) return [];
 
-        const groups: { [key: string]: Omit<GroupedDebt, 'records' | 'netAmount'> &amp; { records: EnrichedDebt[], netAmount: number } } = {};
+        const groups: { [key: string]: Omit<GroupedDebt, 'records' | 'netAmount'> & { records: EnrichedDebt[], netAmount: number } } = {};
 
         debts.forEach(debt => {
             const personName = debt.personName;
@@ -387,7 +387,7 @@ export function DebtsList({ debts, isLoading, selectedPersonNames, onSelectionCh
                     <div className="flex items-center gap-2">
                         <Checkbox
                             id="select-all-debts"
-                            checked={selectedPersonNames.length === groupedDebts.length &amp;&amp; groupedDebts.length > 0}
+                            checked={selectedPersonNames.length === groupedDebts.length && groupedDebts.length > 0}
                             onCheckedChange={handleSelectAll}
                         />
                         <Label htmlFor="select-all-debts" className="font-medium text-sm">{selectedPersonNames.length} selected</Label>

@@ -113,7 +113,7 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
         <AlertDialog>
             <TooltipProvider>
                 <Tooltip>
-                    <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <TooltipTrigger asChild>
                         <AlertDialogTrigger asChild>
                              <Button size="icon" variant="ghost" className="h-8 w-8">
                                 <Handshake className="h-4 w-4" />
@@ -242,9 +242,9 @@ function DebtGroup({ group, currencySymbol, onSelect, isSelected, selectionMode 
                     {!selectionMode && (
                         <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                             <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                            <AddDebtDialog personName={group.personName}>
-                                <TooltipProvider>
-                                    <Tooltip>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <AddDebtDialog personName={group.personName}>
                                         <TooltipTrigger asChild>
                                             <Button
                                                 size="icon"
@@ -254,12 +254,12 @@ function DebtGroup({ group, currencySymbol, onSelect, isSelected, selectionMode 
                                                 <PlusCircle className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Add transaction for {group.personName}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </AddDebtDialog>
+                                    </AddDebtDialog>
+                                    <TooltipContent>
+                                        <p>Add transaction for {group.personName}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
                     )}
                 </div>

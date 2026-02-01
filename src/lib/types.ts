@@ -149,7 +149,7 @@ export type EnrichedRecurringExpense = Omit<RecurringExpense, 'startDate' | 'nex
     account?: Account;
 };
 
-export type AssetType = 'savings_cash' | 'mutual_funds' | 'stocks_equity' | 'fixed_income' | 'retirement' | 'digital_assets' | 'other';
+export type AssetType = 'savings_cash' | 'mutual_funds' | 'stocks_equity' | 'fixed_income' | 'retirement' | 'digital_assets' | 'gold' | 'private_equity' | 'other';
 
 export type Asset = {
     id: string;

@@ -8,5 +8,7 @@ export const ASSET_TYPES: Record<AssetType, { label: string; icon: string }> = {
     fixed_income: { label: 'Fixed Income', icon: 'Landmark' },
     retirement: { label: 'Long-Term', icon: 'PiggyBank' },
     digital_assets: { label: 'Digital Assets', icon: 'Bitcoin' },
+    gold: { label: 'Gold', icon: 'Gem' },
+    private_equity: { label: 'Private Equity', icon: 'Building2' },
     other: { label: 'Other Assets', icon: 'Briefcase' },
 };

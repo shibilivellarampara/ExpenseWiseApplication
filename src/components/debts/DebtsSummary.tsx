@@ -83,7 +83,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                             {netBalance > 0 ? 'Net Owed to You:' : netBalance < 0 ? 'Net You Owe:' : 'Net Position:'}
                         </p>
                         <p className={cn("text-lg font-bold", netBalance >= 0 ? "text-primary" : "text-destructive")}>
-                            {netBalance >= 0 ? `${currencySymbol}${formatAmount(netBalance)}` : `-${currencySymbol}${formatAmount(Math.abs(netBalance))}`}
+                            {netBalance >= 0 ? `${currencySymbol}${formatAmount(netBalance)}` : `${currencySymbol}${formatAmount(Math.abs(netBalance))}`}
                         </p>
                     </div>
                 </div>

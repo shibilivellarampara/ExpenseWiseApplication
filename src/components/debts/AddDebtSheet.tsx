@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -76,16 +77,6 @@ FloatingLabelInput.displayName = 'FloatingLabelInput';
 function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubmit: (values: DebtFormData) => void, isLoading: boolean, personName?: string }) {
      const transactionType = form.watch('type');
      
-     const FooterButtons = () => (
-        <>
-            <Button type="button" variant="outline" onClick={() => form.handleCancel()}>Cancel</Button>
-            <Button type="submit" disabled={isLoading}>
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
-            </Button>
-        </>
-     )
-
-
      return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-2">
@@ -184,9 +175,11 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                         </FormItem>
                     )}
                 />
-                
                 <DialogFooter className="pt-4">
-                    <FooterButtons />
+                    <Button type="button" variant="outline" onClick={() => form.handleCancel()}>Cancel</Button>
+                    <Button type="submit" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
+                    </Button>
                 </DialogFooter>
             </form>
         </Form>
@@ -270,7 +263,12 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-            <DialogContent className="sm:max-w-md">
+            <DialogContent 
+                className="sm:max-w-md"
+                onInteractOutside={(e) => {
+                    e.preventDefault();
+                }}
+            >
                 <DialogHeader>
                     <DialogTitle className="font-headline">Add Debt</DialogTitle>
                     <DialogDescription>

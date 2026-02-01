@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -44,7 +43,7 @@ interface AddDebtDialogProps {
     onOpenChange?: (open: boolean) => void;
 }
 
-const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string }>(
+const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps &amp; { label: string }>(
     ({ className, label, id, ...props }, ref) => {
         const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
         return (

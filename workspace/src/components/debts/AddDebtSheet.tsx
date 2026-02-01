@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -44,7 +43,7 @@ interface AddDebtDialogProps {
     onOpenChange?: (open: boolean) => void;
 }
 
-const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string }>(
+const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps &amp; { label: string }>(
     ({ className, label, id, ...props }, ref) => {
         const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
         return (
@@ -235,7 +234,7 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
         }
 
         try {
-            const debtsCol = collection(firestore, `users/${'user.uid'}/debts`);
+            const debtsCol = collection(firestore, `users/${user.uid}/debts`);
             addDocumentNonBlocking(debtsCol, {
                 ...values,
                 userId: user.uid,
@@ -263,7 +262,12 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-            <DialogContent className="sm:max-w-md">
+            <DialogContent 
+                className="sm:max-w-md"
+                onInteractOutside={(e) => {
+                    e.preventDefault();
+                }}
+            >
                 <DialogHeader>
                     <DialogTitle className="font-headline">Add Debt</DialogTitle>
                     <DialogDescription>

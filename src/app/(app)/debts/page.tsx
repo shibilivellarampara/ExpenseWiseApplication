@@ -1,7 +1,6 @@
 
 'use client';
 
-import { PageHeader } from "@/components/PageHeader";
 import { AddDebtDialog } from "@/components/debts/AddDebtSheet";
 import { DebtsList } from "@/components/debts/DebtsList";
 import { Button } from "@/components/ui/button";

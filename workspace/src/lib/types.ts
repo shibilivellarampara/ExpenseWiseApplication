@@ -1,5 +1,4 @@
 
-
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -34,6 +33,7 @@ export type UserProfile = {
     showTagPieChart?: boolean;
     showIncomePieChart?: boolean;
     showAiInsights?: boolean;
+    showSavingsTrendChart?: boolean;
   };
   transactionFieldOrder?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
   createdAt?: Timestamp;
@@ -122,4 +122,50 @@ export type EnrichedDebt = Omit<Debt, 'date' | 'settledAt'> & {
 
 export type EnrichedDebtWithBalance = EnrichedDebt & {
   runningBalance?: number;
+};
+
+export type RecurringExpense = {
+    id: string;
+    userId: string;
+    name: string;
+    amount: number;
+    type: 'expense' | 'income';
+    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+    startDate: Timestamp;
+    nextDueDate: Timestamp;
+    lastCreatedDate?: Timestamp;
+    categoryId?: string;
+    accountId?: string;
+    tagIds?: string[];
+    description?: string;
+    status: 'active' | 'paused';
+};
+
+export type EnrichedRecurringExpense = Omit<RecurringExpense, 'startDate' | 'nextDueDate' | 'lastCreatedDate' | 'categoryId' | 'accountId'> & {
+    startDate: Date;
+    nextDueDate: Date;
+    lastCreatedDate?: Date;
+    category?: Category;
+    account?: Account;
+};
+
+export type AssetType = 'savings_cash' | 'mutual_funds' | 'stocks_equity' | 'fixed_income' | 'retirement' | 'digital_assets' | 'gold' | 'private_equity' | 'other';
+
+export type Asset = {
+    id: string;
+    userId: string;
+    assetType: AssetType;
+    name: string;
+    investedAmount: number;
+    currentValue: number;
+    quantity?: number;
+    startDate?: Timestamp;
+    notes?: string;
+    lastUpdated: Timestamp;
+    isFromAccount?: boolean; // Custom property
+};
+
+export type EnrichedAsset = Omit<Asset, 'startDate' | 'lastUpdated'> & {
+    startDate?: Date;
+    lastUpdated: Date;
 };

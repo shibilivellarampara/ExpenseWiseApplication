@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -141,7 +140,7 @@ export default function DebtsPage() {
                         />
                     </div>
                      <AddDebtDialog>
-                         <Button className="shrink-0">
+                         <Button variant="outline" className="shrink-0 text-primary border-primary hover:text-primary hover:bg-primary/10">
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Debt
                         </Button>

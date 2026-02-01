@@ -120,7 +120,6 @@ export default function DebtsPage() {
 
     return (
         <div className="w-full space-y-8">
-            <PageHeader title="Debts & Dues" description="Track money you've borrowed or lent to others." />
             
             <div className="space-y-4">
                 <DebtsSummary 
@@ -141,7 +140,7 @@ export default function DebtsPage() {
                         />
                     </div>
                      <AddDebtDialog>
-                         <Button variant="outline" className="shrink-0">
+                         <Button variant="outline" className="shrink-0 text-primary border-primary hover:text-primary hover:bg-primary/10">
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Debt
                         </Button>

@@ -26,6 +26,17 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { DateTimePicker } from '@/components/DateTimePicker';
 import React from 'react';
+import {
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerTrigger,
+  } from "@/components/ui/drawer"
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 const debtSchema = z.object({
   personName: z.string().min(1, 'Person\'s name is required.'),
@@ -76,7 +87,18 @@ FloatingLabelInput.displayName = 'FloatingLabelInput';
 
 function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubmit: (values: DebtFormData) => void, isLoading: boolean, personName?: string }) {
      const transactionType = form.watch('type');
+     const isDesktop = useMediaQuery("(min-width: 768px)");
      
+     const FooterButtons = () => (
+        <>
+            <Button type="button" variant="outline" onClick={() => form.handleCancel()}>Cancel</Button>
+            <Button type="submit" disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
+            </Button>
+        </>
+     )
+
+
      return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-2">
@@ -175,12 +197,21 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                         </FormItem>
                     )}
                 />
-                <DialogFooter className="pt-4">
-                    <Button type="button" variant="outline" onClick={() => form.handleCancel()}>Cancel</Button>
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
-                    </Button>
-                </DialogFooter>
+                
+                 {isDesktop ? (
+                    <DialogFooter className="pt-4">
+                        <FooterButtons />
+                    </DialogFooter>
+                ) : (
+                    <DrawerFooter className="pt-4 px-0">
+                         <DrawerClose asChild>
+                            <Button type="button" variant="outline">Cancel</Button>
+                        </DrawerClose>
+                        <Button type="submit" disabled={isLoading}>
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
+                        </Button>
+                    </DrawerFooter>
+                )}
             </form>
         </Form>
      );
@@ -191,6 +222,7 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
+    const isDesktop = useMediaQuery("(min-width: 768px)");
     
     // Internal state for uncontrolled component
     const [internalOpen, setInternalOpen] = useState(false);
@@ -235,7 +267,7 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
         }
 
         try {
-            const debtsCol = collection(firestore, `users/${'user.uid'}/debts`);
+            const debtsCol = collection(firestore, `users/${user.uid}/debts`);
             addDocumentNonBlocking(debtsCol, {
                 ...values,
                 userId: user.uid,
@@ -260,6 +292,25 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
         }
     }
     
+    if (!isDesktop) {
+        return (
+            <Drawer open={open} onOpenChange={onOpenChange}>
+                {children && <DrawerTrigger asChild>{children}</DrawerTrigger>}
+                <DrawerContent>
+                    <DrawerHeader className="text-left">
+                        <DrawerTitle className="font-headline">Add Debt</DrawerTitle>
+                         <DrawerDescription>
+                            Track money you've lent to others or borrowed from them.
+                        </DrawerDescription>
+                    </DrawerHeader>
+                     <div className="px-4">
+                        <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} personName={personName} />
+                    </div>
+                </DrawerContent>
+            </Drawer>
+        );
+    }
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             {children && <DialogTrigger asChild>{children}</DialogTrigger>}
@@ -275,3 +326,4 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
         </Dialog>
     );
 }
+

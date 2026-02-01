@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -120,6 +119,7 @@ export default function DebtsPage() {
 
     return (
         <div className="w-full space-y-8">
+            <PageHeader title="Debts & Dues" description="Track money you've borrowed or lent to others." />
             
             <div className="space-y-4">
                 <DebtsSummary 
@@ -136,7 +136,7 @@ export default function DebtsPage() {
                             placeholder="Search by name..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-8 w-full"
+                            className="pl-8 w-full border-primary/30 focus-visible:border-primary"
                         />
                     </div>
                      <AddDebtDialog>

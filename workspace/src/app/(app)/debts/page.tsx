@@ -136,7 +136,7 @@ export default function DebtsPage() {
                             placeholder="Search by name..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-8 w-full"
+                            className="pl-8 w-full border-primary/30 focus-visible:border-primary"
                         />
                     </div>
                      <AddDebtDialog>

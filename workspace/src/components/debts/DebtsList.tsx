@@ -7,19 +7,29 @@ import { EnrichedDebt, UserProfile, EnrichedDebtWithBalance } from '@/lib/types'
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
-import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { cn, formatAmount } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { getCurrencySymbol } from '@/lib/currencies';
-import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from "@/components/ui/separator";
 import { AddDebtDialog } from '@/components/debts/AddDebtSheet';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Button } from '@/components/ui/button';
+import { getCurrencySymbol } from '@/lib/currencies';
 
 
 interface DebtsListProps {

@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EnrichedDebt, UserProfile, EnrichedDebtWithBalance } from '@/lib/types';
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton';
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
@@ -22,13 +21,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from "@/components/ui/separator";
-import { AddDebtDialog } from "@/components/debts/AddDebtSheet";
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { AddDebtDialog } from '@/components/debts/AddDebtSheet';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 
 
 interface DebtsListProps {

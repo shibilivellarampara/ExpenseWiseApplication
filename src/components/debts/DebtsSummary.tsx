@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -80,7 +79,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                     <Separator className="my-0" />
                     <div className="p-1 flex items-center justify-center gap-2">
                          <p className="text-sm text-muted-foreground">
-                            {netBalance > 0 ? 'Net Owed:' : netBalance < 0 ? 'You Owe:' : 'Net Position:'}
+                            {netBalance > 0 ? 'Net Owed to You:' : netBalance < 0 ? 'Net You Owe:' : 'Net Position:'}
                         </p>
                         <p className={cn("text-lg font-bold", netBalance >= 0 ? "text-primary" : "text-destructive")}>
                             {netBalance >= 0 ? `${currencySymbol}${formatAmount(netBalance)}` : `-${currencySymbol}${formatAmount(Math.abs(netBalance))}`}

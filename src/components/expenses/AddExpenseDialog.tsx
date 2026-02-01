@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -670,7 +668,7 @@ export function AddExpenseDialog({
 }) {
     const [open, setOpen] = useState(false);
     
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, loadingState, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen, 
         expenseToEdit, 
         initialType,
@@ -693,8 +691,8 @@ export function AddExpenseDialog({
                         {isEditMode ? (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button type="button" variant="destructive" disabled={isLoading}>
-                                        <Trash2 className="mr-2 h-4 w-4" />
+                                    <Button type="button" variant="destructive" disabled={loadingState !== 'idle'}>
+                                         {loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
                                         Delete
                                     </Button>
                                 </AlertDialogTrigger>
@@ -708,7 +706,7 @@ export function AddExpenseDialog({
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                            {isLoading ? 'Deleting...' : "Delete"}
+                                            {loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -723,12 +721,12 @@ export function AddExpenseDialog({
                     </div>
                     <div className="flex gap-2 justify-end">
                          {!isEditMode && (
-                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline">
-                                {isLoading ? 'Saving...' : 'Save & New'}
+                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={loadingState !== 'idle'} variant="outline" className="min-w-[120px]">
+                                {loadingState === 'saveAndNew' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save & New'}
                             </Button>
                          )}
-                         <Button type="submit" form={formId} disabled={isLoading}>
-                            {isLoading ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Save')}
+                         <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px]">
+                             {loadingState === 'save' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : (isEditMode ? 'Save Changes' : 'Save')}
                         </Button>
                     </div>
                 </DialogFooter>
@@ -754,7 +752,7 @@ function useExpenseForm({
     onSaveSuccess,
 }: UseExpenseFormProps) {
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
+    const [loadingState, setLoadingState] = useState<'idle' | 'save' | 'saveAndNew' | 'delete'>('idle');
     const { user } = useUser();
     const firestore = useFirestore();
     const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
@@ -821,7 +819,7 @@ function useExpenseForm({
     }, [open, isEditMode, expenseToEdit, form, getNewFormValues]);
 
 
-    const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
+    const handleTransactionSave = async (values: z.infer<typeof expenseSchema>>, action: 'save' | 'saveAndNew') => {
         if (!firestore || !user) {
             toast({ variant: 'destructive', title: 'Error', description: 'Authentication not ready.' });
             return false;
@@ -830,7 +828,7 @@ function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Required data (categories) is not loaded.' });
             return false;
         }
-        setIsLoading(true);
+        setLoadingState(action);
 
         try {
             const batch = writeBatch(firestore);
@@ -849,12 +847,12 @@ function useExpenseForm({
             if (isCreditCardPayment) {
                 if (selectedAccount?.type === 'credit_card' && values.type !== 'income') {
                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments to a credit card must be an "income" transaction for that card.' });
-                    setIsLoading(false);
+                    setLoadingState('idle');
                     return false;
                 }
                 if (selectedAccount?.type !== 'credit_card' && values.type !== 'expense') {
                      toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments from a bank account for a credit card must be an "expense" transaction.' });
-                     setIsLoading(false);
+                     setLoadingState('idle');
                      return false;
                 }
             }
@@ -937,13 +935,13 @@ function useExpenseForm({
             
             if (isCreditLimitUpgrade) {
                 if (!handleLimitChange('upgrade', values, expenseToEdit)) {
-                    setIsLoading(false);
+                    setLoadingState('idle');
                     return false;
                 }
             }
             if (isCreditLimitDowngrade) {
                 if (!handleLimitChange('downgrade', values, expenseToEdit)) {
-                    setIsLoading(false);
+                    setLoadingState('idle');
                     return false;
                 }
             }
@@ -997,7 +995,7 @@ function useExpenseForm({
              toast({ variant: 'destructive', title: 'Could Not Save Transaction', description: 'An unexpected error occurred. Please check your inputs and try again.' });
              return false;
         } finally {
-            setIsLoading(false);
+            setLoadingState('idle');
         }
     }
     
@@ -1008,14 +1006,14 @@ function useExpenseForm({
 
 
     const onFinalSubmit = form.handleSubmit(async (values) => {
-        const success = await handleTransactionSave(values);
+        const success = await handleTransactionSave(values, 'save');
         if (success) {
             setOpen(false);
         }
     });
 
     const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
-        const success = await handleTransactionSave(values);
+        const success = await handleTransactionSave(values, 'saveAndNew');
         if (success) {
             resetForm(values.date, values.accountId);
         }
@@ -1026,7 +1024,7 @@ function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction. Required data missing.' });
             return;
         }
-        setIsLoading(true);
+        setLoadingState('delete');
         try {
             const batch = writeBatch(firestore);
             const collectionPath = `users/${user.uid}/expenses`;
@@ -1069,7 +1067,7 @@ function useExpenseForm({
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Delete Failed', description: "There was an unexpected error. Please try again." });
         } finally {
-            setIsLoading(false);
+            setLoadingState('idle');
         }
     };
 
@@ -1079,7 +1077,7 @@ function useExpenseForm({
       onFinalSubmit, 
       onSaveAndNewSubmit, 
       handleDelete, 
-      isLoading, 
+      loadingState, 
       isEditMode, 
       formId,
       accounts: accounts || [],

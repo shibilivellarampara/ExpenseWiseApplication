@@ -223,7 +223,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
     };
 
     return (
-        <div className="w-full space-y-4 pb-24">
+        <div className="w-full space-y-4">
              <PageHeader title={pageTitle} description={`A summary of your transactions for ${pageTitle}.`}>
                 <Button variant="outline" asChild>
                     <Link href="/transactions">
@@ -231,6 +231,20 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                         Back to Months
                     </Link>
                 </Button>
+                 <div className="flex items-center gap-2">
+                    <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
+                        <Button size="sm">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Cash In
+                        </Button>
+                    </AddExpenseDialog>
+                    <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
+                        <Button size="sm" variant="destructive">
+                             <Minus className="mr-2 h-4 w-4" />
+                            Cash Out
+                        </Button>
+                    </AddExpenseDialog>
+                </div>
             </PageHeader>
             <div className="space-y-4 sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm pt-4">
                  <ExpensesSummary 

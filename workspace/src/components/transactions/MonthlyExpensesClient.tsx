@@ -223,7 +223,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
     };
 
     return (
-        <div className="w-full space-y-4 pb-24">
+        <div className="w-full space-y-4">
              <PageHeader title={pageTitle} description={`A summary of your transactions for ${pageTitle}.`}>
                 <Button variant="outline" asChild>
                     <Link href="/transactions">
@@ -276,5 +276,3 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
         </div>
     );
 }
-
-    

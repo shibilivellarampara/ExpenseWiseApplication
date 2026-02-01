@@ -173,10 +173,7 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     ref={ref}
                     id={id}
                     placeholder=" "
-                    className={cn(
-                        "peer h-14 pt-5 text-base floating-input", 
-                        className
-                    )}
+                    className={cn("peer h-12 pt-5 text-sm floating-input", className)}
                     data-has-value={hasValue}
                     {...props}
                 />
@@ -184,8 +181,8 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     htmlFor={id}
                     className={cn(
                         "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
-                         "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
-                         "peer-data-[has-value=true]:top-0 peer-data-[has-value=true]:-translate-y-1/2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium"
+                        "top-1/2 -translate-y-1/2 text-sm peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
+                        "peer-data-[has-value=true]:top-0 peer-data-[has-value=true]:-translate-y-1/2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium"
                     )}
                 >
                     {label}
@@ -202,7 +199,7 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
         return (
             <div className="relative">
                  <Select onValueChange={onValueChange} value={value}>
-                    <SelectTrigger ref={ref} id={id} className={cn("peer h-14 pt-4 text-base floating-input", className)} data-has-value={hasValue} {...props}>
+                    <SelectTrigger ref={ref} id={id} className={cn("peer h-12 pt-4 text-sm floating-input", className)} data-has-value={hasValue} {...props}>
                         <SelectValue placeholder=" "/>
                     </SelectTrigger>
                     <SelectContent>
@@ -213,7 +210,7 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
                     htmlFor={id}
                      className={cn(
                         "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
-                        "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
+                        "top-1/2 -translate-y-1/2 text-sm peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
                         hasValue && "top-0 -translate-y-1/2 text-xs font-medium"
                     )}
                 >
@@ -271,7 +268,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     return (
         <Command onKeyDown={handleKeyDown} className={cn('overflow-visible bg-transparent', isSuggesting && 'animate-pulse border-primary/50')}>
              <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background">
-                 <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-14">
+                 <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-12">
                     {tags.filter(tag => selectedTagIds.has(tag.id)).map(tag => (
                         <Badge
                             key={tag.id}
@@ -295,7 +292,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                         onBlur={() => setOpen(false)}
                         onFocus={() => setOpen(true)}
                         placeholder={selectedTagIds.size > 0 ? "" : `Tags ${isRequired ? '*' : ''}`}
-                        className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-base md:text-sm h-full p-0 border-none shadow-none focus-visible:ring-0"
+                        className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-sm h-full p-0 border-none shadow-none focus-visible:ring-0"
                     />
                 </div>
             </div>
@@ -711,7 +708,7 @@ export function AddExpenseDialog({
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                                            {isLoading ? 'Deleting...' : "Delete"}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -726,14 +723,12 @@ export function AddExpenseDialog({
                     </div>
                     <div className="flex gap-2 justify-end">
                          {!isEditMode && (
-                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline" className="min-w-[120px]">
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save & New
+                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline">
+                                {isLoading ? 'Saving...' : 'Save & New'}
                             </Button>
                          )}
-                         <Button type="submit" form={formId} disabled={isLoading} className="min-w-[120px]">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditMode ? 'Save Changes' : 'Save'}
+                         <Button type="submit" form={formId} disabled={isLoading}>
+                            {isLoading ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Save')}
                         </Button>
                     </div>
                 </DialogFooter>

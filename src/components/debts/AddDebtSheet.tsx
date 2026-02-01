@@ -92,17 +92,17 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                             className="grid grid-cols-2 gap-4"
                             >
                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'lent' ? "border-red-500 text-red-500" : "border-muted")}>
+                                    <Label className={cn("flex flex-col items-center justify-center rounded-md border-2 bg-popover p-3 hover:bg-accent hover:text-accent-foreground text-sm", field.value === 'lent' ? "border-red-500 text-red-500" : "border-muted")}>
                                         <RadioGroupItem value="lent" className="sr-only" />
-                                        <ArrowLeft className="h-5 w-5 mb-1" />
-                                        <span>You Gave</span>
+                                        <ArrowLeft className="h-4 w-4 mb-1" />
+                                        <span className="font-medium">You Gave</span>
                                     </Label>
                                 </FormItem>
                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'borrowed' ? "border-green-600 text-green-600" : "border-muted")}>
+                                    <Label className={cn("flex flex-col items-center justify-center rounded-md border-2 bg-popover p-3 hover:bg-accent hover:text-accent-foreground text-sm", field.value === 'borrowed' ? "border-green-600 text-green-600" : "border-muted")}>
                                         <RadioGroupItem value="borrowed" className="sr-only" />
-                                        <ArrowRight className="h-5 w-5 mb-1" />
-                                        <span>You Got</span>
+                                        <ArrowRight className="h-4 w-4 mb-1" />
+                                        <span className="font-medium">You Got</span>
                                     </Label>
                                 </FormItem>
                             </RadioGroup>
@@ -175,7 +175,7 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                         </FormItem>
                     )}
                 />
-                <DialogFooter className="pt-4">
+                <DialogFooter className="pt-4 flex flex-row justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => form.handleCancel()}>Cancel</Button>
                     <Button type="submit" disabled={isLoading}>
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}

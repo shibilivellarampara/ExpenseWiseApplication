@@ -14,6 +14,15 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.7.9",
+        date: "2026-02-01",
+        changes: [
+            { type: 'Fix', description: "Resolved a persistent issue with date pickers on mobile devices by implementing native browser controls across all forms." },
+            { type: 'UI/UX', description: "Made form submission buttons responsive to screen width for a better layout on all devices." },
+            { type: 'UI/UX', description: "Improved loading indicators on form buttons to provide clearer feedback during submission." },
+        ]
+    },
+    {
         version: "1.7.8",
         date: "2026-01-31",
         changes: [

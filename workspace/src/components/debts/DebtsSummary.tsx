@@ -8,8 +8,8 @@ import { getCurrencySymbol } from '@/lib/currencies';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
-import { Button } from '../ui/button';
+import { cn, formatAmount } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 
 interface DebtsSummaryProps {
@@ -25,7 +25,6 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
-    const [showNet, setShowNet] = useState(false);
 
     const { totalOwedToUser, totalUserOwes, netBalance } = useMemo(() => {
         const pendingDebts = debts.filter(d => d.status === 'pending');
@@ -47,11 +46,6 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
         return <Skeleton className="h-24" />;
     }
 
-    const handleSectionClick = (type: 'lent' | 'borrowed') => {
-        onFilterChange(type);
-        setShowNet(true);
-    };
-
     return (
         <Card>
             <CardContent className="p-0 relative">
@@ -66,33 +60,30 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                 >
                     <div 
                         className={cn("flex-1 text-center p-4 cursor-pointer transition-colors rounded-l-lg", activeFilter === 'lent' ? 'bg-primary/10' : 'hover:bg-accent/50')}
-                        onClick={() => handleSectionClick('lent')}
+                        onClick={() => onFilterChange('lent')}
                     >
                          <p className="text-sm text-muted-foreground">You are Owed</p>
-                         <p className="text-2xl font-bold text-primary">{currencySymbol}{totalOwedToUser.toFixed(2)}</p>
+                         <p className="text-2xl font-bold text-primary">{currencySymbol}{formatAmount(totalOwedToUser)}</p>
                     </div>
                     <Separator orientation="vertical" className="h-16" />
                      <div 
                         className={cn("flex-1 text-center p-4 cursor-pointer transition-colors rounded-r-lg", activeFilter === 'borrowed' ? 'bg-destructive/10' : 'hover:bg-accent/50')}
-                        onClick={() => handleSectionClick('borrowed')}
+                        onClick={() => onFilterChange('borrowed')}
                      >
                          <p className="text-sm text-muted-foreground">You Owe</p>
-                         <p className="text-2xl font-bold text-destructive">{currencySymbol}{totalUserOwes.toFixed(2)}</p>
+                         <p className="text-2xl font-bold text-destructive">{currencySymbol}{formatAmount(totalUserOwes)}</p>
                     </div>
                 </div>
 
-                <div className={cn(
-                    "transition-all duration-300 ease-in-out grid cursor-pointer",
-                    showNet ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                )} onClick={() => setShowNet(false)}>
-                    <div className="overflow-hidden">
-                        <Separator className="my-0" />
-                        <div className="text-center p-4">
-                            <p className="text-sm text-muted-foreground">Net Position</p>
-                             <p className={cn("text-xl font-bold", netBalance >= 0 ? "text-primary" : "text-destructive")}>
-                                {netBalance >= 0 ? `${currencySymbol}${netBalance.toFixed(2)}` : `-${currencySymbol}${Math.abs(netBalance).toFixed(2)}`}
-                            </p>
-                        </div>
+                <div>
+                    <Separator className="my-0" />
+                    <div className="p-1 flex items-center justify-center gap-2">
+                         <p className="text-sm text-muted-foreground">
+                            {netBalance > 0 ? 'Net Owed to You:' : netBalance < 0 ? 'Net You Owe:' : 'Net Position:'}
+                        </p>
+                        <p className={cn("text-lg font-bold", netBalance >= 0 ? "text-primary" : "text-destructive")}>
+                            {netBalance >= 0 ? `${currencySymbol}${formatAmount(netBalance)}` : `-${currencySymbol}${formatAmount(Math.abs(netBalance))}`}
+                        </p>
                     </div>
                 </div>
             </CardContent>

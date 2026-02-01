@@ -1,7 +1,6 @@
 
 'use client';
 
-import { PageHeader } from "@/components/PageHeader";
 import { AddDebtDialog } from "@/components/debts/AddDebtSheet";
 import { DebtsList } from "@/components/debts/DebtsList";
 import { Button } from "@/components/ui/button";
@@ -119,9 +118,7 @@ export default function DebtsPage() {
 
 
     return (
-        <div className="w-full space-y-8">
-            <PageHeader title="Debts & Dues" description="Track money you've borrowed or lent to others." />
-            
+        <div className="w-full space-y-4">
             <div className="space-y-4">
                 <DebtsSummary 
                     debts={enrichedDebts} 

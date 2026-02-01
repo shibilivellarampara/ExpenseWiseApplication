@@ -29,14 +29,25 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
     const { totalOwedToUser, totalUserOwes, netBalance } = useMemo(() => {
         const pendingDebts = debts.filter(d => d.status === 'pending');
         
-        const totalOwedToUser = pendingDebts
-            .filter(d => d.type === 'lent')
-            .reduce((sum, d) => sum + d.amount, 0);
-            
-        const totalUserOwes = pendingDebts
-            .filter(d => d.type === 'borrowed')
-            .reduce((sum, d) => sum + d.amount, 0);
+        const personBalances = new Map<string, number>();
 
+        pendingDebts.forEach(debt => {
+            const currentBalance = personBalances.get(debt.personName) || 0;
+            const amountChange = debt.type === 'lent' ? debt.amount : -debt.amount;
+            personBalances.set(debt.personName, currentBalance + amountChange);
+        });
+
+        let totalOwedToUser = 0;
+        let totalUserOwes = 0;
+
+        for (const balance of personBalances.values()) {
+            if (balance > 0) {
+                totalOwedToUser += balance;
+            } else if (balance < 0) {
+                totalUserOwes += Math.abs(balance);
+            }
+        }
+        
         const netBalance = totalOwedToUser - totalUserOwes;
 
         return { totalOwedToUser, totalUserOwes, netBalance };

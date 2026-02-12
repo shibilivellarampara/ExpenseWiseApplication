@@ -29,6 +29,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/colla
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '../ui/scroll-area';
 import React from 'react';
 
 const cardDetailsSchema = z.object({
@@ -123,7 +124,7 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
 );
 FloatingLabelSelect.displayName = 'FloatingLabelSelect';
 
-function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onSubmit: (values: AccountFormData) => void, isLoading: boolean, isEditMode: boolean }) {
+function AccountForm({ form, onSubmit, onCancel, isLoading, isEditMode }: { form: any, onSubmit: (values: AccountFormData) => void, onCancel: () => void, isLoading: boolean, isEditMode: boolean }) {
     const accountType = form.watch('type');
     const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
     
@@ -135,21 +136,7 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
-                <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FloatingLabelInput
-                                label="Account Name *"
-                                id="name"
-                                {...field}
-                                value={field.value ?? ''}
-                            />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                {/* 1. Account Type */}
                 <FormField
                     control={form.control}
                     name="type"
@@ -171,26 +158,58 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                         </FormItem>
                     )}
                 />
-                {accountType === 'credit_card' && (
-                    <FormField
-                        control={form.control}
-                        name="limit"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FloatingLabelInput
-                                    label="Credit Limit *"
-                                    id="limit"
-                                    type="number"
-                                    step="0.01"
-                                    {...field}
-                                    value={field.value ?? ''}
-                                    disabled={isEditMode}
-                                />
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
+
+                {/* 2. Account Name */}
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FloatingLabelInput
+                                label="Account Name *"
+                                id="name"
+                                {...field}
+                                value={field.value ?? ''}
+                            />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* 3. Account Icon */}
+                <FormField
+                    control={form.control}
+                    name="icon"
+                    render={({ field }) => (
+                        <FormItem>
+                            <Label className="text-xs text-muted-foreground mb-1 block px-1">Account Icon *</Label>
+                            <FormControl>
+                                 <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start h-12">
+                                            {renderIcon(field.value)}
+                                            <span className="ml-2">{field.value}</span>
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <ScrollArea className="h-72">
+                                            <div className="grid grid-cols-5 gap-2 p-4">
+                                                {availableIcons.map(icon => (
+                                                    <Button key={icon} variant="ghost" size="icon" onClick={() => {field.onChange(icon); setIconPopoverOpen(false);}}>
+                                                        {renderIcon(icon)}
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        </ScrollArea>
+                                    </PopoverContent>
+                                </Popover>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* 4. Initial Balance / Outstanding Amount */}
                 <FormField
                     control={form.control}
                     name="balance"
@@ -214,78 +233,72 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                         </FormItem>
                     )}
                 />
-                {accountType === 'credit_card' && (
-                    <>
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="cardDetails.statementDate"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FloatingLabelInput
-                                            label="Stmt Date (Day)"
-                                            id="statementDate"
-                                            type="number"
-                                            min="1"
-                                            max="31"
-                                            {...field}
-                                            value={field.value ?? ''}
-                                        />
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="billingDate"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FloatingLabelInput
-                                            label="Due Date (Day)"
-                                            id="billingDate"
-                                            type="number"
-                                            min="1"
-                                            max="31"
-                                            {...field}
-                                            value={field.value ?? ''}
-                                        />
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                    </>
-                )}
-                <FormField
-                    control={form.control}
-                    name="icon"
-                    render={({ field }) => (
-                        <FormItem>
-                            <Label className="text-xs text-muted-foreground mb-1 block px-1">Account Icon *</Label>
-                            <FormControl>
-                                 <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-start h-12">
-                                            {renderIcon(field.value)}
-                                            <span className="ml-2">{field.value}</span>
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <div className="grid grid-cols-5 gap-2 p-4 max-h-[300px] overflow-y-auto">
-                                            {availableIcons.map(icon => (
-                                                <Button key={icon} variant="ghost" size="icon" onClick={() => {field.onChange(icon); setIconPopoverOpen(false);}}>
-                                                    {renderIcon(icon)}
-                                                </Button>
-                                            ))}
-                                        </div>
-                                    </PopoverContent>
-                                </Popover>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
 
+                {/* 5. Credit Limit (Only for Credit Cards) */}
+                {accountType === 'credit_card' && (
+                    <FormField
+                        control={form.control}
+                        name="limit"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FloatingLabelInput
+                                    label="Credit Limit *"
+                                    id="limit"
+                                    type="number"
+                                    step="0.01"
+                                    {...field}
+                                    value={field.value ?? ''}
+                                    disabled={isEditMode}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+
+                {/* 6. Statement & Due Dates (Only for Credit Cards) */}
+                {accountType === 'credit_card' && (
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="cardDetails.statementDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FloatingLabelInput
+                                        label="Stmt Date (Day)"
+                                        id="statementDate"
+                                        type="number"
+                                        min="1"
+                                        max="31"
+                                        {...field}
+                                        value={field.value ?? ''}
+                                    />
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="billingDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FloatingLabelInput
+                                        label="Due Date (Day)"
+                                        id="billingDate"
+                                        type="number"
+                                        min="1"
+                                        max="31"
+                                        {...field}
+                                        value={field.value ?? ''}
+                                    />
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                )}
+
+                {/* 7. Card Display Details (Optional) */}
                 {accountType === 'credit_card' && (
                      <Collapsible>
                         <CollapsibleTrigger asChild>
@@ -370,7 +383,7 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                 )}
 
                 <DialogFooter className="pt-4 flex flex-row gap-2 justify-end">
-                    <Button type="button" variant="outline" onClick={() => form.reset()} className="flex-1 sm:flex-none">Reset</Button>
+                    <Button type="button" variant="outline" onClick={onCancel} className="flex-1 sm:flex-none">Cancel</Button>
                     <Button type="submit" disabled={isLoading} className="flex-1 sm:flex-none min-w-[100px]">
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save" : "Add"}
                     </Button>
@@ -522,7 +535,7 @@ export function AddAccountSheet({ children, accountToEdit }: { children: React.R
                         Fill in the details for your financial account.
                     </DialogDescription>
                 </DialogHeader>
-                <AccountForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode}/>
+                <AccountForm form={form} onSubmit={onSubmit} onCancel={() => setOpen(false)} isLoading={isLoading} isEditMode={isEditMode}/>
             </DialogContent>
         </Dialog>
     );

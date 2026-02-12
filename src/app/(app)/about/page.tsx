@@ -1,15 +1,19 @@
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import pkg from '../../../../package.json';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 const appVersion = pkg.version;
-
 
 const changelog = [
     {
@@ -549,13 +553,15 @@ const changelog = [
 ];
 
 export default function AboutPage() {
+    const openVersions = changelog.slice(0, 5).map(entry => entry.version);
+
     return (
-        <div className="w-full space-y-8">
+        <div className="w-full space-y-8 max-w-3xl mx-auto">
             <PageHeader
                 title={`About ExpenseWise (v${appVersion})`}
-                description="Track features, updates, and bug fixes for your application."
+                description="The journey of continuous improvement."
             >
-                <Button variant="outline" asChild>
+                <Button variant="outline" asChild size="sm">
                     <Link href="/profile">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back to Settings
@@ -563,31 +569,40 @@ export default function AboutPage() {
                 </Button>
             </PageHeader>
 
-            <div className="space-y-6">
-                {changelog.map((entry, index) => (
-                     <Card key={entry.version}>
-                        <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-4">
-                                Version {entry.version}
-                                <span className="text-sm font-normal text-muted-foreground">{entry.date}</span>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-2">
-                                {entry.changes.map((change, changeIndex) => (
-                                    <li key={changeIndex} className="flex items-start gap-3">
-                                        <Badge variant={change.type === 'Feature' || change.type === 'UI' || change.type === 'UI/UX' || change.type === 'Security' || change.type === 'DevEx' ? 'default' : 'secondary'}>
-                                            {change.type}
-                                        </Badge>
-                                        <p className="text-sm text-foreground">{change.description}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        </CardContent>
-                    </Card>
-                ))}
+            <div className="relative pl-8 border-l-2 border-primary/20 space-y-0">
+                <Accordion type="multiple" defaultValue={openVersions} className="space-y-6">
+                    {changelog.map((entry, index) => (
+                        <div key={entry.version} className="relative">
+                            <div className="absolute -left-[41px] top-6 h-4 w-4 rounded-full bg-primary border-4 border-background z-10" />
+                            <AccordionItem value={entry.version} className="border-none">
+                                <AccordionTrigger className="hover:no-underline py-0 pt-2 flex flex-col items-start gap-1">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xl font-bold font-headline">Version {entry.version}</span>
+                                        <Badge variant="secondary" className="font-normal text-xs">{entry.date}</Badge>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-4 pb-2">
+                                    <div className="rounded-lg bg-muted/30 p-4 space-y-3">
+                                        <ul className="space-y-2">
+                                            {entry.changes.map((change, changeIndex) => (
+                                                <li key={changeIndex} className="flex items-start gap-3">
+                                                    <Badge 
+                                                        variant={change.type === 'Feature' || change.type === 'UI' || change.type === 'UI/UX' || change.type === 'Security' || change.type === 'DevEx' ? 'default' : 'secondary'}
+                                                        className="mt-0.5 shrink-0"
+                                                    >
+                                                        {change.type}
+                                                    </Badge>
+                                                    <p className="text-sm text-foreground leading-relaxed">{change.description}</p>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </div>
+                    ))}
+                </Accordion>
             </div>
         </div>
     );
-
 }

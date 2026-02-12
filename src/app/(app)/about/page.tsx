@@ -18,7 +18,7 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
-        version: "1.8.2",
+        version: "1.8.1",
         date: "Feb 15, 2026",
         changes: [
             { type: 'UI/UX', description: "Refined 'Add Asset' form with premium floating labels and smart amount fallback logic." },

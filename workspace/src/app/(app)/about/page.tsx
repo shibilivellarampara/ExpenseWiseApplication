@@ -119,7 +119,7 @@ const changelog = [
         version: "1.7.1",
         date: "2025-12-31",
         changes: [
-            { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other prestigious forms in the application." },
+            { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other forms in the application." },
             { type: 'UI/UX', description: "Improved user feedback by ensuring both 'Save' and 'Save and New' buttons show a loading animation during transaction submission." },
             { type: 'UI/UX', description: "Made the main application header static for consistent visibility while scrolling." },
             { type: 'UI/UX', description: "Added a clear button next to the tag filter on the Analysis page to easily deselect all tags." },
@@ -575,7 +575,7 @@ export default function AboutPage() {
                         <div key={entry.version} className="relative">
                             <div className="absolute -left-[41px] top-6 h-4 w-4 rounded-full bg-primary border-4 border-background z-10" />
                             <AccordionItem value={entry.version} className="border-none">
-                                <AccordionTrigger className="hover:no-underline py-0 pt-2 flex flex-col items-start gap-1">
+                                <AccordionTrigger className="hover:no-underline py-0 pt-2">
                                     <div className="flex items-center gap-3">
                                         <span className="text-xl font-bold font-headline">Version {entry.version}</span>
                                         <Badge variant="secondary" className="font-normal text-xs">{entry.date}</Badge>

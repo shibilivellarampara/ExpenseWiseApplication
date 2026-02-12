@@ -12,13 +12,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { cn } from "@/lib/utils";
 
 const appVersion = pkg.version;
 
 const changelog = [
     {
         version: "1.8.0",
-        date: "2026-02-02",
+        date: "February 02, 2026",
         changes: [
             { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 15 days after statement date if left empty)." },
             { type: 'Feature', description: "Redesigned the 'Add Account' form with a logic-first field order and floating labels for a better user experience." },
@@ -29,7 +30,7 @@ const changelog = [
     },
     {
         version: "1.7.9",
-        date: "2026-02-01",
+        date: "February 01, 2026",
         changes: [
             { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 15 days after statement date if left empty)." },
             { type: 'Fix', description: "Resolved a persistent issue with form submission in the 'Add Account' view where hidden fields caused validation failures." },
@@ -39,7 +40,7 @@ const changelog = [
     },
     {
         version: "1.7.8",
-        date: "2026-01-31",
+        date: "January 31, 2026",
         changes: [
             { type: 'Fix', description: "Resolved a critical build failure caused by incorrect component import paths on the 'Debts & Dues' page." },
             { type: 'UI/UX', description: "Clarified the 'Net Position' label on the Debts summary to dynamically show 'Net Owed' or 'You Owe'." },
@@ -48,7 +49,7 @@ const changelog = [
     },
     {
         version: "1.7.7",
-        date: "2026-01-11",
+        date: "January 11, 2026",
         changes: [
             { type: 'Feature', description: "Added robust filtering and sorting options to the 'Debts & Dues' page." },
             { type: 'UI/UX', description: "Consolidated debt filters into a single, clean row of dropdowns for a better user experience." },
@@ -59,7 +60,7 @@ const changelog = [
     },
     {
         version: "1.7.6",
-        date: "2026-01-02",
+        date: "January 02, 2026",
         changes: [
             { type: 'Feature', description: "Added a 'Getting Started' guide to the new-user screen to introduce core features." },
             { type: 'Feature', description: "Introduced a subtle 'Add to Home Screen' prompt for new users to improve app accessibility." },
@@ -71,7 +72,7 @@ const changelog = [
     },
     {
         version: "1.7.5",
-        date: "2026-01-02",
+        date: "January 02, 2026",
         changes: [
             { type: 'UI/UX', description: "Refined the Accounts page with improved alignment and spacing for credit card details, creating a cleaner look." },
             { type: 'UI/UX', description: "Added a subtle shadow to the 'Credit Cards' header for a modern, floating effect." },
@@ -83,7 +84,7 @@ const changelog = [
     },
     {
         version: "1.7.4",
-        date: "2026-01-02",
+        date: "January 02, 2026",
         changes: [
             { type: 'Feature', description: "Added a 'Monthly Savings Trend' chart to the Analysis page to visualize net savings over time." },
             { type: 'UI/UX', description: "Made all chart and insight cards on the Analysis page collapsible for a cleaner, more customizable view." },
@@ -94,7 +95,7 @@ const changelog = [
     },
     {
         version: "1.7.3",
-        date: "2026-01-01",
+        date: "January 01, 2026",
         changes: [
             { type: 'UI/UX', description: "Improved bulk editing on Category and Tag pages with an intuitive 'selection mode' and a sticky actions header." },
             { type: 'Feature', description: "Added a 'Restore from Backup' option to the welcome card for new users, making it easier to get started." },
@@ -107,7 +108,7 @@ const changelog = [
     },
     {
         version: "1.7.2",
-        date: "2025-12-31",
+        date: "December 31, 2025",
         changes: [
             { type: 'UI/UX', description: "Polished the mobile bottom navigation with a more transparent and refined design for a modern look and feel." },
             { type: 'UI/UX', description: "Adjusted the Floating Action Button (FAB) size and positioning for better ergonomics and a more premium aesthetic." },
@@ -117,7 +118,7 @@ const changelog = [
     },
     {
         version: "1.7.1",
-        date: "2025-12-31",
+        date: "December 31, 2025",
         changes: [
             { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other forms in the application." },
             { type: 'UI/UX', description: "Improved user feedback by ensuring both 'Save' and 'Save and New' buttons show a loading animation during transaction submission." },
@@ -130,7 +131,7 @@ const changelog = [
     },
     {
         version: "1.7.0",
-        date: "2025-12-31",
+        date: "December 31, 2025",
         changes: [
             { type: 'Feature', description: "Introduced a new 'Assets' page to track financial holdings like stocks and mutual funds." },
             { type: 'Feature', description: "Introduced a 'Recurring' feature to automate tracking for subscriptions and regular bills." },
@@ -139,7 +140,7 @@ const changelog = [
     },
     {
         version: "1.6.9",
-        date: "2025-12-30",
+        date: "December 30, 2025",
         changes: [
             { type: 'Fix', description: "Resolved all Firestore permission errors by simplifying security rules for development." },
             { type: 'Feature', description: "Implemented a scalable system for preset avatars by moving them to a JSON configuration file, simplifying future updates." },
@@ -151,7 +152,7 @@ const changelog = [
     },
     {
         version: "1.6.8",
-        date: "2025-12-30",
+        date: "December 30, 2025",
         changes: [
             { type: 'Feature', description: "Added a tag filter to the Expense Analysis page for more granular expense tracking." },
             { type: 'UI/UX', description: "Unified and improved the application's loading animations for a more consistent and dynamic user experience." },
@@ -163,7 +164,7 @@ const changelog = [
     },
     {
         version: "1.6.7",
-        date: "2025-12-29",
+        date: "December 29, 2025",
         changes: [
             { type: 'Fix', description: "Resolved numerous critical build failures by completely removing all code, types, and routes related to the deprecated 'Shared Expenses' feature." },
             { type: 'Fix', description: "Corrected invalid component import paths across multiple files to ensure module resolution." },
@@ -173,7 +174,7 @@ const changelog = [
     },
     {
         version: "1.6.6",
-        date: "2025-12-28",
+        date: "December 28, 2025",
         changes: [
             { type: 'UI/UX', description: "Updated the application logo and Progressive Web App (PWA) icons for a consistent brand identity." },
             { type: 'UI/UX', description: "Set 'Fintech' as the default theme, providing a modern and professional look out-of-the-box." },
@@ -185,7 +186,7 @@ const changelog = [
     },
     {
         version: "1.6.5",
-        date: "2025-12-28",
+        date: "December 28, 2025",
         changes: [
             { type: 'UI/UX', description: "Redesigned the 'Expenses Overview' chart with a cleaner look, focusing on the top 7 categories and grouping the rest into a new clickable 'Others' category." },
             { type: 'UI/UX', description: "Replaced the chart legend with a detailed, scrollable vertical list showing amounts and percentages." },
@@ -196,7 +197,7 @@ const changelog = [
     },
     {
         version: "1.6.4",
-        date: "2025-12-23",
+        date: "December 23, 2025",
         changes: [
             { type: 'Feature', description: "Added a 'Pay Bill' option to credit card menus to easily settle outstanding balances from a bank account." },
             { type: 'Feature', description: "Temporarily removed the 'Shared Expenses' feature to improve application stability and simplify the user experience." },
@@ -207,7 +208,7 @@ const changelog = [
     },
     {
         version: "1.6.3",
-        date: "2025-12-19",
+        date: "December 19, 2025",
         changes: [
             { type: 'Feature', description: "Enabled Google Drive backup for exporting expense reports." },
             { type: 'Fix', description: "Resolved a persistent build error related to the 'react-google-drive-picker' library." },
@@ -216,7 +217,7 @@ const changelog = [
     },
     {
         version: "1.6.2",
-        date: "2025-12-18",
+        date: "December 18, 2025",
         changes: [
             { type: 'UI', description: "Adjusted transaction filter controls to prevent wrapping on mobile for a cleaner single-line layout." },
             { type: 'UI', description: "Increased the size and added a border to the 'Clear Filters' button for better visibility and easier tapping on mobile." },
@@ -225,7 +226,7 @@ const changelog = [
     },
     {
         version: "1.6.1",
-        date: "2025-12-17",
+        date: "December 17, 2025",
         changes: [
             { type: 'UI', description: "Made the 'Add Debt' form consistent with the transaction form by using floating labels and moving the date field to the top." },
             { type: 'UI', description: "Clarified labels in the debt form to 'You are giving money'/'You are receiving money' and in the list to 'Given'/'Received' for better clarity." },
@@ -237,14 +238,14 @@ const changelog = [
     },
     {
         version: "1.6.0",
-        date: "2025-12-11",
+        date: "December 11, 2025",
         changes: [
             { type: 'Security', description: "Upgraded Next.js to version 16.0.7 to patch a critical security vulnerability (CVE-2025-55182)." },
         ]
     },
     {
         version: "1.5.1",
-        date: "2025-12-16",
+        date: "December 16, 2025",
         changes: [
             { type: 'Feature', description: "Added contextual page-specific settings to the user profile dropdown for quick access without navigating away." },
             { type: 'Feature', description: "Enhanced both 'ExpenseWise' and 'Enhanced' Excel exports to include icon names for categories and tags." },
@@ -255,21 +256,21 @@ const changelog = [
     },
     {
         version: "1.5.0",
-        date: "2025-12-15",
+        date: "December 15, 2025",
         changes: [
             { type: 'Feature', description: "Added the ability to archive and reactivate categories and tags to hide them from transaction forms." },
         ]
     },
     {
         version: "1.4.9",
-        date: "2025-12-14",
+        date: "December 14, 2025",
         changes: [
             { type: 'Fix', description: "Refined credit card payment notifications to only appear when there is an outstanding balance, preventing unnecessary alerts for paid-off cards." },
         ]
     },
     {
         version: "1.4.8",
-        date: "2025-12-06",
+        date: "December 06, 2025",
         changes: [
             { type: 'UI', description: "Improved the 'Spending by Tag' and 'Income Sources' pie charts on the Analysis page to group smaller items into an 'Others' category for a cleaner look, while still providing a full, scrollable list of all items below." },
             { type: 'Feature', description: "Added a convenient 'All Accounts' option to the account filter on the Analysis page." },
@@ -280,7 +281,7 @@ const changelog = [
     },
     {
         version: "1.4.7",
-        date: "2025-12-12",
+        date: "December 12, 2025",
         changes: [
             { type: 'Fix', description: "Resolved a persistent build failure by upgrading Next.js to the latest patched version to address a critical security vulnerability." },
             { type: 'Fix', description: "Corrected a visual bug where fully paid or overpaid credit cards were not correctly marked as 'Paid'." },
@@ -289,14 +290,14 @@ const changelog = [
     },
     {
         version: "1.4.6",
-        date: "2025-12-10",
+        date: "December 10, 2025",
         changes: [
             { type: 'Feature', description: "Added visibility toggles in Analysis Settings to show or hide individual charts and the AI insights card on the Analysis page." },
         ]
     },
     {
         version: "1.4.5",
-        date: "2025-12-09",
+        date: "December 09, 2025",
         changes: [
             { type: 'UI', description: "Streamlined the Settings page by combining 'Profile' and 'Security' sections and moving the 'Danger Zone' to the bottom for safety." },
             { type: 'UI', description: "Set 'Profile Details' and 'Form Customization' sections in Settings to be collapsed by default." },
@@ -309,21 +310,21 @@ const changelog = [
     },
     {
         version: "1.4.4",
-        date: "2025-12-08",
+        date: "December 08, 2025",
         changes: [
             { type: 'Fix', description: "Corrected the logic for 'Credit Card Payment' transactions to allow them to be recorded as an expense from non-credit card accounts (e.g., a bank account)." },
         ]
     },
     {
         version: "1.4.3",
-        date: "2025-12-06",
+        date: "December 06, 2025",
         changes: [
             { type: 'Fix', description: "Resolved all persistent Firestore security rule errors that were preventing data from being displayed on several pages. The rules have been completely overhauled for correctness and stability." },
         ]
     },
     {
         version: "1.4.2",
-        date: "2025-12-05",
+        date: "December 05, 2025",
         changes: [
             { type: 'Fix', description: "Resolved persistent build errors by removing a problematic and unused account settings component." },
             { type: 'Fix', description: "Corrected internal component import paths to improve application stability." },
@@ -331,7 +332,7 @@ const changelog = [
     },
     {
         version: "1.4.1",
-        date: "2025-12-03",
+        date: "December 03, 2025",
         changes: [
             { type: 'Feature', description: "Added a secure way to store and view non-sensitive credit card details (nickname, last 4 digits, etc.) to easily identify cards." },
             { type: 'UI', description: "Made credit card icons on the Accounts page clickable to directly open the new card details view." },
@@ -340,7 +341,7 @@ const changelog = [
     },
     {
         version: "1.4.0",
-        date: "2025-11-30",
+        date: "November 30, 2025",
         changes: [
             { type: 'Feature', description: "Made account names in the transaction list clickable to automatically filter by that account." },
             { type: 'Feature', description: "Enhanced the 'Save and New' button to retain both the Date and Account from the previous transaction." },
@@ -351,7 +352,7 @@ const changelog = [
     },
     {
         version: "1.3.10",
-        date: "2025-11-28",
+        date: "November 28, 2025",
         changes: [
             { type: 'Feature', description: "Added the ability to delete a person and all their associated records from the Debts & Dues page." },
             { type: 'Fix', description: "The 'Save and New' button in the transaction form now retains the date from the previous entry to make back-dating easier." },
@@ -359,7 +360,7 @@ const changelog = [
     },
     {
         version: "1.3.9",
-        date: "2025-11-26",
+        date: "November 26, 2025",
         changes: [
             { type: 'Feature', description: "Grouped debts by person on the Debts & Dues page for a clearer overview." },
             { type: 'Feature', description: "Added a quick-add button to create new transactions for existing people on the Debts page." },
@@ -370,7 +371,7 @@ const changelog = [
     },
     {
         version: "1.3.8",
-        date: "2025-11-24",
+        date: "November 24, 2025",
         changes: [
             { type: 'Feature', description: "Added a new 'Debts & Dues' page to track lent and borrowed money." },
             { type: 'Feature', description: "Added the ability to mark debts as 'settled'." },
@@ -379,7 +380,7 @@ const changelog = [
     },
     {
         version: "1.3.7",
-        date: "2025-11-22",
+        date: "November 22, 2025",
         changes: [
             { type: 'Fix', description: "Addressed various build errors and permission issues to improve application stability." },
             { type: 'Feature', description: "Added a dedicated popup for credit card payment history on the Accounts page." },
@@ -387,7 +388,7 @@ const changelog = [
     },
     {
         version: "1.3.6",
-        date: "2025-11-20",
+        date: "November 20, 2025",
         changes: [
             { type: 'Feature', description: "Added a progress bar to the report generation feature for better user feedback." },
             { type: 'Feature', description: "Added 'Last 6 Months' and 'Last Year' options to the date range filter on the Analysis page." },
@@ -400,7 +401,7 @@ const changelog = [
     },
     {
         version: "1.3.5",
-        date: "2025-11-18",
+        date: "November 18, 2025",
         changes: [
             { type: 'Feature', description: "Added the ability to merge multiple categories or tags into a single new or existing item, streamlining data organization." },
             { type: 'Feature', description: "Made category and tag badges in the transaction list clickable, automatically applying a filter for that item." },
@@ -410,7 +411,7 @@ const changelog = [
     },
     {
         version: "1.3.4",
-        date: "2025-11-16",
+        date: "November 16, 2025",
         changes: [
             { type: 'Fix', description: "Corrected an issue where special financial categories like 'Credit Card Payment' were always excluded from analysis, regardless of user settings." },
             { type: 'Fix', description: "Resolved a build error caused by an incorrect import path for `AnalysisSettingsContent`." },
@@ -419,7 +420,7 @@ const changelog = [
     },
     {
         version: "1.3.3",
-        date: "2025-11-14",
+        date: "November 14, 2025",
         changes: [
             { type: 'Fix', description: "Resolved a layout issue in the category analysis table that caused a runtime error when expanding rows." },
             { type: 'Fix', description: "Corrected the alignment of the notification panel to ensure it appears centered below the bell icon." },
@@ -427,7 +428,7 @@ const changelog = [
     },
     {
         version: "1.3.2",
-        date: "2025-11-12",
+        date: "November 12, 2025",
         changes: [
             { type: 'Feature', description: "Added a notification center to the header to provide timely alerts for events like upcoming credit card payments." },
             { type: 'Feature', description: "Added a 'Compact View' option in the Profile settings to allow for a denser transaction list." },
@@ -437,7 +438,7 @@ const changelog = [
     },
     {
         version: "1.3.1",
-        date: "2025-11-10",
+        date: "November 10, 2025",
         changes: [
             { type: 'Feature', description: "Added a 'Net' view to the category analysis table to show net cash flow per category." },
             { type: 'Feature', description: "Made category rows on the Analysis page clickable, opening an in-page dialog with the corresponding transactions." },
@@ -450,7 +451,7 @@ const changelog = [
     },
     {
         version: "1.3.0",
-        date: "2025-11-08",
+        date: "November 08, 2025",
         changes: [
             { type: 'Fix', description: "Resolved a persistent Firestore query error that was incorrectly reported as 'Missing or insufficient permissions' by refactoring data fetching logic on the transactions and analysis pages." },
             { type: 'Fix', description: "Replaced the date range tabs on the analysis page with a dropdown menu to improve usability and accommodate more options, including a custom date range picker." },
@@ -460,7 +461,7 @@ const changelog = [
     },
     {
         version: "1.2.9",
-        date: "2025-11-06",
+        date: "November 06, 2025",
         changes: [
             { type: 'Feature', description: "Introduced a new 'Analysis' page with detailed expense breakdowns, trend charts, and AI-powered insights." },
             { type: 'Feature', description: "Added full support for income categorization, allowing for a complete financial overview on the Analysis page." },
@@ -469,7 +470,7 @@ const changelog = [
     },
     {
         version: "1.2.8",
-        date: "2025-11-04",
+        date: "November 04, 2025",
         changes: [
             { type: 'Feature', description: "Added a dedicated theme toggle button to the main header for easier access." },
             { type: 'Feature', description: "Streamlined report generation and added a 'Copy to Clipboard' option." },
@@ -480,21 +481,21 @@ const changelog = [
     },
     {
         version: "1.2.7",
-        date: "2025-11-02",
+        date: "November 02, 2025",
         changes: [
             { type: 'Feature', description: "Added a 'Credit Limit Downgrade' category to reduce a credit card's limit via an expense transaction." },
         ]
     },
     {
         version: "1.2.6",
-        date: "2025-10-31",
+        date: "October 31, 2025",
         changes: [
             { type: 'Feature', description: "Added a 'Payment History' option to credit card menus for quick access to payment transactions." },
         ]
     },
     {
         version: "1.2.5",
-        date: "2025-10-29",
+        date: "October 29, 2025",
         changes: [
             { type: 'Feature', description: "Unified date and time selection into a single input in the transaction form." },
             { type: 'Feature', description: "Implemented a consistent, searchable dropdown for tag selection, matching account and category fields." },
@@ -506,14 +507,14 @@ const changelog = [
     },
     {
         version: "1.2.4",
-        date: "2025-10-27",
+        date: "October 27, 2025",
         changes: [
             { type: 'Feature', description: "Optimized transaction list performance by implementing list virtualization for large datasets." },
         ]
     },
     {
         version: "1.2.3",
-        date: "2025-10-25",
+        date: "October 25, 2025",
         changes: [
             { type: 'Fix', description: "Resolved multiple TypeScript type errors that were causing persistent build failures." },
             { type: 'Fix', description: "Corrected data handling in login, sign-up, and transaction forms to improve type safety." },
@@ -521,7 +522,7 @@ const changelog = [
     },
     {
         version: "1.2.2",
-        date: "2025-10-23",
+        date: "October 23, 2025",
         changes: [
             { type: 'Feature', description: "Added search functionality to the transactions page to filter by description and amount." },
             { type: 'Fix', description: "Changed the search input placeholder to be more concise." },
@@ -529,7 +530,7 @@ const changelog = [
     },
     {
         version: "1.2.1",
-        date: "2025-10-21",
+        date: "October 21, 2025",
         changes: [
             { type: 'Feature', description: "Implemented a true running balance calculation for all transactions, visible on the main list without requiring filtering." },
             { type: 'Fix', description: "Corrected bank account running balance to calculate forward from a starting balance of zero for the filtered period." },
@@ -537,7 +538,7 @@ const changelog = [
     },
     {
         version: "1.2.0",
-        date: "2025-10-19",
+        date: "October 19, 2025",
         changes: [
             { type: 'Feature', description: "Added 'Select All' checkbox to the Excel importer for easier account selection." },
             { type: 'Fix', description: "Updated 'Clear All Data' function to correctly delete accounts in addition to transactions." },
@@ -545,54 +546,82 @@ const changelog = [
     },
     {
         version: "1.1.0",
-        date: "2025-10-17",
+        date: "October 17, 2025",
         changes: [
             { type: 'Feature', description: "Initial release of ExpenseWise." },
         ]
     }
 ];
 
+const getTagColor = (type: string) => {
+    switch (type) {
+        case 'Feature':
+            return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+        case 'UI':
+        case 'UI/UX':
+            return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
+        case 'Fix':
+        case 'Security':
+            return 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20';
+        default:
+            return 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20';
+    }
+};
+
 export default function AboutPage() {
-    const openVersions = changelog.slice(0, 5).map(entry => entry.version);
+    // Only the first version is open by default
+    const latestVersion = [changelog[0].version];
 
     return (
-        <div className="w-full space-y-8 max-w-3xl mx-auto">
+        <div className="w-full space-y-10 max-w-2xl mx-auto pb-32">
             <PageHeader
-                title={`About ExpenseWise (v${appVersion})`}
-                description="The journey of continuous improvement."
+                title="Release Notes"
+                description="Release notes and improvements."
             >
-                <Button variant="outline" asChild size="sm">
+                <Button variant="ghost" asChild size="sm" className="text-muted-foreground hover:text-foreground">
                     <Link href="/profile">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Settings
+                        Back
                     </Link>
                 </Button>
             </PageHeader>
 
-            <div className="relative pl-8 border-l-2 border-primary/20 space-y-0">
-                <Accordion type="multiple" defaultValue={openVersions} className="space-y-6">
+            <div className="relative pl-8 border-l border-muted-foreground/20 space-y-12">
+                <Accordion type="multiple" defaultValue={latestVersion} className="space-y-10">
                     {changelog.map((entry, index) => (
-                        <div key={entry.version} className="relative">
-                            <div className="absolute -left-[41px] top-6 h-4 w-4 rounded-full bg-primary border-4 border-background z-10" />
+                        <div key={entry.version} className="relative group">
+                            {/* Timeline Dot */}
+                            <div className="absolute -left-[37px] top-1.5 h-4 w-4 rounded-full bg-muted-foreground/20 border-4 border-background group-data-[state=open]:bg-primary group-data-[state=open]:border-primary/20 z-10 transition-colors" />
+                            
                             <AccordionItem value={entry.version} className="border-none">
-                                <AccordionTrigger className="hover:no-underline py-0 pt-2">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xl font-bold font-headline">Version {entry.version}</span>
-                                        <Badge variant="secondary" className="font-normal text-xs">{entry.date}</Badge>
+                                <AccordionTrigger className="hover:no-underline py-0 items-start gap-4">
+                                    <div className="flex flex-col items-start text-left space-y-1">
+                                        <h3 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+                                            Version {entry.version}
+                                        </h3>
+                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                            {entry.date}
+                                        </p>
                                     </div>
                                 </AccordionTrigger>
-                                <AccordionContent className="pt-4 pb-2">
-                                    <div className="rounded-lg bg-muted/30 p-4 space-y-3">
-                                        <ul className="space-y-2">
+                                
+                                <AccordionContent className="pt-6 pb-2">
+                                    <div className="rounded-2xl bg-muted/30 border border-muted p-5 space-y-4 shadow-sm">
+                                        <ul className="space-y-4">
                                             {entry.changes.map((change, changeIndex) => (
-                                                <li key={changeIndex} className="flex items-start gap-3">
+                                                <li key={changeIndex} className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 group/item">
                                                     <Badge 
-                                                        variant={change.type === 'Feature' || change.type === 'UI' || change.type === 'UI/UX' || change.type === 'Security' || change.type === 'DevEx' ? 'default' : 'secondary'}
-                                                        className="mt-0.5 shrink-0"
+                                                        variant="outline"
+                                                        className={cn(
+                                                            "w-fit px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest transition-colors",
+                                                            getTagColor(change.type)
+                                                        )}
                                                     >
                                                         {change.type}
                                                     </Badge>
-                                                    <p className="text-sm text-foreground leading-relaxed">{change.description}</p>
+                                                    <p className="text-[15px] leading-relaxed text-foreground/80 group-hover/item:text-foreground transition-colors">
+                                                        {change.description}
+                                                    </p>
                                                 </li>
                                             ))}
                                         </ul>
@@ -602,6 +631,12 @@ export default function AboutPage() {
                         </div>
                     ))}
                 </Accordion>
+            </div>
+            
+            <div className="text-center pt-8 border-t border-muted">
+                <p className="text-xs text-muted-foreground">
+                    ExpenseWise &bull; Version {appVersion} &bull; Built with pride.
+                </p>
             </div>
         </div>
     );

@@ -6,7 +6,7 @@ import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
-import { Bell, Circle, CheckCheck } from 'lucide-react';
+import { Bell, Circle, CheckCheck, RefreshCw } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import pkg from '../../../package.json';
 import { Separator } from '@/components/ui/separator';
@@ -86,7 +86,7 @@ function Notifications() {
         const currentDay = today.getDate();
 
         creditCards?.forEach(card => {
-            const outstandingAmount = (card.limit || 0) - card.balance;
+            const outstandingAmount = Math.round(((card.limit || 0) - card.balance) * 100) / 100;
 
             if (card.billingDate && outstandingAmount > 0) {
                 const daysUntilBilling = (card.billingDate - currentDay + 30) % 30; // simple days diff
@@ -149,7 +149,7 @@ function Notifications() {
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-4 w-4"
+                                        className="h-7 w-7"
                                         onClick={handleMarkAllAsRead}
                                     >
                                         <CheckCheck className="h-4 w-4" />
@@ -178,6 +178,28 @@ function Notifications() {
     )
 }
 
+function DevReloadButton() {
+    const router = useRouter();
+    if (process.env.NODE_ENV !== 'development') {
+        return null;
+    }
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => window.location.reload()}>
+                        <RefreshCw className="h-[1.2rem] w-[1.2rem]" />
+                        <span className="sr-only">Reload</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Reload Page (Dev only)</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    )
+}
+
 export function AppHeader() {
   const pathname = usePathname();
   const { isUserLoading } = useUser();
@@ -185,7 +207,7 @@ export function AppHeader() {
   const pageTitle = getPageTitle(pathname);
     
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-card/95 backdrop-blur-sm px-4 md:px-6">
         
          <div className="md:hidden">
             <Logo />
@@ -201,6 +223,7 @@ export function AppHeader() {
                 <Skeleton className="h-10 w-10 rounded-full" />
             ) : (
                 <>
+                    <DevReloadButton />
                     <Notifications />
                     <ThemeToggle />
                     <UserNav />

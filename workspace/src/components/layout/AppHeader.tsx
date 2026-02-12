@@ -149,7 +149,7 @@ function Notifications() {
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-7 w-7"
+                                        className="h-4 w-4"
                                         onClick={handleMarkAllAsRead}
                                     >
                                         <CheckCheck className="h-4 w-4" />

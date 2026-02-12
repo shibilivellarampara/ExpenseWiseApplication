@@ -1,13 +1,13 @@
-
 import { MonthlyExpensesClient } from '@/components/transactions/MonthlyExpensesClient';
 
 interface MonthlyExpensesPageProps {
-    params: {
+    params: Promise<{
         year: string;
         month: string;
-    };
+    }>;
 }
 
-export default function MonthlyExpensesPage({ params }: MonthlyExpensesPageProps) {
-  return <MonthlyExpensesClient year={params.year} month={params.month} />;
+export default async function MonthlyExpensesPage({ params }: MonthlyExpensesPageProps) {
+  const { year, month } = await params;
+  return <MonthlyExpensesClient year={year} month={month} />;
 }

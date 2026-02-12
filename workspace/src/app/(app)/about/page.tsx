@@ -19,12 +19,14 @@ const appVersion = pkg.version;
 const changelog = [
     {
         version: "1.8.1",
-        date: "Feb 15, 2026",
+        date: "Feb 12, 2026",
         changes: [
-            { type: 'UI/UX', description: "Refined 'Add Asset' form with premium floating labels and smart amount fallback logic." },
-            { type: 'Feature', description: "Quantity and amount fields in Asset tracking are now optional for quicker entry." },
-            { type: 'UI/UX', description: "Enforced centered dialog popup for Asset entry for a consistent premium feel." },
-            { type: 'Fix', description: "Standardized package version imports across the application to resolve build errors." },
+            { type: 'Feature', description: "Enforced centered dialog popup for Asset entry across all devices for a consistent premium feel." },
+            { type: 'Feature', description: "Standardized 'Add Asset' form with high-quality floating labels and smart invested/current amount fallback logic." },
+            { type: 'Feature', description: "Improved 'Add Asset' form flexibility: Quantity, Invested Amount, and Current Value are now optional." },
+            { type: 'UI/UX', description: "Added refined 'click knowing' interaction to account names with theme-aware oval backgrounds." },
+            { type: 'Fix', description: "Corrected package version module resolution to ensure stable production builds." },
+            { type: 'Fix', description: "Resolved account list sorting logic bug preventing successful compilation." },
         ]
     },
     {

@@ -60,8 +60,6 @@ const accountSchemaBase = z.object({
 const accountSchema = accountSchemaBase.refine(data => {
     if (data.type !== 'credit_card') return true;
     if (data.balance > 0) {
-        // If there's an outstanding balance, a limit is logically expected for calculation
-        // though we allow 0/undefined if the user really wants to track it that way.
         return true; 
     }
     return true;
@@ -142,7 +140,6 @@ function AccountForm({ form, onSubmit, onCancel, isLoading, isEditMode }: { form
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
-                {/* 1. Account Type */}
                 <FormField
                     control={form.control}
                     name="type"
@@ -165,7 +162,6 @@ function AccountForm({ form, onSubmit, onCancel, isLoading, isEditMode }: { form
                     )}
                 />
 
-                {/* 2. Account Name */}
                 <FormField
                     control={form.control}
                     name="name"
@@ -182,7 +178,6 @@ function AccountForm({ form, onSubmit, onCancel, isLoading, isEditMode }: { form
                     )}
                 />
 
-                {/* 3. Account Icon */}
                 <FormField
                     control={form.control}
                     name="icon"
@@ -215,7 +210,6 @@ function AccountForm({ form, onSubmit, onCancel, isLoading, isEditMode }: { form
                     )}
                 />
 
-                {/* 4. Initial Balance / Outstanding Amount */}
                 <FormField
                     control={form.control}
                     name="balance"
@@ -240,7 +234,6 @@ function AccountForm({ form, onSubmit, onCancel, isLoading, isEditMode }: { form
                     )}
                 />
 
-                {/* 5. Credit Limit (Only for Credit Cards) */}
                 {accountType === 'credit_card' && (
                     <FormField
                         control={form.control}
@@ -262,7 +255,6 @@ function AccountForm({ form, onSubmit, onCancel, isLoading, isEditMode }: { form
                     />
                 )}
 
-                {/* 6. Statement & Due Dates (Only for Credit Cards) */}
                 {accountType === 'credit_card' && (
                     <div className="grid grid-cols-2 gap-4">
                         <FormField
@@ -304,7 +296,6 @@ function AccountForm({ form, onSubmit, onCancel, isLoading, isEditMode }: { form
                     </div>
                 )}
 
-                {/* 7. Card Display Details (Optional) */}
                 {accountType === 'credit_card' && (
                      <Collapsible>
                         <CollapsibleTrigger asChild>
@@ -470,6 +461,11 @@ export function AddAccountSheet({ children, accountToEdit }: { children: React.R
     
         const accountData: any = { ...values };
         delete accountData.balance;
+
+        // Auto-calculate billingDate (Due Date) if empty for credit cards (Stmt Date + 15 days)
+        if (values.type === 'credit_card' && !values.billingDate && values.cardDetails?.statementDate) {
+            accountData.billingDate = ((values.cardDetails.statementDate + 15 - 1) % 31) + 1;
+        }
     
         if (accountData.cardDetails) {
             const cleaned: any = {};

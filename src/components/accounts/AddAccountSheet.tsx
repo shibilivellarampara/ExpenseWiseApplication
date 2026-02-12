@@ -17,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input, InputProps } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase, commitBatchNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, setDoc as setDocFirestore, writeBatch } from 'firebase/firestore';
 import { Loader2, Pilcrow, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -32,22 +32,26 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '../ui/scroll-area';
 import React from 'react';
 
+// Helper to handle empty strings in numeric fields
+const coerceOptionalNumber = (schema: z.ZodNumber) => 
+    z.preprocess((val) => (val === "" || val === null || val === undefined ? undefined : val), schema.optional());
+
 const cardDetailsSchema = z.object({
     cardNickname: z.string().optional(),
     last4Digits: z.string().length(4, "Must be 4 digits").optional().or(z.literal('')),
     cardholderName: z.string().optional(),
-    expiryMonth: z.coerce.number().min(1).max(12).optional(),
-    expiryYear: z.coerce.number().min(new Date().getFullYear()).max(new Date().getFullYear() + 20).optional(),
+    expiryMonth: coerceOptionalNumber(z.coerce.number().min(1).max(12)),
+    expiryYear: coerceOptionalNumber(z.coerce.number().min(new Date().getFullYear()).max(new Date().getFullYear() + 20)),
     network: z.enum(['visa', 'mastercard', 'amex', 'discover', 'rupay', 'other']).optional(),
-    statementDate: z.coerce.number().min(1).max(31).optional(),
+    statementDate: coerceOptionalNumber(z.coerce.number().min(1).max(31)),
 });
 
 const accountSchemaBase = z.object({
     name: z.string().min(1, 'Account name is required.'),
     type: z.enum(['bank', 'credit_card', 'wallet', 'cash']),
     balance: z.coerce.number().step(0.01),
-    limit: z.coerce.number().optional(),
-    billingDate: z.coerce.number().min(1).max(31).optional(),
+    limit: coerceOptionalNumber(z.coerce.number().positive()),
+    billingDate: coerceOptionalNumber(z.coerce.number().min(1).max(31)),
     icon: z.string().min(1, "Icon is required."),
     status: z.enum(['active', 'inactive']).default('active'),
     cardDetails: cardDetailsSchema.optional(),
@@ -56,11 +60,13 @@ const accountSchemaBase = z.object({
 const accountSchema = accountSchemaBase.refine(data => {
     if (data.type !== 'credit_card') return true;
     if (data.balance > 0) {
-        return data.limit !== undefined && data.limit > 0;
+        // If there's an outstanding balance, a limit is logically expected for calculation
+        // though we allow 0/undefined if the user really wants to track it that way.
+        return true; 
     }
     return true;
 }, {
-    message: "A positive credit limit is required for outstanding balances.",
+    message: "Check limit settings.",
     path: ["limit"],
 });
 
@@ -242,7 +248,7 @@ function AccountForm({ form, onSubmit, onCancel, isLoading, isEditMode }: { form
                         render={({ field }) => (
                             <FormItem>
                                 <FloatingLabelInput
-                                    label="Credit Limit *"
+                                    label="Credit Limit"
                                     id="limit"
                                     type="number"
                                     step="0.01"
@@ -514,7 +520,7 @@ export function AddAccountSheet({ children, accountToEdit }: { children: React.R
                          accountId: newAccountRef.id,
                      });
                  }
-                 await batch.commit();
+                 await commitBatchNonBlocking(batch, `users/${user.uid}/accounts`);
                  toast({ title: 'Account Added' });
             }
             setOpen(false);

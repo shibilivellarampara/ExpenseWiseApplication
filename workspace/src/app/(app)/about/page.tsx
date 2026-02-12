@@ -19,7 +19,7 @@ const appVersion = pkg.version;
 const changelog = [
     {
         version: "1.8.0",
-        date: "February 02, 2026",
+        date: "February 12, 2026",
         changes: [
             { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 15 days after statement date if left empty)." },
             { type: 'Feature', description: "Redesigned the 'Add Account' form with a logic-first field order and floating labels for a better user experience." },
@@ -594,7 +594,7 @@ export default function AboutPage() {
                             <div className="absolute -left-[37px] top-1.5 h-4 w-4 rounded-full bg-muted-foreground/20 border-4 border-background group-data-[state=open]:bg-primary group-data-[state=open]:border-primary/20 z-10 transition-colors" />
                             
                             <AccordionItem value={entry.version} className="border-none">
-                                <AccordionTrigger className="hover:no-underline py-0 items-start gap-4">
+                                <AccordionTrigger className="hover:no-underline py-0 items-start gap-2">
                                     <div className="flex flex-col items-start text-left space-y-1">
                                         <h3 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
                                             Version {entry.version}

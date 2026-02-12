@@ -22,9 +22,9 @@ const changelog = [
         date: "Feb 15, 2026",
         changes: [
             { type: 'UI/UX', description: "Refined 'Add Asset' form with premium floating labels and smart amount fallback logic." },
-            { type: 'UI/UX', description: "Implemented 'click knowing' interaction effect on the Accounts page for better tactile feedback." },
-            { type: 'Feature', description: "Quantity and value fields in Asset tracking are now optional for quicker entry." },
-            { type: 'UI/UX', description: "Standardized all application entry forms for a consistent high-quality experience." },
+            { type: 'Feature', description: "Quantity and amount fields in Asset tracking are now optional for quicker entry." },
+            { type: 'UI/UX', description: "Enforced centered dialog popup for Asset entry for a consistent premium feel." },
+            { type: 'Fix', description: "Standardized package version imports across the application to resolve build errors." },
         ]
     },
     {

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';

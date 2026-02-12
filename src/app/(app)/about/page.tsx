@@ -199,7 +199,7 @@ const changelog = [
         date: "Dec 28, 2025",
         changes: [
             { type: 'UI/UX', description: "Redesigned the 'Expenses Overview' chart with a cleaner look, focusing on the top 7 categories and grouping the rest into a new clickable 'Others' category." },
-            { type: 'UI/UX', description: "Replaced the chart legend with a detailed, scrollable vertical list showing amounts and percentages." },
+            { type: 'UI/UX', description: "Replaced the_legend with a detailed, scrollable vertical list showing amounts and percentages." },
             { type: 'Fix', description: "Corrected layout issues where the category list on the dashboard did not fill its available space." },
             { type: 'UI/UX', description: "Improved the app-wide loading experience with more dynamic graphics and friendlier messages." },
             { type: 'Fix', description: "Adjusted chart tooltips to prevent them from obscuring the data when hovering." },
@@ -464,7 +464,7 @@ const changelog = [
         date: "Nov 08, 2025",
         changes: [
             { type: 'Fix', description: "Resolved a persistent Firestore query error that was incorrectly reported as 'Missing or insufficient permissions' by refactoring data fetching logic on the transactions and analysis pages." },
-            { type: 'Fix', description: "Replaced the date range tabs on the analysis page with a dropdown menu to improve usability and accommodate more options, including a custom date range picker." },
+            { type: 'Fix', description: "Replaced the_date range tabs on the analysis page with a dropdown menu to improve usability and accommodate more options, including a custom date range picker." },
             { type: 'Feature', description: "Added a multi-select dropdown to the analysis page to allow filtering by one or more financial accounts." },
             { type: 'Fix', description: "Enabled clickable rows in the 'Spending by Category' table to navigate directly to a pre-filtered list of corresponding transactions." },
         ]

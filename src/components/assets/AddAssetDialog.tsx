@@ -18,7 +18,6 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer"
 
 import { Button } from '@/components/ui/button';
@@ -353,7 +352,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
     if (!isDesktop) {
         return (
             <Drawer open={open} onOpenChange={setOpen}>
-                <DrawerTrigger asChild>{children}</DrawerTrigger>
+                <DialogTrigger asChild>{children}</DialogTrigger>
                 <DrawerContent onOpenAutoFocus={(e) => e.preventDefault()}>
                     <DrawerHeader className="text-left">
                         <DrawerTitle className="font-headline">{isEditMode ? 'Edit Asset' : 'Add New Asset'}</DrawerTitle>

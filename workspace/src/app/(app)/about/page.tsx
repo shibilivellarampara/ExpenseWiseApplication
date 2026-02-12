@@ -97,7 +97,7 @@ const changelog = [
         version: "1.7.3",
         date: "January 01, 2026",
         changes: [
-            { type: 'UI/UX', description: "Improved bulk editing on Category and Tag prowess with an intuitive 'selection mode' and a sticky actions header." },
+            { type: 'UI/UX', description: "Improved bulk editing on Category and Tag pages with an intuitive 'selection mode' and a sticky actions header." },
             { type: 'Feature', description: "Added a 'Restore from Backup' option to the welcome card for new users, making it easier to get started." },
             { type: 'Feature', description: "Expanded the default list of categories for new users to include more common options." },
             { type: 'DevEx', description: "Added a 'dev' badge to the logo and a reload button in the header, exclusively for the development environment." },
@@ -145,7 +145,7 @@ const changelog = [
             { type: 'Fix', description: "Resolved all Firestore permission errors by simplifying security rules for development." },
             { type: 'Feature', description: "Implemented a scalable system for preset avatars by moving them to a JSON configuration file, simplifying future updates." },
             { type: 'UI/UX', description: "Improved the styling of the user profile dropdown menu for a cleaner, more polished appearance." },
-            { type: 'UI/UX', description: "Adjusted the height of dashboard charts to be more dynamic, reducing unnecessary white space." },
+            { type: 'UI/UX', description: "Adjusted the height of dashboard prowess to be more dynamic, reducing unnecessary white space." },
             { type: 'Fix', description: "Corrected the 'Spending by Tag' chart calculation to ensure the full transaction amount is applied to each tag." },
             { type: 'Fix', description: "Resolved a ReferenceError in the dashboard's data generation function to prevent chart failures." },
         ]
@@ -231,7 +231,7 @@ const changelog = [
             { type: 'UI', description: "Made the 'Add Debt' form consistent with the transaction form by using floating labels and moving the date field to the top." },
             { type: 'UI', description: "Clarified labels in the debt form to 'You are giving money'/'You are receiving money' and in the list to 'Given'/'Received' for better clarity." },
             { type: 'Feature', description: "Consolidated transaction list and form settings into a single, convenient 'Transaction Settings' section in the user profile menu." },
-            { type: 'UI', description: "Disabled text selection on mobile devices to provide a cleaner, more app-like feel." },
+            { type: 'UI', description: "Disabled text selection on mobile devices to provide a more app-like feel." },
             { type: 'Fix', description: "Resolved a build error in the 'Add Asset' form caused by a missing component import." },
             { type: 'Fix', description: "Corrected the Google Drive export to open the file link in the same tab instead of a new one." },
         ]
@@ -569,11 +569,11 @@ const getTagColor = (type: string) => {
 };
 
 export default function AboutPage() {
-    // Latest 5 versions are open by default
-    const latestVersions = changelog.slice(0, 5).map(v => v.version);
+    // Only expand the latest version by default for cleaner hierarchy
+    const latestVersion = changelog.slice(0, 1).map(v => v.version);
 
     return (
-        <div className="w-full space-y-10 max-w-2xl mx-auto pb-32">
+        <div className="w-full max-w-2xl mx-auto pb-32">
             <PageHeader
                 title="Release Notes"
                 description="Release notes and improvements."
@@ -586,40 +586,40 @@ export default function AboutPage() {
                 </Button>
             </PageHeader>
 
-            <div className="relative pl-8 border-l border-primary/30 space-y-12">
-                <Accordion type="multiple" defaultValue={latestVersions} className="space-y-10">
-                    {changelog.map((entry, index) => (
+            <div className="relative mt-10 pl-10 border-l-[2px] border-primary/10 space-y-16">
+                <Accordion type="multiple" defaultValue={latestVersion} className="space-y-12">
+                    {changelog.map((entry) => (
                         <div key={entry.version} className="relative group">
-                            {/* Timeline Dot */}
-                            <div className="absolute -left-[37px] top-1.5 h-4 w-4 rounded-full bg-primary/20 border-4 border-background group-data-[state=open]:bg-primary group-data-[state=open]:border-primary/20 z-10 transition-colors" />
+                            {/* Timeline Dot - Aligned precisely with vertical line center */}
+                            <div className="absolute -left-[49px] top-1.5 h-[18px] w-[18px] rounded-full bg-background border-[3px] border-primary/20 group-data-[state=open]:border-primary z-10 transition-colors" />
                             
-                            <AccordionItem value={entry.version} className="border-none">
-                                <AccordionTrigger className="hover:no-underline py-0 items-start gap-2">
-                                    <div className="flex flex-col items-start text-left space-y-1">
-                                        <h3 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+                            <AccordionItem value={entry.version} className="border-none transition-all duration-300 rounded-xl data-[state=open]:bg-primary/[0.03] data-[state=open]:px-4 data-[state=open]:-mx-4">
+                                <AccordionTrigger className="hover:no-underline py-0 items-start gap-2 text-left">
+                                    <div className="flex flex-col items-start space-y-2">
+                                        <h3 className="text-2xl font-bold tracking-tight text-foreground/90 group-data-[state=open]:text-foreground">
                                             Version {entry.version}
                                         </h3>
-                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        <p className="text-sm font-medium text-muted-foreground/70 uppercase tracking-widest">
                                             {entry.date}
                                         </p>
                                     </div>
                                 </AccordionTrigger>
                                 
-                                <AccordionContent className="pt-6 pb-2">
-                                    <div className="rounded-2xl bg-muted/30 border border-muted p-5 space-y-4 shadow-sm">
-                                        <ul className="space-y-4">
+                                <AccordionContent className="pt-6 pb-4">
+                                    <div className="space-y-5">
+                                        <ul className="space-y-5">
                                             {entry.changes.map((change, changeIndex) => (
-                                                <li key={changeIndex} className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 group/item">
+                                                <li key={changeIndex} className="flex flex-col sm:flex-row sm:items-start gap-3 group/item">
                                                     <Badge 
                                                         variant="outline"
                                                         className={cn(
-                                                            "w-fit px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest transition-colors",
+                                                            "w-fit px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest transition-colors shrink-0",
                                                             getTagColor(change.type)
                                                         )}
                                                     >
                                                         {change.type}
                                                     </Badge>
-                                                    <p className="text-[15px] leading-relaxed text-foreground/80 group-hover/item:text-foreground transition-colors">
+                                                    <p className="text-[15px] leading-relaxed text-foreground/70 group-hover/item:text-foreground transition-colors">
                                                         {change.description}
                                                     </p>
                                                 </li>
@@ -633,9 +633,9 @@ export default function AboutPage() {
                 </Accordion>
             </div>
             
-            <div className="text-center pt-8 border-t border-muted">
-                <p className="text-xs text-muted-foreground">
-                    ExpenseWise &bull; Version {appVersion} &bull; Built with pride.
+            <div className="text-center pt-16 mt-8 border-t border-muted/50">
+                <p className="text-xs font-medium text-muted-foreground/50 tracking-wide uppercase">
+                    ExpenseWise &bull; v{appVersion} &bull; Built with pride.
                 </p>
             </div>
         </div>

@@ -375,7 +375,7 @@ const changelog = [
         date: "Nov 26, 2025",
         changes: [
             { type: 'Feature', description: "Grouped transactions by person on the Debts & Dues page for a clearer overview." },
-            { type: 'Feature', description: "Added a quick-add button to create new transactions for existing people on the Debts page." },
+            { type: 'Feature', description: "Added a quick-add button to create new transactions for existing people on the <Debts></Debts> page." },
             { type: 'Fix', description: "Corrected the net amount calculation to only include 'pending' transactions." },
             { type: 'Fix', description: "Removed the 'Settle Debt' success notification for a quieter experience." },
             { type: 'Fix', description: "Removed default '0.00' values from amount fields in forms." },

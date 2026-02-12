@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -10,16 +9,6 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer"
-
 import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,7 +28,6 @@ import { DateTimePicker } from '@/components/DateTimePicker';
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
-import { useMediaQuery } from '@/hooks/use-media-query';
 
 const assetSchema = z.object({
   name: z.string().min(1, 'Asset name is required.'),
@@ -51,7 +39,6 @@ const assetSchema = z.object({
   notes: z.string().optional(),
 });
 
-
 type AssetFormData = z.infer<typeof assetSchema>;
 
 interface AddAssetDialogProps {
@@ -60,7 +47,6 @@ interface AddAssetDialogProps {
     initialAssetType?: AssetType;
     onSaveSuccess?: () => void;
 }
-
 
 const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string }>(
     ({ className, label, id, ...props }, ref) => {
@@ -120,12 +106,10 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
 );
 FloatingLabelSelect.displayName = 'FloatingLabelSelect';
 
-function AssetForm({ form, onSubmit, isLoading, isEditMode }: { form: any; onSubmit: (values: AssetFormData) => void; isLoading: boolean; isEditMode: boolean; }) {
-    const isDesktop = useMediaQuery("(min-width: 768px)");
-
+function AssetForm({ form, onSubmit, isLoading, isEditMode, onCancel }: { form: any; onSubmit: (values: AssetFormData) => void; isLoading: boolean; isEditMode: boolean; onCancel: () => void }) {
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4 max-h-[70vh] overflow-y-auto pr-2">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                 <FormField
                     control={form.control}
                     name="assetType"
@@ -233,30 +217,18 @@ function AssetForm({ form, onSubmit, isLoading, isEditMode }: { form: any; onSub
                         <FormItem>
                             <Label className="text-xs text-muted-foreground mb-1 block px-1">Notes</Label>
                             <FormControl>
-                                <Textarea placeholder="Any additional notes about this asset..." {...field} value={field.value ?? ''} />
+                                <Textarea placeholder="Any additional notes about this asset..." {...field} value={field.value ?? ''} className="min-h-[100px]" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                {!isDesktop && (
-                    <DrawerFooter className="pt-4 px-0 flex-row justify-end gap-2">
-                        <DrawerClose asChild>
-                            <Button type="button" variant="outline" className="w-24">Cancel</Button>
-                        </DrawerClose>
-                        <Button type="submit" disabled={isLoading} className="w-28">
-                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
-                        </Button>
-                    </DrawerFooter>
-                )}
-                {isDesktop && (
-                    <DialogFooter className="pt-4">
-                        <Button type="button" variant="outline" className="w-24" onClick={() => (form as any).handleCancel()}>Cancel</Button>
-                        <Button type="submit" disabled={isLoading} className="w-28">
-                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
-                        </Button>
-                    </DialogFooter>
-                )}
+                <DialogFooter className="pt-4 flex flex-row gap-2 justify-end">
+                    <Button type="button" variant="outline" onClick={onCancel} className="flex-1 sm:flex-none">Cancel</Button>
+                    <Button type="submit" disabled={isLoading} className="flex-1 sm:flex-none min-w-[100px]">
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
+                    </Button>
+                </DialogFooter>
             </form>
         </Form>
     );
@@ -269,7 +241,6 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
     const { user } = useUser();
     const firestore = useFirestore();
     const isEditMode = !!assetToEdit;
-    const isDesktop = useMediaQuery("(min-width: 768px)");
 
     const form = useForm<AssetFormData>({
         resolver: zodResolver(assetSchema),
@@ -283,8 +254,6 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
             notes: '',
         },
     });
-
-    (form as any).handleCancel = () => setOpen(false);
 
     useEffect(() => {
         if(open) {
@@ -342,43 +311,23 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
             setOpen(false);
     
         } catch (error: any) {
-            let description = "There was an unexpected error. Please try again.";
-             toast({ variant: 'destructive', title: 'Could Not Save Asset', description });
+             toast({ variant: 'destructive', title: 'Could Not Save Asset', description: "There was an unexpected error. Please try again." });
         } finally {
             setIsLoading(false);
         }
     }
     
-    if (!isDesktop) {
-        return (
-            <Drawer open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>{children}</DialogTrigger>
-                <DrawerContent onOpenAutoFocus={(e) => e.preventDefault()}>
-                    <DrawerHeader className="text-left">
-                        <DrawerTitle className="font-headline">{isEditMode ? 'Edit Asset' : 'Add New Asset'}</DrawerTitle>
-                        <DrawerDescription>
-                            {isEditMode ? 'Update the details for your asset.' : 'Add a new asset to track its value.'}
-                        </DrawerDescription>
-                    </DrawerHeader>
-                    <div className="px-4">
-                        <AssetForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode}/>
-                    </div>
-                </DrawerContent>
-            </Drawer>
-        );
-    }
-
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-lg" onOpenAutoFocus={(e) => e.preventDefault()}>
+            <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle className="font-headline">{isEditMode ? 'Edit Asset' : 'Add New Asset'}</DialogTitle>
                     <DialogDescription>
                         {isEditMode ? 'Update the details for your asset.' : 'Add a new asset to track its value.'}
                     </DialogDescription>
                 </DialogHeader>
-                <AssetForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode}/>
+                <AssetForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode} onCancel={() => setOpen(false)} />
             </DialogContent>
         </Dialog>
     );

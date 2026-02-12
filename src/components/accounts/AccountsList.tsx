@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -379,7 +378,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                 <div className="flex-1">
                                                     <Link 
                                                         href={`/expenses?accounts=${item.id}`} 
-                                                        className="font-semibold truncate transition-all duration-200 active:scale-95 active:opacity-80 inline-block"
+                                                        className="font-semibold truncate transition-all duration-200 active:scale-95 active:bg-primary/20 rounded-full px-2 -mx-2 inline-block"
                                                     >
                                                         {item.name}
                                                     </Link>
@@ -480,7 +479,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                 {renderIcon(item.icon, "h-5 w-5")}
                                 </div>
                                 <div className="flex-grow">
-                                        <span className="font-semibold transition-all duration-200 active:scale-95 inline-block">{item.name}</span>
+                                        <span className="font-semibold transition-all duration-200 active:scale-95 active:bg-primary/20 rounded-full px-2 -mx-2 inline-block">{item.name}</span>
                                 </div>
                                 <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                                     <div className={cn(

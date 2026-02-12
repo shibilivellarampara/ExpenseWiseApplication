@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -38,7 +39,7 @@ const assetSchema = z.object({
   assetType: z.enum(Object.keys(ASSET_TYPES) as [AssetType, ...AssetType[]]),
   investedAmount: coerceOptionalNumber(z.coerce.number().positive()),
   currentValue: coerceOptionalNumber(z.coerce.number().positive()),
-  quantity: coerceOptionalNumber(z.coerce.number().positive()),
+  quantity: coerceOptionalNumber(z.coerce.number()),
   startDate: z.date().optional().nullable(),
   notes: z.string().optional(),
 });

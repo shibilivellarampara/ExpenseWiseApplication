@@ -1,4 +1,3 @@
-
 'use client';
 
 import pkg from '../../package.json';

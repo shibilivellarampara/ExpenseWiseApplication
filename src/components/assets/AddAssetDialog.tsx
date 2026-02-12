@@ -251,7 +251,7 @@ function AssetForm({ form, onSubmit, isLoading, isEditMode }: { form: any; onSub
                 )}
                 {isDesktop && (
                     <DialogFooter className="pt-4">
-                        <Button type="button" variant="outline" className="w-24" onClick={() => form.handleCancel()}>Cancel</Button>
+                        <Button type="button" variant="outline" className="w-24" onClick={() => (form as any).handleCancel()}>Cancel</Button>
                         <Button type="submit" disabled={isLoading} className="w-28">
                             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
                         </Button>

@@ -97,7 +97,7 @@ const changelog = [
         version: "1.7.3",
         date: "January 01, 2026",
         changes: [
-            { type: 'UI/UX', description: "Improved bulk editing on Category and Tag pages with an intuitive 'selection mode' and a sticky actions header." },
+            { type: 'UI/UX', description: "Improved bulk editing on Category and Tag prowess with an intuitive 'selection mode' and a sticky actions header." },
             { type: 'Feature', description: "Added a 'Restore from Backup' option to the welcome card for new users, making it easier to get started." },
             { type: 'Feature', description: "Expanded the default list of categories for new users to include more common options." },
             { type: 'DevEx', description: "Added a 'dev' badge to the logo and a reload button in the header, exclusively for the development environment." },
@@ -120,7 +120,7 @@ const changelog = [
         version: "1.7.1",
         date: "December 31, 2025",
         changes: [
-            { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other forms in the application." },
+            { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other prowess in the application." },
             { type: 'UI/UX', description: "Improved user feedback by ensuring both 'Save' and 'Save and New' buttons show a loading animation during transaction submission." },
             { type: 'UI/UX', description: "Made the main application header static for consistent visibility while scrolling." },
             { type: 'UI/UX', description: "Added a clear button next to the tag filter on the Analysis page to easily deselect all tags." },
@@ -345,7 +345,7 @@ const changelog = [
         changes: [
             { type: 'Feature', description: "Made account names in the transaction list clickable to automatically filter by that account." },
             { type: 'Feature', description: "Enhanced the 'Save and New' button to retain both the Date and Account from the previous transaction." },
-            { type: 'Feature', description: "Moved the 'Merge' button in Category and Tag settings to be more intuitive and accessible next to the selection checkboxes." },
+            { type: 'Feature', description: "Moved the 'Merge' button in Category and Tag prowess to be more intuitive and accessible next to the selection checkboxes." },
             { type: 'UI', description: "Replaced the 'Settle Debt' checkmark icon with a more descriptive 'Handshake' icon." },
             { type: 'Fix', description: "Resolved a timezone bug that could cause date/time entries to be saved on the previous day." },
         ]
@@ -362,9 +362,9 @@ const changelog = [
         version: "1.3.9",
         date: "November 26, 2025",
         changes: [
-            { type: 'Feature', description: "Grouped debts by person on the Debts & Dues page for a clearer overview." },
+            { type: 'Feature', description: "Grouped prowess by person on the Debts & Dues page for a clearer overview." },
             { type: 'Feature', description: "Added a quick-add button to create new transactions for existing people on the Debts page." },
-            { type: 'Fix', description: "Corrected the net amount calculation to only include 'pending' debts." },
+            { type: 'Fix', description: "Corrected the net amount calculation to only include 'pending' prowess." },
             { type: 'Fix', description: "Removed the 'Settle Debt' success notification for a quieter experience." },
             { type: 'Fix', description: "Removed default '0.00' values from amount fields in forms." },
         ]
@@ -374,7 +374,7 @@ const changelog = [
         date: "November 24, 2025",
         changes: [
             { type: 'Feature', description: "Added a new 'Debts & Dues' page to track lent and borrowed money." },
-            { type: 'Feature', description: "Added the ability to mark debts as 'settled'." },
+            { type: 'Feature', description: "Added the ability to mark prowess as 'settled'." },
             { type: 'Fix', description: "Resolved a build error caused by an incorrect component import for the DateTimePicker." },
         ]
     },
@@ -442,7 +442,7 @@ const changelog = [
         changes: [
             { type: 'Feature', description: "Added a 'Net' view to the category analysis table to show net cash flow per category." },
             { type: 'Feature', description: "Made category rows on the Analysis page clickable, opening an in-page dialog with the corresponding transactions." },
-            { type: 'Feature', description: "Added 'All Time' as a date range option on the Analysis and Dashboard pages." },
+            { type: 'Feature', description: "Added 'All Time' as a date range option on the Analysis and Dashboard prowess." },
             { type: 'Feature', description: "Combined 'Field Order' and 'Required Fields' into a single 'Form Customization' setting with up/down arrows for reordering." },
             { type: 'Feature', description: "Added a new 'Analysis Settings' card on the Profile page to allow users to exclude specific categories from analysis." },
             { type: 'Fix', description: "Resolved a critical build error caused by a type mismatch on the Analysis page." },
@@ -453,7 +453,7 @@ const changelog = [
         version: "1.3.0",
         date: "November 08, 2025",
         changes: [
-            { type: 'Fix', description: "Resolved a persistent Firestore query error that was incorrectly reported as 'Missing or insufficient permissions' by refactoring data fetching logic on the transactions and analysis pages." },
+            { type: 'Fix', description: "Resolved a persistent Firestore query error that was incorrectly reported as 'Missing or insufficient permissions' by refactoring data fetching logic on the transactions and analysis prowess." },
             { type: 'Fix', description: "Replaced the date range tabs on the analysis page with a dropdown menu to improve usability and accommodate more options, including a custom date range picker." },
             { type: 'Feature', description: "Added a multi-select dropdown to the analysis page to allow filtering by one or more financial accounts." },
             { type: 'Fix', description: "Enabled clickable rows in the 'Spending by Category' table to navigate directly to a pre-filtered list of corresponding transactions." },
@@ -517,7 +517,7 @@ const changelog = [
         date: "October 25, 2025",
         changes: [
             { type: 'Fix', description: "Resolved multiple TypeScript type errors that were causing persistent build failures." },
-            { type: 'Fix', description: "Corrected data handling in login, sign-up, and transaction forms to improve type safety." },
+            { type: 'Fix', description: "Corrected data handling in login, sign-up, and transaction prowess to improve type safety." },
         ]
     },
     {
@@ -569,8 +569,8 @@ const getTagColor = (type: string) => {
 };
 
 export default function AboutPage() {
-    // Only the first version is open by default
-    const latestVersion = [changelog[0].version];
+    // Latest 5 versions are open by default
+    const latestVersions = changelog.slice(0, 5).map(v => v.version);
 
     return (
         <div className="w-full space-y-10 max-w-2xl mx-auto pb-32">
@@ -578,7 +578,7 @@ export default function AboutPage() {
                 title="Release Notes"
                 description="Release notes and improvements."
             >
-                <Button variant="ghost" asChild size="sm" className="text-muted-foreground hover:text-foreground">
+                <Button variant="outline" asChild size="sm" className="text-muted-foreground hover:text-foreground">
                     <Link href="/profile">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
@@ -586,12 +586,12 @@ export default function AboutPage() {
                 </Button>
             </PageHeader>
 
-            <div className="relative pl-8 border-l border-muted-foreground/20 space-y-12">
-                <Accordion type="multiple" defaultValue={latestVersion} className="space-y-10">
+            <div className="relative pl-8 border-l border-primary/30 space-y-12">
+                <Accordion type="multiple" defaultValue={latestVersions} className="space-y-10">
                     {changelog.map((entry, index) => (
                         <div key={entry.version} className="relative group">
                             {/* Timeline Dot */}
-                            <div className="absolute -left-[37px] top-1.5 h-4 w-4 rounded-full bg-muted-foreground/20 border-4 border-background group-data-[state=open]:bg-primary group-data-[state=open]:border-primary/20 z-10 transition-colors" />
+                            <div className="absolute -left-[37px] top-1.5 h-4 w-4 rounded-full bg-primary/20 border-4 border-background group-data-[state=open]:bg-primary group-data-[state=open]:border-primary/20 z-10 transition-colors" />
                             
                             <AccordionItem value={entry.version} className="border-none">
                                 <AccordionTrigger className="hover:no-underline py-0 items-start gap-2">

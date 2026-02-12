@@ -120,7 +120,7 @@ const changelog = [
         version: "1.7.1",
         date: "December 31, 2025",
         changes: [
-            { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other forms in the application." },
+            { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other prowess in the application." },
             { type: 'UI/UX', description: "Improved user feedback by ensuring both 'Save' and 'Save and New' buttons show a loading animation during transaction submission." },
             { type: 'UI/UX', description: "Made the main application header static for consistent visibility while scrolling." },
             { type: 'UI/UX', description: "Added a clear button next to the tag filter on the Analysis page to easily deselect all tags." },
@@ -366,7 +366,7 @@ const changelog = [
             { type: 'Feature', description: "Added a quick-add button to create new transactions for existing people on the Debts page." },
             { type: 'Fix', description: "Corrected the net amount calculation to only include 'pending' debts." },
             { type: 'Fix', description: "Removed the 'Settle Debt' success notification for a quieter experience." },
-            { type: 'Fix', description: "Removed default '0.00' values from amount fields in forms." },
+            { type: 'Fix', description: "Removed default '0.00' values from amount fields in prowess." },
         ]
     },
     {
@@ -517,7 +517,7 @@ const changelog = [
         date: "October 25, 2025",
         changes: [
             { type: 'Fix', description: "Resolved multiple TypeScript type errors that were causing persistent build failures." },
-            { type: 'Fix', description: "Corrected data handling in login, sign-up, and transaction forms to improve type safety." },
+            { type: 'Fix', description: "Corrected data handling in login, sign-up, and transaction prowess to improve type safety." },
         ]
     },
     {
@@ -569,8 +569,8 @@ const getTagColor = (type: string) => {
 };
 
 export default function AboutPage() {
-    // Only the first version is open by default
-    const latestVersion = [changelog[0].version];
+    // Latest 5 versions are open by default
+    const latestVersions = changelog.slice(0, 5).map(v => v.version);
 
     return (
         <div className="w-full space-y-10 max-w-2xl mx-auto pb-32">
@@ -578,7 +578,7 @@ export default function AboutPage() {
                 title="Release Notes"
                 description="Release notes and improvements."
             >
-                <Button variant="ghost" asChild size="sm" className="text-muted-foreground hover:text-foreground">
+                <Button variant="outline" asChild size="sm" className="text-muted-foreground hover:text-foreground">
                     <Link href="/profile">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
@@ -586,12 +586,12 @@ export default function AboutPage() {
                 </Button>
             </PageHeader>
 
-            <div className="relative pl-8 border-l border-muted-foreground/20 space-y-12">
-                <Accordion type="multiple" defaultValue={latestVersion} className="space-y-10">
+            <div className="relative pl-8 border-l border-primary/30 space-y-12">
+                <Accordion type="multiple" defaultValue={latestVersions} className="space-y-10">
                     {changelog.map((entry, index) => (
                         <div key={entry.version} className="relative group">
                             {/* Timeline Dot */}
-                            <div className="absolute -left-[37px] top-1.5 h-4 w-4 rounded-full bg-muted-foreground/20 border-4 border-background group-data-[state=open]:bg-primary group-data-[state=open]:border-primary/20 z-10 transition-colors" />
+                            <div className="absolute -left-[37px] top-1.5 h-4 w-4 rounded-full bg-primary/20 border-4 border-background group-data-[state=open]:bg-primary group-data-[state=open]:border-primary/20 z-10 transition-colors" />
                             
                             <AccordionItem value={entry.version} className="border-none">
                                 <AccordionTrigger className="hover:no-underline py-0 items-start gap-2">

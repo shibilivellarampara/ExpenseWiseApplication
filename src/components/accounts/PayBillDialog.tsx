@@ -10,8 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Account, Category } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { writeBatch, collection, doc, serverTimestamp, increment, query } from 'firebase/firestore';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { Input } from '../ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Input } from '@/components/ui/input';
 import { formatAmount } from '@/lib/utils';
 
 interface PayBillDialogProps {

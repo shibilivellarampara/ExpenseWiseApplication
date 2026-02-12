@@ -605,7 +605,7 @@ export default function AboutPage() {
                             {/* Timeline Dot */}
                             <div className="absolute -left-[49px] top-1.5 h-[18px] w-[18px] rounded-full bg-background border-[3px] border-primary/20 chat:border-primary/30 fintech:border-primary/30 group-data-[state=open]:border-primary group-data-[state=open]:chat:border-primary group-data-[state=open]:fintech:border-primary z-10 transition-colors" />
                             
-                            <AccordionItem value={entry.version} className="border-none transition-all duration-300 rounded-xl data-[state=open]:bg-primary/[0.03] data-[state=open]:px-4 data-[state=open]:-mx-4">
+                            <AccordionItem value={entry.version} className="border-none transition-all duration-300 rounded-xl data-[state=open]:px-4 data-[state=open]:-mx-4">
                                 <AccordionTrigger className="hover:no-underline py-0 items-start gap-2 text-left">
                                     <div className="flex flex-col items-start space-y-2">
                                         <h3 className="text-[18px] font-bold tracking-tight text-foreground/90 group-data-[state=open]:text-foreground">

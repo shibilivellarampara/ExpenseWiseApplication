@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -145,7 +146,7 @@ const changelog = [
             { type: 'Fix', description: "Resolved all Firestore permission errors by simplifying security rules for development." },
             { type: 'Feature', description: "Implemented a scalable system for preset avatars by moving them to a JSON configuration file, simplifying future updates." },
             { type: 'UI/UX', description: "Improved the styling of the user profile dropdown menu for a cleaner, more polished appearance." },
-            { type: 'UI/UX', description: "Adjusted the height of dashboard prowess to be more dynamic, reducing unnecessary white space." },
+            { type: 'UI/UX', description: "Adjusted the height of dashboard charts to be more dynamic, reducing unnecessary white space." },
             { type: 'Fix', description: "Corrected the 'Spending by Tag' chart calculation to ensure the full transaction amount is applied to each tag." },
             { type: 'Fix', description: "Resolved a ReferenceError in the dashboard's data generation function to prevent chart failures." },
         ]
@@ -596,10 +597,10 @@ export default function AboutPage() {
                             <AccordionItem value={entry.version} className="border-none transition-all duration-300 rounded-xl data-[state=open]:bg-primary/[0.03] data-[state=open]:px-4 data-[state=open]:-mx-4">
                                 <AccordionTrigger className="hover:no-underline py-0 items-start gap-2 text-left">
                                     <div className="flex flex-col items-start space-y-2">
-                                        <h3 className="text-2xl font-bold tracking-tight text-foreground/90 group-data-[state=open]:text-foreground">
+                                        <h3 className="text-base font-bold tracking-tight text-foreground/90 group-data-[state=open]:text-foreground">
                                             Version {entry.version}
                                         </h3>
-                                        <p className="text-sm font-medium text-muted-foreground/70 uppercase tracking-widest">
+                                        <p className="text-[13px] font-medium text-muted-foreground/70 uppercase tracking-widest">
                                             {entry.date}
                                         </p>
                                     </div>

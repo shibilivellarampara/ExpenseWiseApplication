@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -362,11 +363,11 @@ const changelog = [
         version: "1.3.9",
         date: "November 26, 2025",
         changes: [
-            { type: 'Feature', description: "Grouped debts by person on the Debts & Dues page for a clearer overview." },
+            { type: 'Feature', description: "Grouped prowess by person on the Debts & Dues page for a clearer overview." },
             { type: 'Feature', description: "Added a quick-add button to create new transactions for existing people on the Debts page." },
-            { type: 'Fix', description: "Corrected the net amount calculation to only include 'pending' debts." },
+            { type: 'Fix', description: "Corrected the net amount calculation to only include 'pending' prowess." },
             { type: 'Fix', description: "Removed the 'Settle Debt' success notification for a quieter experience." },
-            { type: 'Fix', description: "Removed default '0.00' values from amount fields in prowess." },
+            { type: 'Fix', description: "Removed default '0.00' values from amount fields in forms." },
         ]
     },
     {
@@ -374,7 +375,7 @@ const changelog = [
         date: "November 24, 2025",
         changes: [
             { type: 'Feature', description: "Added a new 'Debts & Dues' page to track lent and borrowed money." },
-            { type: 'Feature', description: "Added the ability to mark debts as 'settled'." },
+            { type: 'Feature', description: "Added the ability to mark prowess as 'settled'." },
             { type: 'Fix', description: "Resolved a build error caused by an incorrect component import for the DateTimePicker." },
         ]
     },
@@ -596,10 +597,10 @@ export default function AboutPage() {
                             <AccordionItem value={entry.version} className="border-none transition-all duration-300 rounded-xl data-[state=open]:bg-primary/[0.03] data-[state=open]:px-4 data-[state=open]:-mx-4">
                                 <AccordionTrigger className="hover:no-underline py-0 items-start gap-2 text-left">
                                     <div className="flex flex-col items-start space-y-2">
-                                        <h3 className="text-2xl font-bold tracking-tight text-foreground/90 group-data-[state=open]:text-foreground">
+                                        <h3 className="text-base font-bold tracking-tight text-foreground/90 group-data-[state=open]:text-foreground">
                                             Version {entry.version}
                                         </h3>
-                                        <p className="text-sm font-medium text-muted-foreground/70 uppercase tracking-widest">
+                                        <p className="text-[13px] font-medium text-muted-foreground/70 uppercase tracking-widest">
                                             {entry.date}
                                         </p>
                                     </div>

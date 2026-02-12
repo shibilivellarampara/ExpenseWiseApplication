@@ -13,6 +13,17 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.8.0",
+        date: "2026-02-02",
+        changes: [
+            { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 15 days after statement date if left empty)." },
+            { type: 'Feature', description: "Redesigned the 'Add Account' form with a logic-first field order and floating labels for a better user experience." },
+            { type: 'UI/UX', description: "Enhanced form accessibility by preventing automatic keyboard popup on form open." },
+            { type: 'Fix', description: "Resolved a validation issue in the account form where empty optional numeric fields caused submission failures." },
+            { type: 'Fix', description: "Standardized mandatory field markers (*) across all primary input forms." },
+        ]
+    },
+    {
         version: "1.7.9",
         date: "2026-02-01",
         changes: [

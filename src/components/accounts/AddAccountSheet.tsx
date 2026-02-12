@@ -59,9 +59,6 @@ const accountSchemaBase = z.object({
 
 const accountSchema = accountSchemaBase.refine(data => {
     if (data.type !== 'credit_card') return true;
-    if (data.balance > 0) {
-        return true; 
-    }
     return true;
 }, {
     message: "Check limit settings.",

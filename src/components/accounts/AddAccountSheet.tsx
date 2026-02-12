@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -11,36 +9,27 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
 import { Button } from '../ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '../ui/form';
-import { Input } from '../ui/input';
+import { Input, InputProps } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { useCollection, useFirestore, useUser, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, setDoc as setDocFirestore, writeBatch } from 'firebase/firestore';
 import { Loader2, Pilcrow, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
-import { Account, Category, CardDetails } from '@/lib/types';
+import { Account, CardDetails } from '@/lib/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { Label } from '@/components/ui/label';
+import React from 'react';
 
 const cardDetailsSchema = z.object({
     cardNickname: z.string().optional(),
@@ -51,7 +40,6 @@ const cardDetailsSchema = z.object({
     network: z.enum(['visa', 'mastercard', 'amex', 'discover', 'rupay', 'other']).optional(),
     statementDate: z.coerce.number().min(1).max(31).optional(),
 });
-
 
 const accountSchemaBase = z.object({
     name: z.string().min(1, 'Account name is required.'),
@@ -71,17 +59,69 @@ const accountSchema = accountSchemaBase.refine(data => {
     }
     return true;
 }, {
-    message: "A positive credit limit is required if you enter an initial outstanding amount.",
+    message: "A positive credit limit is required for outstanding balances.",
     path: ["limit"],
 });
 
-
 type AccountFormData = z.infer<typeof accountSchema>;
 
-interface AddAccountSheetProps {
-    children: React.ReactNode;
-    accountToEdit?: Account;
-}
+const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string }>(
+    ({ className, label, id, ...props }, ref) => {
+        const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
+        return (
+            <div className="relative">
+                <Input
+                    ref={ref}
+                    id={id}
+                    placeholder=" "
+                    className={cn("peer h-14 pt-5 text-base floating-input", className)}
+                    data-has-value={hasValue}
+                    {...props}
+                />
+                <Label
+                    htmlFor={id}
+                    className={cn(
+                        "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
+                         "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
+                         "peer-data-[has-value=true]:top-0 peer-data-[has-value=true]:-translate-y-1/2 peer-data-[has-value=true]:text-xs peer-data-[has-value=true]:font-medium"
+                    )}
+                >
+                    {label}
+                </Label>
+            </div>
+        );
+    }
+);
+FloatingLabelInput.displayName = 'FloatingLabelInput';
+
+const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof SelectTrigger> & { label: string; children: React.ReactNode; onValueChange: (value: string) => void; value?: string }>(
+    ({ className, label, id, children, onValueChange, value, ...props }, ref) => {
+        const hasValue = !!value;
+        return (
+            <div className="relative">
+                 <Select onValueChange={onValueChange} value={value}>
+                    <SelectTrigger ref={ref} id={id} className={cn("peer h-14 pt-4 text-base floating-input", className)} data-has-value={hasValue} {...props}>
+                        <SelectValue placeholder=" "/>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {children}
+                    </SelectContent>
+                </Select>
+                 <Label
+                    htmlFor={id}
+                     className={cn(
+                        "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
+                        "top-1/2 -translate-y-1/2 text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium",
+                        hasValue && "top-0 -translate-y-1/2 text-xs font-medium"
+                    )}
+                >
+                    {label}
+                </Label>
+            </div>
+        )
+    }
+);
+FloatingLabelSelect.displayName = 'FloatingLabelSelect';
 
 function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onSubmit: (values: AccountFormData) => void, isLoading: boolean, isEditMode: boolean }) {
     const accountType = form.watch('type');
@@ -94,16 +134,18 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
                 <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Account Name</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g., Savings Account" {...field} />
-                            </FormControl>
+                            <FloatingLabelInput
+                                label="Account Name *"
+                                id="name"
+                                {...field}
+                                value={field.value ?? ''}
+                            />
                             <FormMessage />
                         </FormItem>
                     )}
@@ -113,108 +155,129 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                     name="type"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Account Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isEditMode}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select an account type" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
+                            <FloatingLabelSelect
+                                label="Account Type *"
+                                id="type"
+                                onValueChange={field.onChange}
+                                value={field.value}
+                                disabled={isEditMode}
+                            >
                                 <SelectItem value="bank">Bank Account</SelectItem>
                                 <SelectItem value="credit_card">Credit Card</SelectItem>
                                 <SelectItem value="wallet">Digital Wallet</SelectItem>
                                 <SelectItem value="cash">Cash</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
+                            </FloatingLabelSelect>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
                 {accountType === 'credit_card' && (
-                     <>
-                        <FormField
-                            control={form.control}
-                            name="limit"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Credit Limit</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" step="0.01" placeholder="50000" {...field} value={field.value ?? ''} disabled={isEditMode} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                     </>
+                    <FormField
+                        control={form.control}
+                        name="limit"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FloatingLabelInput
+                                    label="Credit Limit *"
+                                    id="limit"
+                                    type="number"
+                                    step="0.01"
+                                    {...field}
+                                    value={field.value ?? ''}
+                                    disabled={isEditMode}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 )}
                 <FormField
                     control={form.control}
                     name="balance"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>
-                                {accountType === 'credit_card' ? 'Current Outstanding Amount' : 'Current Balance'}
-                            </FormLabel>
-                            <FormControl>
-                                <Input type="number" step="0.01" placeholder="0.00" {...field} disabled={isEditMode} />
-                            </FormControl>
-                             {accountType !== 'credit_card' && !isEditMode && <FormDescription>An initial transaction will be created for this amount.</FormDescription>}
+                            <FloatingLabelInput
+                                label={accountType === 'credit_card' ? 'Current Outstanding Amount *' : 'Initial Balance *'}
+                                id="balance"
+                                type="number"
+                                step="0.01"
+                                {...field}
+                                value={field.value ?? ''}
+                                disabled={isEditMode}
+                            />
+                            {!isEditMode && accountType !== 'credit_card' && (
+                                <FormDescription className="text-xs px-1">
+                                    An initial transaction will be created for this amount.
+                                </FormDescription>
+                            )}
                             <FormMessage />
                         </FormItem>
                     )}
                 />
                 {accountType === 'credit_card' && (
                     <>
-                         <FormField
-                            control={form.control}
-                            name="cardDetails.statementDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Statement Date (Day of Month)</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" min="1" max="31" placeholder="e.g., 10" {...field} value={field.value ?? ''}/>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="billingDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Payment Due Date (Day of Month)</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" min="1" max="31" placeholder="e.g., 25" {...field} value={field.value ?? ''} />
-                                    </FormControl>
-                                     <FormDescription>Set the day your credit card bill is due.</FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="cardDetails.statementDate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FloatingLabelInput
+                                            label="Stmt Date (Day)"
+                                            id="statementDate"
+                                            type="number"
+                                            min="1"
+                                            max="31"
+                                            {...field}
+                                            value={field.value ?? ''}
+                                        />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="billingDate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FloatingLabelInput
+                                            label="Due Date (Day)"
+                                            id="billingDate"
+                                            type="number"
+                                            min="1"
+                                            max="31"
+                                            {...field}
+                                            value={field.value ?? ''}
+                                        />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                     </>
                 )}
-                 <FormField
+                <FormField
                     control={form.control}
                     name="icon"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Icon</FormLabel>
+                            <Label className="text-xs text-muted-foreground mb-1 block px-1">Account Icon *</Label>
                             <FormControl>
                                  <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
                                     <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-start">
+                                        <Button variant="outline" className="w-full justify-start h-12">
                                             {renderIcon(field.value)}
                                             <span className="ml-2">{field.value}</span>
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-auto grid grid-cols-5 gap-2">
-                                        {availableIcons.map(icon => (
-                                            <Button key={icon} variant="ghost" size="icon" onClick={() => {field.onChange(icon); setIconPopoverOpen(false);}}>
-                                                {renderIcon(icon)}
-                                            </Button>
-                                        ))}
+                                    <PopoverContent className="w-auto p-0">
+                                        <div className="grid grid-cols-5 gap-2 p-4 max-h-[300px] overflow-y-auto">
+                                            {availableIcons.map(icon => (
+                                                <Button key={icon} variant="ghost" size="icon" onClick={() => {field.onChange(icon); setIconPopoverOpen(false);}}>
+                                                    {renderIcon(icon)}
+                                                </Button>
+                                            ))}
+                                        </div>
                                     </PopoverContent>
                                 </Popover>
                             </FormControl>
@@ -226,9 +289,9 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                 {accountType === 'credit_card' && (
                      <Collapsible>
                         <CollapsibleTrigger asChild>
-                            <Button variant="link" className="p-0 h-auto flex items-center gap-1">
-                                <ChevronDown className="h-4 w-4" />
-                                Add Card Details (Optional)
+                            <Button variant="link" className="p-0 h-auto flex items-center gap-1 text-xs">
+                                <ChevronDown className="h-3 w-3" />
+                                Card Display Details (Optional)
                             </Button>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="space-y-4 pt-4">
@@ -238,8 +301,7 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                                 name="cardDetails.cardNickname"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Card Nickname</FormLabel>
-                                        <FormControl><Input placeholder="e.g., Personal HDFC Card" {...field} value={field.value ?? ''} /></FormControl>
+                                        <FloatingLabelInput label="Card Nickname" id="cardNickname" {...field} value={field.value ?? ''} />
                                     </FormItem>
                                 )}
                             />
@@ -248,8 +310,7 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                                 name="cardDetails.last4Digits"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Last 4 Digits</FormLabel>
-                                        <FormControl><Input placeholder="1234" maxLength={4} {...field} value={field.value ?? ''} /></FormControl>
+                                        <FloatingLabelInput label="Last 4 Digits" id="last4" maxLength={4} {...field} value={field.value ?? ''} />
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -259,8 +320,7 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                                 name="cardDetails.cardholderName"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Cardholder Name</FormLabel>
-                                        <FormControl><Input placeholder="John Doe" {...field} value={field.value ?? ''} /></FormControl>
+                                        <FloatingLabelInput label="Cardholder Name" id="chName" {...field} value={field.value ?? ''} />
                                     </FormItem>
                                 )}
                             />
@@ -270,8 +330,7 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                                     name="cardDetails.expiryMonth"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Expiry Month</FormLabel>
-                                            <FormControl><Input type="number" min="1" max="12" placeholder="MM" {...field} value={field.value ?? ''} /></FormControl>
+                                            <FloatingLabelInput label="Exp Month" id="expM" type="number" min="1" max="12" {...field} value={field.value ?? ''} />
                                         </FormItem>
                                     )}
                                 />
@@ -280,8 +339,7 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                                     name="cardDetails.expiryYear"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Expiry Year</FormLabel>
-                                            <FormControl><Input type="number" placeholder="YYYY" {...field} value={field.value ?? ''} /></FormControl>
+                                            <FloatingLabelInput label="Exp Year" id="expY" type="number" {...field} value={field.value ?? ''} />
                                         </FormItem>
                                     )}
                                 />
@@ -291,37 +349,30 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
                                 name="cardDetails.network"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Card Network</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Select network..." /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="visa">Visa</SelectItem>
-                                                <SelectItem value="mastercard">Mastercard</SelectItem>
-                                                <SelectItem value="amex">American Express</SelectItem>
-                                                <SelectItem value="discover">Discover</SelectItem>
-                                                <SelectItem value="rupay">RuPay</SelectItem>
-                                                <SelectItem value="other">Other</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <FloatingLabelSelect
+                                            label="Card Network"
+                                            id="network"
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                        >
+                                            <SelectItem value="visa">Visa</SelectItem>
+                                            <SelectItem value="mastercard">Mastercard</SelectItem>
+                                            <SelectItem value="amex">American Express</SelectItem>
+                                            <SelectItem value="discover">Discover</SelectItem>
+                                            <SelectItem value="rupay">RuPay</SelectItem>
+                                            <SelectItem value="other">Other</SelectItem>
+                                        </FloatingLabelSelect>
                                     </FormItem>
                                 )}
                             />
-
                         </CollapsibleContent>
                     </Collapsible>
                 )}
 
-                <DrawerFooter className="pt-4 px-0 flex-row justify-end gap-2 sm:hidden">
-                    <DrawerClose asChild>
-                        <Button type="button" variant="outline">Cancel</Button>
-                    </DrawerClose>
-                    <Button type="submit" disabled={isLoading} className="w-full">
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Account"}
-                    </Button>
-                </DrawerFooter>
-                 <DialogFooter className="pt-4 hidden sm:flex">
-                     <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Account"}
+                <DialogFooter className="pt-4 flex flex-row gap-2 justify-end">
+                    <Button type="button" variant="outline" onClick={() => form.reset()} className="flex-1 sm:flex-none">Reset</Button>
+                    <Button type="submit" disabled={isLoading} className="flex-1 sm:flex-none min-w-[100px]">
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save" : "Add"}
                     </Button>
                 </DialogFooter>
             </form>
@@ -329,14 +380,13 @@ function AccountForm({ form, onSubmit, isLoading, isEditMode }: { form: any, onS
     );
 }
 
-export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProps) {
+export function AddAccountSheet({ children, accountToEdit }: { children: React.ReactNode; accountToEdit?: Account }) {
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
     const isEditMode = !!accountToEdit;
-    const isDesktop = useMediaQuery("(min-width: 768px)");
     
     const accountsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
     const { data: accounts } = useCollection<Account>(accountsQuery);
@@ -344,25 +394,20 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
     const form = useForm<AccountFormData>({
         resolver: zodResolver(accountSchema.refine(
             (data) => {
-                if (isEditMode && accountToEdit?.name === data.name) {
-                    return true;
-                }
+                if (isEditMode && accountToEdit?.name === data.name) return true;
                 return !accounts?.some(acc => acc.name.toLowerCase() === data.name.toLowerCase());
             },
-            {
-                message: "An account with this name already exists.",
-                path: ["name"],
-            }
+            { message: "Account name already exists.", path: ["name"] }
         )),
         defaultValues: {
             name: '',
             type: 'bank',
-            balance: undefined,
+            balance: '' as any,
             icon: 'Landmark',
-            limit: undefined,
-            billingDate: undefined,
+            limit: '' as any,
+            billingDate: '' as any,
             status: 'active',
-            cardDetails: { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined, statementDate: undefined }
+            cardDetails: { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: '' as any, expiryYear: '' as any, network: undefined, statementDate: '' as any }
         },
     });
 
@@ -385,12 +430,12 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                 form.reset({
                     name: '',
                     type: 'bank',
-                    balance: undefined,
+                    balance: '' as any,
                     icon: 'Landmark',
-                    limit: undefined,
-                    billingDate: undefined,
+                    limit: '' as any,
+                    billingDate: '' as any,
                     status: 'active',
-                    cardDetails: { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: undefined, expiryYear: undefined, network: undefined, statementDate: undefined }
+                    cardDetails: { cardNickname: '', last4Digits: '', cardholderName: '', expiryMonth: '' as any, expiryYear: '' as any, network: undefined, statementDate: '' as any }
                 });
             }
         }
@@ -399,27 +444,21 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
     async function onSubmit(values: AccountFormData) {
         setIsLoading(true);
         if (!firestore || !user) {
-             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+             toast({ variant: 'destructive', title: 'Error', description: 'Authentication not ready.' });
              setIsLoading(false);
              return;
         }
     
         const accountData: any = { ...values };
-        delete accountData.balance; // Balance should not be directly set, it is calculated
+        delete accountData.balance;
     
-        // Clean cardDetails
         if (accountData.cardDetails) {
-            const cleanedDetails: Partial<CardDetails> = {};
+            const cleaned: any = {};
             for (const key in accountData.cardDetails) {
-                const value = accountData.cardDetails[key as keyof CardDetails];
-                if (value !== undefined && value !== null && value !== '' && !Number.isNaN(value)) {
-                    cleanedDetails[key as keyof CardDetails] = value;
-                }
+                const val = accountData.cardDetails[key];
+                if (val !== undefined && val !== null && val !== '' && !Number.isNaN(val)) cleaned[key] = val;
             }
-            accountData.cardDetails = cleanedDetails;
-            if (Object.keys(accountData.cardDetails).length === 0) {
-                delete accountData.cardDetails;
-            }
+            accountData.cardDetails = Object.keys(cleaned).length > 0 ? cleaned : undefined;
         }
     
         if (values.type !== 'credit_card') {
@@ -431,14 +470,9 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
         try {
             if (isEditMode && accountToEdit) {
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountToEdit.id);
-                // For edit, we only update specific fields, not the balance.
                 await setDocFirestore(accountRef, accountData, { merge: true });
-                toast({
-                    title: 'Account Updated!',
-                    description: 'Your account details have been saved.',
-                });
+                toast({ title: 'Account Updated' });
             } else {
-                 // For new account
                  const newAccountRef = doc(collection(firestore, `users/${user.uid}/accounts`));
                  const finalBalance = (values.type === 'credit_card') 
                      ? (values.limit || 0) - (values.balance || 0) 
@@ -454,10 +488,8 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                  const batch = writeBatch(firestore);
                  batch.set(newAccountRef, newAccountData);
  
-                 // If there's an initial balance for a non-credit card, create an initial transaction
                  if (values.type !== 'credit_card' && values.balance) {
-                     const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
-                     const initialTxRef = doc(expensesCol);
+                     const initialTxRef = doc(collection(firestore, `users/${user.uid}/expenses`));
                      batch.set(initialTxRef, {
                          id: initialTxRef.id,
                          userId: user.uid,
@@ -470,52 +502,24 @@ export function AddAccountSheet({ children, accountToEdit }: AddAccountSheetProp
                      });
                  }
                  await batch.commit();
-
-                toast({
-                    title: 'Account Added!',
-                    description: 'The new account has been created.',
-                });
+                 toast({ title: 'Account Added' });
             }
             setOpen(false);
-    
         } catch (error: any) {
-             let description = "There was an unexpected error. Please try again.";
-            if (error.message.includes("invalid data")) {
-                description = "Some of the data you entered is invalid. Please check all fields and try again.";
-            }
-             toast({ variant: 'destructive', title: 'Could Not Save Account', description });
+             toast({ variant: 'destructive', title: 'Error', description: 'Could not save account details.' });
         } finally {
             setIsLoading(false);
         }
     }
     
-    if (!isDesktop) {
-        return (
-            <Drawer open={open} onOpenChange={setOpen}>
-                <DrawerTrigger asChild>{children}</DrawerTrigger>
-                <DrawerContent>
-                    <DrawerHeader className="text-left">
-                        <DrawerTitle className="font-headline">{isEditMode ? 'Edit Account' : 'Add New Account'}</DrawerTitle>
-                        <DrawerDescription>
-                            {isEditMode ? 'Update the details for your account.' : 'Create a new account to track your finances.'}
-                        </DrawerDescription>
-                    </DrawerHeader>
-                    <div className="overflow-y-auto px-4">
-                        <AccountForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode}/>
-                    </div>
-                </DrawerContent>
-            </Drawer>
-        );
-    }
-    
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="overflow-y-auto max-h-[90vh]">
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="font-headline">{isEditMode ? 'Edit Account' : 'Add New Account'}</DialogTitle>
+                    <DialogTitle className="font-headline">{isEditMode ? 'Edit Account' : 'New Account'}</DialogTitle>
                     <DialogDescription>
-                        {isEditMode ? 'Update the details for your account.' : 'Create a new account to track your finances.'}
+                        Fill in the details for your financial account.
                     </DialogDescription>
                 </DialogHeader>
                 <AccountForm form={form} onSubmit={onSubmit} isLoading={isLoading} isEditMode={isEditMode}/>

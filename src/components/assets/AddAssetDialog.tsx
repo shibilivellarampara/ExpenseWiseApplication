@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -32,13 +32,13 @@ import { useState, useEffect } from 'react';
 import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp, doc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Asset, AssetType, EnrichedAsset } from '@/lib/types';
 import { ASSET_TYPES } from '@/lib/assets';
-import { DateTimePicker } from '../DateTimePicker';
+import { DateTimePicker } from '@/components/DateTimePicker';
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Label as ShadcnLabel } from '@/components/ui/label';
+import { Label } from '@/components/ui/label';
 import { useMediaQuery } from '@/hooks/use-media-query';
 
 const assetSchema = z.object({
@@ -75,7 +75,7 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     data-has-value={hasValue}
                     {...props}
                 />
-                <ShadcnLabel
+                <Label
                     htmlFor={id}
                     className={cn(
                         "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
@@ -104,7 +104,7 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
                         {children}
                     </SelectContent>
                 </Select>
-                 <ShadcnLabel
+                 <Label
                     htmlFor={id}
                      className={cn(
                         "absolute left-3 text-muted-foreground transition-all bg-background px-1 pointer-events-none",
@@ -113,7 +113,7 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
                     )}
                 >
                     {label}
-                </ShadcnLabel>
+                </Label>
             </div>
         )
     }
@@ -218,7 +218,7 @@ function AssetForm({ form, onSubmit, isLoading, isEditMode }: { form: any; onSub
                     name="startDate"
                     render={({ field }) => (
                         <FormItem>
-                            <ShadcnLabel>Start Date</ShadcnLabel>
+                            <Label className="text-xs text-muted-foreground mb-1 block px-1">Start Date</Label>
                             <DateTimePicker field={field} />
                             <FormMessage />
                         </FormItem>
@@ -229,7 +229,7 @@ function AssetForm({ form, onSubmit, isLoading, isEditMode }: { form: any; onSub
                     name="notes"
                     render={({ field }) => (
                         <FormItem>
-                            <ShadcnLabel>Notes</ShadcnLabel>
+                            <Label className="text-xs text-muted-foreground mb-1 block px-1">Notes</Label>
                             <FormControl>
                                 <Textarea placeholder="Any additional notes about this asset..." {...field} value={field.value ?? ''} />
                             </FormControl>

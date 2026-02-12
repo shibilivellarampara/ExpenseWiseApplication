@@ -17,8 +17,8 @@ const settingsLinks = [
     { href: '/profile/dashboard', icon: LayoutDashboard, title: 'Dashboard Settings', description: 'Customize your dashboard appearance.' },
     { href: '/profile/analysis', icon: BarChart2, title: 'Analysis Settings', description: 'Customize which categories to exclude.' },
     { href: '/data', icon: FileUp, title: 'Import & Export', description: 'Backup, restore, or import data.' },
-    { href: '/about', icon: Info, title: 'About', description: 'View application details and version history.' },
     { href: '/profile/data', icon: Database, title: 'Data Management', description: 'Reset or delete your account data.' },
+    { href: '/about', icon: Info, title: 'About', description: 'View application details and version history.' },
 ]
 
 
@@ -53,4 +53,3 @@ export default function ProfilePage() {
         </div>
     );
 }
-

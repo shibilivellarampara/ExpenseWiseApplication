@@ -29,12 +29,16 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 
+// Helper to handle empty strings in numeric fields
+const coerceOptionalNumber = (schema: z.ZodNumber) => 
+    z.preprocess((val) => (val === "" || val === null || val === undefined ? undefined : val), schema.optional());
+
 const assetSchema = z.object({
   name: z.string().min(1, 'Asset name is required.'),
   assetType: z.enum(Object.keys(ASSET_TYPES) as [AssetType, ...AssetType[]]),
-  investedAmount: z.coerce.number().optional(),
-  currentValue: z.coerce.number().optional(),
-  quantity: z.coerce.number().optional(),
+  investedAmount: coerceOptionalNumber(z.coerce.number().positive()),
+  currentValue: coerceOptionalNumber(z.coerce.number().positive()),
+  quantity: coerceOptionalNumber(z.coerce.number().positive()),
   startDate: z.date().optional().nullable(),
   notes: z.string().optional(),
 });
@@ -289,11 +293,21 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
              return;
         }
 
+        // Logic for amount fallbacks
+        let finalInvested = values.investedAmount || 0;
+        let finalCurrent = values.currentValue || 0;
+
+        if (values.investedAmount && !values.currentValue) {
+            finalCurrent = values.investedAmount;
+        } else if (values.currentValue && !values.investedAmount) {
+            finalInvested = values.currentValue;
+        }
+
         const assetData = {
             ...values,
             userId: user.uid,
-            investedAmount: values.investedAmount || 0,
-            currentValue: values.currentValue || 0,
+            investedAmount: finalInvested,
+            currentValue: finalCurrent,
             lastUpdated: serverTimestamp(),
         };
     

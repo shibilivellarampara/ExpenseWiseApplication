@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -587,20 +586,20 @@ export default function AboutPage() {
                 </Button>
             </PageHeader>
 
-            <div className="relative mt-10 pl-10 border-l-[2px] border-primary/10 space-y-16">
+            <div className="relative mt-10 pl-10 border-l-[2px] border-primary/10 chat:border-[#142.1_76.2%_36.3%/0.2] fintech:border-[#210_80%_55%/0.2] space-y-16">
                 <Accordion type="multiple" defaultValue={latestVersion} className="space-y-12">
                     {changelog.map((entry) => (
                         <div key={entry.version} className="relative group">
-                            {/* Timeline Dot - Aligned precisely with vertical line center */}
-                            <div className="absolute -left-[49px] top-1.5 h-[18px] w-[18px] rounded-full bg-background border-[3px] border-primary/20 group-data-[state=open]:border-primary z-10 transition-colors" />
+                            {/* Timeline Dot */}
+                            <div className="absolute -left-[49px] top-1.5 h-[18px] w-[18px] rounded-full bg-background border-[3px] border-primary/20 chat:border-[#142.1_76.2%_36.3%/0.2] fintech:border-[#210_80%_55%/0.2] group-data-[state=open]:border-primary group-data-[state=open]:chat:border-[#142.1_76.2%_36.3%] group-data-[state=open]:fintech:border-[#210_80%_55%] z-10 transition-colors" />
                             
                             <AccordionItem value={entry.version} className="border-none transition-all duration-300 rounded-xl data-[state=open]:bg-primary/[0.03] data-[state=open]:px-4 data-[state=open]:-mx-4">
                                 <AccordionTrigger className="hover:no-underline py-0 items-start gap-2 text-left">
                                     <div className="flex flex-col items-start space-y-2">
-                                        <h3 className="text-base font-bold tracking-tight text-foreground/90 group-data-[state=open]:text-foreground">
+                                        <h3 className="text-[18px] font-bold tracking-tight text-foreground/90 group-data-[state=open]:text-foreground">
                                             Version {entry.version}
                                         </h3>
-                                        <p className="text-[13px] font-medium text-muted-foreground/70 uppercase tracking-widest">
+                                        <p className="text-[14px] font-medium text-muted-foreground/70 uppercase tracking-widest">
                                             {entry.date}
                                         </p>
                                     </div>

@@ -199,7 +199,7 @@ const changelog = [
         date: "Dec 28, 2025",
         changes: [
             { type: 'UI/UX', description: "Redesigned the 'Expenses Overview' chart with a cleaner look, focusing on the top 7 categories and grouping the rest into a new clickable 'Others' category." },
-            { type: 'UI/UX', description: "Replaced the_legend with a detailed, scrollable vertical list showing amounts and percentages." },
+            { type: 'UI/UX', description: "Replaced the legend with a detailed, scrollable vertical list showing amounts and percentages." },
             { type: 'Fix', description: "Corrected layout issues where the category list on the dashboard did not fill its available space." },
             { type: 'UI/UX', description: "Improved the app-wide loading experience with more dynamic graphics and friendlier messages." },
             { type: 'Fix', description: "Adjusted chart tooltips to prevent them from obscuring the data when hovering." },
@@ -372,9 +372,9 @@ const changelog = [
         version: "1.3.9",
         date: "Nov 26, 2025",
         changes: [
-            { type: 'Feature', description: "Grouped prowess by person on the Debts & Dues page for a clearer overview." },
+            { type: 'Feature', description: "Grouped transactions by person on the Debts & Dues page for a clearer overview." },
             { type: 'Feature', description: "Added a quick-add button to create new transactions for existing people on the Debts page." },
-            { type: 'Fix', description: "Corrected the net amount calculation to only include 'pending' prowess." },
+            { type: 'Fix', description: "Corrected the net amount calculation to only include 'pending' transactions." },
             { type: 'Fix', description: "Removed the 'Settle Debt' success notification for a quieter experience." },
             { type: 'Fix', description: "Removed default '0.00' values from amount fields in forms." },
         ]
@@ -384,7 +384,7 @@ const changelog = [
         date: "Nov 24, 2025",
         changes: [
             { type: 'Feature', description: "Added a new 'Debts & Dues' page to track lent and borrowed money." },
-            { type: 'Feature', description: "Added the ability to mark prowess as 'settled'." },
+            { type: 'Feature', description: "Added the ability to mark transactions as 'settled'." },
             { type: 'Fix', description: "Resolved a build error caused by an incorrect component import for the DateTimePicker." },
         ]
     },
@@ -464,7 +464,7 @@ const changelog = [
         date: "Nov 08, 2025",
         changes: [
             { type: 'Fix', description: "Resolved a persistent Firestore query error that was incorrectly reported as 'Missing or insufficient permissions' by refactoring data fetching logic on the transactions and analysis pages." },
-            { type: 'Fix', description: "Replaced the_date range tabs on the analysis page with a dropdown menu to improve usability and accommodate more options, including a custom date range picker." },
+            { type: 'Fix', description: "Replaced the date range tabs on the analysis page with a dropdown menu to improve usability and accommodate more options, including a custom date range picker." },
             { type: 'Feature', description: "Added a multi-select dropdown to the analysis page to allow filtering by one or more financial accounts." },
             { type: 'Fix', description: "Enabled clickable rows in the 'Spending by Category' table to navigate directly to a pre-filtered list of corresponding transactions." },
         ]
@@ -527,7 +527,7 @@ const changelog = [
         date: "Oct 25, 2025",
         changes: [
             { type: 'Fix', description: "Resolved multiple TypeScript type errors that were causing persistent build failures." },
-            { type: 'Fix', description: "Corrected data handling in login, sign-up, and transaction prowess to improve type safety." },
+            { type: 'Fix', description: "Corrected data handling in login, sign-up, and transaction processes to improve type safety." },
         ]
     },
     {

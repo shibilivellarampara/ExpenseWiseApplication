@@ -263,7 +263,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
         const typeOrder = { 'bank': 1, 'wallet': 2, 'cash': 3 };
         return other.sort((a, b) => {
             const orderA = typeOrder[a.type as keyof typeof typeOrder] || 4;
-            const orderB = typeOrder[b.type as keyof typeof orderB] || 4;
+            const orderB = typeOrder[b.type as keyof typeof typeOrder] || 4;
             return orderA - orderB;
         });
     }, [activeAccounts]);

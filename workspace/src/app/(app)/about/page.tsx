@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -13,6 +12,27 @@ const appVersion = pkg.version;
 
 
 const changelog = [
+    {
+        version: "1.8.0",
+        date: "2026-02-02",
+        changes: [
+            { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 15 days after statement date if left empty)." },
+            { type: 'Feature', description: "Redesigned the 'Add Account' form with a logic-first field order and floating labels for a better user experience." },
+            { type: 'UI/UX', description: "Enhanced form accessibility by preventing automatic keyboard popup on form open." },
+            { type: 'Fix', description: "Resolved a validation issue in the account form where empty optional numeric fields caused submission failures." },
+            { type: 'Fix', description: "Standardized mandatory field markers (*) across all primary input forms." },
+        ]
+    },
+    {
+        version: "1.7.9",
+        date: "2026-02-01",
+        changes: [
+            { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 15 days after statement date if left empty)." },
+            { type: 'Fix', description: "Resolved a persistent issue with form submission in the 'Add Account' view where hidden fields caused validation failures." },
+            { type: 'UI/UX', description: "Implemented a more robust context-driven field order for the 'Add Account' form with floating labels." },
+            { type: 'UI/UX', description: "Improved form responsiveness and loading states for a smoother entry experience." },
+        ]
+    },
     {
         version: "1.7.8",
         date: "2026-01-31",
@@ -95,7 +115,7 @@ const changelog = [
         version: "1.7.1",
         date: "2025-12-31",
         changes: [
-            { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other forms in the application." },
+            { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the style of other prestigious forms in the application." },
             { type: 'UI/UX', description: "Improved user feedback by ensuring both 'Save' and 'Save and New' buttons show a loading animation during transaction submission." },
             { type: 'UI/UX', description: "Made the main application header static for consistent visibility while scrolling." },
             { type: 'UI/UX', description: "Added a clear button next to the tag filter on the Analysis page to easily deselect all tags." },

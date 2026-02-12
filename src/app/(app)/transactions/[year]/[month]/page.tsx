@@ -1,3 +1,4 @@
+
 import { MonthlyExpensesClient } from '@/components/transactions/MonthlyExpensesClient';
 
 interface MonthlyExpensesPageProps {

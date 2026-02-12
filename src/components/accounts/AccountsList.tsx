@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -378,7 +377,10 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                         <div className="flex-grow min-w-0">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex-1">
-                                                    <Link href={`/expenses?accounts=${item.id}`} className="font-semibold truncate transition-transform active:scale-95">
+                                                    <Link 
+                                                        href={`/expenses?accounts=${item.id}`} 
+                                                        className="font-semibold truncate transition-all duration-200 active:scale-95 active:opacity-80 inline-block"
+                                                    >
                                                         {item.name}
                                                     </Link>
                                                     <div className="text-sm text-muted-foreground">
@@ -473,12 +475,12 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                     <div className="divide-y">
                         {otherAccounts.length > 0 ? otherAccounts.map((item) => (
                             <Link key={item.id} href={`/expenses?accounts=${item.id}`} passHref>
-                            <div className="p-4 flex items-center gap-4 group transition-colors hover:bg-accent/50 cursor-pointer">
+                            <div className="p-4 flex items-center gap-4 group transition-all duration-200 hover:bg-accent/50 cursor-pointer active:scale-[0.98] active:bg-accent/70">
                                 <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                                 {renderIcon(item.icon, "h-5 w-5")}
                                 </div>
                                 <div className="flex-grow">
-                                        <span className="font-semibold">{item.name}</span>
+                                        <span className="font-semibold transition-all duration-200 active:scale-95 inline-block">{item.name}</span>
                                 </div>
                                 <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                                     <div className={cn(

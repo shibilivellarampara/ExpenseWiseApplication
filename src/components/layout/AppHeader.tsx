@@ -1,4 +1,3 @@
-
 'use client';
 
 import { UserNav } from '@/components/auth/UserNav';
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuFooter } from '@/components/ui/dropdown-menu';
 import { Bell, Circle, CheckCheck, RefreshCw } from 'lucide-react';
 import { Logo } from '@/components/Logo';
-import pkg from '../../../package.json';
+import pkg from '../../../../package.json';
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Badge } from '@/components/ui/badge';

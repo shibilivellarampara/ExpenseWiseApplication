@@ -1,9 +1,8 @@
-
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Logo } from '@/components/Logo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import pkg from '../../../package.json';
+import pkg from '../../../../package.json';
 
 const appVersion = pkg.version;
 

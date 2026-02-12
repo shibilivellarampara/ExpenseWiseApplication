@@ -121,6 +121,8 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
 FloatingLabelSelect.displayName = 'FloatingLabelSelect';
 
 function AssetForm({ form, onSubmit, isLoading, isEditMode }: { form: any; onSubmit: (values: AssetFormData) => void; isLoading: boolean; isEditMode: boolean; }) {
+    const isDesktop = useMediaQuery("(min-width: 768px)");
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4 max-h-[70vh] overflow-y-auto pr-2">
@@ -237,20 +239,24 @@ function AssetForm({ form, onSubmit, isLoading, isEditMode }: { form: any; onSub
                         </FormItem>
                     )}
                 />
-                <DrawerFooter className="pt-4 px-0 flex-row justify-end gap-2 sm:hidden">
-                    <DrawerClose asChild>
-                        <Button type="button" variant="outline" className="w-24">Cancel</Button>
-                    </DrawerClose>
-                    <Button type="submit" disabled={isLoading} className="w-28">
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
-                    </Button>
-                </DrawerFooter>
-                 <DialogFooter className="pt-4 hidden sm:flex">
-                    <Button type="button" variant="outline" className="w-24" onClick={() => form.handleCancel()}>Cancel</Button>
-                    <Button type="submit" disabled={isLoading} className="w-28">
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
-                    </Button>
-                </DialogFooter>
+                {!isDesktop && (
+                    <DrawerFooter className="pt-4 px-0 flex-row justify-end gap-2">
+                        <DrawerClose asChild>
+                            <Button type="button" variant="outline" className="w-24">Cancel</Button>
+                        </DrawerClose>
+                        <Button type="submit" disabled={isLoading} className="w-28">
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
+                        </Button>
+                    </DrawerFooter>
+                )}
+                {isDesktop && (
+                    <DialogFooter className="pt-4">
+                        <Button type="button" variant="outline" className="w-24" onClick={() => form.handleCancel()}>Cancel</Button>
+                        <Button type="submit" disabled={isLoading} className="w-28">
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEditMode ? "Save Changes" : "Save Asset"}
+                        </Button>
+                    </DialogFooter>
+                )}
             </form>
         </Form>
     );

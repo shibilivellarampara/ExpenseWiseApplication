@@ -263,7 +263,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
         const typeOrder = { 'bank': 1, 'wallet': 2, 'cash': 3 };
         return other.sort((a, b) => {
             const orderA = typeOrder[a.type as keyof typeof typeOrder] || 4;
-            const orderB = typeOrder[b.type as keyof typeof typeOrder] || 4;
+            const orderB = typeOrder[b.type as keyof typeof orderB] || 4;
             return orderA - orderB;
         });
     }, [activeAccounts]);
@@ -378,7 +378,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                                 <div className="flex-1">
                                                     <Link 
                                                         href={`/expenses?accounts=${item.id}`} 
-                                                        className="font-semibold truncate transition-all duration-300 active:scale-90 active:bg-primary/20 rounded-full px-2 -mx-2 inline-block"
+                                                        className="font-semibold truncate transition-all duration-300 active:scale-95 active:bg-primary/20 rounded-full px-2 -mx-2 inline-block"
                                                     >
                                                         {item.name}
                                                     </Link>
@@ -479,7 +479,7 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
                                 {renderIcon(item.icon, "h-5 w-5")}
                                 </div>
                                 <div className="flex-grow">
-                                        <span className="font-semibold transition-all duration-300 active:scale-90 active:bg-primary/20 rounded-full px-2 -mx-2 inline-block">{item.name}</span>
+                                        <span className="font-semibold transition-all duration-300 active:scale-95 active:bg-primary/20 rounded-full px-2 -mx-2 inline-block">{item.name}</span>
                                 </div>
                                 <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                                     <div className={cn(

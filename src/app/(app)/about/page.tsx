@@ -18,6 +18,16 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.8.2",
+        date: "Feb 15, 2026",
+        changes: [
+            { type: 'UI/UX', description: "Refined 'Add Asset' form with premium floating labels and smart amount fallback logic." },
+            { type: 'UI/UX', description: "Implemented 'click knowing' interaction effect on the Accounts page for better tactile feedback." },
+            { type: 'Feature', description: "Quantity and value fields in Asset tracking are now optional for quicker entry." },
+            { type: 'UI/UX', description: "Standardized all application entry forms for a consistent high-quality experience." },
+        ]
+    },
+    {
         version: "1.8.0",
         date: "Feb 12, 2026",
         changes: [

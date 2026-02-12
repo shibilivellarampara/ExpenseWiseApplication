@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -29,16 +27,15 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
-import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, Check, Calendar as CalendarIcon, Clock, ChevronDown } from 'lucide-react';
+import { Loader2, Pilcrow, Trash2, PlusCircle, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
-import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy, where, getDocs } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import * as LucideIcons from 'lucide-react';
-import { useMediaQuery } from '@/hooks/use-media-query';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -49,9 +46,6 @@ import { Badge } from '@/components/ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import { DateTimePicker } from '../DateTimePicker';
 
 // Function to create a dynamic schema
@@ -124,7 +118,7 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
     return (
         <Dialog open={open} onOpenChange={handleOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent>
+            <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle>Add New {type}</DialogTitle>
                 </DialogHeader>
@@ -681,7 +675,7 @@ export function AddExpenseDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]">
+            <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle>
                 </DialogHeader>

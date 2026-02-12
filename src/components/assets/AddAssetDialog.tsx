@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -86,7 +84,7 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     )}
                 >
                     {label}
-                </ShadcnLabel>
+                </Label>
             </div>
         );
     }
@@ -349,7 +347,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
         return (
             <Drawer open={open} onOpenChange={setOpen}>
                 <DrawerTrigger asChild>{children}</DrawerTrigger>
-                <DrawerContent>
+                <DrawerContent onOpenAutoFocus={(e) => e.preventDefault()}>
                     <DrawerHeader className="text-left">
                         <DrawerTitle className="font-headline">{isEditMode ? 'Edit Asset' : 'Add New Asset'}</DrawerTitle>
                         <DrawerDescription>
@@ -367,7 +365,7 @@ export function AddAssetDialog({ children, assetToEdit, initialAssetType, onSave
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-lg" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle className="font-headline">{isEditMode ? 'Edit Asset' : 'Add New Asset'}</DialogTitle>
                     <DialogDescription>

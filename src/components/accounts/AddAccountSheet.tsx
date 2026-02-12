@@ -17,14 +17,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input, InputProps } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { useCollection, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, doc, serverTimestamp, setDoc as setDocFirestore, writeBatch } from 'firebase/firestore';
 import { Loader2, Pilcrow, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
-import { Account, CardDetails } from '@/lib/types';
+import { Account } from '@/lib/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
@@ -515,7 +515,7 @@ export function AddAccountSheet({ children, accountToEdit }: { children: React.R
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle className="font-headline">{isEditMode ? 'Edit Account' : 'New Account'}</DialogTitle>
                     <DialogDescription>

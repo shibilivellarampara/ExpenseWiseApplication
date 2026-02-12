@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -265,6 +264,7 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
             {children && <DialogTrigger asChild>{children}</DialogTrigger>}
             <DialogContent 
                 className="sm:max-w-md"
+                onOpenAutoFocus={(e) => e.preventDefault()}
                 onInteractOutside={(e) => {
                     e.preventDefault();
                 }}

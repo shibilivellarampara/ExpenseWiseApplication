@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -128,7 +127,7 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Pay Bill for {creditCard.name}</DialogTitle>
           <DialogDescription>
@@ -170,7 +169,6 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
                             placeholder="Enter amount to pay"
                             value={specificAmount}
                             onChange={(e) => setSpecificAmount(e.target.value)}
-                            autoFocus
                         />
                     </div>
                 )}

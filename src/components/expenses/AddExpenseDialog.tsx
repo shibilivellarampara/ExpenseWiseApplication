@@ -705,14 +705,14 @@ export function AddExpenseDialog({
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
-                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px]">
+                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px] text-[14px]">
                                 {loadingState === 'save' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}
                             </Button>
                         </div>
                     ) : (
                         <div className="grid grid-cols-3 gap-2 w-full">
                             <DialogClose asChild>
-                                <Button type="button" variant="outline" className="w-full text-xs sm:text-sm px-1">
+                                <Button type="button" variant="outline" className="w-full text-[14px] px-1">
                                     Cancel
                                 </Button>
                             </DialogClose>
@@ -721,12 +721,12 @@ export function AddExpenseDialog({
                                 onClick={onSaveAndNewSubmit} 
                                 disabled={loadingState !== 'idle'} 
                                 variant="outline" 
-                                className="w-full px-1 text-xs sm:text-sm border-primary text-primary hover:bg-primary/5"
+                                className="w-full px-1 text-[14px] border-primary text-primary hover:bg-primary/5 hover:text-primary"
                             >
                                 {loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}
                             </Button>
-                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-xs sm:text-sm px-1">
-                                {loadingState === 'save' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-[14px] px-1">
+                                {loadingState === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save'}
                             </Button>
                         </div>
                     )}
@@ -752,7 +752,7 @@ function useExpenseForm({
     open,
     onSaveSuccess,
 }: UseExpenseFormProps) {
-    const { toast } = useToast();
+    const { toast } } from useToast();
     const [loadingState, setLoadingState] = useState<'idle' | 'save' | 'saveAndNew' | 'delete'>('idle');
     const { user } = useUser();
     const firestore = useFirestore();

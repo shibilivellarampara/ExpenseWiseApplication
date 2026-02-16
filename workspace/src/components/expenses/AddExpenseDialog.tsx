@@ -721,7 +721,7 @@ export function AddExpenseDialog({
                                 onClick={onSaveAndNewSubmit} 
                                 disabled={loadingState !== 'idle'} 
                                 variant="outline" 
-                                className="w-full px-1 text-xs sm:text-sm border-primary/50 text-primary hover:bg-primary/5"
+                                className="w-full px-1 text-xs sm:text-sm border-primary text-primary hover:bg-primary/5"
                             >
                                 {loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}
                             </Button>
@@ -781,7 +781,7 @@ function useExpenseForm({
     const getNewFormValues = useCallback((keepDate?: Date, keepAccount?: string) => {
         let type: 'income' | 'expense' = 'expense';
         if (initialType) {
-            type = initialType;
+            type = type;
         }
 
         return {

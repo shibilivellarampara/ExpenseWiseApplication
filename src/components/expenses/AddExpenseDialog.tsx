@@ -46,7 +46,7 @@ import { Badge } from '@/components/ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DateTimePicker } from '@/ '@/components/DateTimePicker';
+import { DateTimePicker } from '@/components/DateTimePicker';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -721,7 +721,7 @@ export function AddExpenseDialog({
                                 onClick={onSaveAndNewSubmit} 
                                 disabled={loadingState !== 'idle'} 
                                 variant="outline" 
-                                className="w-full px-1 text-xs sm:text-sm border-primary/50 text-primary hover:bg-primary/5"
+                                className="w-full px-1 text-xs sm:text-sm border-primary text-primary hover:bg-primary/5"
                             >
                                 {loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}
                             </Button>

@@ -766,7 +766,7 @@ function useExpenseForm({
 
     const accounts = userAccounts || [];
     const categories = userCategories || [];
-    tags = userTags || [];
+    const tags = userTags || [];
 
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
     

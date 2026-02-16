@@ -591,10 +591,10 @@ export default function AboutPage() {
                 description="Release notes and improvements."
             >
                 <Button variant="outline" asChild size="sm" className="text-muted-foreground hover:text-foreground">
-                    <link href="/profile">
+                    <Link href="/profile">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
-                    </link>
+                    </Link>
                 </Button>
             </PageHeader>
 

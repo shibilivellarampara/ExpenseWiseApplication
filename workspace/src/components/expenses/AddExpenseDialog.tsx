@@ -716,7 +716,13 @@ export function AddExpenseDialog({
                                     Cancel
                                 </Button>
                             </DialogClose>
-                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={loadingState !== 'idle'} variant="outline" className="w-full px-1 text-xs sm:text-sm">
+                            <Button 
+                                type="button" 
+                                onClick={onSaveAndNewSubmit} 
+                                disabled={loadingState !== 'idle'} 
+                                variant="outline" 
+                                className="w-full px-1 text-xs sm:text-sm border-primary/50 text-primary hover:bg-primary/5"
+                            >
                                 {loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}
                             </Button>
                             <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-xs sm:text-sm px-1">

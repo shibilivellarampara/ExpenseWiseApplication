@@ -22,7 +22,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogTrigger, DialogHeader, DialogTitle, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import Image from "next/image";
-import { PayBillDialog } from "./PayBillDialog";
+import { PayBillDialog } from "@/components/accounts/PayBillDialog";
 
 interface AccountsListProps {
     accounts: Account[];

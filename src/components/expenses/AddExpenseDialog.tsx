@@ -46,7 +46,7 @@ import { Badge } from '@/components/ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DateTimePicker } from '@/components/DateTimePicker';
+import { DateTimePicker } from '@/ '@/components/DateTimePicker';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -712,14 +712,20 @@ export function AddExpenseDialog({
                     ) : (
                         <div className="grid grid-cols-3 gap-2 w-full">
                             <DialogClose asChild>
-                                <Button type="button" variant="outline" className="w-full text-xs sm:text-sm">
+                                <Button type="button" variant="outline" className="w-full text-xs sm:text-sm px-1">
                                     Cancel
                                 </Button>
                             </DialogClose>
-                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={loadingState !== 'idle'} variant="outline" className="w-full px-1 text-xs sm:text-sm">
+                            <Button 
+                                type="button" 
+                                onClick={onSaveAndNewSubmit} 
+                                disabled={loadingState !== 'idle'} 
+                                variant="outline" 
+                                className="w-full px-1 text-xs sm:text-sm border-primary/50 text-primary hover:bg-primary/5"
+                            >
                                 {loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}
                             </Button>
-                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-xs sm:text-sm">
+                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-xs sm:text-sm px-1">
                                 {loadingState === 'save' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
                             </Button>
                         </div>

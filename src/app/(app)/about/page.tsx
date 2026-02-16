@@ -19,13 +19,13 @@ const appVersion = pkg.version;
 const changelog = [
     {
         version: "1.8.1",
-        date: "Feb 12, 2026",
+        date: "Feb 16, 2026",
         changes: [
             { type: 'Feature', description: "Enforced centered dialog popup for Asset entry across all devices for a consistent premium feel." },
             { type: 'Feature', description: "Standardized 'Add Asset' form with high-quality floating labels and smart invested/current amount fallback logic." },
             { type: 'Feature', description: "Improved 'Add Asset' form flexibility: Quantity, Invested Amount, and Current Value are now optional." },
             { type: 'UI/UX', description: "Added refined 'click knowing' interaction to account names with theme-aware oval backgrounds." },
-            { type: 'Fix', description: "Corrected package version module resolution to ensure stable production builds." },
+            { type: 'Fix', description: "Corrected module resolution for DateTimePicker and package.json to ensure stable production builds." },
             { type: 'Fix', description: "Resolved account list sorting logic bug preventing successful compilation." },
         ]
     },
@@ -591,10 +591,10 @@ export default function AboutPage() {
                 description="Release notes and improvements."
             >
                 <Button variant="outline" asChild size="sm" className="text-muted-foreground hover:text-foreground">
-                    <Link href="/profile">
+                    <link href="/profile">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
-                    </Link>
+                    </link>
                 </Button>
             </PageHeader>
 

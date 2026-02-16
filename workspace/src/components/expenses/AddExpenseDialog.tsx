@@ -46,7 +46,7 @@ import { Badge } from '@/components/ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DateTimePicker } from '../DateTimePicker';
+import { DateTimePicker } from '@/components/DateTimePicker';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -766,7 +766,7 @@ function useExpenseForm({
 
     const accounts = userAccounts || [];
     const categories = userCategories || [];
-    const tags = userTags || [];
+    tags = userTags || [];
 
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
     

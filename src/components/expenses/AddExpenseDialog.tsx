@@ -680,9 +680,9 @@ export function AddExpenseDialog({
                 <div className="flex-1 overflow-y-auto -mx-6 px-6">
                     <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} />
                 </div>
-                 <DialogFooter className="flex-row justify-between w-full">
-                    <div className="flex items-center">
-                        {isEditMode ? (
+                 <DialogFooter className="w-full pt-4">
+                    {isEditMode ? (
+                        <div className="flex items-center justify-between w-full">
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button type="button" variant="destructive" disabled={loadingState !== 'idle'}>
@@ -705,24 +705,25 @@ export function AddExpenseDialog({
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
-                        ) : (
-                             <DialogClose asChild>
-                                <Button type="button" variant="outline">
+                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px]">
+                                {loadingState === 'save' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-3 gap-2 w-full">
+                            <DialogClose asChild>
+                                <Button type="button" variant="outline" className="w-full text-xs sm:text-sm">
                                     Cancel
                                 </Button>
                             </DialogClose>
-                        )}
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                         {!isEditMode && (
-                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={loadingState !== 'idle'} variant="outline" className="min-w-[120px]">
-                                {loadingState === 'saveAndNew' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save & New'}
+                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={loadingState !== 'idle'} variant="outline" className="w-full px-1 text-xs sm:text-sm">
+                                {loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}
                             </Button>
-                         )}
-                         <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px]">
-                             {loadingState === 'save' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : (isEditMode ? 'Save Changes' : 'Save')}
-                        </Button>
-                    </div>
+                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-xs sm:text-sm">
+                                {loadingState === 'save' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                            </Button>
+                        </div>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -29,16 +27,15 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
-import { Loader2, Pilcrow, Trash2, Sparkles, PlusCircle, X, Check, Calendar as CalendarIcon, Clock, ChevronDown } from 'lucide-react';
+import { Loader2, Pilcrow, Trash2, PlusCircle, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
-import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy, where, getDocs } from 'firebase/firestore';
+import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
+import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import * as LucideIcons from 'lucide-react';
-import { useMediaQuery } from '@/hooks/use-media-query';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -49,17 +46,14 @@ import { Badge } from '@/components/ui/badge';
 import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
-import { DateTimePicker } from '@/components/DateTimePicker';
+import { DateTimePicker } from '../DateTimePicker';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
   let schema = z.object({
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
-    amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
+    amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
     
     categoryId: z.string().optional(),
@@ -124,7 +118,7 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
     return (
         <Dialog open={open} onOpenChange={handleOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent>
+            <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle>Add New {type}</DialogTitle>
                 </DialogHeader>
@@ -163,7 +157,6 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
     );
 }
 
-// New FloatingLabelInput component
 const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string }>(
     ({ className, label, id, ...props }, ref) => {
         const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
@@ -173,10 +166,7 @@ const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { lab
                     ref={ref}
                     id={id}
                     placeholder=" "
-                    className={cn(
-                        "peer h-14 pt-5 text-base floating-input", 
-                        className
-                    )}
+                    className={cn("peer h-14 pt-5 text-base floating-input", className)}
                     data-has-value={hasValue}
                     {...props}
                 />
@@ -225,7 +215,6 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
 );
 FloatingLabelSelect.displayName = 'FloatingLabelSelect';
 
-// Multi-select combobox for tags
 const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { field: any, tags: Tag[], onQuickAdd: (name: string, icon: string) => Promise<string|undefined>, isRequired: boolean, isSuggesting: boolean }) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [open, setOpen] = useState(false);
@@ -673,7 +662,7 @@ export function AddExpenseDialog({
 }) {
     const [open, setOpen] = useState(false);
     
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, isLoading, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, loadingState, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
         setOpen, 
         expenseToEdit, 
         initialType,
@@ -684,7 +673,7 @@ export function AddExpenseDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]">
+            <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle>
                 </DialogHeader>
@@ -696,8 +685,8 @@ export function AddExpenseDialog({
                         {isEditMode ? (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button type="button" variant="destructive" disabled={isLoading}>
-                                        <Trash2 className="mr-2 h-4 w-4" />
+                                    <Button type="button" variant="destructive" disabled={loadingState !== 'idle'}>
+                                         {loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
                                         Delete
                                     </Button>
                                 </AlertDialogTrigger>
@@ -711,7 +700,7 @@ export function AddExpenseDialog({
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                                            {loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -726,14 +715,12 @@ export function AddExpenseDialog({
                     </div>
                     <div className="flex gap-2 justify-end">
                          {!isEditMode && (
-                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={isLoading} variant="outline" className="min-w-[120px]">
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save and New
+                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={loadingState !== 'idle'} variant="outline" className="min-w-[120px]">
+                                {loadingState === 'saveAndNew' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save & New'}
                             </Button>
                          )}
-                         <Button type="submit" form={formId} disabled={isLoading} className="min-w-[120px]">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditMode ? 'Save Changes' : 'Save'}
+                         <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px]">
+                             {loadingState === 'save' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : (isEditMode ? 'Save Changes' : 'Save')}
                         </Button>
                     </div>
                 </DialogFooter>
@@ -759,7 +746,7 @@ function useExpenseForm({
     onSaveSuccess,
 }: UseExpenseFormProps) {
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
+    const [loadingState, setLoadingState] = useState<'idle' | 'save' | 'saveAndNew' | 'delete'>('idle');
     const { user } = useUser();
     const firestore = useFirestore();
     const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
@@ -826,7 +813,7 @@ function useExpenseForm({
     }, [open, isEditMode, expenseToEdit, form, getNewFormValues]);
 
 
-    const handleTransactionSave = async (values: z.infer<typeof expenseSchema>) => {
+    const handleTransactionSave = async (values: z.infer<typeof expenseSchema>, action: 'save' | 'saveAndNew') => {
         if (!firestore || !user) {
             toast({ variant: 'destructive', title: 'Error', description: 'Authentication not ready.' });
             return false;
@@ -835,7 +822,7 @@ function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Required data (categories) is not loaded.' });
             return false;
         }
-        setIsLoading(true);
+        setLoadingState(action);
 
         try {
             const batch = writeBatch(firestore);
@@ -854,12 +841,12 @@ function useExpenseForm({
             if (isCreditCardPayment) {
                 if (selectedAccount?.type === 'credit_card' && values.type !== 'income') {
                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments to a credit card must be an "income" transaction for that card.' });
-                    setIsLoading(false);
+                    setLoadingState('idle');
                     return false;
                 }
                 if (selectedAccount?.type !== 'credit_card' && values.type !== 'expense') {
                      toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments from a bank account for a credit card must be an "expense" transaction.' });
-                     setIsLoading(false);
+                     setLoadingState('idle');
                      return false;
                 }
             }
@@ -942,13 +929,13 @@ function useExpenseForm({
             
             if (isCreditLimitUpgrade) {
                 if (!handleLimitChange('upgrade', values, expenseToEdit)) {
-                    setIsLoading(false);
+                    setLoadingState('idle');
                     return false;
                 }
             }
             if (isCreditLimitDowngrade) {
                 if (!handleLimitChange('downgrade', values, expenseToEdit)) {
-                    setIsLoading(false);
+                    setLoadingState('idle');
                     return false;
                 }
             }
@@ -1002,7 +989,7 @@ function useExpenseForm({
              toast({ variant: 'destructive', title: 'Could Not Save Transaction', description: 'An unexpected error occurred. Please check your inputs and try again.' });
              return false;
         } finally {
-            setIsLoading(false);
+            setLoadingState('idle');
         }
     }
     
@@ -1013,14 +1000,14 @@ function useExpenseForm({
 
 
     const onFinalSubmit = form.handleSubmit(async (values) => {
-        const success = await handleTransactionSave(values);
+        const success = await handleTransactionSave(values, 'save');
         if (success) {
             setOpen(false);
         }
     });
 
     const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
-        const success = await handleTransactionSave(values);
+        const success = await handleTransactionSave(values, 'saveAndNew');
         if (success) {
             resetForm(values.date, values.accountId);
         }
@@ -1031,7 +1018,7 @@ function useExpenseForm({
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction. Required data missing.' });
             return;
         }
-        setIsLoading(true);
+        setLoadingState('delete');
         try {
             const batch = writeBatch(firestore);
             const collectionPath = `users/${user.uid}/expenses`;
@@ -1074,7 +1061,7 @@ function useExpenseForm({
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Delete Failed', description: "There was an unexpected error. Please try again." });
         } finally {
-            setIsLoading(false);
+            setLoadingState('idle');
         }
     };
 
@@ -1084,7 +1071,7 @@ function useExpenseForm({
       onFinalSubmit, 
       onSaveAndNewSubmit, 
       handleDelete, 
-      isLoading, 
+      loadingState, 
       isEditMode, 
       formId,
       accounts: accounts || [],
@@ -1092,4 +1079,3 @@ function useExpenseForm({
       tags: tags || []
     };
 }
-

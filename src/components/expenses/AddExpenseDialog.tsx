@@ -32,7 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
+import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import * as LucideIcons from 'lucide-react';
@@ -157,7 +157,6 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
     );
 }
 
-// New FloatingLabelInput component
 const FloatingLabelInput = React.forwardRef<HTMLInputElement, InputProps & { label: string }>(
     ({ className, label, id, ...props }, ref) => {
         const hasValue = props.value !== undefined && props.value !== null && String(props.value) !== '';
@@ -216,7 +215,6 @@ const FloatingLabelSelect = React.forwardRef<HTMLButtonElement, React.ComponentP
 );
 FloatingLabelSelect.displayName = 'FloatingLabelSelect';
 
-// Multi-select combobox for tags
 const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { field: any, tags: Tag[], onQuickAdd: (name: string, icon: string) => Promise<string|undefined>, isRequired: boolean, isSuggesting: boolean }) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [open, setOpen] = useState(false);

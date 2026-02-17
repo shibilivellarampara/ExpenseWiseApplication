@@ -18,6 +18,17 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.8.3",
+        date: "Feb 18, 2026",
+        changes: [
+            { type: 'UI/UX', description: "Finalized premium fintech redesign for Accounts and Debts with elevated summary cards and unified search headers." },
+            { type: 'UI/UX', description: "Implemented themed fade-out effects for all progress bars, enhancing visual clarity for credit utilization." },
+            { type: 'UI/UX', description: "Contextualized filter cancellation in the Debts UI by moving clear buttons inside respective stat boxes." },
+            { type: 'Feature', description: "Stabilized the 'Recurring Transactions' module by resolving invalid Firebase document references and segment mismatches." },
+            { type: 'Logic', description: "Synchronized v1.8.2 logic and UI refinements across production and workspace environments for global consistency." },
+        ]
+    },
+    {
         version: "1.8.2",
         date: "Feb 18, 2026",
         changes: [
@@ -59,6 +70,8 @@ const getTagColor = (type: string) => {
         case 'Fix':
         case 'Security':
             return 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20';
+        case 'Logic':
+            return 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20';
         default:
             return 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20';
     }

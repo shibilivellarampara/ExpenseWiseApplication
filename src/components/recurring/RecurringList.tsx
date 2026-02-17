@@ -29,7 +29,6 @@ export function RecurringList({ items, isLoading }: RecurringListProps) {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-    const accountsQuery = useMemoFirebase(() => user ? doc(firestore, `users/${user.uid}/accounts`) : null, [user, firestore]);
     
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);

@@ -18,6 +18,17 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.8.2",
+        date: "Feb 18, 2026",
+        changes: [
+            { type: 'Feature', description: "Dashboard 'Total Monthly Expense' now automatically excludes the 'Transfer' category for more accurate spending tracking." },
+            { type: 'Feature', description: "Optimized transaction list rendering by removing internal scroll constraints for a more natural natural feel consistent with other pages." },
+            { type: 'Feature', description: "Refined Bottom Navigation positioning with a 16px offset for improved cross-platform mobile accessibility and floating aesthetic." },
+            { type: 'UI/UX', description: "Standardized transaction form button text to 14px and enforced primary theme styling on hover for consistency." },
+            { type: 'Fix', description: "Resolved critical JSX tag mismatch and syntax errors in forms and dashboard stats to ensure production stability." },
+        ]
+    },
+    {
         version: "1.8.1",
         date: "Feb 16, 2026",
         changes: [

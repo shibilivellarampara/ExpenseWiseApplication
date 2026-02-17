@@ -82,7 +82,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                             </Button>
                         )}
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Owed to You</p>
-                        <p className="text-xl sm:text-2xl font-bold text-primary">
+                        <p className="text-2xl sm:text-4xl font-bold text-primary tracking-tight">
                             {currencySymbol}{formatAmount(totalOwedToUser)}
                         </p>
                     </div>
@@ -111,7 +111,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                             </Button>
                         )}
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">You Owe</p>
-                        <p className="text-xl sm:text-2xl font-bold text-destructive">
+                        <p className="text-2xl sm:text-4xl font-bold text-destructive tracking-tight">
                             {currencySymbol}{formatAmount(totalUserOwes)}
                         </p>
                     </div>
@@ -134,7 +134,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                         <div 
                             className={cn(
                                 "absolute inset-y-0 left-0 transition-all duration-500",
-                                netBalance >= 0 ? "bg-gradient-to-r from-primary/30 to-primary" : "bg-gradient-to-r from-destructive/30 to-destructive"
+                                netBalance >= 0 ? "bg-gradient-to-r from-primary to-primary/30" : "bg-gradient-to-r from-destructive to-destructive/30"
                             )}
                             style={{ width: `100%` }}
                         />

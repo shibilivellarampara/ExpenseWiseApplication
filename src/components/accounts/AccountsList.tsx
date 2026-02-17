@@ -23,18 +23,13 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogTrigger, DialogHeader, DialogTitle, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import Image from "next/image";
 import { PayBillDialog } from "@/components/accounts/PayBillDialog";
+import { renderIcon } from '@/lib/render-icon';
 
 interface AccountsListProps {
     accounts: Account[];
     isLoading?: boolean;
     searchActive?: boolean;
 }
-
-const renderIcon = (iconName: string | undefined, className?: string) => {
-  if (!iconName) return <Pilcrow className={cn("h-6 w-6 text-muted-foreground", className)} />;
-  const IconComponent = (LucideIcons as any)[iconName];
-  return IconComponent ? <IconComponent className={cn("h-6 w-6 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-6 w-6 text-muted-foreground", className)} />;
-};
 
 const getOrdinalSuffix = (day: number) => {
     if (day > 3 && day < 21) return 'th';
@@ -285,7 +280,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
         const availablePercent = limit > 0 ? (available / limit) * 100 : 0;
 
         return (
-            <Card key={item.id} className="rounded-[20px] border-none shadow-sm hover:shadow-md transition-all duration-300 bg-card overflow-hidden group">
+            <Card key={item.id} className="rounded-[20px] border-none shadow-md hover:shadow-lg transition-all duration-300 bg-card overflow-hidden group">
                 <CardContent className="p-4">
                     <div className="flex items-start gap-4">
                         <div className="flex-shrink-0">

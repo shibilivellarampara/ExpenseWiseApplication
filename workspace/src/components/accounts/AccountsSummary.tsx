@@ -40,7 +40,7 @@ export function AccountsSummary({ accounts, isLoading, currency }: AccountsSumma
     }, [accounts]);
 
     if (isLoading) {
-        return <Skeleton className="h-44 w-full rounded-[24px]" />;
+        return <Skeleton className="h-44 w-full rounded-3xl" />;
     }
 
     return (
@@ -49,13 +49,13 @@ export function AccountsSummary({ accounts, isLoading, currency }: AccountsSumma
                 <div className="flex justify-between items-start mb-8">
                     <div className="space-y-1">
                         <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Total Balance</p>
-                        <p className="text-xl sm:text-2xl font-bold text-primary">
+                        <p className="text-2xl sm:text-4xl font-bold text-primary tracking-tight">
                             {currencySymbol}{formatAmount(stats.totalBalance)}
                         </p>
                     </div>
                     <div className="text-right space-y-1">
                         <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Credit Limit</p>
-                        <p className="text-lg font-bold text-foreground">
+                        <p className="text-lg sm:text-2xl font-bold text-foreground tracking-tight">
                             {currencySymbol}{formatAmount(stats.totalLimit)}
                         </p>
                     </div>
@@ -74,7 +74,7 @@ export function AccountsSummary({ accounts, isLoading, currency }: AccountsSumma
                         />
                     </div>
 
-                    <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                    <div className="flex justify-between text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         <span>Used: {currencySymbol}{formatAmount(stats.totalUsed)}</span>
                         <span>Available: {currencySymbol}{formatAmount(stats.totalAvailable)}</span>
                     </div>

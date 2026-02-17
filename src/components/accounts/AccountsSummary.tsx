@@ -49,13 +49,13 @@ export function AccountsSummary({ accounts, isLoading, currency }: AccountsSumma
                 <div className="flex justify-between items-start mb-8">
                     <div className="space-y-1">
                         <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Total Balance</p>
-                        <p className="text-xl sm:text-2xl font-bold text-primary">
+                        <p className="text-2xl sm:text-4xl font-bold text-primary tracking-tight">
                             {currencySymbol}{formatAmount(stats.totalBalance)}
                         </p>
                     </div>
                     <div className="text-right space-y-1">
                         <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Credit Limit</p>
-                        <p className="text-lg font-bold text-foreground">
+                        <p className="text-lg sm:text-2xl font-bold text-foreground tracking-tight">
                             {currencySymbol}{formatAmount(stats.totalLimit)}
                         </p>
                     </div>
@@ -69,12 +69,12 @@ export function AccountsSummary({ accounts, isLoading, currency }: AccountsSumma
                     
                     <div className="relative h-2.5 w-full bg-muted rounded-full overflow-hidden">
                         <div 
-                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary/30 to-primary transition-all duration-500"
+                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/30 transition-all duration-500"
                             style={{ width: `${Math.min(100, stats.utilization)}%` }}
                         />
                     </div>
 
-                    <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                    <div className="flex justify-between text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         <span>Used: {currencySymbol}{formatAmount(stats.totalUsed)}</span>
                         <span>Available: {currencySymbol}{formatAmount(stats.totalAvailable)}</span>
                     </div>

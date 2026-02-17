@@ -387,9 +387,9 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
 
                             {isCreditCard && limit > 0 && (
                                 <div className="mt-3 space-y-1.5">
-                                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                    <div className="h-1.5 w-full bg-primary/20 rounded-full overflow-hidden">
                                         <div 
-                                            className="h-full bg-destructive transition-all duration-500 rounded-full"
+                                            className="h-full bg-gradient-to-r from-destructive to-destructive/40 transition-all duration-500 rounded-full"
                                             style={{ width: `${Math.min(100, usagePercent)}%` }}
                                         />
                                     </div>

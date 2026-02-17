@@ -175,7 +175,7 @@ function InactiveAccountsSection({ accounts, title }: { accounts: Account[], tit
     return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mt-4">
             <CollapsibleTrigger asChild>
-                <button className="flex w-full items-center justify-between p-4 text-xs font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-primary transition-colors">
+                <button className="flex w-full items-center justify-between p-4 text-sm font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-primary transition-colors">
                     <span>{accounts.length} Inactive {title}</span>
                     {isOpen ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -282,7 +282,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
         const available = item.balance;
         const outstanding = Math.round((limit > 0 ? limit - available : -available) * 100) / 100;
         const isPaid = outstanding <= 0;
-        const usagePercent = limit > 0 ? (outstanding / limit) * 100 : 0;
+        const availablePercent = limit > 0 ? (available / limit) * 100 : 0;
 
         return (
             <Card key={item.id} className="rounded-[20px] border-none shadow-md transition-all duration-300 bg-card overflow-hidden group">
@@ -387,10 +387,10 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
 
                             {isCreditCard && limit > 0 && (
                                 <div className="mt-3 space-y-1.5">
-                                    <div className="h-1.5 w-full bg-primary/20 rounded-full overflow-hidden">
+                                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                                         <div 
-                                            className="h-full bg-gradient-to-r from-destructive to-destructive/40 transition-all duration-500 rounded-full"
-                                            style={{ width: `${Math.min(100, usagePercent)}%` }}
+                                            className="h-full bg-gradient-to-r from-primary to-primary/30 transition-all duration-500 rounded-full"
+                                            style={{ width: `${Math.min(100, availablePercent)}%` }}
                                         />
                                     </div>
                                     <div className="flex justify-between text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider">

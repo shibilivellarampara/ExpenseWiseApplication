@@ -18,6 +18,17 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.8.4",
+        date: "Feb 18, 2026",
+        changes: [
+            { type: 'UI/UX', description: "Implemented responsive typography for summary cards, ensuring amounts scale gracefully on mobile devices." },
+            { type: 'UI/UX', description: "Aligned Asset performance visuals with semantic themes: primary for gains and destructive for losses." },
+            { type: 'UI/UX', description: "Applied global shadow-md elevation to all major dashboard cards for enhanced visual depth." },
+            { type: 'Fix', description: "Resolved critical ReferenceErrors for 'orderBy' and 'Badge' across various holding components." },
+            { type: 'Logic', description: "Standardized the premium fintech UI setup across Accounts, Debts, and Assets screens." },
+        ]
+    },
+    {
         version: "1.8.3",
         date: "Feb 18, 2026",
         changes: [

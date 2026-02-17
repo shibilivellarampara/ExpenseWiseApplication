@@ -18,6 +18,17 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.8.4",
+        date: "Feb 18, 2026",
+        changes: [
+            { type: 'UI/UX', description: "Implemented responsive typography for summary cards, ensuring amounts scale gracefully on mobile devices." },
+            { type: 'UI/UX', description: "Aligned Asset performance visuals with semantic themes: primary for gains and destructive for losses." },
+            { type: 'UI/UX', description: "Applied global shadow-md elevation to all major dashboard cards for enhanced visual depth." },
+            { type: 'Fix', description: "Resolved critical ReferenceErrors for 'orderBy' and 'Badge' across various holding components." },
+            { type: 'Logic', description: "Standardized the premium fintech UI setup across Accounts, Debts, and Assets screens." },
+        ]
+    },
+    {
         version: "1.8.3",
         date: "Feb 18, 2026",
         changes: [
@@ -38,24 +49,6 @@ const changelog = [
             { type: 'UI/UX', description: "Implemented semantic theme coloring: Blue/Orange for Fintech and Green/Red for Chat themes." },
             { type: 'UI/UX', description: "Optimized transaction list rendering by removing internal scroll constraints for a more natural natural feel." },
             { type: 'Fix', description: "Resolved critical JSX tag mismatch and syntax errors in forms and dashboard stats to ensure production stability." },
-        ]
-    },
-    {
-        version: "1.8.1",
-        date: "Feb 16, 2026",
-        changes: [
-            { type: 'Feature', description: "Enforced centered dialog popup for Asset entry across all devices for a consistent premium feel." },
-            { type: 'Feature', description: "Standardized 'Add Asset' form with high-quality floating labels and smart invested/current amount fallback logic." },
-            { type: 'Fix', description: "Corrected module resolution for DateTimePicker and package.json to ensure stable production builds." },
-        ]
-    },
-    {
-        version: "1.8.0",
-        date: "Feb 12, 2026",
-        changes: [
-            { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 15 days after statement date if left empty)." },
-            { type: 'Feature', description: "Redesigned the 'Add Account' form with a logic-first field order and floating labels for a better user experience." },
-            { type: 'UI/UX', description: "Enhanced form accessibility by preventing automatic keyboard popup on form open." },
         ]
     }
 ];

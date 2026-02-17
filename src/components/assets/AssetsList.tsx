@@ -17,6 +17,7 @@ import { AddAssetDialog } from './AddAssetDialog';
 import { ASSET_TYPES } from '@/lib/assets';
 import { renderIcon } from '@/lib/render-icon';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { Badge } from "@/components/ui/badge";
 
 interface AssetsListProps {
     assets: Asset[];

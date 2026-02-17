@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,18 +24,13 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogTrigger, DialogHeader, DialogTitle, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import Image from "next/image";
 import { PayBillDialog } from "@/components/accounts/PayBillDialog";
+import { renderIcon } from '@/lib/render-icon';
 
 interface AccountsListProps {
     accounts: Account[];
     isLoading?: boolean;
     searchActive?: boolean;
 }
-
-const renderIcon = (iconName: string | undefined, className?: string) => {
-  if (!iconName) return <Pilcrow className={cn("h-6 w-6 text-muted-foreground", className)} />;
-  const IconComponent = (LucideIcons as any)[iconName];
-  return IconComponent ? <IconComponent className={cn("h-6 w-6 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-6 w-6 text-muted-foreground", className)} />;
-};
 
 const getOrdinalSuffix = (day: number) => {
     if (day > 3 && day < 21) return 'th';

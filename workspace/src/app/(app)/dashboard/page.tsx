@@ -9,7 +9,7 @@ import { ExpensesBarChart } from '@/components/dashboard/ExpensesBarChart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { Expense, Category, EnrichedExpense, UserProfile, Account, Tag } from '@/lib/types';
-import { collection, query, where, Timestamp, doc, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, Timestamp, doc, getDocs, limit, orderBy } from 'firebase/firestore';
 import { startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, format, startOfYear, endOfYear, getYear, subYears } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCurrencySymbol } from '@/lib/currencies';

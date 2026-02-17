@@ -1,18 +1,18 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Account, UserProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from "@/firebase";
-import { doc, setDoc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 import { Progress } from "@/components/ui/progress";
-import { Pilcrow, Edit, CreditCard, Landmark, Trash2, Loader2, MoreVertical, Archive, Eye, EyeOff, RotateCw, CalendarDays, History, XCircle, Merge, BarChartHorizontal, Handshake } from "lucide-react";
+import { Pilcrow, Edit, MoreVertical, Archive, Eye, EyeOff, RotateCw, History, XCircle, BarChartHorizontal, Handshake, CreditCard, Landmark, Loader2 } from "lucide-react";
 import { cn, formatAmount } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -27,6 +27,7 @@ import { PayBillDialog } from "@/components/accounts/PayBillDialog";
 interface AccountsListProps {
     accounts: Account[];
     isLoading?: boolean;
+    searchActive?: boolean;
 }
 
 const renderIcon = (iconName: string | undefined, className?: string) => {
@@ -35,7 +36,6 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
   return IconComponent ? <IconComponent className={cn("h-6 w-6 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-6 w-6 text-muted-foreground", className)} />;
 };
 
-// Helper function to get the ordinal suffix for a day
 const getOrdinalSuffix = (day: number) => {
     if (day > 3 && day < 21) return 'th';
     switch (day % 10) {
@@ -57,13 +57,10 @@ function CloseAccountButton({ account }: { account: Account }) {
         setIsDeleting(true);
         try {
             const batch = writeBatch(firestore);
-            
-            // Query for all transactions associated with the account
             const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), where('accountId', '==', account.id));
             const expensesSnapshot = await getDocs(expensesQuery);
             expensesSnapshot.forEach(doc => batch.delete(doc.ref));
 
-            // Delete the account itself
             const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
             batch.delete(accountRef);
 
@@ -74,11 +71,7 @@ function CloseAccountButton({ account }: { account: Account }) {
                 description: `"${account.name}" and all its transactions have been permanently deleted.`
             });
         } catch (error: any) {
-             toast({
-                variant: 'destructive',
-                title: "Error Closing Account",
-                description: error.message
-            });
+             toast({ variant: 'destructive', title: "Error Closing Account", description: error.message });
         } finally {
             setIsDeleting(false);
         }
@@ -92,7 +85,7 @@ function CloseAccountButton({ account }: { account: Account }) {
                     Close Account
                 </DropdownMenuItem>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="rounded-[24px]">
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -102,7 +95,7 @@ function CloseAccountButton({ account }: { account: Account }) {
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={handleAccountDelete} className="bg-destructive hover:bg-destructive/90">
-                        {isDeleting ? <Loader2 className="animate-spin" /> : "Yes, close this account"}
+                        {isDeleting ? <Loader2 className="animate-spin" /> : "Yes, close account"}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -121,7 +114,7 @@ function DeactivateAccountButton({ account }: { account: Account }) {
         setIsDeactivating(true);
         const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
         setDocumentNonBlocking(accountRef, { status: 'inactive' }, { merge: true });
-        toast({ title: "Account Deactivated", description: `"${account.name}" has been hidden and can no longer be used.` });
+        toast({ title: "Account Deactivated", description: `"${account.name}" has been archived.` });
         setIsDeactivating(false);
     }
     
@@ -133,16 +126,16 @@ function DeactivateAccountButton({ account }: { account: Account }) {
                     Deactivate
                 </DropdownMenuItem>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="rounded-[24px]">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure you want to deactivate this account?</AlertDialogTitle>
+                    <AlertDialogTitle>Deactivate Account?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will hide the account "{account.name}" from lists and prevent new transactions. You can reactivate it later.
+                        This will hide the account "{account.name}" from forms and lists. You can reactivate it later from the settings.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeactivate} className="bg-destructive hover:bg-destructive/90">
+                    <AlertDialogAction onClick={handleDeactivate}>
                         {isDeactivating ? <Loader2 className="animate-spin" /> : "Deactivate"}
                     </AlertDialogAction>
                 </AlertDialogFooter>
@@ -167,7 +160,7 @@ function ReactivateAccountButton({ account }: { account: Account }) {
     }
 
     return (
-        <Button variant="ghost" size="sm" onClick={handleReactivate} disabled={isReactivating}>
+        <Button variant="ghost" size="sm" onClick={handleReactivate} disabled={isReactivating} className="text-primary hover:bg-primary/10 rounded-xl">
             {isReactivating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCw className="mr-2 h-4 w-4" />}
             Reactivate
         </Button>
@@ -180,20 +173,21 @@ function InactiveAccountsSection({ accounts, title }: { accounts: Account[], tit
     if (accounts.length === 0) return null;
 
     return (
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-             <Separator />
+        <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mt-4">
             <CollapsibleTrigger asChild>
-                <button className="flex w-full items-center justify-between p-4 text-sm font-medium text-muted-foreground">
-                    <span>View {accounts.length} inactive {title}</span>
+                <button className="flex w-full items-center justify-between p-4 text-xs font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-primary transition-colors">
+                    <span>{accounts.length} Inactive {title}</span>
                     {isOpen ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-2 p-4 pt-0">
+            <CollapsibleContent className="space-y-3 px-2 pb-4">
                 {accounts.map(account => (
-                    <div key={account.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                        <div className="flex items-center gap-2">
-                             {renderIcon(account.icon, 'h-5 w-5')}
-                            <span className="text-muted-foreground">{account.name}</span>
+                    <div key={account.id} className="flex items-center justify-between p-3 rounded-[16px] bg-muted/30 border border-border/50">
+                        <div className="flex items-center gap-3">
+                             <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center opacity-60">
+                                {renderIcon(account.icon, 'h-4 w-4')}
+                             </div>
+                            <span className="text-sm font-medium text-muted-foreground">{account.name}</span>
                         </div>
                         <ReactivateAccountButton account={account} />
                     </div>
@@ -203,13 +197,12 @@ function InactiveAccountsSection({ accounts, title }: { accounts: Account[], tit
     )
 }
 
-
 const CardDisplay = ({ account }: { account: Account }) => {
     const details = account.cardDetails;
     const network = details?.network || 'other';
 
     return (
-        <div className="w-full max-w-sm mx-auto rounded-xl bg-gradient-to-br from-primary/80 to-primary/60 p-6 text-primary-foreground shadow-2xl relative overflow-hidden">
+        <div className="w-full max-w-sm mx-auto rounded-[20px] bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground shadow-2xl relative overflow-hidden">
             <div className="absolute top-4 right-4 h-10 w-16">
                  <Image src={`/card-networks/${network}.svg`} alt={network} width={64} height={40} className="object-contain" />
             </div>
@@ -225,11 +218,11 @@ const CardDisplay = ({ account }: { account: Account }) => {
                 </div>
                 <div className="flex justify-between items-end">
                     <div className="text-sm">
-                        <p className="font-light tracking-wider">Card Holder</p>
+                        <p className="font-light tracking-wider text-primary-foreground/70 uppercase">Card Holder</p>
                         <p className="font-medium tracking-wide">{details?.cardholderName || 'N/A'}</p>
                     </div>
                      <div className="text-sm text-right">
-                        <p className="font-light tracking-wider">Expires</p>
+                        <p className="font-light tracking-wider text-primary-foreground/70 uppercase">Expires</p>
                         <p className="font-medium tracking-wide">
                             {details?.expiryMonth && details?.expiryYear ? 
                                 `${String(details.expiryMonth).padStart(2, '0')}/${String(details.expiryYear).slice(-2)}`
@@ -243,8 +236,7 @@ const CardDisplay = ({ account }: { account: Account }) => {
     )
 }
 
-
-export function AccountsList({ accounts, isLoading }: AccountsListProps) {
+export function AccountsList({ accounts, isLoading, searchActive }: AccountsListProps) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -253,270 +245,213 @@ export function AccountsList({ accounts, isLoading }: AccountsListProps) {
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
-    const activeAccounts = accounts.filter(acc => (acc.status === 'active' || acc.status === undefined));
-    const inactiveAccounts = accounts.filter(acc => acc.status === 'inactive');
+    const { activeCreditCards, inactiveCreditCards, activeOtherAccounts, inactiveOtherAccounts } = useMemo(() => {
+        const active = accounts.filter(acc => acc.status === 'active' || acc.status === undefined);
+        const inactive = accounts.filter(acc => acc.status === 'inactive');
 
-    const creditCards = activeAccounts.filter(acc => acc.type === 'credit_card');
-
-    const otherAccounts = useMemo(() => {
-        const other = activeAccounts.filter(acc => acc.type !== 'credit_card');
-        const typeOrder = { 'bank': 1, 'wallet': 2, 'cash': 3 };
-        return other.sort((a, b) => {
-            const orderA = typeOrder[a.type as keyof typeof typeOrder] || 4;
-            const orderB = typeOrder[b.type as keyof typeof typeOrder] || 4;
-            return orderA - orderB;
-        });
-    }, [activeAccounts]);
-
-    const { totalOutstanding, totalAvailableCredit } = useMemo(() => {
-        const outstanding = creditCards.reduce((sum, card) => sum + ((card.limit || 0) - card.balance), 0);
-        const available = creditCards.reduce((sum, card) => sum + card.balance, 0);
-        return { totalOutstanding: outstanding, totalAvailableCredit: available };
-    }, [creditCards]);
-
-    const totalSavingsBalance = useMemo(() => {
-        return otherAccounts.reduce((sum, acc) => sum + acc.balance, 0);
-    }, [otherAccounts]);
-    
-    const inactiveCreditCards = inactiveAccounts.filter(acc => acc.type === 'credit_card');
-    const inactiveOtherAccounts = inactiveAccounts.filter(acc => acc.type !== 'credit_card');
-    
+        return {
+            activeCreditCards: active.filter(acc => acc.type === 'credit_card'),
+            inactiveCreditCards: inactive.filter(acc => acc.type === 'credit_card'),
+            activeOtherAccounts: active.filter(acc => acc.type !== 'credit_card'),
+            inactiveOtherAccounts: inactive.filter(acc => acc.type !== 'credit_card'),
+        };
+    }, [accounts]);
 
     if (isLoading) {
         return (
-            <div className="grid gap-8">
-                <Card>
-                    <CardHeader>
-                        <Skeleton className="h-6 w-48" />
-                        <Skeleton className="h-4 w-64" />
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {Array.from({ length: 2 }).map((_, i) => (
-                            <div key={i} className="flex items-center gap-4 p-2">
-                                <Skeleton className="h-10 w-10 rounded-full" />
-                                <div className="flex-1 space-y-2">
-                                    <Skeleton className="h-5 w-3/4" />
-                                    <Skeleton className="h-4 w-1/2" />
-                                </div>
-                                <Skeleton className="h-6 w-1/4" />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <Skeleton className="h-6 w-48" />
-                        <Skeleton className="h-4 w-64" />
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                         <div className="flex items-center gap-4 p-2">
-                            <Skeleton className="h-10 w-10 rounded-full" />
-                            <div className="flex-1 space-y-2">
-                                <Skeleton className="h-5 w-3/4" />
-                                <Skeleton className="h-4 w-1/2" />
-                            </div>
-                            <Skeleton className="h-6 w-1/4" />
-                        </div>
-                    </CardContent>
-                </Card>
+            <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-32 w-full rounded-[20px]" />
+                ))}
             </div>
         )
     }
 
-    if (accounts && accounts.length === 0) {
+    if (accounts.length === 0 && !searchActive) {
         return (
-            <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg">
+            <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-[20px] bg-card/50">
                 <h3 className="text-xl font-semibold">No Accounts Found</h3>
                 <p className="text-muted-foreground mt-2">Click "Add Account" to get started.</p>
             </div>
         );
     }
-    return (
-       <div className="grid gap-8">
-            <Card>
-                <CardHeader className="flex flex-row items-start justify-between bg-card shadow-sm p-4 rounded-t-lg">
-                    <div className="flex items-center gap-3">
-                        <CreditCard className="h-7 w-7 text-primary"/>
-                        <div>
-                            <CardTitle className="font-headline">Credit Cards</CardTitle>
-                            <CardDescription>Available: {currencySymbol}{formatAmount(totalAvailableCredit)}</CardDescription>
-                        </div>
-                    </div>
-                     <div className="text-right">
-                        <p className="font-bold text-xl text-destructive">{currencySymbol}{formatAmount(totalOutstanding)}</p>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <div className="divide-y">
-                        {creditCards.length > 0 ? creditCards.map((item) => {
-                            const limit = item.limit || 0;
-                            const availableCredit = item.balance;
-                            const outstandingAmount = Math.round((limit > 0 ? limit - availableCredit : -availableCredit) * 100) / 100;
-                            const isPaid = outstandingAmount <= 0;
-                            const availablePercentage = limit > 0 && limit > outstandingAmount ? ((limit - outstandingAmount) / limit) * 100 : 0;
-                            
-                            return (
-                                <div key={item.id} className="p-4 group">
-                                    <div className="flex items-center gap-4">
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-muted flex-shrink-0 cursor-pointer">
-                                                    {renderIcon(item.icon, "h-5 w-5")}
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Card Details</DialogTitle>
-                                                    <DialogDescription>Non-sensitive card information.</DialogDescription>
-                                                </DialogHeader>
-                                                <CardDisplay account={item} />
-                                            </DialogContent>
-                                        </Dialog>
 
-                                        <div className="flex-grow min-w-0">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex-1">
-                                                    <div
-                                                        className="font-semibold truncate transition-all duration-300 active:scale-95 active:bg-primary/20 rounded-full px-2 -mx-2 inline-block cursor-pointer"
-                                                        onClick={() => window.location.href=`/expenses?accounts=${item.id}`}
-                                                    >
-                                                        {item.name}
-                                                    </div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        {item.billingDate ? 
-                                                            outstandingAmount > 0 ? (
-                                                                <span>
-                                                                    Due: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
-                                                                </span>
-                                                            ) : (
-                                                                    <span>
-                                                                    Next bill: {`${item.billingDate}${getOrdinalSuffix(item.billingDate)}`}
-                                                                </span>
-                                                            )
-                                                        : outstandingAmount > 0 ? <span>No billing date set</span> : null}
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-1 flex-shrink-0 ml-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                                                    <div className="text-right">
-                                                        {isPaid ? (
-                                                            <Badge className="bg-primary/10 text-primary text-sm">Paid</Badge>
-                                                        ) : (
-                                                            <div className={cn("font-semibold text-lg text-destructive")}>
-                                                                {`${currencySymbol}${formatAmount(outstandingAmount)}`}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 focus-visible:ring-0 focus-visible:ring-offset-0">
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <AddAccountSheet accountToEdit={item}>
-                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                                    <Edit className="mr-2 h-4 w-4" /> Edit
-                                                                </DropdownMenuItem>
-                                                            </AddAccountSheet>
-                                                            <PayBillDialog creditCard={item} paymentAccounts={otherAccounts.filter(a => a.type === 'bank')} outstandingAmount={outstandingAmount}>
-                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={outstandingAmount <= 0} className={outstandingAmount > 0 ? 'text-primary' : ''}>
-                                                                    <Handshake className="mr-2 h-4 w-4" /> Pay Bill
-                                                                </DropdownMenuItem>
-                                                            </PayBillDialog>
-                                                            <DropdownMenuItem asChild>
-                                                                <Link href={`/analysis?accounts=${item.id}`}>
-                                                                    <BarChartHorizontal className="mr-2 h-4 w-4" /> Go to Analysis
-                                                                </Link>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem asChild>
-                                                                <Link href={`/expenses?accounts=${item.id}&type=income`}>
-                                                                    <History className="mr-2 h-4 w-4" /> Payment History
-                                                                </Link>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DeactivateAccountButton account={item} />
-                                                            <CloseAccountButton account={item} />
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
-                                            </div>
-                                            {limit > 0 && (
-                                                <div className="space-y-1 pt-1">
-                                                    <Progress value={availablePercentage} className="h-1.5" />
-                                                    <div className="flex justify-between text-xs text-muted-foreground">
-                                                        <span>Limit: {currencySymbol}{formatAmount(limit)}</span>
-                                                        <span>Available: {currencySymbol}{formatAmount(availableCredit)}</span>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )
-                        }) : (
-                             <p className="text-muted-foreground text-center p-8">No active credit card accounts yet.</p>
-                        )}
-                    </div>
-                </CardContent>
-                <InactiveAccountsSection accounts={inactiveCreditCards} title="Credit Cards" />
-            </Card>
+    const renderAccountCard = (item: Account) => {
+        const isCreditCard = item.type === 'credit_card';
+        const limit = item.limit || 0;
+        const available = item.balance;
+        const outstanding = Math.round((limit > 0 ? limit - available : -available) * 100) / 100;
+        const isPaid = outstanding <= 0;
+        const usagePercent = limit > 0 ? (outstanding / limit) * 100 : 0;
 
-             <Card>
-                <CardHeader>
-                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Landmark className="h-7 w-7 text-primary"/>
-                            <CardTitle className="font-headline">Savings &amp; Others</CardTitle>
+        return (
+            <Card key={item.id} className="rounded-[20px] border-none shadow-sm hover:shadow-md transition-all duration-300 bg-card overflow-hidden group">
+                <CardContent className="p-4">
+                    <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                            {isCreditCard ? (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full bg-muted hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer">
+                                            {renderIcon(item.icon, "h-6 w-6")}
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="rounded-[24px]">
+                                        <DialogHeader>
+                                            <DialogTitle>Card Details</DialogTitle>
+                                            <DialogDescription>Non-sensitive card information.</DialogDescription>
+                                        </DialogHeader>
+                                        <CardDisplay account={item} />
+                                    </DialogContent>
+                                </Dialog>
+                            ) : (
+                                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                                    {renderIcon(item.icon, "h-6 w-6")}
+                                </div>
+                            )}
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <div className="divide-y">
-                        {otherAccounts.length > 0 ? otherAccounts.map((item) => (
-                            <div key={item.id} className="p-4 flex items-center gap-4 group transition-all duration-300 hover:bg-accent/50 cursor-pointer active:scale-[0.98] active:bg-accent/70" onClick={() => window.location.href=`/expenses?accounts=${item.id}`}>
-                                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                                {renderIcon(item.icon, "h-5 w-5")}
+
+                        <div className="flex-grow min-w-0">
+                            <div className="flex justify-between items-start mb-1">
+                                <div className="min-w-0">
+                                    <h3 
+                                        className="font-bold text-base truncate cursor-pointer hover:text-primary transition-colors"
+                                        onClick={() => window.location.href=`/expenses?accounts=${item.id}`}
+                                    >
+                                        {item.name}
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground font-medium">
+                                        {isCreditCard && item.billingDate 
+                                            ? `${outstanding > 0 ? 'Due' : 'Next bill'}: ${item.billingDate}${getOrdinalSuffix(item.billingDate)}`
+                                            : item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                                    </p>
                                 </div>
-                                <div className="flex-grow">
-                                        <span className="font-semibold transition-all duration-300 active:scale-95 active:bg-primary/20 rounded-full px-2 -mx-2 inline-block">{item.name}</span>
-                                </div>
-                                <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                                    <div className={cn(
-                                        "font-bold text-base",
-                                        item.balance >= 0 ? "text-primary" : "text-destructive"
-                                    )}>
-                                        {currencySymbol}{formatAmount(item.balance)}
+                                <div className="flex items-center gap-2">
+                                    <div className="text-right">
+                                        {isCreditCard ? (
+                                            isPaid ? (
+                                                <Badge className="bg-primary/10 text-primary border-none font-bold">Paid</Badge>
+                                            ) : (
+                                                <p className="font-bold text-lg text-destructive leading-none">
+                                                    {currencySymbol}{formatAmount(outstanding)}
+                                                </p>
+                                            )
+                                        ) : (
+                                            <p className={cn("font-bold text-lg leading-none", item.balance >= 0 ? "text-primary" : "text-destructive")}>
+                                                {currencySymbol}{formatAmount(item.balance)}
+                                            </p>
+                                        )}
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 focus-visible:ring-0 focus-visible:ring-offset-0">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground focus-visible:ring-0">
                                                 <MoreVertical className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
+                                        <DropdownMenuContent align="end" className="rounded-xl">
                                             <AddAccountSheet accountToEdit={item}>
                                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                                     <Edit className="mr-2 h-4 w-4" /> Edit
                                                 </DropdownMenuItem>
                                             </AddAccountSheet>
+                                            {isCreditCard && (
+                                                <PayBillDialog 
+                                                    creditCard={item} 
+                                                    paymentAccounts={activeOtherAccounts.filter(a => a.type === 'bank')} 
+                                                    outstandingAmount={outstanding}
+                                                >
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={outstanding <= 0} className={!isPaid ? "text-primary" : ""}>
+                                                        <Handshake className="mr-2 h-4 w-4" /> Pay Bill
+                                                    </DropdownMenuItem>
+                                                </PayBillDialog>
+                                            )}
                                             <DropdownMenuItem asChild>
                                                 <Link href={`/analysis?accounts=${item.id}`}>
-                                                    <BarChartHorizontal className="mr-2 h-4 w-4" /> Go to Analysis
+                                                    <BarChartHorizontal className="mr-2 h-4 w-4" /> Analysis
                                                 </Link>
                                             </DropdownMenuItem>
+                                            {isCreditCard && (
+                                                <DropdownMenuItem asChild>
+                                                    <Link href={`/expenses?accounts=${item.id}&type=income`}>
+                                                        <History className="mr-2 h-4 w-4" /> Payment History
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            )}
+                                            <DropdownMenuSeparator />
                                             <DeactivateAccountButton account={item} />
                                             <CloseAccountButton account={item} />
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
                             </div>
-                        )) : (
-                            <p className="text-muted-foreground text-center p-8">No other active accounts yet.</p>
-                        )}
+
+                            {isCreditCard && limit > 0 && (
+                                <div className="mt-3 space-y-1.5">
+                                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-destructive transition-all duration-500 rounded-full"
+                                            style={{ width: `${Math.min(100, usagePercent)}%` }}
+                                        />
+                                    </div>
+                                    <div className="flex justify-between text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider">
+                                        <span>Limit: {currencySymbol}{formatAmount(limit)}</span>
+                                        <span>Avail: {currencySymbol}{formatAmount(available)}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </CardContent>
-                <InactiveAccountsSection accounts={inactiveOtherAccounts} title="Accounts" />
             </Card>
-       </div>
-    )
+        );
+    };
+
+    return (
+        <div className="space-y-8">
+            {/* Active Credit Cards Section */}
+            <div className="space-y-4">
+                <div className="flex justify-between items-end px-1">
+                    <div>
+                        <h2 className="text-xl font-bold font-headline">Credit Cards</h2>
+                    </div>
+                    {activeCreditCards.length > 0 && (
+                        <div className="text-right">
+                            <p className="text-xl font-bold text-destructive">
+                                {currencySymbol}{formatAmount(activeCreditCards.reduce((sum, c) => sum + Math.max(0, (c.limit || 0) - c.balance), 0))}
+                            </p>
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-widest leading-none mt-1">
+                                Available: {currencySymbol}{formatAmount(activeCreditCards.reduce((sum, c) => sum + c.balance, 0))}
+                            </p>
+                        </div>
+                    )}
+                </div>
+                <div className="grid gap-4">
+                    {activeCreditCards.map(renderAccountCard)}
+                    {activeCreditCards.length === 0 && !isLoading && (
+                        <p className="text-sm text-muted-foreground/60 text-center py-4 bg-muted/10 rounded-[20px] border border-dashed">No active credit cards</p>
+                    )}
+                </div>
+                <InactiveAccountsSection accounts={inactiveCreditCards} title="Credit Cards" />
+            </div>
+
+            {/* Active Savings & Others Section */}
+            <div className="space-y-4">
+                <div className="flex justify-between items-center px-1">
+                    <h2 className="text-xl font-bold font-headline">Savings & Others</h2>
+                    {activeOtherAccounts.length > 0 && (
+                        <p className="text-xl font-bold text-primary">
+                            {currencySymbol}{formatAmount(activeOtherAccounts.reduce((sum, c) => sum + c.balance, 0))}
+                        </p>
+                    )}
+                </div>
+                <div className="grid gap-4">
+                    {activeOtherAccounts.map(renderAccountCard)}
+                    {activeOtherAccounts.length === 0 && !isLoading && (
+                        <p className="text-sm text-muted-foreground/60 text-center py-4 bg-muted/10 rounded-[20px] border border-dashed">No active savings accounts</p>
+                    )}
+                </div>
+                <InactiveAccountsSection accounts={inactiveOtherAccounts} title="Accounts" />
+            </div>
+        </div>
+    );
 }

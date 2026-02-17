@@ -7,7 +7,7 @@ import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from "@/firebase";
 import { doc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 import { Progress } from "@/components/ui/progress";
-import { Pilcrow, Edit, MoreVertical, Archive, Eye, EyeOff, RotateCw, History, XCircle, BarChartHorizontal, Handshake, CreditCard, Landmark } from "lucide-react";
+import { Pilcrow, Edit, MoreVertical, Archive, Eye, EyeOff, RotateCw, History, XCircle, BarChartHorizontal, Handshake, CreditCard, Landmark, Loader2 } from "lucide-react";
 import { cn, formatAmount } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AddAccountSheet } from "./AddAccountSheet";
@@ -330,9 +330,9 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                                     <div className="text-right">
                                         {isCreditCard ? (
                                             isPaid ? (
-                                                <Badge className="bg-[#2F80ED]/10 text-[#2F80ED] border-none font-bold">Paid</Badge>
+                                                <Badge className="bg-primary/10 text-primary border-none font-bold">Paid</Badge>
                                             ) : (
-                                                <p className="font-bold text-lg text-[#F2994A] leading-none">
+                                                <p className="font-bold text-lg text-destructive leading-none">
                                                     {currencySymbol}{formatAmount(outstanding)}
                                                 </p>
                                             )
@@ -389,7 +389,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                                 <div className="mt-3 space-y-1.5">
                                     <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                                         <div 
-                                            className="h-full bg-[#F2994A] transition-all duration-500 rounded-full"
+                                            className="h-full bg-destructive transition-all duration-500 rounded-full"
                                             style={{ width: `${Math.min(100, usagePercent)}%` }}
                                         />
                                     </div>
@@ -416,7 +416,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                     </div>
                     {activeCreditCards.length > 0 && (
                         <div className="text-right">
-                            <p className="text-xl font-bold text-[#F2994A]">
+                            <p className="text-xl font-bold text-destructive">
                                 {currencySymbol}{formatAmount(activeCreditCards.reduce((sum, c) => sum + Math.max(0, (c.limit || 0) - c.balance), 0))}
                             </p>
                             <p className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-widest leading-none mt-1">

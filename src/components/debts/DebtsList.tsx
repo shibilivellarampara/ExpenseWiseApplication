@@ -1,14 +1,14 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useMemo, useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { EnrichedDebt, UserProfile, EnrichedDebtWithBalance } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { doc, serverTimestamp, writeBatch, query, collection, where, getDocs } from 'firebase/firestore';
+import { useDoc, useFirestore, useUser, useMemoFirebase, deleteDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
+import { doc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatAmount } from '@/lib/utils';
-import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2 } from 'lucide-react';
+import { Handshake, Loader2, User, ArrowRight, ArrowLeft, PlusCircle, Trash2, ChevronDown, MoreVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -22,13 +22,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Separator } from "@/components/ui/separator";
 import { AddDebtDialog } from '@/components/debts/AddDebtSheet';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from '@/components/ui/button';
 import { getCurrencySymbol } from '@/lib/currencies';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 interface DebtsListProps {
@@ -58,14 +57,13 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
     const { toast } = useToast();
 
     const handleSettle = async (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent collapsible from toggling
+        e.stopPropagation(); // Prevent dropdown from toggling
         if (!user || !firestore || group.netAmount === 0) return;
         setIsSettling(true);
 
         try {
             const batch = writeBatch(firestore);
 
-            // Mark all pending records for this person as settled
             group.records.forEach(debt => {
                 if (debt.status === 'pending') {
                     const debtRef = doc(firestore, `users/${user.uid}/debts`, debt.id);
@@ -73,10 +71,9 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
                 }
             });
 
-            // Create the balancing transaction
             const settlementAmount = Math.abs(group.netAmount);
-            const settlementType = group.netAmount > 0 ? 'income' : 'expense';
-            const settlementDescription = group.netAmount > 0 ? `Received from ${group.personName}` : `Paid to ${group.personName}`;
+            const settlementType = group.netAmount > 0 ? 'borrowed' : 'lent';
+            const settlementDescription = group.netAmount > 0 ? `Settlement: Received from ${group.personName}` : `Settlement: Paid to ${group.personName}`;
 
             const debtsCol = collection(firestore, `users/${user.uid}/debts`);
             const newDebtRef = doc(debtsCol);
@@ -86,7 +83,7 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
                 userId: user.uid,
                 personName: group.personName,
                 amount: settlementAmount,
-                type: settlementType === 'income' ? 'borrowed' : 'lent',
+                type: settlementType,
                 description: settlementDescription,
                 date: new Date(),
                 status: 'settled',
@@ -95,6 +92,7 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
             });
 
             await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
+            toast({ title: "Balance Settled" });
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error Settling Up', description: "Could not settle the balance. Please try again." });
         } finally {
@@ -104,22 +102,19 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
     
     if(group.netAmount === 0) return null;
 
-    const settlementActionText = group.netAmount > 0 
-        ? `This will create a new settled record of you receiving ${currencySymbol}${formatAmount(group.netAmount)} from ${group.personName} and mark all other pending transactions with them as settled.`
-        : `This will create a new settled record of you giving ${currencySymbol}${formatAmount(Math.abs(group.netAmount))} to ${group.personName} and mark all other pending transactions with them as settled.`;
-
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                 <Button size="icon" variant="ghost" className="h-8 w-8">
-                    <Handshake className="h-4 w-4" />
-                </Button>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-primary">
+                    <Handshake className="mr-2 h-4 w-4" />
+                    Settle Up
+                </DropdownMenuItem>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="rounded-[24px]">
                 <AlertDialogHeader>
                     <AlertDialogTitle>Settle balance with {group.personName}?</AlertDialogTitle>
                     <AlertDialogDescription>
-                       {settlementActionText} This will clear their outstanding balance.
+                       This will mark all pending transactions with {group.personName} as settled and create a balancing record.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -146,12 +141,9 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
         try {
             const debtRef = doc(firestore, `users/${user.uid}/debts`, debt.id);
             await deleteDocumentNonBlocking(debtRef);
-            toast({
-                title: "Transaction Deleted",
-                description: `The record has been removed.`,
-            });
+            toast({ title: "Transaction Deleted" });
         } catch (error: any) {
-            toast({ variant: 'destructive', title: "Error Deleting Transaction", description: "Could not delete the transaction. Please try again." });
+            toast({ variant: 'destructive', title: "Error Deleting Transaction" });
         } finally {
             setIsDeleting(false);
         }
@@ -164,11 +156,11 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="rounded-[24px]">
                 <AlertDialogHeader>
                     <AlertDialogTitle>Delete this transaction?</AlertDialogTitle>
                     <AlertDialogDescription>
-                       You are about to permanently delete the transaction: "{debt.description || 'Transaction'}" of {currencySymbol}{formatAmount(debt.amount)}. This cannot be undone.
+                       This will permanently delete the transaction: "{debt.description || 'Transaction'}" of {currencySymbol}{formatAmount(debt.amount)}.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -183,90 +175,115 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
 }
 
 function DebtGroup({ group, currencySymbol, onSelect, isSelected, selectionMode }: { group: GroupedDebt, currencySymbol: string, onSelect: (name: string) => void, isSelected: boolean, selectionMode: boolean }) {
-
-    const handleIconClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        onSelect(group.personName);
-    };
+    const [isExpanded, setIsExpanded] = useState(false);
 
     return (
-         <Collapsible key={group.personName} className="border rounded-lg bg-card overflow-hidden">
-            <CollapsibleTrigger asChild>
-                <div
-                    className={cn("flex items-center justify-between p-4 hover:bg-accent/50", selectionMode && "cursor-pointer")}
-                    onClick={() => selectionMode && onSelect(group.personName)}
-                >
-                     <div className="flex items-center gap-3 flex-grow min-w-0">
-                        {selectionMode ? (
-                            <Checkbox 
-                                checked={isSelected} 
-                                onCheckedChange={() => onSelect(group.personName)}
-                                onClick={(e) => e.stopPropagation()} 
-                                className="flex-shrink-0"
-                            />
-                        ) : (
-                             <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 -ml-2" onClick={handleIconClick}>
-                                <User className="h-5 w-5 text-muted-foreground" />
-                            </Button>
-                        )}
-                        <div className="flex-grow">
-                            <h3 className="font-semibold text-[15px] truncate">{group.personName}</h3>
-                            <p className={cn("font-semibold text-sm",
-                                group.netAmount > 0 && "text-primary",
-                                group.netAmount < 0 && "text-destructive",
-                                group.netAmount === 0 && "text-muted-foreground"
-                            )}>
-                                {group.netAmount > 0 ? `Owes you ${currencySymbol}${formatAmount(group.netAmount)}` : group.netAmount < 0 ? `You owe ${currencySymbol}${formatAmount(Math.abs(group.netAmount))}` : `All Settled`}
-                            </p>
-                        </div>
+         <Card className="rounded-[20px] border-none shadow-sm hover:shadow-md transition-all duration-300 bg-card overflow-hidden">
+            <CardContent className="p-4">
+                <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onSelect(group.personName); }}
+                            className={cn(
+                                "h-12 w-12 rounded-full bg-muted flex items-center justify-center transition-colors",
+                                isSelected ? "bg-primary text-white" : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                            )}
+                        >
+                            {selectionMode ? (
+                                <Checkbox 
+                                    checked={isSelected} 
+                                    onCheckedChange={() => onSelect(group.personName)}
+                                    className="border-none bg-transparent"
+                                />
+                            ) : (
+                                <User className="h-6 w-6" />
+                            )}
+                        </button>
                     </div>
-                    {!selectionMode && (
-                        <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <SettleUpButton group={group} currencySymbol={currencySymbol} />
-                            <AddDebtDialog personName={group.personName}>
-                                <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-8 w-8"
-                                >
-                                    <PlusCircle className="h-4 w-4" />
+
+                    <div className="flex-grow min-w-0">
+                        <div className="flex justify-between items-start mb-1">
+                            <div className="min-w-0">
+                                <h3 className="font-bold text-base truncate">{group.personName}</h3>
+                                <p className="text-xs text-muted-foreground font-medium">
+                                    {group.pendingCount} pending transactions
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="text-right">
+                                    {group.netAmount === 0 ? (
+                                        <Badge className="bg-primary/10 text-primary border-none font-bold uppercase text-[10px]">Settled</Badge>
+                                    ) : (
+                                        <p className={cn(
+                                            "font-bold text-lg leading-none",
+                                            group.netAmount > 0 ? "text-primary" : "text-destructive"
+                                        )}>
+                                            {currencySymbol}{formatAmount(Math.abs(group.netAmount))}
+                                        </p>
+                                    )}
+                                </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground focus-visible:ring-0">
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="rounded-xl">
+                                        <AddDebtDialog personName={group.personName}>
+                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                <PlusCircle className="mr-2 h-4 w-4" /> Add Record
+                                            </DropdownMenuItem>
+                                        </AddDebtDialog>
+                                        {group.netAmount !== 0 && <SettleUpButton group={group} currencySymbol={currencySymbol} />}
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem 
+                                            onSelect={(e) => { e.preventDefault(); onSelect(group.personName); }}
+                                            className={isSelected ? "bg-muted" : ""}
+                                        >
+                                            <Trash2 className="mr-2 h-4 w-4" /> {selectionMode ? 'Unselect' : 'Delete records'}
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+
+                        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+                            <CollapsibleTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-6 p-0 text-[10px] uppercase font-bold text-muted-foreground/70 tracking-widest hover:bg-transparent">
+                                    {isExpanded ? 'Hide history' : 'View history'}
+                                    <ChevronDown className={cn("ml-1 h-3 w-3 transition-transform", isExpanded && "rotate-180")} />
                                 </Button>
-                            </AddDebtDialog>
-                        </div>
-                    )}
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="pt-3 space-y-3">
+                                {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
+                                    <div key={record.id} className="flex items-center gap-3 py-2 border-t border-muted/50 text-sm group/item">
+                                        <div className={cn(
+                                            "h-7 w-7 rounded-full flex items-center justify-center shrink-0",
+                                            record.type === 'lent' ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+                                        )}>
+                                            {record.type === 'lent' ? <ArrowLeft className="h-3.5 w-3.5" /> : <ArrowRight className="h-3.5 w-3.5" />}
+                                        </div>
+                                        <div className="flex-grow min-w-0">
+                                            <p className="font-medium truncate">{record.description || (record.type === 'lent' ? 'Money Given' : 'Money Received')}</p>
+                                            <p className="text-[10px] text-muted-foreground">{record.date.toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                            <p className={cn("font-bold", record.type === 'lent' ? 'text-destructive' : 'text-primary')}>
+                                                {currencySymbol}{formatAmount(record.amount)}
+                                            </p>
+                                            {record.status === 'settled' && <Badge className="h-3 text-[8px] bg-muted text-muted-foreground uppercase py-0 px-1 border-none">Settled</Badge>}
+                                        </div>
+                                        <div className="opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                            <DeleteTransactionButton debt={record} currencySymbol={currencySymbol} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </div>
                 </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-                <div className="px-4 pb-4 pt-2">
-                    {group.records.sort((a,b) => b.date.getTime() - a.date.getTime()).map(record => (
-                        <div key={record.id} className="flex items-center gap-4 py-3 border-b last:border-b-0 text-sm group">
-                            <div>
-                                {record.type === 'lent' ? 
-                                    <ArrowLeft className="h-5 w-5 text-destructive" /> : 
-                                    <ArrowRight className="h-5 w-5 text-primary" />}
-                            </div>
-                            <div className="flex-grow">
-                                <p className="font-medium">
-                                    {record.description || (record.type === 'lent' ? 'Given' : 'Received')}
-                                </p>
-                                <p className="text-xs text-muted-foreground">{record.date.toLocaleDateString()}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className={cn("font-semibold", record.type === 'lent' ? 'text-destructive' : 'text-primary')}>
-                                    {currencySymbol}{formatAmount(record.amount)}
-                                </p>
-                                {typeof record.runningBalance === 'number' && (
-                                    <p className="text-xs text-muted-foreground">Bal: {currencySymbol}{formatAmount(record.runningBalance)}</p>
-                                )}
-                            </div>
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                <DeleteTransactionButton debt={record} currencySymbol={currencySymbol} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </CollapsibleContent>
-        </Collapsible>
+            </CardContent>
+        </Card>
     );
 }
 
@@ -362,10 +379,7 @@ export function DebtsList({ debts, isLoading, selectedPersonNames, onSelectionCh
         return (
             <div className="space-y-4">
                 {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="p-4 border rounded-lg">
-                        <Skeleton className="h-6 w-1/3" />
-                        <Skeleton className="h-4 w-1/2 mt-2" />
-                    </div>
+                    <Skeleton key={i} className="h-32 w-full rounded-[20px]" />
                 ))}
             </div>
         )
@@ -373,34 +387,34 @@ export function DebtsList({ debts, isLoading, selectedPersonNames, onSelectionCh
     
     if (debts.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg">
-                <h3 className="text-xl font-semibold">No Debts or Dues</h3>
-                <p className="text-muted-foreground mt-2">Click "Add Debt" to start tracking.</p>
+            <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-[20px] bg-card/50">
+                <h3 className="text-xl font-semibold">No Debts Found</h3>
+                <p className="text-muted-foreground mt-2">Click "Add Debt" to start tracking your dues.</p>
             </div>
         );
     }
 
     return (
-        <div className="relative">
+        <div className="space-y-4">
              {selectionMode && (
-                <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm p-2 border-b flex justify-between items-center">
-                    <div className="flex items-center gap-2">
+                <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm p-3 rounded-2xl border shadow-sm flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-2 pl-1">
                         <Checkbox
                             id="select-all-debts"
                             checked={selectedPersonNames.length === groupedDebts.length && groupedDebts.length > 0}
                             onCheckedChange={handleSelectAll}
                         />
-                        <Label htmlFor="select-all-debts" className="font-medium text-sm">{selectedPersonNames.length} selected</Label>
+                        <Label htmlFor="select-all-debts" className="font-bold text-sm">{selectedPersonNames.length} selected</Label>
                     </div>
                     <div className="flex items-center gap-2">
                          <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm" disabled={selectedPersonNames.length === 0 || isDeleting}>
+                                <Button variant="destructive" size="sm" className="h-9 px-4 rounded-xl" disabled={selectedPersonNames.length === 0 || isDeleting}>
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Delete
                                 </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
+                            <AlertDialogContent className="rounded-[24px]">
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                     <AlertDialogDescription>This will permanently delete all records for {selectedPersonNames.length} person(s).</AlertDialogDescription>
@@ -413,11 +427,11 @@ export function DebtsList({ debts, isLoading, selectedPersonNames, onSelectionCh
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
-                        <Button variant="ghost" size="sm" onClick={() => onSelectionChange([])}>Cancel</Button>
+                        <Button variant="ghost" size="sm" className="h-9 px-4 rounded-xl" onClick={() => onSelectionChange([])}>Cancel</Button>
                     </div>
                 </div>
             )}
-            <div className="space-y-3">
+            <div className="grid gap-4">
                 {groupedDebts.map((group) => (
                     <DebtGroup
                         key={group.personName}

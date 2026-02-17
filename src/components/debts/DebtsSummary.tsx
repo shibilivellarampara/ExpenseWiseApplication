@@ -1,13 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EnrichedDebt, UserProfile } from '@/lib/types';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { Separator } from '@/components/ui/separator';
 import { cn, formatAmount } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -54,48 +53,76 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
     }, [debts]);
 
     if (isLoading) {
-        return <Skeleton className="h-24" />;
+        return <Skeleton className="h-44 w-full rounded-[24px]" />;
     }
 
     return (
-        <Card>
-            <CardContent className="p-0 relative">
-                 {activeFilter !== 'all' && (
-                    <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-8 w-8 z-10" onClick={() => onFilterChange(activeFilter === 'lent' ? 'lent' : 'borrowed')}>
-                        <X className="h-4 w-4" />
-                        <span className="sr-only">Clear filter</span>
-                    </Button>
-                )}
-                <div 
-                    className="flex items-center justify-center"
+        <Card className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden relative">
+            {activeFilter !== 'all' && (
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 right-2 h-8 w-8 z-10 hover:bg-primary/10 rounded-full" 
+                    onClick={() => onFilterChange(activeFilter === 'lent' ? 'lent' : 'borrowed')}
                 >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                    <span className="sr-only">Clear filter</span>
+                </Button>
+            )}
+            <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-8">
                     <div 
-                        className={cn("flex-1 text-center p-4 cursor-pointer transition-colors rounded-l-lg", activeFilter === 'lent' ? 'bg-primary/10' : 'hover:bg-accent/50')}
+                        className={cn(
+                            "space-y-1 cursor-pointer transition-all p-2 rounded-xl -m-2",
+                            activeFilter === 'lent' ? "bg-primary/5 ring-1 ring-primary/20" : "hover:bg-muted/50"
+                        )}
                         onClick={() => onFilterChange('lent')}
                     >
-                         <p className="text-sm text-muted-foreground">You are Owed</p>
-                         <p className="text-2xl font-bold text-primary">{currencySymbol}{formatAmount(totalOwedToUser)}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Owed to You</p>
+                        <p className="text-3xl font-bold text-primary">
+                            {currencySymbol}{formatAmount(totalOwedToUser)}
+                        </p>
                     </div>
-                    <Separator orientation="vertical" className="h-16" />
-                     <div 
-                        className={cn("flex-1 text-center p-4 cursor-pointer transition-colors rounded-r-lg", activeFilter === 'borrowed' ? 'bg-destructive/10' : 'hover:bg-accent/50')}
+                    <div 
+                        className={cn(
+                            "text-right space-y-1 cursor-pointer transition-all p-2 rounded-xl -m-2",
+                            activeFilter === 'borrowed' ? "bg-destructive/5 ring-1 ring-destructive/20" : "hover:bg-muted/50"
+                        )}
                         onClick={() => onFilterChange('borrowed')}
-                     >
-                         <p className="text-sm text-muted-foreground">You Owe</p>
-                         <p className="text-2xl font-bold text-destructive">{currencySymbol}{formatAmount(totalUserOwes)}</p>
+                    >
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">You Owe</p>
+                        <p className="text-3xl font-bold text-destructive">
+                            {currencySymbol}{formatAmount(totalUserOwes)}
+                        </p>
                     </div>
                 </div>
 
-                <div>
-                    <Separator className="my-0" />
-                    <div className="p-1 flex items-center justify-center gap-2">
-                         <p className="text-sm text-muted-foreground">
-                            {netBalance > 0 ? 'Net Owed to You:' : netBalance < 0 ? 'Net You Owe:' : 'Net Position:'}
+                <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                        <p className="text-sm font-medium text-foreground">
+                            {netBalance >= 0 ? 'Net Receivable' : 'Net Payable'}
                         </p>
-                        <p className={cn("text-lg font-bold", netBalance >= 0 ? "text-primary" : "text-destructive")}>
-                            {netBalance >= 0 ? `${currencySymbol}${formatAmount(netBalance)}` : `${currencySymbol}${formatAmount(Math.abs(netBalance))}`}
+                        <p className={cn(
+                            "text-lg font-bold",
+                            netBalance >= 0 ? "text-primary" : "text-destructive"
+                        )}>
+                            {currencySymbol}{formatAmount(Math.abs(netBalance))}
                         </p>
                     </div>
+                    
+                    <div className="relative h-2.5 w-full bg-muted rounded-full overflow-hidden">
+                        <div 
+                            className={cn(
+                                "absolute inset-y-0 left-0 transition-all duration-500",
+                                netBalance >= 0 ? "bg-gradient-to-r from-primary/30 to-primary" : "bg-gradient-to-r from-destructive/30 to-destructive"
+                            )}
+                            style={{ width: `100%` }}
+                        />
+                    </div>
+
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground/50 tracking-widest text-center">
+                        Financial Position at a glance
+                    </p>
                 </div>
             </CardContent>
         </Card>

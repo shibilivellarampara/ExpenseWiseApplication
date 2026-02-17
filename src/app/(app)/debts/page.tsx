@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, commitBatchNonBlocking } from "@/firebase";
 import { Debt, EnrichedDebt } from "@/lib/types";
 import { collection, orderBy, query, where, getDocs, writeBatch } from "firebase/firestore";
-import { PlusCircle, Search } from "lucide-react";
+import { PlusCircle, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { DebtsSummary } from "@/components/debts/DebtsSummary";
 import { useDebounce } from "use-debounce";
@@ -118,34 +118,45 @@ export default function DebtsPage() {
 
 
     return (
-        <div className="w-full space-y-8">
-            <PageHeader title="Debts & Dues" description="Track money you've borrowed or lent to others." />
+        <div className="w-full space-y-6 pb-32">
+            <div className="space-y-1">
+                <h1 className="text-3xl font-bold font-headline text-foreground">Debts & Dues</h1>
+            </div>
             
-            <div className="space-y-4">
-                <DebtsSummary 
-                    debts={enrichedDebts} 
-                    isLoading={isLoading}
-                    onFilterChange={handleFilterChange}
-                    activeFilter={typeFilter}
-                />
-                
-                <div className="flex gap-2 items-center">
-                    <div className="relative flex-grow">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search by name..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-8 w-full border-primary/30 focus-visible:border-primary"
-                        />
-                    </div>
-                     <AddDebtDialog>
-                         <Button variant="outline" className="shrink-0 text-primary border-primary hover:text-primary hover:bg-primary/10">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Debt
+            <DebtsSummary 
+                debts={enrichedDebts} 
+                isLoading={isLoading}
+                onFilterChange={handleFilterChange}
+                activeFilter={typeFilter}
+            />
+            
+            <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by name..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 h-12 bg-card border-none shadow-sm rounded-2xl"
+                    />
+                    {searchQuery && (
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent"
+                            onClick={() => setSearchQuery('')}
+                        >
+                            <X className="h-4 w-4 text-muted-foreground" />
                         </Button>
-                    </AddDebtDialog>
+                    )}
                 </div>
+                <AddDebtDialog>
+                     <Button className="h-12 px-6 bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-md gap-2 shrink-0">
+                        <PlusCircle className="h-5 w-5" />
+                        <span className="hidden sm:inline">Add Debt</span>
+                        <span className="sm:hidden">Add</span>
+                    </Button>
+                </AddDebtDialog>
             </div>
 
             <DebtsList 

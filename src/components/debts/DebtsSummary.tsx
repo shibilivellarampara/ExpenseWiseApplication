@@ -82,7 +82,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                             </Button>
                         )}
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Owed to You</p>
-                        <p className="text-3xl font-bold text-primary">
+                        <p className="text-xl sm:text-2xl font-bold text-primary">
                             {currencySymbol}{formatAmount(totalOwedToUser)}
                         </p>
                     </div>
@@ -111,7 +111,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
                             </Button>
                         )}
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">You Owe</p>
-                        <p className="text-3xl font-bold text-destructive">
+                        <p className="text-xl sm:text-2xl font-bold text-destructive">
                             {currencySymbol}{formatAmount(totalUserOwes)}
                         </p>
                     </div>

@@ -28,13 +28,13 @@ export function AssetsSummary({ totalNetAssets, totalInvested, overallGainLoss, 
                 <div className="flex justify-between items-start mb-8">
                     <div className="space-y-1">
                         <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Net Assets</p>
-                        <p className="text-2xl sm:text-3xl font-bold text-primary">
+                        <p className="text-xl sm:text-2xl font-bold text-primary">
                             {currencySymbol}{formatAmount(totalNetAssets)}
                         </p>
                     </div>
                     <div className="text-right space-y-1">
                         <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Total Invested</p>
-                        <p className="text-lg sm:text-xl font-bold text-foreground">
+                        <p className="text-lg font-bold text-foreground">
                             {currencySymbol}{formatAmount(totalInvested)}
                         </p>
                     </div>

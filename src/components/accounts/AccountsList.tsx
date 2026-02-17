@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +45,157 @@ const getOrdinalSuffix = (day: number) => {
       default: return "th";
     }
 };
+
+function CloseAccountButton({ account }: { account: Account }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { toast } = useToast();
+
+    const handleAccountDelete = async () => {
+        if (!user || !firestore) return;
+        setIsDeleting(true);
+        try {
+            const batch = writeBatch(firestore);
+            const expensesQuery = query(collection(firestore, `users/${user.uid}/expenses`), where('accountId', '==', account.id));
+            const expensesSnapshot = await getDocs(expensesQuery);
+            expensesSnapshot.forEach(doc => batch.delete(doc.ref));
+
+            const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
+            batch.delete(accountRef);
+
+            await commitBatchNonBlocking(batch, `users/${user.uid}/accounts`);
+            
+            toast({
+                title: "Account Closed",
+                description: `"${account.name}" and all its transactions have been permanently deleted.`
+            });
+        } catch (error: any) {
+             toast({ variant: 'destructive', title: "Error Closing Account", description: error.message });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    return (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Close Account
+                </DropdownMenuItem>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-[24px]">
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete the account "{account.name}" and all of its associated transactions. This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleAccountDelete} className="bg-destructive hover:bg-destructive/90">
+                        {isDeleting ? <Loader2 className="animate-spin" /> : "Yes, close account"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}
+
+function DeactivateAccountButton({ account }: { account: Account }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const [isDeactivating, setIsDeactivating] = useState(false);
+    const { toast } = useToast();
+
+    const handleDeactivate = async () => {
+        if (!user || !firestore) return;
+        setIsDeactivating(true);
+        const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
+        setDocumentNonBlocking(accountRef, { status: 'inactive' }, { merge: true });
+        toast({ title: "Account Deactivated", description: `"${account.name}" has been archived.` });
+        setIsDeactivating(false);
+    }
+    
+    return (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Archive className="mr-2 h-4 w-4" />
+                    Deactivate
+                </DropdownMenuItem>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-[24px]">
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Deactivate Account?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will hide the account "{account.name}" from forms and lists. You can reactivate it later from the settings.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeactivate}>
+                        {isDeactivating ? <Loader2 className="animate-spin" /> : "Deactivate"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}
+
+function ReactivateAccountButton({ account }: { account: Account }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const [isReactivating, setIsReactivating] = useState(false);
+    const { toast } = useToast();
+
+    const handleReactivate = async () => {
+        if (!user || !firestore) return;
+        setIsReactivating(true);
+        const accountRef = doc(firestore, `users/${user.uid}/accounts`, account.id);
+        setDocumentNonBlocking(accountRef, { status: 'active' }, { merge: true });
+        toast({ title: "Account Reactivated", description: `"${account.name}" is now active.` });
+        setIsReactivating(false);
+    }
+
+    return (
+        <Button variant="ghost" size="sm" onClick={handleReactivate} disabled={isReactivating} className="text-primary hover:bg-primary/10 rounded-xl">
+            {isReactivating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCw className="mr-2 h-4 w-4" />}
+            Reactivate
+        </Button>
+    )
+}
+
+function InactiveAccountsSection({ accounts, title }: { accounts: Account[], title: string }) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    if (accounts.length === 0) return null;
+
+    return (
+        <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mt-4">
+            <CollapsibleTrigger asChild>
+                <button className="flex w-full items-center justify-between p-4 text-xs font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-primary transition-colors">
+                    <span>{accounts.length} Inactive {title}</span>
+                    {isOpen ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-3 px-2 pb-4">
+                {accounts.map(account => (
+                    <div key={account.id} className="flex items-center justify-between p-3 rounded-[16px] bg-muted/30 border border-border/50">
+                        <div className="flex items-center gap-3">
+                             <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center opacity-60">
+                                {renderIcon(account.icon, 'h-4 w-4')}
+                             </div>
+                            <span className="text-sm font-medium text-muted-foreground">{account.name}</span>
+                        </div>
+                        <ReactivateAccountButton account={account} />
+                    </div>
+                ))}
+            </CollapsibleContent>
+        </Collapsible>
+    )
+}
 
 const CardDisplay = ({ account }: { account: Account }) => {
     const details = account.cardDetails;
@@ -95,11 +245,17 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
     const currencySymbol = getCurrencySymbol(userProfile?.defaultCurrency);
 
-    const activeAccounts = accounts.filter(acc => (acc.status === 'active' || acc.status === undefined));
-    const inactiveAccounts = accounts.filter(acc => acc.status === 'inactive');
+    const { activeCreditCards, inactiveCreditCards, activeOtherAccounts, inactiveOtherAccounts } = useMemo(() => {
+        const active = accounts.filter(acc => acc.status === 'active' || acc.status === undefined);
+        const inactive = accounts.filter(acc => acc.status === 'inactive');
 
-    const creditCards = activeAccounts.filter(acc => acc.type === 'credit_card');
-    const otherAccounts = activeAccounts.filter(acc => acc.type !== 'credit_card');
+        return {
+            activeCreditCards: active.filter(acc => acc.type === 'credit_card'),
+            inactiveCreditCards: inactive.filter(acc => acc.type === 'credit_card'),
+            activeOtherAccounts: active.filter(acc => acc.type !== 'credit_card'),
+            inactiveOtherAccounts: inactive.filter(acc => acc.type !== 'credit_card'),
+        };
+    }, [accounts]);
 
     if (isLoading) {
         return (
@@ -201,10 +357,10 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                                             {isCreditCard && (
                                                 <PayBillDialog 
                                                     creditCard={item} 
-                                                    paymentAccounts={otherAccounts.filter(a => a.type === 'bank')} 
+                                                    paymentAccounts={activeOtherAccounts.filter(a => a.type === 'bank')} 
                                                     outstandingAmount={outstanding}
                                                 >
-                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={outstanding <= 0}>
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={outstanding <= 0} className={!isPaid ? "text-primary" : ""}>
                                                         <Handshake className="mr-2 h-4 w-4" /> Pay Bill
                                                     </DropdownMenuItem>
                                                 </PayBillDialog>
@@ -214,10 +370,16 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                                                     <BarChartHorizontal className="mr-2 h-4 w-4" /> Analysis
                                                 </Link>
                                             </DropdownMenuItem>
+                                            {isCreditCard && (
+                                                <DropdownMenuItem asChild>
+                                                    <Link href={`/expenses?accounts=${item.id}&type=income`}>
+                                                        <History className="mr-2 h-4 w-4" /> Payment History
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            )}
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-destructive">
-                                                <XCircle className="mr-2 h-4 w-4" /> Close Account
-                                            </DropdownMenuItem>
+                                            <DeactivateAccountButton account={item} />
+                                            <CloseAccountButton account={item} />
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
@@ -246,40 +408,50 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
 
     return (
         <div className="space-y-8">
-            {creditCards.length > 0 && (
-                <div className="space-y-4">
-                    <div className="flex justify-between items-end px-1">
-                        <div>
-                            <h2 className="text-xl font-bold font-headline">Credit Cards</h2>
-                        </div>
+            {/* Active Credit Cards Section */}
+            <div className="space-y-4">
+                <div className="flex justify-between items-end px-1">
+                    <div>
+                        <h2 className="text-xl font-bold font-headline">Credit Cards</h2>
+                    </div>
+                    {activeCreditCards.length > 0 && (
                         <div className="text-right">
                             <p className="text-xl font-bold text-[#F2994A]">
-                                {currencySymbol}{formatAmount(creditCards.reduce((sum, c) => sum + Math.max(0, (c.limit || 0) - c.balance), 0))}
+                                {currencySymbol}{formatAmount(activeCreditCards.reduce((sum, c) => sum + Math.max(0, (c.limit || 0) - c.balance), 0))}
                             </p>
                             <p className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-widest leading-none mt-1">
-                                Available: {currencySymbol}{formatAmount(creditCards.reduce((sum, c) => sum + c.balance, 0))}
+                                Available: {currencySymbol}{formatAmount(activeCreditCards.reduce((sum, c) => sum + c.balance, 0))}
                             </p>
                         </div>
-                    </div>
-                    <div className="grid gap-4">
-                        {creditCards.map(renderAccountCard)}
-                    </div>
+                    )}
                 </div>
-            )}
+                <div className="grid gap-4">
+                    {activeCreditCards.map(renderAccountCard)}
+                    {activeCreditCards.length === 0 && !isLoading && (
+                        <p className="text-sm text-muted-foreground/60 text-center py-4 bg-muted/10 rounded-[20px] border border-dashed">No active credit cards</p>
+                    )}
+                </div>
+                <InactiveAccountsSection accounts={inactiveCreditCards} title="Credit Cards" />
+            </div>
 
-            {otherAccounts.length > 0 && (
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center px-1">
-                        <h2 className="text-xl font-bold font-headline">Savings & Others</h2>
+            {/* Active Savings & Others Section */}
+            <div className="space-y-4">
+                <div className="flex justify-between items-center px-1">
+                    <h2 className="text-xl font-bold font-headline">Savings & Others</h2>
+                    {activeOtherAccounts.length > 0 && (
                         <p className="text-xl font-bold text-primary">
-                            {currencySymbol}{formatAmount(otherAccounts.reduce((sum, c) => sum + c.balance, 0))}
+                            {currencySymbol}{formatAmount(activeOtherAccounts.reduce((sum, c) => sum + c.balance, 0))}
                         </p>
-                    </div>
-                    <div className="grid gap-4">
-                        {otherAccounts.map(renderAccountCard)}
-                    </div>
+                    )}
                 </div>
-            )}
+                <div className="grid gap-4">
+                    {activeOtherAccounts.map(renderAccountCard)}
+                    {activeOtherAccounts.length === 0 && !isLoading && (
+                        <p className="text-sm text-muted-foreground/60 text-center py-4 bg-muted/10 rounded-[20px] border border-dashed">No active savings accounts</p>
+                    )}
+                </div>
+                <InactiveAccountsSection accounts={inactiveOtherAccounts} title="Accounts" />
+            </div>
         </div>
     );
 }

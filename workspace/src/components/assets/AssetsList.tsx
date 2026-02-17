@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -123,15 +122,14 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                 const categoryTotal = categoryAssets?.reduce((sum, asset) => sum + asset.currentValue, 0) || 0;
 
                 return (
-                    <Card key={assetType} className="rounded-[20px] border-none shadow-md bg-card overflow-hidden">
+                    <Card key={assetType} className="rounded-[20px] border border-border/50 shadow-md bg-card overflow-hidden">
                         <CardHeader className="flex flex-row justify-between items-start pb-4">
                              <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                                     {renderIcon(categoryInfo.icon, 'h-5 w-5')}
                                 </div>
                                 <div>
-                                    <CardTitle className="font-headline text-lg">{categoryInfo.label}</CardTitle>
-                                    <CardDescription className="font-bold text-foreground/80">{currencySymbol}{formatAmount(categoryTotal)}</CardDescription>
+                                    <CardTitle className="font-headline text-lg">{categoryInfo.label}</CardTitle(CardDescription className="font-bold text-foreground/80">{currencySymbol}{formatAmount(categoryTotal)}</CardDescription>
                                 </div>
                             </div>
                            <div className="flex items-center">

@@ -280,7 +280,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
         const availablePercent = limit > 0 ? (available / limit) * 100 : 0;
 
         return (
-            <Card key={item.id} className="rounded-[20px] border-none shadow-md hover:shadow-lg transition-all duration-300 bg-card overflow-hidden group">
+            <Card key={item.id} className="rounded-[20px] border border-border/50 shadow-md hover:shadow-lg transition-all duration-300 bg-card overflow-hidden group">
                 <CardContent className="p-4">
                     <div className="flex items-start gap-4">
                         <div className="flex-shrink-0">

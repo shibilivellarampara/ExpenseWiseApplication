@@ -1,4 +1,3 @@
-
 @import 'react-phone-number-input/style.css';
 @tailwind base;
 @tailwind components;
@@ -53,7 +52,7 @@
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222.2 84% 8%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
@@ -187,7 +186,7 @@
   .dark-fintech {
     --background: 220 25% 12%; /* Dark Navy/Charcoal */
     --foreground: 220 15% 95%; /* Off-white */
-    --card: 220 25% 16%;
+    --card: 220 25% 18%;
     --card-foreground: 220 15% 95%;
     --popover: 220 25% 14%;
     --popover-foreground: 220 15% 95%;

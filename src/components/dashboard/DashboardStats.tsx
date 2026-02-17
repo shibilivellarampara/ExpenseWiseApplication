@@ -23,22 +23,26 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
         const currentMonthSpending = currentMonthExpenses.filter(e => e.type === 'expense');
         const lastMonthSpending = lastMonthExpenses.filter(e => e.type === 'expense');
 
-        const totalCurrent = currentMonthSpending.reduce((sum, e) => sum + e.amount, 0);
-        const totalLast = lastMonthSpending.reduce((sum, e) => sum + e.amount, 0);
-
-        // Calculate Transfers specifically
-        const transferCategories = ['Transfer', 'Self Transfer', 'Credit Card Payment'];
-        const totalTransfers = currentMonthSpending
-            .filter(e => e.category && (
-                transferCategories.includes(e.category.name) || 
-                e.category.name.toLowerCase().includes('transfer')
-            ))
+        // Specifically only 'Transfer' category for current month
+        const totalTransfersCurrent = currentMonthSpending
+            .filter(e => e.category?.name === 'Transfer')
             .reduce((sum, e) => sum + e.amount, 0);
 
+        // Specifically only 'Transfer' category for last month
+        const totalTransfersLast = lastMonthSpending
+            .filter(e => e.category?.name === 'Transfer')
+            .reduce((sum, e) => sum + e.amount, 0);
+
+        const totalCurrentAll = currentMonthSpending.reduce((sum, e) => sum + e.amount, 0);
+        const totalLastAll = lastMonthSpending.reduce((sum, e) => sum + e.amount, 0);
+
+        const adjustedTotalCurrent = totalCurrentAll - totalTransfersCurrent;
+        const adjustedTotalLast = totalLastAll - totalTransfersLast;
+
         let momChange = 0;
-        if (totalLast > 0) {
-            momChange = ((totalCurrent - totalLast) / totalLast) * 100;
-        } else if (totalCurrent > 0) {
+        if (adjustedTotalLast > 0) {
+            momChange = ((adjustedTotalCurrent - adjustedTotalLast) / adjustedTotalLast) * 100;
+        } else if (adjustedTotalCurrent > 0) {
             momChange = 100; 
         }
 
@@ -57,8 +61,8 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
         }
 
         return {
-            totalExpense: totalCurrent,
-            totalTransfers: totalTransfers,
+            totalExpense: adjustedTotalCurrent,
+            totalTransfers: totalTransfersCurrent,
             topCategory: topCategory,
             topCategoryAmount: topCategoryAmount,
             monthOverMonthChange: momChange
@@ -81,7 +85,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                     <div className="flex items-center gap-1.5 mt-1">
                         <ArrowRightLeft className="h-3 w-3 text-muted-foreground" />
                         <p className="text-xs text-muted-foreground">
-                            Incl. {currencySymbol}{formatAmount(stats.totalTransfers)} in transfers
+                            Excl. {currencySymbol}{formatAmount(stats.totalTransfers)} in transfers
                         </p>
                     </div>
                 </CardContent>

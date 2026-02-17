@@ -23,12 +23,10 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
         const currentMonthSpending = currentMonthExpenses.filter(e => e.type === 'expense');
         const lastMonthSpending = lastMonthExpenses.filter(e => e.type === 'expense');
 
-        // Specifically only 'Transfer' category for current month
         const totalTransfersCurrent = currentMonthSpending
             .filter(e => e.category?.name === 'Transfer')
             .reduce((sum, e) => sum + e.amount, 0);
 
-        // Specifically only 'Transfer' category for last month
         const totalTransfersLast = lastMonthSpending
             .filter(e => e.category?.name === 'Transfer')
             .reduce((sum, e) => sum + e.amount, 0);
@@ -75,7 +73,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
 
     return (
         <div className="grid gap-4 md:grid-cols-3">
-            <Card>
+            <Card className="shadow-md border-none rounded-2xl">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Monthly Expense</CardTitle>
                     <span className="text-muted-foreground font-bold">{currencySymbol}</span>
@@ -90,17 +88,17 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                     </div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-md border-none rounded-2xl">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Top Spending Category</CardTitle>
                     <Tag className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stats.topCategory}</div>
+                    <div className="text-2xl font-bold truncate">{stats.topCategory}</div>
                     <p className="text-xs text-muted-foreground">{currencySymbol}{formatAmount(stats.topCategoryAmount)} spent this month</p>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-md border-none rounded-2xl">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Month-over-Month</CardTitle>
                      {stats.monthOverMonthChange > 0 ? (
@@ -125,36 +123,18 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
 function DashboardStatsSkeleton() {
     return (
         <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-7 w-24 mb-2" />
-                    <Skeleton className="h-3 w-32" />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-7 w-24 mb-2" />
-                    <Skeleton className="h-3 w-32" />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-7 w-24 mb-2" />
-                    <Skeleton className="h-3 w-32" />
-                </CardContent>
-            </Card>
+            {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i} className="shadow-md border-none rounded-2xl">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-4 w-4" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-7 w-24 mb-2" />
+                        <Skeleton className="h-3 w-32" />
+                    </CardContent>
+                </Card>
+            ))}
         </div>
     );
 }

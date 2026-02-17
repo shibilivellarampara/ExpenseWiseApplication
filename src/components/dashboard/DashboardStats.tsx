@@ -1,11 +1,9 @@
-
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EnrichedExpense } from "@/lib/types";
-import { TrendingUp, Tag, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, Tag, TrendingDown, Minus, ArrowRightLeft } from "lucide-react";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { formatAmount } from "@/lib/utils";
@@ -28,11 +26,20 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
         const totalCurrent = currentMonthSpending.reduce((sum, e) => sum + e.amount, 0);
         const totalLast = lastMonthSpending.reduce((sum, e) => sum + e.amount, 0);
 
+        // Calculate Transfers specifically
+        const transferCategories = ['Transfer', 'Self Transfer', 'Credit Card Payment'];
+        const totalTransfers = currentMonthSpending
+            .filter(e => e.category && (
+                transferCategories.includes(e.category.name) || 
+                e.category.name.toLowerCase().includes('transfer')
+            ))
+            .reduce((sum, e) => sum + e.amount, 0);
+
         let momChange = 0;
         if (totalLast > 0) {
             momChange = ((totalCurrent - totalLast) / totalLast) * 100;
         } else if (totalCurrent > 0) {
-            momChange = 100; // Infinite increase if last month was 0
+            momChange = 100; 
         }
 
         const categorySpending = new Map<string, number>();
@@ -51,6 +58,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
 
         return {
             totalExpense: totalCurrent,
+            totalTransfers: totalTransfers,
             topCategory: topCategory,
             topCategoryAmount: topCategoryAmount,
             monthOverMonthChange: momChange
@@ -70,7 +78,12 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{formatAmount(stats.totalExpense)}</div>
-                    <p className="text-xs text-muted-foreground">Cash out this month</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                        <ArrowRightLeft className="h-3 w-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">
+                            Incl. {currencySymbol}{formatAmount(stats.totalTransfers)} in transfers
+                        </p>
+                    </div>
                 </CardContent>
             </Card>
             <Card>

@@ -175,7 +175,7 @@ function InactiveAccountsSection({ accounts, title }: { accounts: Account[], tit
     return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mt-4">
             <CollapsibleTrigger asChild>
-                <button className="flex w-full items-center justify-between p-4 text-sm font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-primary transition-colors">
+                <button className="flex w-full items-center justify-between p-4 text-xs font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-primary transition-colors">
                     <span>{accounts.length} Inactive {title}</span>
                     {isOpen ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -285,7 +285,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
         const availablePercent = limit > 0 ? (available / limit) * 100 : 0;
 
         return (
-            <Card key={item.id} className="rounded-[20px] border-none shadow-md transition-all duration-300 bg-card overflow-hidden group">
+            <Card key={item.id} className="rounded-[20px] border-none shadow-sm hover:shadow-md transition-all duration-300 bg-card overflow-hidden group">
                 <CardContent className="p-4">
                     <div className="flex items-start gap-4">
                         <div className="flex-shrink-0">

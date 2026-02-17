@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -24,7 +23,8 @@ const changelog = [
         changes: [
             { type: 'Feature', description: "Introduced 'Recurring Transactions' management to automate tracking for regular bills and subscriptions." },
             { type: 'Feature', description: "Dashboard 'Total Monthly Expense' now automatically excludes the 'Transfer' category for more accurate spending tracking." },
-            { type: 'UI/UX', description: "Redesigned the Accounts page with a premium fintech summary card and dynamic utilization visualizations." },
+            { type: 'UI/UX', description: "Redesigned the Accounts and Debts pages with a premium fintech summary card and unified search/add headers." },
+            { type: 'UI/UX', description: "Implemented semantic theme coloring: Blue/Orange for Fintech and Green/Red for Chat themes." },
             { type: 'UI/UX', description: "Optimized transaction list rendering by removing internal scroll constraints for a more natural natural feel." },
             { type: 'Fix', description: "Resolved critical JSX tag mismatch and syntax errors in forms and dashboard stats to ensure production stability." },
         ]

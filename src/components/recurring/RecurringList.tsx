@@ -1,4 +1,3 @@
-
 'use client';
 
 import { RecurringExpense, UserProfile, Account, Category } from '@/lib/types';

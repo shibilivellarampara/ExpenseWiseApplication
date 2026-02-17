@@ -17,6 +17,7 @@ import { AddAssetDialog } from './AddAssetDialog';
 import { ASSET_TYPES } from '@/lib/assets';
 import { renderIcon } from '@/lib/render-icon';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { Badge } from "@/components/ui/badge";
 
 interface AssetsListProps {
     assets: Asset[];
@@ -200,10 +201,10 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                             <div className="flex flex-col items-end shrink-0">
                                                 {!isFromAccount ? (
                                                     <>
-                                                        <div className={cn("font-bold text-base", gainLoss >= 0 ? 'text-green-600' : 'text-red-500')}>
+                                                        <div className={cn("font-bold text-base", gainLoss >= 0 ? 'text-primary' : 'text-destructive')}>
                                                             {gainLoss >= 0 ? '+' : '-'}{currencySymbol}{formatAmount(Math.abs(gainLoss))}
                                                         </div>
-                                                        <div className={cn("text-[10px] font-bold flex items-center", gainLoss >= 0 ? 'text-green-600' : 'text-red-500')}>
+                                                        <div className={cn("text-[10px] font-bold flex items-center", gainLoss >= 0 ? 'text-primary' : 'text-destructive')}>
                                                             {percentageReturn.toFixed(1)}%
                                                         </div>
                                                     </>

@@ -45,7 +45,7 @@ export function AssetsSummary({ totalNetAssets, totalInvested, overallGainLoss, 
                         <p className="text-sm font-medium text-foreground">Performance</p>
                         <div className={cn(
                             "flex items-center gap-1.5 font-bold",
-                            overallGainLoss >= 0 ? "text-green-600" : "text-red-500"
+                            overallGainLoss >= 0 ? "text-primary" : "text-destructive"
                         )}>
                             {overallGainLoss >= 0 ? <TrendingUp className="h-4 w-4"/> : <TrendingDown className="h-4 w-4"/>}
                             <span>{overallReturn.toFixed(2)}%</span>

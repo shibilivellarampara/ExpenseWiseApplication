@@ -201,10 +201,10 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                             <div className="flex flex-col items-end shrink-0">
                                                 {!isFromAccount ? (
                                                     <>
-                                                        <div className={cn("font-bold text-base", gainLoss >= 0 ? 'text-green-600' : 'text-red-500')}>
+                                                        <div className={cn("font-bold text-base", gainLoss >= 0 ? 'text-primary' : 'text-destructive')}>
                                                             {gainLoss >= 0 ? '+' : '-'}{currencySymbol}{formatAmount(Math.abs(gainLoss))}
                                                         </div>
-                                                        <div className={cn("text-[10px] font-bold flex items-center", gainLoss >= 0 ? 'text-green-600' : 'text-red-500')}>
+                                                        <div className={cn("text-[10px] font-bold flex items-center", gainLoss >= 0 ? 'text-primary' : 'text-destructive')}>
                                                             {percentageReturn.toFixed(1)}%
                                                         </div>
                                                     </>

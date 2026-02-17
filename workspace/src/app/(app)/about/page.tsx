@@ -32,12 +32,11 @@ const changelog = [
         version: "1.8.3",
         date: "Feb 18, 2026",
         changes: [
-            { type: 'UI/UX', description: "Finalized premium fintech redesign for Accounts, Debts, and Assets with elevated summary cards and unified search headers." },
-            { type: 'UI/UX', description: "Implemented responsive typography for summary cards, ensuring amounts scale gracefully on mobile devices." },
-            { type: 'UI/UX', description: "Applied consistent shadow-md elevation to all dashboard cards for enhanced visual depth." },
-            { type: 'Feature', description: "Aligned Asset performance visuals with semantic themes: primary for gains and destructive for losses." },
-            { type: 'Fix', description: "Resolved critical ReferenceErrors for 'orderBy' and 'Badge' across various holding components." },
-            { type: 'Logic', description: "Standardized v1.8.3 features across production and workspace environments for global parity." },
+            { type: 'UI/UX', description: "Finalized premium fintech redesign for Accounts and Debts with elevated summary cards and unified search headers." },
+            { type: 'UI/UX', description: "Implemented themed fade-out effects for all progress bars, enhancing visual clarity for credit utilization." },
+            { type: 'UI/UX', description: "Contextualized filter cancellation in the Debts UI by moving clear buttons inside respective stat boxes." },
+            { type: 'Feature', description: "Stabilized the 'Recurring Transactions' module by resolving invalid Firebase document references and segment mismatches." },
+            { type: 'Logic', description: "Synchronized v1.8.2 logic and UI refinements across production and workspace environments for global consistency." },
         ]
     },
     {
@@ -48,7 +47,8 @@ const changelog = [
             { type: 'Feature', description: "Dashboard 'Total Monthly Expense' now automatically excludes the 'Transfer' category for more accurate spending tracking." },
             { type: 'UI/UX', description: "Redesigned the Accounts and Debts pages with a premium fintech summary card and unified search/add headers." },
             { type: 'UI/UX', description: "Implemented semantic theme coloring: Blue/Orange for Fintech and Green/Red for Chat themes." },
-            { type: 'Fix', description: "Resolved critical JSX tag mismatch and syntax errors in forms and dashboard stats." },
+            { type: 'UI/UX', description: "Optimized transaction list rendering by removing internal scroll constraints for a more natural natural feel." },
+            { type: 'Fix', description: "Resolved critical JSX tag mismatch and syntax errors in forms and dashboard stats to ensure production stability." },
         ]
     }
 ];

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MoreVertical, Edit, Trash2, Pause, Play, Loader2, Calendar } from 'lucide-react';
-import { useDoc, useFirestore, useUser, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useDoc, useFirestore, useUser, useMemoFirebase, useCollection, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { cn, formatAmount } from '@/lib/utils';

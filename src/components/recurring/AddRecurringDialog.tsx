@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -20,14 +19,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useFirestore, useUser, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { Loader2, Pilcrow } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RecurringExpense, Category, Account } from '@/lib/types';
 import { DateTimePicker } from '@/components/DateTimePicker';
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
-import * as LucideIcons from 'lucide-react';
+import { renderIcon } from '@/lib/render-icon';
 
 const recurringSchema = z.object({
   name: z.string().min(1, 'Name is required.'),
@@ -163,7 +162,7 @@ export function AddRecurringDialog({ children, itemToEdit }: { children: React.R
             ...values,
             userId: user.uid,
             status: itemToEdit?.status || 'active',
-            nextDueDate: values.startDate, // Initial setup
+            nextDueDate: values.startDate,
             createdAt: serverTimestamp(),
         };
 
@@ -184,11 +183,6 @@ export function AddRecurringDialog({ children, itemToEdit }: { children: React.R
             setIsLoading(false);
         }
     }
-
-    const renderIcon = (iconName: string | undefined) => {
-        const IconComponent = (LucideIcons as any)[iconName || ''];
-        return IconComponent ? <IconComponent className="mr-2 h-4 w-4" /> : <Pilcrow className="mr-2 h-4 w-4" />;
-    };
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>

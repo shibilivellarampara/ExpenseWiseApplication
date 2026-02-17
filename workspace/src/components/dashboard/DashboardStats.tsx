@@ -134,7 +134,8 @@ function DashboardStatsSkeleton() {
                     <Skeleton className="h-7 w-24 mb-2" />
                     <Skeleton className="h-3 w-32" />
                 </CardContent>
-             <Card>
+            </Card>
+            <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-4 w-4" />
@@ -143,7 +144,8 @@ function DashboardStatsSkeleton() {
                     <Skeleton className="h-7 w-24 mb-2" />
                     <Skeleton className="h-3 w-32" />
                 </CardContent>
-             <Card>
+            </Card>
+            <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-4 w-4" />
@@ -152,6 +154,7 @@ function DashboardStatsSkeleton() {
                     <Skeleton className="h-7 w-24 mb-2" />
                     <Skeleton className="h-3 w-32" />
                 </CardContent>
+            </Card>
         </div>
-    )
+    );
 }

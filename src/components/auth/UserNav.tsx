@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react"
@@ -72,18 +71,18 @@ export function UserNav() {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-56 rounded-[20px] shadow-2xl border-none p-2" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user?.displayName}</p>
+          <div className="flex flex-col space-y-1 p-2">
+            <p className="text-sm font-bold leading-none">{user?.displayName}</p>
             <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link href="/profile">
-              <Settings className="mr-2 h-4 w-4" />
+        <DropdownMenuSeparator className="bg-muted/50" />
+        <DropdownMenuGroup className="p-1">
+          <DropdownMenuItem asChild className="rounded-xl p-2 cursor-pointer">
+            <Link href="/profile" className="flex items-center w-full">
+              <Settings className="mr-2 h-4 w-4 text-muted-foreground" />
               <span>All Settings</span>
             </Link>
           </DropdownMenuItem>
@@ -94,44 +93,46 @@ export function UserNav() {
                 description={`Customize settings for the ${pathname.split('/')[1] || 'current'} page.`}
                 SettingsComponent={settingsDetails.component}
               >
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                      <Cog className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="rounded-xl p-2 cursor-pointer">
+                      <Cog className="mr-2 h-4 w-4 text-muted-foreground" />
                       <span>{settingsDetails.label}</span>
                   </DropdownMenuItem>
              </PageSettingsDialog>
           )}
 
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <DropdownMenuSubTrigger className="rounded-xl p-2 cursor-pointer">
+              <div className="relative mr-2 h-4 w-4">
+                <Sun className="h-4 w-4 text-muted-foreground rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute top-0 left-0 h-4 w-4 text-muted-foreground rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              </div>
               <span>Toggle theme</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem onClick={() => setTheme("light")}>
-                  <Sun className="mr-2 h-4 w-4" />
+              <DropdownMenuSubContent className="rounded-xl p-1 shadow-xl border-none">
+                <DropdownMenuItem onClick={() => setTheme("light")} className="rounded-lg p-2 cursor-pointer">
+                  <Sun className="mr-2 h-4 w-4 text-muted-foreground" />
                   <span>Light</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
-                  <Moon className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onClick={() => setTheme("dark")} className="rounded-lg p-2 cursor-pointer">
+                  <Moon className="mr-2 h-4 w-4 text-muted-foreground" />
                   <span>Dark</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("chat")}>
-                  <MessageSquare className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onClick={() => setTheme("chat")} className="rounded-lg p-2 cursor-pointer">
+                  <MessageSquare className="mr-2 h-4 w-4 text-muted-foreground" />
                   <span>Chat</span>
                 </DropdownMenuItem>
-                 <DropdownMenuItem onClick={() => setTheme("fintech")}>
-                  <Bot className="mr-2 h-4 w-4" />
+                 <DropdownMenuItem onClick={() => setTheme("fintech")} className="rounded-lg p-2 cursor-pointer">
+                  <Bot className="mr-2 h-4 w-4 text-muted-foreground" />
                   <span>Fintech</span>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut}>
-          <LogOut className="mr-2 h-4 w-4" />
+        <DropdownMenuSeparator className="bg-muted/50" />
+        <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-2 cursor-pointer text-destructive focus:text-destructive">
+          <LogOut className="mr-2 h-4 w-4 text-muted-foreground" />
           <span>Log out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

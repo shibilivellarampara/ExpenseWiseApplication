@@ -21,6 +21,7 @@ const changelog = [
         version: "1.8.5",
         date: "Feb 18, 2026",
         changes: [
+            { type: 'Logic', description: "Optimized transaction loading with dual-query architecture: 50-record pagination for speed + accurate summary totals." },
             { type: 'Fix', description: "Resolved critical JSX syntax errors in AssetsList that caused production build failures." },
             { type: 'Feature', description: "Implemented specific Month & Year picker in Analysis filters for historical deep-dives." },
             { type: 'UI/UX', description: "Redesigned Category Analysis list with a tiered metadata stack and full-width progress bars." },

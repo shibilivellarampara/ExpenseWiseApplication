@@ -6,19 +6,20 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, commitBatchNonBlocking } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment }from "firebase/firestore";
+import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment, limit } from "firebase/firestore";
 import { Plus, Minus, ArrowLeft } from "lucide-react";
-import { useMemo, useState, useCallback, useEffect, useRef } from "react";
-import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
+import { useMemo, useState, useCallback, useEffect } from "react";
+import { ExpensesFilters, Filters } from "@/components/expenses/ExpensesFilters";
 import { endOfMonth, startOfMonth, parse, format } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
-import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
-import { useSearchParams } from 'next/navigation';
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useToast } from "@/hooks/use-toast";
+import { Pagination } from "@/components/ui/pagination";
+
+const PAGE_SIZE = 50;
 
 interface MonthlyExpensesClientProps {
     year: string;
@@ -32,6 +33,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
     const { toast } = useToast();
     const [selectedExpenseIds, setSelectedExpenseIds] = useState<string[]>([]);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [displayLimit, setDisplayLimit] = useState(PAGE_SIZE);
     
     const pageDate = useMemo(() => {
         if (typeof year === 'string' && typeof month === 'string') {
@@ -59,27 +61,27 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             collection(firestore, `users/${user.uid}/expenses`),
             where('date', '>=', Timestamp.fromDate(filters.dateRange.from)),
             where('date', '<=', Timestamp.fromDate(filters.dateRange.to)),
-            orderBy('date', 'desc')
+            orderBy('date', 'desc'),
+            limit(displayLimit)
         );
-    }, [user, firestore, filters.dateRange]);
+    }, [user, firestore, filters.dateRange.from, filters.dateRange.to, displayLimit]);
     
-    // Queries for filter dropdowns
     const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [firestore, user]);
     const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [firestore, user]);
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
     const { data: allExpenses, isLoading: expensesLoading, error: expensesError, } = useCollection<Expense>(expensesQuery);
-    const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
-    const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
-    const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
+    const { data: categories } = useCollection<Category>(categoriesQuery);
+    const { data: accounts } = useCollection<Account>(accountsQuery);
+    const { data: tags } = useCollection<Tag>(tagsQuery);
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
     const handleDataChange = useCallback(() => {
         setSelectedExpenseIds([]);
     }, []);
 
-    const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
+    const isLoading = expensesLoading || profileLoading;
 
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
@@ -108,9 +110,6 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             });
             
         const getAmountChange = (tx: Expense, accType: Account['type']) => {
-            if (accType === 'credit_card') {
-               return tx.type === 'income' ? tx.amount : -tx.amount;
-            }
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
@@ -154,31 +153,16 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
     const handleFiltersChange = (newFilters: Filters) => {
         // Keep date range fixed to the month
         setFilters({ ...newFilters, dateRange: filters.dateRange });
+        setDisplayLimit(PAGE_SIZE);
     };
 
      const handleBadgeClick = (type: 'category' | 'tag' | 'account', id: string) => {
-        if (type === 'category') {
-            setFilters(prev => ({
-                ...prev,
-                categories: [id],
-                tags: [],
-                accounts: [],
-            }));
-        } else if (type === 'tag'){
-            setFilters(prev => ({
-                ...prev,
-                tags: [id],
-                categories: [],
-                accounts: [],
-            }));
-        } else { // account
-             setFilters(prev => ({
-                ...prev,
-                accounts: [id],
-                categories: [],
-                tags: [],
-            }));
-        }
+        setFilters(prev => ({
+            ...prev,
+            [type === 'category' ? 'categories' : type === 'tag' ? 'tags' : 'accounts']: [id],
+            searchQuery: '',
+        }));
+        setDisplayLimit(PAGE_SIZE);
     };
     
     const handleDeleteSelected = async () => {
@@ -221,6 +205,9 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             setIsDeleting(false);
         }
     };
+
+    const hasMore = (allExpenses?.length || 0) >= displayLimit;
+    const loadMore = () => setDisplayLimit(prev => prev + PAGE_SIZE);
 
     return (
         <div className="w-full space-y-4">
@@ -272,6 +259,12 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                 onSelectionChange={setSelectedExpenseIds}
                 isDeleting={isDeleting}
                 onDeleteSelected={handleDeleteSelected}
+            />
+
+            <Pagination 
+                onLoadMore={loadMore} 
+                isLoading={expensesLoading} 
+                hasMore={hasMore} 
             />
         </div>
     );

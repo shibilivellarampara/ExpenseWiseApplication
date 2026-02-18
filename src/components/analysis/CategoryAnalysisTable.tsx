@@ -78,7 +78,6 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
     }, [expenses, view]);
 
     const top3 = stats.data.slice(0, 3);
-    const top5 = stats.data.slice(0, 5);
     const chartData = stats.data.map(d => ({ name: d.name, value: Math.abs(d.amount) }));
 
     const toggleTags = (e: React.MouseEvent, id: string) => {
@@ -194,7 +193,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2 min-w-0">
                                                         <span className={cn("text-sm font-medium truncate", isHidden && "text-muted-foreground/70")}>{item.name}</span>
-                                                        {isHidden && <Badge variant="outline" className="h-3.5 text-[8px] uppercase font-bold text-muted-foreground/60 border-muted-foreground/20 px-1 rounded-full">Hidden</Badge>}
+                                                        {isHidden && <Badge variant="outline" className="h-3.5 text-[8px] font-bold text-muted-foreground/60 border-muted-foreground/20 px-1 rounded-full">Hidden</Badge>}
                                                     </div>
                                                     <p className="text-sm font-medium">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
                                                 </div>

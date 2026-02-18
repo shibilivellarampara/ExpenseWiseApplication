@@ -143,10 +143,10 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                 {top3.map((item, idx) => (
                                     <div key={idx} className="flex justify-between items-start">
                                         <div className="flex items-center gap-2">
-                                            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }} />
+                                            <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }} />
                                             <span className="text-xs font-medium truncate max-w-[100px]">{item.name}</span>
                                             {excludedCategoryIds.includes(item.id) && (
-                                                <Badge variant="outline" className="h-3.5 text-[8px] uppercase font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
+                                                <Badge variant="outline" className="h-3.5 text-[8px] font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
                                             )}
                                         </div>
                                         <div className="text-right">
@@ -191,7 +191,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                         <div className="flex items-center gap-2 min-w-0">
                                                             <span className={cn("text-sm font-medium truncate", isHidden && "text-muted-foreground/70")}>{item.name}</span>
                                                             {isHidden && (
-                                                                <Badge variant="outline" className="h-3.5 text-[8px] uppercase font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
+                                                                <Badge variant="outline" className="h-3.5 text-[8px] font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
                                                             )}
                                                         </div>
                                                         <div className="text-right shrink-0">

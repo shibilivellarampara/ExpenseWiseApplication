@@ -97,7 +97,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                                                 key={tag.id} 
                                                 variant="outline"
                                                 style={generateColorStyle(tag.name)}
-                                                className="badge-colorful text-[9px] h-4 px-1.5 font-bold uppercase tracking-widest border-none rounded-full"
+                                                className="badge-colorful text-[9px] h-4 px-1.5 font-bold border-none rounded-full"
                                             >
                                                 {tag.name}
                                             </Badge>

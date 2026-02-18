@@ -90,7 +90,6 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
     const handleToggleExpand = () => {
         if (isExpanded) {
             setIsExpanded(false);
-            // Smoothly snap back to the card top after shrinking
             setTimeout(() => {
                 if (cardRef.current) {
                     cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -186,7 +185,6 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                 onClick={() => setSelectedCategory(item)}
                                                 className="flex items-start gap-3 cursor-pointer group"
                                             >
-                                                {/* Color Indicator */}
                                                 <div className="h-2 w-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: color }} />
                                                 
                                                 <div className="flex-grow min-w-0 space-y-1.5">
@@ -205,10 +203,6 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                     {view !== 'net' && (
                                                         <div className="text-[11px] font-medium text-muted-foreground">{item.percentage.toFixed(1)}%</div>
                                                     )}
-
-                                                    <div className="relative h-1.5 w-full bg-muted/30 rounded-full overflow-hidden">
-                                                        <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${item.percentage}%`, backgroundColor: color }} />
-                                                    </div>
                                                 </div>
 
                                                 <div className="flex items-center gap-1 text-muted-foreground/40 transition-colors shrink-0 ml-1 mt-0.5">

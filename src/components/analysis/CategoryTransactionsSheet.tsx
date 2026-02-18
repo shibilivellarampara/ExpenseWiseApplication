@@ -42,7 +42,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
 
     return (
         <Dialog open={!!category} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-md w-[95vw] h-[65vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden">
+            <DialogContent className="max-w-sm w-[95vw] h-[65vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden">
                 <DialogHeader className="p-6 pb-4 border-b bg-card shrink-0">
                     <div className="flex justify-between items-center pr-10 gap-4">
                         <div className="min-w-0 flex flex-col gap-0.5">
@@ -55,7 +55,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                         </div>
                         <div className="text-right shrink-0">
                             <p className={cn(
-                                "text-lg font-semibold whitespace-nowrap",
+                                "text-lg font-medium whitespace-nowrap",
                                 getAmountColor()
                             )}>
                                 {currencySymbol}{formatAmount(Math.abs(category?.amount || 0))}
@@ -79,7 +79,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                                                 {expense.account?.name}
                                             </span>
                                             <span className="opacity-30">&bull;</span>
-                                            <span>{format(expense.date, 'MMM d, h:mm a')}</span>
+                                            <span>{format(expense.date, 'MMM d')}</span>
                                         </div>
                                     </div>
                                     <div className="shrink-0 text-right">

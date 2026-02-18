@@ -170,13 +170,14 @@ export function AppHeader() {
         
         <div className="flex-1 md:hidden" />
         
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
             {isUserLoading ? (
                 <Skeleton className="h-8 w-8 rounded-full" />
             ) : (
                 <>
                     <DevReloadButton />
                     <Notifications />
+                    <ThemeToggle />
                     <UserNav />
                 </>
             )}

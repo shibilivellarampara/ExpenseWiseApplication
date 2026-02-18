@@ -26,6 +26,7 @@ import { IncomeBreakdownChart } from "@/components/analysis/IncomeBreakdownChart
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'specific-month' | 'custom';
 type StoredFilters = {
@@ -52,6 +53,14 @@ function AnalysisPageContent() {
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [includeHidden, setIncludeHidden] = useState(false);
+    const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({
+        savings: true,
+        topCats: true,
+        tags: true,
+        income: true,
+        trend: true,
+        ai: true
+    });
     
     useEffect(() => {
         if (user) {
@@ -228,6 +237,10 @@ function AnalysisPageContent() {
         "July", "August", "September", "October", "November", "December"
     ];
 
+    const toggleCard = (card: string) => {
+        setExpandedCards(prev => ({ ...prev, [card]: !prev[card] }));
+    };
+
     return (
         <div className="w-full space-y-6 pb-32">
             <Suspense fallback={null}>
@@ -345,91 +358,134 @@ function AnalysisPageContent() {
                     )}
 
                     {(analysisSettings?.showSavingsTrendChart ?? true) && (
-                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                            <CardContent className="p-6">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-lg">Monthly Savings Trend</h3>
-                                        <p className="text-xs text-muted-foreground">Your net savings each month.</p>
+                        <Collapsible open={expandedCards.savings} onOpenChange={() => toggleCard('savings')}>
+                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                                <CollapsibleTrigger asChild>
+                                    <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
+                                        <div>
+                                            <h3 className="font-bold text-lg group-hover:text-primary transition-colors">Monthly Savings Trend</h3>
+                                            <p className="text-xs text-muted-foreground">Your net savings each month.</p>
+                                        </div>
+                                        <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.savings && "rotate-180")} />
                                     </div>
-                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                                </div>
-                                <SavingsTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                            </CardContent>
-                        </Card>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <CardContent className="p-6 pt-2">
+                                        <SavingsTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                                    </CardContent>
+                                </CollapsibleContent>
+                            </Card>
+                        </Collapsible>
                     )}
 
                     {(analysisSettings?.showCategoryBarChart ?? true) && (
-                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                            <CardContent className="p-6">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-lg">Top Spending Categories</h3>
-                                        <p className="text-xs text-muted-foreground">A bar chart showing your top categories.</p>
+                        <Collapsible open={expandedCards.topCats} onOpenChange={() => toggleCard('topCats')}>
+                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                                <CollapsibleTrigger asChild>
+                                    <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
+                                        <div>
+                                            <h3 className="font-bold text-lg group-hover:text-primary transition-colors">Top Spending Categories</h3>
+                                            <p className="text-xs text-muted-foreground">A bar chart showing your top categories.</p>
+                                        </div>
+                                        <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.topCats && "rotate-180")} />
                                     </div>
-                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                                </div>
-                                <CategoryBarChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                            </CardContent>
-                        </Card>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <CardContent className="p-6 pt-2">
+                                        <CategoryBarChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                                    </CardContent>
+                                </CollapsibleContent>
+                            </Card>
+                        </Collapsible>
                     )}
 
                     {(analysisSettings?.showTagPieChart ?? true) && (
-                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                            <CardContent className="p-6">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-lg">Spending by Tag</h3>
-                                        <p className="text-xs text-muted-foreground">A breakdown of your expenses by tags.</p>
+                        <Collapsible open={expandedCards.tags} onOpenChange={() => toggleCard('tags')}>
+                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                                <CollapsibleTrigger asChild>
+                                    <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
+                                        <div>
+                                            <h3 className="font-bold text-lg group-hover:text-primary transition-colors">Spending by Tag</h3>
+                                            <p className="text-xs text-muted-foreground">A breakdown of your expenses by tags.</p>
+                                        </div>
+                                        <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.tags && "rotate-180")} />
                                     </div>
-                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                                </div>
-                                <TagSpendingChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                            </CardContent>
-                        </Card>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <CardContent className="p-6 pt-2">
+                                        <TagSpendingChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                                    </CardContent>
+                                </CollapsibleContent>
+                            </Card>
+                        </Collapsible>
                     )}
 
                     {(analysisSettings?.showIncomePieChart ?? true) && (
-                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                            <CardContent className="p-6">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-lg">Income Sources</h3>
-                                        <p className="text-xs text-muted-foreground">A breakdown of your income by category.</p>
+                        <Collapsible open={expandedCards.income} onOpenChange={() => toggleCard('income')}>
+                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                                <CollapsibleTrigger asChild>
+                                    <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
+                                        <div>
+                                            <h3 className="font-bold text-lg group-hover:text-primary transition-colors">Income Sources</h3>
+                                            <p className="text-xs text-muted-foreground">A breakdown of your income by category.</p>
+                                        </div>
+                                        <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.income && "rotate-180")} />
                                     </div>
-                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                                </div>
-                                <IncomeBreakdownChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                            </CardContent>
-                        </Card>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <CardContent className="p-6 pt-2">
+                                        <IncomeBreakdownChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                                    </CardContent>
+                                </CollapsibleContent>
+                            </Card>
+                        </Collapsible>
                     )}
 
                     {(analysisSettings?.showTrendChart ?? true) && (
-                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                            <CardContent className="p-6">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-lg">Cash Flow Trend</h3>
-                                        <p className="text-xs text-muted-foreground">Monthly cash flow analysis.</p>
+                        <Collapsible open={expandedCards.trend} onOpenChange={() => toggleCard('trend')}>
+                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                                <CollapsibleTrigger asChild>
+                                    <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
+                                        <div>
+                                            <h3 className="font-bold text-lg group-hover:text-primary transition-colors">Cash Flow Trend</h3>
+                                            <p className="text-xs text-muted-foreground">Monthly cash flow analysis.</p>
+                                        </div>
+                                        <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.trend && "rotate-180")} />
                                     </div>
-                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                                </div>
-                                <SpendingTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
-                            </CardContent>
-                        </Card>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <CardContent className="p-6 pt-2">
+                                        <SpendingTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
+                                    </CardContent>
+                                </CollapsibleContent>
+                            </Card>
+                        </Collapsible>
                     )}
 
                     {(analysisSettings?.showAiInsights ?? true) && (
-                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                            <CardContent className="p-6">
-                                <AiInsights
-                                    onGenerate={handleGenerateInsights}
-                                    analysis={aiAnalysis}
-                                    isLoading={isAiLoading}
-                                    hasData={filteredExpenses.length > 0}
-                                />
-                            </CardContent>
-                        </Card>
+                        <Collapsible open={expandedCards.ai} onOpenChange={() => toggleCard('ai')}>
+                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                                <CollapsibleTrigger asChild>
+                                    <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
+                                        <div>
+                                            <h3 className="font-bold text-lg group-hover:text-primary transition-colors">AI-Powered Insights</h3>
+                                            <p className="text-xs text-muted-foreground">Smart financial summary and suggestions.</p>
+                                        </div>
+                                        <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.ai && "rotate-180")} />
+                                    </div>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <CardContent className="p-6 pt-2">
+                                        <AiInsights
+                                            onGenerate={handleGenerateInsights}
+                                            analysis={aiAnalysis}
+                                            isLoading={isAiLoading}
+                                            hasData={filteredExpenses.length > 0}
+                                        />
+                                    </CardContent>
+                                </CollapsibleContent>
+                            </Card>
+                        </Collapsible>
                     )}
                 </div>
 

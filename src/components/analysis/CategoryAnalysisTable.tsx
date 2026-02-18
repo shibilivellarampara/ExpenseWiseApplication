@@ -108,7 +108,6 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                     <div className="flex items-center justify-between p-6 pb-2">
                         <div>
                             <h3 className="font-bold text-lg">{isExpanded ? 'All Categories' : 'Top 5 Categories'}</h3>
-                            <p className="text-xs text-muted-foreground">Your spending, organized by category.</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full">

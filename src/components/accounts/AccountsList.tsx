@@ -258,7 +258,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
         return (
             <div className="space-y-4">
                 {Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton className="h-32 w-full rounded-[20px]" />
+                    <Skeleton key={i} className="h-32 w-full rounded-[20px]" />
                 ))}
             </div>
         )

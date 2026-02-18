@@ -88,12 +88,14 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
     const handleToggleExpand = () => {
         if (isExpanded) {
             setIsExpanded(false);
-            if (cardRef.current) {
-                const yOffset = -80; 
-                const element = cardRef.current;
-                const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
-                window.scrollTo({ top: y, behavior: 'smooth' });
-            }
+            // Precise scroll adjustment for mobile to avoid jumping to next card
+            setTimeout(() => {
+                if (cardRef.current) {
+                    const yOffset = -70; // Account for sticky header
+                    const y = cardRef.current.getBoundingClientRect().top + window.scrollY + yOffset;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+            }, 10);
         } else {
             setIsExpanded(true);
         }

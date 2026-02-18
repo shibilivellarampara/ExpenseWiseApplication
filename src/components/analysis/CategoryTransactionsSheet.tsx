@@ -28,13 +28,17 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
 
     const categoryExpenses = expenses
         .filter(e => (e.category?.id || 'other') === category?.id)
-        .filter(e => view === 'net' ? true : e.type === view)
+        .filter(e => {
+            if (view === 'net') return true;
+            return e.type === view;
+        })
         .sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    // Helper to determine amount color in header
+    // Helper to determine amount color in header based on active view and balance
     const getAmountColor = () => {
         if (view === 'expense') return 'text-destructive';
         if (view === 'income') return 'text-green-600';
+        // In net view, color based on whether it's a surplus or deficit
         return (category?.amount || 0) >= 0 ? 'text-green-600' : 'text-destructive';
     };
 
@@ -42,7 +46,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
         <Dialog open={!!category} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-md w-[95vw] h-[65vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden">
                 <DialogHeader className="p-6 pb-4 border-b bg-card shrink-0">
-                    <div className="flex justify-between items-start pr-8 gap-4">
+                    <div className="flex justify-between items-start pr-10 gap-4">
                         <div className="min-w-0">
                             <DialogTitle className="text-xl font-bold font-headline truncate">{category?.name}</DialogTitle>
                             <DialogDescription className="text-sm font-medium">

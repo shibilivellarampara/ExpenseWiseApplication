@@ -208,192 +208,194 @@ function AnalysisPageContent() {
 
     return (
         <div className="w-full space-y-6 pb-32">
-            <PageHeader
-                title="Expense Analysis"
-                description="A detailed breakdown of your income and spending habits."
-            />
+            <Suspense fallback={null}>
+                <PageHeader
+                    title="Expense Analysis"
+                    description="A detailed breakdown of your income and spending habits."
+                />
 
-            <AnalysisSummary 
-                expenses={filteredExpenses}
-                isLoading={isLoading}
-                currency={userProfile?.defaultCurrency}
-                includeHidden={includeHidden}
-                onIncludeHiddenChange={setIncludeHidden}
-            />
+                <AnalysisSummary 
+                    expenses={filteredExpenses}
+                    isLoading={isLoading}
+                    currency={userProfile?.defaultCurrency}
+                    includeHidden={includeHidden}
+                    onIncludeHiddenChange={setIncludeHidden}
+                />
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
-                            {timeRangeLabels[timeRangePreset]}
-                            <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-56 p-0" align="start">
-                        <Command>
-                            <CommandList>
-                                <CommandGroup>
-                                    <CommandItem onSelect={() => handleTimeRangeChange('week')}>This Week</CommandItem>
-                                    <CommandItem onSelect={() => handleTimeRangeChange('month')}>This Month</CommandItem>
-                                    <CommandItem onSelect={() => handleTimeRangeChange('last-month')}>Last Month</CommandItem>
-                                    <CommandItem onSelect={() => handleTimeRangeChange('3-months')}>Last 3 Months</CommandItem>
-                                    <CommandItem onSelect={() => handleTimeRangeChange('6-months')}>Last 6 Months</CommandItem>
-                                    <CommandItem onSelect={() => handleTimeRangeChange('year')}>This Year</CommandItem>
-                                    <CommandItem onSelect={() => handleTimeRangeChange('last-year')}>Last Year</CommandItem>
-                                    <CommandItem onSelect={() => handleTimeRangeChange('all')}>All Time</CommandItem>
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </PopoverContent>
-                </Popover>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
+                                {timeRangeLabels[timeRangePreset]}
+                                <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-56 p-0" align="start">
+                            <Command>
+                                <CommandList>
+                                    <CommandGroup>
+                                        <CommandItem onSelect={() => handleTimeRangeChange('week')}>This Week</CommandItem>
+                                        <CommandItem onSelect={() => handleTimeRangeChange('month')}>This Month</CommandItem>
+                                        <CommandItem onSelect={() => handleTimeRangeChange('last-month')}>Last Month</CommandItem>
+                                        <CommandItem onSelect={() => handleTimeRangeChange('3-months')}>Last 3 Months</CommandItem>
+                                        <CommandItem onSelect={() => handleTimeRangeChange('6-months')}>Last 6 Months</CommandItem>
+                                        <CommandItem onSelect={() => handleTimeRangeChange('year')}>This Year</CommandItem>
+                                        <CommandItem onSelect={() => handleTimeRangeChange('last-year')}>Last Year</CommandItem>
+                                        <CommandItem onSelect={() => handleTimeRangeChange('all')}>All Time</CommandItem>
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
 
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
-                            {selectedAccounts.length === 0 ? "All Accounts" : `${selectedAccounts.length} Accts`}
-                            <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="start">
-                        <Command>
-                            <CommandInput placeholder="Search accounts..." />
-                            <CommandList>
-                                <CommandGroup>
-                                    <CommandItem onSelect={() => setSelectedAccounts([])} className="flex justify-between">
-                                        All Accounts <Check className={cn("h-4 w-4", selectedAccounts.length === 0 ? "opacity-100" : "opacity-0")} />
-                                    </CommandItem>
-                                    {allAccounts?.map(acc => (
-                                        <CommandItem key={acc.id} onSelect={() => setSelectedAccounts(prev => prev.includes(acc.id) ? prev.filter(id => id !== acc.id) : [...prev, acc.id])} className="flex justify-between">
-                                            {acc.name} <Check className={cn("h-4 w-4", selectedAccounts.includes(acc.id) ? "opacity-100" : "opacity-0")} />
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
+                                {selectedAccounts.length === 0 ? "All Accounts" : `${selectedAccounts.length} Accts`}
+                                <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56" align="start">
+                            <Command>
+                                <CommandInput placeholder="Search accounts..." />
+                                <CommandList>
+                                    <CommandGroup>
+                                        <CommandItem onSelect={() => setSelectedAccounts([])} className="flex justify-between">
+                                            All Accounts <Check className={cn("h-4 w-4", selectedAccounts.length === 0 ? "opacity-100" : "opacity-0")} />
                                         </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                                        {allAccounts?.map(acc => (
+                                            <CommandItem key={acc.id} onSelect={() => setSelectedAccounts(prev => prev.includes(acc.id) ? prev.filter(id => id !== acc.id) : [...prev, acc.id])} className="flex justify-between">
+                                                {acc.name} <Check className={cn("h-4 w-4", selectedAccounts.includes(acc.id) ? "opacity-100" : "opacity-0")} />
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
 
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
-                            {selectedTags.length === 0 ? "All Tags" : `${selectedTags.length} Tags`}
-                            <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="start">
-                        <Command>
-                            <CommandInput placeholder="Search tags..." />
-                            <CommandList>
-                                <CommandGroup>
-                                    {tags?.map(tag => (
-                                        <CommandItem key={tag.id} onSelect={() => setSelectedTags(prev => prev.includes(tag.id) ? prev.filter(id => id !== tag.id) : [...prev, tag.id])} className="flex justify-between">
-                                            {tag.name} <Check className={cn("h-4 w-4", selectedTags.includes(tag.id) ? "opacity-100" : "opacity-0")} />
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
+                                {selectedTags.length === 0 ? "All Tags" : `${selectedTags.length} Tags`}
+                                <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56" align="start">
+                            <Command>
+                                <CommandInput placeholder="Search tags..." />
+                                <CommandList>
+                                    <CommandGroup>
+                                        {tags?.map(tag => (
+                                            <CommandItem key={tag.id} onSelect={() => setSelectedTags(prev => prev.includes(tag.id) ? prev.filter(id => id !== tag.id) : [...prev, tag.id])} className="flex justify-between">
+                                                {tag.name} <Check className={cn("h-4 w-4", selectedTags.includes(tag.id) ? "opacity-100" : "opacity-0")} />
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
 
-            <div className="space-y-6">
-                {/* Category Analysis - Expanding Table */}
-                {(analysisSettings?.showCategoryTable ?? true) && (
-                    <CategoryAnalysisTable expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                )}
+                <div className="space-y-6">
+                    {/* Category Analysis - Expanding Table */}
+                    {(analysisSettings?.showCategoryTable ?? true) && (
+                        <CategoryAnalysisTable expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                    )}
 
-                {/* Monthly Savings Trend */}
-                {(analysisSettings?.showSavingsTrendChart ?? true) && (
-                    <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                        <CardContent className="p-6">
-                            <div className="mb-4 flex items-center justify-between">
-                                <div>
-                                    <h3 className="font-bold text-lg">Monthly Savings Trend</h3>
-                                    <p className="text-xs text-muted-foreground">Your net savings each month.</p>
+                    {/* Monthly Savings Trend */}
+                    {(analysisSettings?.showSavingsTrendChart ?? true) && (
+                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <CardContent className="p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-lg">Monthly Savings Trend</h3>
+                                        <p className="text-xs text-muted-foreground">Your net savings each month.</p>
+                                    </div>
+                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
                                 </div>
-                                <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                            </div>
-                            <SavingsTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                        </CardContent>
-                    </Card>
-                )}
+                                <SavingsTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                            </CardContent>
+                        </Card>
+                    )}
 
-                {/* Top Spending Categories - Bar Chart */}
-                {(analysisSettings?.showCategoryBarChart ?? true) && (
-                    <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                        <CardContent className="p-6">
-                            <div className="mb-4 flex items-center justify-between">
-                                <div>
-                                    <h3 className="font-bold text-lg">Top Spending Categories</h3>
-                                    <p className="text-xs text-muted-foreground">A bar chart showing your top spending categories.</p>
+                    {/* Top Spending Categories - Bar Chart */}
+                    {(analysisSettings?.showCategoryBarChart ?? true) && (
+                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <CardContent className="p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-lg">Top Spending Categories</h3>
+                                        <p className="text-xs text-muted-foreground">A bar chart showing your top spending categories.</p>
+                                    </div>
+                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
                                 </div>
-                                <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                            </div>
-                            <CategoryBarChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                        </CardContent>
-                    </Card>
-                )}
+                                <CategoryBarChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                            </CardContent>
+                        </Card>
+                    )}
 
-                {/* Spending by Tag - Pie Chart */}
-                {(analysisSettings?.showTagPieChart ?? true) && (
-                    <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                        <CardContent className="p-6">
-                            <div className="mb-4 flex items-center justify-between">
-                                <div>
-                                    <h3 className="font-bold text-lg">Spending by Tag</h3>
-                                    <p className="text-xs text-muted-foreground">A breakdown of your expenses by tags.</p>
+                    {/* Spending by Tag - Pie Chart */}
+                    {(analysisSettings?.showTagPieChart ?? true) && (
+                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <CardContent className="p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-lg">Spending by Tag</h3>
+                                        <p className="text-xs text-muted-foreground">A breakdown of your expenses by tags.</p>
+                                    </div>
+                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
                                 </div>
-                                <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                            </div>
-                            <TagSpendingChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                        </CardContent>
-                    </Card>
-                )}
+                                <TagSpendingChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                            </CardContent>
+                        </Card>
+                    )}
 
-                {/* Income Sources - Pie Chart */}
-                {(analysisSettings?.showIncomePieChart ?? true) && (
-                    <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                        <CardContent className="p-6">
-                            <div className="mb-4 flex items-center justify-between">
-                                <div>
-                                    <h3 className="font-bold text-lg">Income Sources</h3>
-                                    <p className="text-xs text-muted-foreground">A breakdown of your income by category.</p>
+                    {/* Income Sources - Pie Chart */}
+                    {(analysisSettings?.showIncomePieChart ?? true) && (
+                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <CardContent className="p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-lg">Income Sources</h3>
+                                        <p className="text-xs text-muted-foreground">A breakdown of your income by category.</p>
+                                    </div>
+                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
                                 </div>
-                                <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                            </div>
-                            <IncomeBreakdownChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                        </CardContent>
-                    </Card>
-                )}
+                                <IncomeBreakdownChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                            </CardContent>
+                        </Card>
+                    )}
 
-                {/* Spending Trends - Line Chart */}
-                {(analysisSettings?.showTrendChart ?? true) && (
-                    <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                        <CardContent className="p-6">
-                            <div className="mb-4">
-                                <h3 className="font-bold text-lg">Cash Flow Trend</h3>
-                                <p className="text-xs text-muted-foreground">Detailed monthly cash flow analysis.</p>
-                            </div>
-                            <SpendingTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
-                        </CardContent>
-                    </Card>
-                )}
+                    {/* Spending Trends - Line Chart */}
+                    {(analysisSettings?.showTrendChart ?? true) && (
+                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <CardContent className="p-6">
+                                <div className="mb-4">
+                                    <h3 className="font-bold text-lg">Cash Flow Trend</h3>
+                                    <p className="text-xs text-muted-foreground">Detailed monthly cash flow analysis.</p>
+                                </div>
+                                <SpendingTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
+                            </CardContent>
+                        </Card>
+                    )}
 
-                {/* AI Insights Card */}
-                {(analysisSettings?.showAiInsights ?? true) && (
-                    <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                        <CardContent className="p-6">
-                            <AiInsights
-                                onGenerate={handleGenerateInsights}
-                                analysis={aiAnalysis}
-                                isLoading={isAiLoading}
-                                hasData={filteredExpenses.length > 0}
-                            />
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
+                    {/* AI Insights Card */}
+                    {(analysisSettings?.showAiInsights ?? true) && (
+                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <CardContent className="p-6">
+                                <AiInsights
+                                    onGenerate={handleGenerateInsights}
+                                    analysis={aiAnalysis}
+                                    isLoading={isAiLoading}
+                                    hasData={filteredExpenses.length > 0}
+                                />
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+            </Suspense>
         </div>
     );
 }

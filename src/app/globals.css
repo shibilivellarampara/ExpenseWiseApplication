@@ -241,10 +241,11 @@
   .badge-colorful {
     background-color: var(--badge-bg-light);
     color: var(--badge-text-light);
-    border: none;
+    border: 1px solid var(--badge-text-light);
   }
   .dark .badge-colorful {
     background-color: var(--badge-bg-dark);
     color: var(--badge-text-dark);
+    border: 1px solid var(--badge-text-dark);
   }
 }

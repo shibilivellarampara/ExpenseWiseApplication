@@ -205,8 +205,9 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                         <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
                                             {row.expense.category && (
                                                 <Badge
+                                                    variant="outline"
                                                     style={generateColorStyle(row.expense.category.name)}
-                                                    className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                    className="badge-colorful text-[10px] px-1.5 py-0 h-5 font-bold uppercase tracking-tight cursor-pointer"
                                                     onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
                                                 >
                                                     {renderIcon(row.expense.category.icon, "h-3 w-3 mr-1")}
@@ -217,8 +218,9 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                             {(expandedTags[row.expense.id] ? row.expense.tags : (row.expense.tags || []).slice(0, 3)).map(tag => (
                                                 <Badge
                                                     key={tag.id}
+                                                    variant="outline"
                                                     style={generateColorStyle(tag.name)}
-                                                    className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                    className="badge-colorful text-[10px] px-1.5 py-0 h-5 font-bold uppercase tracking-tight cursor-pointer"
                                                     onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
                                                 >
                                                     {renderIcon(tag.icon, "h-3 w-3 mr-1")}
@@ -228,7 +230,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                             {(row.expense.tags?.length || 0) > 3 && (
                                                 <Badge
                                                     variant="secondary"
-                                                    className="text-xs px-1.5 py-0 cursor-pointer"
+                                                    className="text-[10px] px-1.5 py-0 h-5 font-bold uppercase tracking-tight cursor-pointer"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setExpandedTags(prev => ({...prev, [row.expense.id]: !prev[row.expense.id]}));

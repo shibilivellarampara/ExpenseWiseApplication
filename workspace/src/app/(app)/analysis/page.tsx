@@ -53,13 +53,15 @@ function AnalysisPageContent() {
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [includeHidden, setIncludeHidden] = useState(false);
+    
+    // Set all cards to false (closed) by default per user request
     const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({
-        savings: true,
-        topCats: true,
-        tags: true,
-        income: true,
-        trend: true,
-        ai: true
+        savings: false,
+        topCats: false,
+        tags: false,
+        income: false,
+        trend: false,
+        ai: false
     });
     
     useEffect(() => {
@@ -156,7 +158,7 @@ function AnalysisPageContent() {
         if (!user) return null;
         let q = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
         if (dateRangeStart) q = query(q, where('date', '>=', Timestamp.fromDate(dateRangeStart)));
-        if (dateRangeEnd) q = query(q, where('date', '<=', Timestamp.fromDate(dateRangeEnd)));
+        if (dateRangeEnd) q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(dateRangeEnd))));
         return q;
     }, [user, firestore, dateRangeStart, dateRangeEnd]);
     
@@ -363,7 +365,7 @@ function AnalysisPageContent() {
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>
-                                            <h3 className="font-bold text-lg group-active:text-primary transition-colors">Monthly Savings Trend</h3>
+                                            <h3 className="font-bold text-lg active:text-primary transition-colors">Monthly Savings Trend</h3>
                                             <p className="text-xs text-muted-foreground">Your net savings each month.</p>
                                         </div>
                                         <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.savings && "rotate-180")} />
@@ -384,7 +386,7 @@ function AnalysisPageContent() {
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>
-                                            <h3 className="font-bold text-lg group-active:text-primary transition-colors">Top Spending Categories</h3>
+                                            <h3 className="font-bold text-lg active:text-primary transition-colors">Top Spending Categories</h3>
                                             <p className="text-xs text-muted-foreground">A bar chart showing your top categories.</p>
                                         </div>
                                         <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.topCats && "rotate-180")} />
@@ -405,7 +407,7 @@ function AnalysisPageContent() {
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>
-                                            <h3 className="font-bold text-lg group-active:text-primary transition-colors">Spending by Tag</h3>
+                                            <h3 className="font-bold text-lg active:text-primary transition-colors">Spending by Tag</h3>
                                             <p className="text-xs text-muted-foreground">A breakdown of your expenses by tags.</p>
                                         </div>
                                         <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.tags && "rotate-180")} />
@@ -426,7 +428,7 @@ function AnalysisPageContent() {
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>
-                                            <h3 className="font-bold text-lg group-active:text-primary transition-colors">Income Sources</h3>
+                                            <h3 className="font-bold text-lg active:text-primary transition-colors">Income Sources</h3>
                                             <p className="text-xs text-muted-foreground">A breakdown of your income by category.</p>
                                         </div>
                                         <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.income && "rotate-180")} />
@@ -447,7 +449,7 @@ function AnalysisPageContent() {
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>
-                                            <h3 className="font-bold text-lg group-active:text-primary transition-colors">Cash Flow Trend</h3>
+                                            <h3 className="font-bold text-lg active:text-primary transition-colors">Cash Flow Trend</h3>
                                             <p className="text-xs text-muted-foreground">Monthly cash flow analysis.</p>
                                         </div>
                                         <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.trend && "rotate-180")} />
@@ -468,7 +470,7 @@ function AnalysisPageContent() {
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>
-                                            <h3 className="font-bold text-lg group-active:text-primary transition-colors">AI-Powered Insights</h3>
+                                            <h3 className="font-bold text-lg active:text-primary transition-colors">AI-Powered Insights</h3>
                                             <p className="text-xs text-muted-foreground">Smart financial summary and suggestions.</p>
                                         </div>
                                         <ChevronDown className={cn("h-5 w-5 text-muted-foreground/50 transition-transform duration-300", expandedCards.ai && "rotate-180")} />

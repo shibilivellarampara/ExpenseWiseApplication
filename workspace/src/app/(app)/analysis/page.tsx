@@ -260,10 +260,10 @@ function AnalysisPageContent() {
                     excludedCategoryIds={analysisSettings?.excludedCategoryIds || []}
                 />
 
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar pr-4">
+                <div className="flex items-center gap-2 overflow-x-auto pb-3 pt-1 no-scrollbar pr-4 bg-muted/20 -mx-4 px-4 mb-2">
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
+                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-transparent shadow-none shrink-0 hover:bg-card">
                                 {timeRangeLabels[timeRangePreset]}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
@@ -289,7 +289,7 @@ function AnalysisPageContent() {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
+                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-transparent shadow-none shrink-0 hover:bg-card">
                                 {selectedAccounts.length === 0 
                                     ? "All Accounts" 
                                     : selectedAccounts.length === 1 
@@ -320,7 +320,7 @@ function AnalysisPageContent() {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
+                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-transparent shadow-none shrink-0 hover:bg-card">
                                 {selectedTags.length === 0 
                                     ? "All Tags" 
                                     : selectedTags.length === 1 

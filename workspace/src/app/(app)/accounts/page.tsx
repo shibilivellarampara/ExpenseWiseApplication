@@ -66,7 +66,7 @@ export default function AccountsPage() {
                     )}
                 </div>
                 <AddAccountSheet>
-                     <Button className="h-12 px-6 bg-primary/10 hover:bg-primary/20 text-primary rounded-2xl shadow-none gap-2 shrink-0">
+                     <Button className="h-12 px-6 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-2xl shadow-none gap-2 shrink-0">
                         <PlusCircle className="h-5 w-5" />
                         <span className="hidden sm:inline">Add Account</span>
                         <span className="sm:hidden">Add</span>

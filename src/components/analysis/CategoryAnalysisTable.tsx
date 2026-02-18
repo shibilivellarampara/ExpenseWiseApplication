@@ -185,16 +185,14 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                 className="flex items-center justify-between cursor-pointer group"
                                             >
                                                 <div className="flex-grow min-w-0 space-y-1">
-                                                    <div className="flex items-center justify-between pr-4">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                                                            <span className={cn("text-sm font-bold truncate", isHidden && "text-muted-foreground/70")}>{item.name}</span>
-                                                            {isHidden && (
-                                                                <Badge variant="outline" className="h-3.5 text-[8px] uppercase font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
-                                                            )}
-                                                        </div>
-                                                        <span className="text-[11px] font-bold text-muted-foreground">{item.percentage.toFixed(1)}%</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                                                        <span className={cn("text-sm font-bold truncate", isHidden && "text-muted-foreground/70")}>{item.name}</span>
+                                                        {isHidden && (
+                                                            <Badge variant="outline" className="h-3.5 text-[8px] uppercase font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
+                                                        )}
                                                     </div>
+                                                    <div className="text-[11px] font-bold text-muted-foreground">{item.percentage.toFixed(1)}%</div>
                                                     <div className="relative h-1.5 w-full bg-muted/30 rounded-full overflow-hidden">
                                                         <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${item.percentage}%`, backgroundColor: color }} />
                                                     </div>

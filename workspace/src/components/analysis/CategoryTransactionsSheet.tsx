@@ -66,8 +66,8 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                     <div className="space-y-3 pb-6">
                         {categoryExpenses.map((expense) => (
                             <div key={expense.id} className="flex flex-col gap-2 p-4 rounded-2xl bg-card border border-border/40 shadow-sm hover:shadow-md transition-all">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex-grow min-w-0">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
                                         <p className="text-[15px] font-bold truncate leading-tight">
                                             {expense.description || category?.name}
                                         </p>
@@ -80,7 +80,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                                             <span>{format(expense.date, 'MMM d, h:mm a')}</span>
                                         </div>
                                     </div>
-                                    <div className="shrink-0 text-right min-w-[100px]">
+                                    <div className="shrink-0 text-right">
                                         <p className={cn(
                                             "text-[15px] font-bold whitespace-nowrap",
                                             expense.type === 'income' ? "text-green-600" : "text-destructive"

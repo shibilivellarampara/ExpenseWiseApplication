@@ -27,6 +27,7 @@ const changelog = [
             { type: 'UI/UX', description: "Redesigned Category Analysis list with a tiered metadata stack and full-width progress bars." },
             { type: 'UI/UX', description: "Enhanced 'Hidden Categories' management with a descriptive popover and inline toggle." },
             { type: 'UI/UX', description: "Added 'All Tags' clear option to Analysis filters for faster interaction." },
+            { type: 'UI/UX', description: "Integrated Tag icons and corrected alignment in the nested category breakdown." },
             { type: 'Logic', description: "Refined 'Net' view by hiding percentages to avoid balance-based calculation confusion." },
         ]
     },
@@ -43,162 +44,354 @@ const changelog = [
     },
     {
         version: "1.8.3",
-        date: "Feb 15, 2026",
+        date: "Feb 18, 2026",
         changes: [
-            { type: 'Fix', description: "Corrected z-index stacking issues for the bottom navigation menu on high-resolution displays." },
-            { type: 'UI/UX', description: "Refined the 'Add Transaction' floating action button with smoother scale animations." },
+            { type: 'UI/UX', description: "Finalized premium fintech redesign for Accounts, Debts, and Assets with elevated summary cards and unified search headers." },
+            { type: 'UI/UX', description: "Implemented themed fade-out effects for all progress bars, enhancing visual clarity for credit utilization." },
+            { type: 'UI/UX', description: "Contextualized filter cancellation in the Debts UI by moving clear buttons inside respective stat boxes." },
+            { type: 'Feature', description: "Stabilized the 'Recurring Transactions' module by resolving invalid Firebase document references and segment mismatches." },
+            { type: 'Logic', description: "Standardized v1.8.3 features across production and workspace environments for global parity." },
         ]
     },
     {
         version: "1.8.2",
-        date: "Feb 12, 2026",
+        date: "Feb 18, 2026",
         changes: [
-            { type: 'Logic', description: "Enhanced recurring transaction date calculations to handle month-end boundary conditions correctly." },
-            { type: 'UI/UX', description: "Updated icon library with specialized Fintech-themed SVG assets." },
+            { type: 'Feature', description: "Dashboard 'Total Monthly Expense' now automatically excludes the 'Transfer' category for more accurate spending tracking." },
+            { type: 'Feature', description: "Optimized transaction list rendering by removing internal scroll constraints for a more natural feel consistent with other pages." },
+            { type: 'Feature', description: "Refined Bottom Navigation positioning with a 16px offset for improved cross-platform mobile accessibility." },
+            { type: 'UI/UX', description: "Standardized transaction form button text to 14px and enforced primary theme styling on hover." },
+            { type: 'Fix', description: "Resolved critical JSX tag mismatch and syntax errors in forms and dashboard stats." },
         ]
     },
     {
         version: "1.8.1",
-        date: "Feb 11, 2026",
+        date: "Feb 16, 2026",
         changes: [
-            { type: 'Feature', description: "Added 'Quick Re-sync' button to the dashboard for manual Firestore cache refreshing." },
-            { type: 'Fix', description: "Fixed a bug where credit card billing dates were displaying as UTC instead of local time." },
+            { type: 'Feature', description: "Enforced centered dialog popup for Asset entry across all devices for a consistent premium feel." },
+            { type: 'Feature', description: "Standardized 'Add Asset' form with high-quality floating labels and smart invested/current amount fallback logic." },
+            { type: 'Feature', description: "Improved 'Add Asset' form flexibility: Quantity, Invested Amount, and Current Value are now optional." },
+            { type: 'UI/UX', description: "Added refined 'click knowing' interaction to account names with theme-aware oval backgrounds." },
+            { type: 'Fix', description: "Corrected module resolution for DateTimePicker and package.json to ensure stable production builds." },
         ]
     },
     {
         version: "1.8.0",
-        date: "Feb 10, 2026",
+        date: "Feb 12, 2026",
         changes: [
-            { type: 'Feature', description: "Launched 'Recurring Transactions' module for automated tracking of subscriptions and bills." },
-            { type: 'Logic', description: "Implemented automatic Credit Card Due Date calculation (Statement Date + 15 days)." },
-            { type: 'UI/UX', description: "Enhanced transaction form with floating labels and refined date-time pickers." },
+            { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 15 days after statement date if left empty)." },
+            { type: 'Feature', description: "Redesigned the 'Add Account' form with a logic-first field order and floating labels for a better user experience." },
+            { type: 'UI/UX', description: "Enhanced form accessibility by preventing automatic keyboard popup on form open." },
+            { type: 'Fix', description: "Resolved a validation issue in the account form where empty optional numeric fields caused submission failures." },
+        ]
+    },
+    {
+        version: "1.7.9",
+        date: "Feb 01, 2026",
+        changes: [
+            { type: 'Fix', description: "Resolved a persistent issue with form submission in the 'Add Account' view where hidden fields caused validation failures." },
+            { type: 'UI/UX', description: "Implemented a more robust context-driven field order for the 'Add Account' form with floating labels." },
+            { type: 'UI/UX', description: "Improved form responsiveness and loading states for a smoother entry experience." },
+        ]
+    },
+    {
+        version: "1.7.8",
+        date: "Jan 31, 2026",
+        changes: [
+            { type: 'Fix', description: "Resolved a critical build failure caused by incorrect component import paths on the 'Debts & Dues' page." },
+            { type: 'UI/UX', description: "Clarified the 'Net Position' label on the Debts summary to dynamically show 'Net Owed' or 'You Owe'." },
+            { type: 'UI/UX', description: "Made the Debts summary card more compact for a cleaner look." },
+        ]
+    },
+    {
+        version: "1.7.7",
+        date: "Jan 11, 2026",
+        changes: [
+            { type: 'Feature', description: "Added robust filtering and sorting options to the 'Debts & Dues' page." },
+            { type: 'UI/UX', description: "Consolidated debt filters into a single, clean row of dropdowns for a better user experience." },
+            { type: 'UI/UX', description: "Disabled text selection across the app to provide a more native, app-like feel." },
+            { type: 'UI/UX', description: "Shortened the 'Accounts' filter label on the Analysis page to 'Acct' for a more concise layout." },
+        ]
+    },
+    {
+        version: "1.7.6",
+        date: "Jan 02, 2026",
+        changes: [
+            { type: 'Feature', description: "Added a 'Getting Started' guide to the new-user screen to introduce core features." },
+            { type: 'Feature', description: "Introduced a subtle 'Add to Home Screen' prompt for new users to improve app accessibility." },
+            { type: 'UI/UX', description: "Implemented one-time callouts (coach marks) to highlight key actions for new users." },
+            { type: 'Fix', description: "Increased server action timeout to resolve errors when uploading large files to Google Drive." },
         ]
     },
     {
         version: "1.7.5",
-        date: "Feb 05, 2026",
+        date: "Jan 02, 2026",
         changes: [
-            { type: 'Logic', description: "Optimized debt grouping logic to handle identical person names across different user profiles." },
-            { type: 'Security', description: "Strengthened Firebase Security Rules for debt subcollections." },
+            { type: 'UI/UX', description: "Refined the Accounts page with improved alignment and spacing for credit card details." },
+            { type: 'UI/UX', description: "Added a subtle shadow to the 'Credit Cards' header for a modern, floating effect." },
+            { type: 'Fix', description: "Resolved an issue where the main application header would disappear on some pages." },
+            { type: 'UI/UX', description: "Improved clarity on the Accounts page by showing 'Due' for cards with a balance and 'Next bill' for paid cards." },
+        ]
+    },
+    {
+        version: "1.7.4",
+        date: "Jan 02, 2026",
+        changes: [
+            { type: 'Feature', description: "Added a 'Monthly Savings Trend' chart to the Analysis page to visualize net savings over time." },
+            { type: 'UI/UX', description: "Made all chart and insight cards on the Analysis page collapsible for a cleaner, more customizable view." },
+            { type: 'UI/UX', description: "Added text labels to the secondary navigation menu (the 'More' pop-up) on mobile for better clarity." },
+            { type: 'UI/UX', description: "Increased the size of the icons in the bottom navigation bar for improved visibility." },
+        ]
+    },
+    {
+        version: "1.7.3",
+        date: "Jan 01, 2026",
+        changes: [
+            { type: 'UI/UX', description: "Improved bulk editing on Category and Tag pages with an intuitive 'selection mode' and a sticky actions header." },
+            { type: 'Feature', description: "Added a 'Restore from Backup' option to the welcome card for new users." },
+            { type: 'Feature', description: "Expanded the default list of categories for new users to include more common options." },
+            { type: 'DevEx', description: "Added a 'dev' badge to the logo and a reload button in the header for the development environment." },
         ]
     },
     {
         version: "1.7.2",
-        date: "Feb 03, 2026",
+        date: "Dec 31, 2025",
         changes: [
-            { type: 'Feature', description: "Integrated 'Settle Up' logic for Debts, allowing users to balance outstanding dues with one click." },
-            { type: 'UI/UX', description: "Improved mobile legibility for the Debt summary card." },
+            { type: 'UI/UX', description: "Polished the mobile bottom navigation with a more transparent and refined design." },
+            { type: 'UI/UX', description: "Adjusted the Floating Action Button (FAB) size and positioning for better ergonomics." },
+            { type: 'UI/UX', description: "Improved the visual hierarchy of the expandable 'More' menu on mobile." },
+        ]
+    },
+    {
+        version: "1.7.1",
+        date: "Dec 31, 2025",
+        changes: [
+            { type: 'UI/UX', description: "Redesigned the 'Add Asset' form with floating labels to match the application's premium aesthetic." },
+            { type: 'UI/UX', description: "Improved user feedback by ensuring loading animations during transaction submission." },
+            { type: 'UI/UX', description: "Made the main application header static for consistent visibility while scrolling." },
         ]
     },
     {
         version: "1.7.0",
-        date: "Feb 01, 2026",
+        date: "Dec 31, 2025",
         changes: [
-            { type: 'Feature', description: "Introduced 'Debts & Dues' tracking with person-based grouping and balance settlement logic." },
-            { type: 'UI/UX', description: "Added a 'More' expandable menu to the mobile navigation bar for better feature discovery." },
-            { type: 'Logic', description: "Improved data validation for large-scale transaction bulk deletions." },
+            { type: 'Feature', description: "Introduced a new 'Assets' page to track financial holdings like stocks and mutual funds." },
+            { type: 'Feature', description: "Introduced a 'Recurring' feature to automate tracking for subscriptions and regular bills." },
+        ]
+    },
+    {
+        version: "1.6.9",
+        date: "Dec 30, 2025",
+        changes: [
+            { type: 'Fix', description: "Resolved all Firestore permission errors by simplifying security rules for development." },
+            { type: 'Feature', description: "Implemented a scalable system for preset avatars by moving them to a JSON configuration." },
+            { type: 'UI/UX', description: "Improved the styling of the user profile dropdown menu." },
+        ]
+    },
+    {
+        version: "1.6.8",
+        date: "Dec 30, 2025",
+        changes: [
+            { type: 'Feature', description: "Added a tag filter to the Expense Analysis page for more granular expense tracking." },
+            { type: 'UI/UX', description: "Unified and improved the application's loading animations." },
+            { type: 'Feature', description: "Redesigned the 'More' menu on mobile with a cleaner, more modern sheet-style layout." },
+        ]
+    },
+    {
+        version: "1.6.7",
+        date: "Dec 29, 2025",
+        changes: [
+            { type: 'Fix', description: "Resolved critical build failures by removing deprecated 'Shared Expenses' features." },
+            { type: 'Fix', description: "Corrected invalid component import paths across multiple files." },
+        ]
+    },
+    {
+        version: "1.6.6",
+        date: "Dec 28, 2025",
+        changes: [
+            { type: 'UI/UX', description: "Updated the application logo and Progressive Web App (PWA) icons." },
+            { type: 'UI/UX', description: "Set 'Fintech' as the default theme, providing a modern and professional look." },
+            { type: 'UI/UX', description: "Improved the 'Add Debt' form with clearer labels and a bolder amount field." },
         ]
     },
     {
         version: "1.6.5",
-        date: "Jan 25, 2026",
+        date: "Dec 28, 2025",
         changes: [
-            { type: 'UI/UX', description: "Added 'Linked' badges to assets that are automatically synced from bank accounts." },
-            { type: 'Fix', description: "Fixed a layout shift issue in the Assets grid on ultra-wide screens." },
+            { type: 'UI/UX', description: "Redesigned the 'Expenses Overview' chart with a cleaner look and 'Others' category grouping." },
+            { type: 'UI/UX', description: "Replaced the legend with a detailed, scrollable vertical list showing amounts and percentages." },
+        ]
+    },
+    {
+        version: "1.6.4",
+        date: "Dec 23, 2025",
+        changes: [
+            { type: 'Feature', description: "Added a 'Pay Bill' option to credit card menus to settle balances from a bank account." },
+            { type: 'Fix', description: "Resolved multiple Firestore errors related to credit card billing date updates." },
+        ]
+    },
+    {
+        version: "1.6.3",
+        date: "Dec 19, 2025",
+        changes: [
+            { type: 'Feature', description: "Enabled Google Drive backup for exporting expense reports." },
+            { type: 'Fix', description: "Resolved a persistent build error related to the Google Drive picker integration." },
+        ]
+    },
+    {
+        version: "1.6.2",
+        date: "Dec 18, 2025",
+        changes: [
+            { type: 'UI/UX', description: "Adjusted transaction filter controls to prevent wrapping on mobile." },
+            { type: 'UI/UX', description: "Enhanced visibility and accessibility of 'Clear Filters' buttons on mobile." },
+        ]
+    },
+    {
+        version: "1.6.1",
+        date: "Dec 17, 2025",
+        changes: [
+            { type: 'UI/UX', description: "Standardized the 'Add Debt' form with floating labels and refined layouts." },
+            { type: 'Feature', description: "Consolidated transaction list and form settings into a single 'Transaction Settings' section." },
         ]
     },
     {
         version: "1.6.0",
-        date: "Jan 20, 2026",
+        date: "Dec 11, 2025",
         changes: [
-            { type: 'Feature', description: "Launched 'Asset Management' dashboard to track Net Worth, Mutual Funds, and Equity." },
-            { type: 'Logic', description: "Integrated real-time Bank balance syncing with the Assets portfolio view." },
-            { type: 'UI/UX', description: "Implemented 'Compact View' mode for transaction lists to improve data density." },
+            { type: 'Security', description: "Upgraded Next.js to version 16.0.7 to patch a critical security vulnerability." },
         ]
     },
     {
-        version: "1.5.5",
-        date: "Jan 15, 2026",
+        version: "1.5.1",
+        date: "Dec 16, 2025",
         changes: [
-            { type: 'Logic', description: "Added real-time progress indicators for the JSON Backup and Restore utility." },
-            { type: 'Security', description: "Implemented password re-authentication for high-risk data management actions." },
+            { type: 'Feature', description: "Added contextual page-specific settings to the user profile dropdown." },
+            { type: 'Feature', description: "Enhanced Excel exports to include icons for categories and tags." },
+            { type: 'Feature', description: "Implemented selective reset dialogs for safer data management." },
         ]
     },
     {
         version: "1.5.0",
-        date: "Jan 10, 2026",
+        date: "Dec 15, 2025",
         changes: [
-            { type: 'Feature', description: "Enhanced Excel Importer with intelligent account mapping and category auto-matching." },
-            { type: 'Feature', description: "Added 'Backup & Restore' utility for full data portability via encrypted JSON files." },
-            { type: 'UI/UX', description: "Standardized system-wide icons using a centralized high-performance renderer." },
+            { type: 'Feature', description: "Added the ability to archive and reactivate categories and tags." },
+        ]
+    },
+    {
+        version: "1.4.9",
+        date: "Dec 14, 2025",
+        changes: [
+            { type: 'Fix', description: "Refined credit card payment notifications to prevent alerts for paid-off cards." },
+        ]
+    },
+    {
+        version: "1.4.8",
+        date: "Dec 06, 2025",
+        changes: [
+            { type: 'UI/UX', description: "Improved pie chart data grouping for cleaner Analysis page visualizations." },
+            { type: 'Feature', description: "Added 'All Accounts' filtering to the Analysis dashboard." },
+        ]
+    },
+    {
+        version: "1.4.7",
+        date: "Dec 12, 2025",
+        changes: [
+            { type: 'Fix', description: "Corrected visual bugs where fully paid credit cards were not marked correctly." },
+            { type: 'UI/UX', description: "Prioritized bank accounts in the accounts list for better accessibility." },
+        ]
+    },
+    {
+        version: "1.4.6",
+        date: "Dec 10, 2025",
+        changes: [
+            { type: 'Feature', description: "Added visibility toggles for individual charts and AI insight cards." },
         ]
     },
     {
         version: "1.4.5",
-        date: "Jan 05, 2026",
+        date: "Dec 09, 2025",
         changes: [
-            { type: 'Logic', description: "Fine-tuned Genkit prompts for more accurate category and tag suggestions." },
-            { type: 'Fix', description: "Resolved a memory leak in the real-time Firestore listener for the Analysis page." },
+            { type: 'UI/UX', description: "Combined 'Profile' and 'Security' sections in Settings for a more efficient layout." },
+            { type: 'Feature', description: "Added 'Cash In'/'Cash Out' shortcuts to the monthly transaction view." },
+        ]
+    },
+    {
+        version: "1.4.4",
+        date: "Dec 08, 2025",
+        changes: [
+            { type: 'Fix', description: "Corrected 'Credit Card Payment' logic for cross-account transactions." },
+        ]
+    },
+    {
+        version: "1.4.3",
+        date: "Dec 06, 2025",
+        changes: [
+            { type: 'Security', description: "Overhauled Firestore security rules for robust owner-based data access." },
+        ]
+    },
+    {
+        version: "1.4.2",
+        date: "Dec 05, 2025",
+        changes: [
+            { type: 'Fix', description: "Resolved persistent build errors by removing unused account components." },
+        ]
+    },
+    {
+        version: "1.4.1",
+        date: "Dec 03, 2025",
+        changes: [
+            { type: 'Feature', description: "Introduced secure non-sensitive credit card detail storage." },
+            { type: 'Feature', description: "Enhanced Excel importer with intelligent account mapping." },
         ]
     },
     {
         version: "1.4.0",
-        date: "Dec 28, 2025",
+        date: "Nov 30, 2025",
         changes: [
-            { type: 'Feature', description: "Integrated GenAI for spending insights and automatic transaction detail suggestions." },
-            { type: 'UI/UX', description: "Redesigned Dashboard stats with comparative month-over-month trend analysis." },
-            { type: 'Feature', description: "Implemented 'Analysis' view with spending by tag, category, and cash flow trends." },
+            { type: 'Feature', description: "Integrated GenAI for spending insights and automatic transaction suggestions." },
+            { type: 'Feature', description: "Added 'Save and New' functionality to speed up bulk entry." },
         ]
     },
     {
-        version: "1.3.5",
-        date: "Dec 20, 2025",
+        version: "1.3.10",
+        date: "Nov 28, 2025",
         changes: [
-            { type: 'UI/UX', description: "Polished the 'Premium Fintech' theme with refined HSL variables for better contrast." },
-            { type: 'Fix', description: "Fixed an issue where the PWA install prompt wouldn't trigger on some Android devices." },
+            { type: 'Feature', description: "Added bulk deletion capabilities for debts and dues." },
+        ]
+    },
+    {
+        version: "1.3.9",
+        date: "Nov 26, 2025",
+        changes: [
+            { type: 'Feature', description: "Introduced person-based grouping for Debt tracking." },
+        ]
+    },
+    {
+        version: "1.3.8",
+        date: "Nov 24, 2025",
+        changes: [
+            { type: 'Feature', description: "Launched the initial 'Debts & Dues' tracking module." },
         ]
     },
     {
         version: "1.3.0",
-        date: "Dec 15, 2025",
+        date: "Nov 08, 2025",
         changes: [
-            { type: 'Feature', description: "Added 'Transaction Field Customization' to allow users to reorder and hide form fields." },
-            { type: 'Logic', description: "Implemented dual-mode transaction grouping (Daily vs. Monthly) based on user preference." },
-            { type: 'UI/UX', description: "Introduced the 'Fintech' premium theme with soft beige backgrounds and navy typography." },
-        ]
-    },
-    {
-        version: "1.2.5",
-        date: "Dec 05, 2025",
-        changes: [
-            { type: 'Logic', description: "Optimized chart rendering by pre-aggregating Firestore data chunks." },
-            { type: 'UI/UX', description: "Added 'Chat' theme for a more conversational and lightweight user experience." },
+            { type: 'Feature', description: "Implemented multi-account support and advanced analysis filters." },
         ]
     },
     {
         version: "1.2.0",
-        date: "Nov 30, 2025",
+        date: "Oct 19, 2025",
         changes: [
-            { type: 'Feature', description: "Launched multi-account support with specialized logic for Credit Card limits and utilization." },
-            { type: 'Security', description: "Implemented robust Firebase Security Rules to ensure owner-only data access." },
-            { type: 'UI/UX', description: "Added 'Dark Mode' support and dynamic color coding for transaction categories." },
-        ]
-    },
-    {
-        version: "1.1.5",
-        date: "Nov 22, 2025",
-        changes: [
-            { type: 'Feature', description: "Added Phone OTP authentication as a primary sign-in alternative." },
-            { type: 'Fix', description: "Fixed recurring layout shifts in the profile avatar uploader." },
+            { type: 'Feature', description: "Added running balance calculations and search functionality." },
         ]
     },
     {
         version: "1.1.0",
-        date: "Nov 15, 2025",
+        date: "Oct 17, 2025",
         changes: [
-            { type: 'Feature', description: "Initial release of core Expense & Income tracking engine." },
-            { type: 'Feature', description: "Implemented Firebase Auth integration with Email and Phone OTP support." },
-            { type: 'UI/UX', description: "Designed the foundation responsive layout and basic financial summary cards." },
+            { type: 'Feature', description: "Initial release of the ExpenseWise core engine." },
         ]
     }
 ];
@@ -227,7 +420,7 @@ export default function AboutPage() {
         <div className="w-full max-w-2xl mx-auto pb-32">
             <PageHeader
                 title="Release Notes"
-                description="Our journey from 1.1.0 to the latest improvements."
+                description="The journey of ExpenseWise from 1.1.0 to the latest improvements."
             >
                 <Button variant="outline" asChild size="sm" className="text-muted-foreground hover:text-foreground">
                     <Link href="/profile">

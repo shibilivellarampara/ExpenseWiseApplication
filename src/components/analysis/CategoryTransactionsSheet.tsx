@@ -46,7 +46,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                 <DialogHeader className="p-6 pb-4 border-b bg-card shrink-0">
                     <div className="flex justify-between items-center pr-10 gap-4">
                         <div className="min-w-0 flex flex-col gap-0.5">
-                            <DialogTitle className="text-lg font-normal font-headline truncate">
+                            <DialogTitle className="text-lg font-medium truncate">
                                 {category?.name}
                             </DialogTitle>
                             <DialogDescription className="text-xs text-muted-foreground font-normal">
@@ -55,7 +55,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                         </div>
                         <div className="text-right shrink-0">
                             <p className={cn(
-                                "text-lg font-normal whitespace-nowrap",
+                                "text-lg font-medium whitespace-nowrap",
                                 getAmountColor()
                             )}>
                                 {currencySymbol}{formatAmount(Math.abs(category?.amount || 0))}

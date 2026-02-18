@@ -239,25 +239,14 @@
 
 @layer components {
   .badge-colorful {
-    background-color: var(--badge-bg-light);
-    color: var(--badge-text-light);
-    border: none;
+    background-color: var(--badge-bg-light) !important;
+    color: var(--badge-text-light) !important;
+    border: none !important;
   }
   .dark .badge-colorful {
-    background-color: var(--badge-bg-dark);
-    color: var(--badge-text-dark);
-  }
-  .chat .badge-colorful {
-    background-color: var(--badge-bg-light);
-    color: var(--badge-text-light);
-  }
-  .fintech .badge-colorful {
-    background-color: var(--badge-bg-light);
-    color: var(--badge-text-light);
-  }
-  .dark-fintech .badge-colorful {
-    background-color: var(--badge-bg-dark);
-    color: var(--badge-text-dark);
+    background-color: var(--badge-bg-dark) !important;
+    color: var(--badge-text-dark) !important;
+    border: none !important;
   }
 }
 

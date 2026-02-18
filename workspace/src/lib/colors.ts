@@ -1,11 +1,10 @@
-
 type ColorInfo = {
   light: { bg: string; text: string };
   dark: { bg: string; text: string };
 };
 
 // A vibrant, professional palette for generating dynamic badge colors.
-// This palette is designed to work well across all themes, including the Fintech theme.
+// Refined to match high-quality fintech standards: light background with darker, high-contrast same-hue text.
 export const COLORS: ColorInfo[] = [
   { light: { bg: '210 80% 95%', text: '210 80% 30%' }, dark: { bg: '210 40% 20%', text: '210 80% 85%' } },   // Blue
   { light: { bg: '180 45% 95%', text: '180 45% 30%' }, dark: { bg: '180 45% 20%', text: '180 45% 85%' } },   // Teal

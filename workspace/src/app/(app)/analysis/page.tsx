@@ -54,7 +54,7 @@ function AnalysisPageContent() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [includeHidden, setIncludeHidden] = useState(false);
     
-    // Set all cards to false (closed) by default per user request
+    // Default to closed for all collapsible cards
     const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({
         savings: false,
         topCats: false,
@@ -297,7 +297,7 @@ function AnalysisPageContent() {
                                         : `${selectedAccounts.length} Accounts`}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
-                        </DropdownMenuTrigger>
+                        </PopoverTrigger>
                         <DropdownMenuContent className="w-40" align="end">
                             <Command>
                                 <CommandInput placeholder="Search accounts..." />

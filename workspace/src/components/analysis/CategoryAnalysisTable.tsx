@@ -129,7 +129,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                     </div>
 
                     {!isExpanded ? (
-                        <div className="px-6 pb-6 flex items-center gap-4 sm:gap-8 pt-4 animate-in fade-in duration-300">
+                        <div className="px-6 pb-6 flex items-center gap-4 pt-4 animate-in fade-in duration-300">
                             <div className="h-32 w-32 shrink-0">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>

@@ -36,8 +36,8 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
 
     const getAmountColor = () => {
         if (view === 'expense') return 'text-destructive';
-        if (view === 'income') return 'text-green-600';
-        return (category?.amount || 0) >= 0 ? 'text-green-600' : 'text-destructive';
+        if (view === 'income') return 'text-primary';
+        return (category?.amount || 0) >= 0 ? 'text-primary' : 'text-destructive';
     };
 
     return (
@@ -85,7 +85,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                                     <div className="shrink-0 text-right">
                                         <p className={cn(
                                             "text-[15px] font-normal whitespace-nowrap",
-                                            expense.type === 'income' ? "text-green-600" : "text-destructive"
+                                            expense.type === 'income' ? "text-primary" : "text-destructive"
                                         )}>
                                             {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}
                                         </p>

@@ -301,7 +301,11 @@ function AnalysisPageContent() {
                 <div className="space-y-6">
                     {/* Category Analysis - Expanding Table */}
                     {(analysisSettings?.showCategoryTable ?? true) && (
-                        <CategoryAnalysisTable expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                        <CategoryAnalysisTable 
+                            expenses={filteredExpenses} 
+                            currency={userProfile?.defaultCurrency} 
+                            excludedCategoryIds={analysisSettings?.excludedCategoryIds}
+                        />
                     )}
 
                     {/* Monthly Savings Trend */}

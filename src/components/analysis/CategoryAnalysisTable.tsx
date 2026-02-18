@@ -10,13 +10,15 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { CHART_COLORS } from "@/lib/colors";
 import { CategoryTransactionsSheet } from "./CategoryTransactionsSheet";
+import { Badge } from "@/components/ui/badge";
 
 interface CategoryAnalysisTableProps {
     expenses: EnrichedExpense[];
     currency?: string;
+    excludedCategoryIds?: string[];
 }
 
-export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTableProps) {
+export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds = [] }: CategoryAnalysisTableProps) {
     const currencySymbol = getCurrencySymbol(currency);
     const [view, setView] = useState<'expense' | 'income' | 'net'>('expense');
     const [isExpanded, setIsExpanded] = useState(false);
@@ -89,7 +91,6 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
         if (isExpanded) {
             setIsExpanded(false);
             // Robust scroll retention for mobile using scrollIntoView
-            // requestAnimationFrame ensures the layout has shrunk before we scroll
             requestAnimationFrame(() => {
                 if (cardRef.current) {
                     cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -145,6 +146,9 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                                         <div className="flex items-center gap-2">
                                             <div className="h-2 w-2 rounded-full" style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }} />
                                             <span className="text-xs font-semibold truncate max-w-[100px]">{item.name}</span>
+                                            {excludedCategoryIds.includes(item.id) && (
+                                                <Badge variant="outline" className="h-3.5 text-[8px] uppercase font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
+                                            )}
                                         </div>
                                         <div className="text-right">
                                             <p className="text-xs font-bold">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
@@ -172,6 +176,7 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                                 {stats.data.map((item, idx) => {
                                     const isTagsOpen = expandedTags.has(item.id);
                                     const color = CHART_COLORS[idx % CHART_COLORS.length];
+                                    const isHidden = excludedCategoryIds.includes(item.id);
 
                                     return (
                                         <div key={item.id} className="space-y-3">
@@ -183,7 +188,10 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                                                     <div className="flex items-center justify-between pr-4">
                                                         <div className="flex items-center gap-2">
                                                             <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                                                            <span className="text-sm font-bold truncate">{item.name}</span>
+                                                            <span className={cn("text-sm font-bold truncate", isHidden && "text-muted-foreground/70")}>{item.name}</span>
+                                                            {isHidden && (
+                                                                <Badge variant="outline" className="h-3.5 text-[8px] uppercase font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
+                                                            )}
                                                         </div>
                                                         <span className="text-[10px] font-medium text-muted-foreground">{item.percentage.toFixed(1)}%</span>
                                                     </div>

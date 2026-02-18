@@ -57,7 +57,12 @@ export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, 
                 </div>
 
                 <div className="pt-4 border-t border-muted/50 flex items-center justify-between">
-                    <Label htmlFor="include-hidden" className="text-xs font-medium text-muted-foreground">Include Hidden Categories</Label>
+                    <Label 
+                        htmlFor="include-hidden" 
+                        className="text-xs font-medium text-muted-foreground cursor-pointer flex-grow py-2"
+                    >
+                        Include Hidden Categories
+                    </Label>
                     <Switch 
                         id="include-hidden" 
                         checked={includeHidden} 

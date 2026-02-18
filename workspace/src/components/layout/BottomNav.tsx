@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   LayoutDashboard,
@@ -14,7 +14,6 @@ import {
   Repeat,
   HandCoins,
   Settings,
-  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -57,6 +56,7 @@ const NavLink = ({ href, currentPath, children }: { href: string; currentPath: s
 
 export function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -146,32 +146,26 @@ export function BottomNav() {
             
                 {/* Floating Action Button */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[75%] h-[72px] w-[72px] flex items-center justify-center z-10 pointer-events-auto">
-                     <AddExpenseDialog onSaveSuccess={handleDataChange}>
+                     {isTransactionsPage ? (
+                        <AddExpenseDialog onSaveSuccess={handleDataChange}>
+                            <Button
+                                size="icon"
+                                className="h-[72px] w-[72px] rounded-full bg-primary border-4 border-background shadow-[0_4px_8px_rgba(0,0,0,0.1)]"
+                            >
+                                <Plus className="h-8 w-8" />
+                                <span className="sr-only">Add Transaction</span>
+                            </Button>
+                        </AddExpenseDialog>
+                     ) : (
                         <Button
                             size="icon"
-                            className={cn(
-                                "h-[72px] w-[72px] rounded-full bg-primary border-4 border-background relative overflow-hidden",
-                                "shadow-[0_4px_8px_rgba(0,0,0,0.1)]", 
-                                !isTransactionsPage && "cursor-default"
-                            )}
-                            onClick={(e) => {
-                                if (!isTransactionsPage) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                }
-                            }}
+                            onClick={() => router.push(transactionsHref)}
+                            className="h-[72px] w-[72px] rounded-full bg-primary border-4 border-background shadow-[0_4px_8px_rgba(0,0,0,0.1)]"
                         >
-                             <Link href={transactionsHref} className={cn("absolute inset-0 flex items-center justify-center transition-all duration-300", isTransactionsPage && "opacity-0 scale-0 rotate-180 pointer-events-none")}>
-                                <ArrowRightLeft className="h-7 w-7" />
-                            </Link>
-
-                             <div className={cn("absolute inset-0 flex items-center justify-center transition-all duration-300", !isTransactionsPage && "opacity-0 scale-0 -rotate-180 pointer-events-none")}>
-                                <Plus className="h-8 w-8" />
-                            </div>
-                            
-                            <span className="sr-only">Add Transaction or Navigate</span>
+                            <ArrowRightLeft className="h-7 w-7" />
+                            <span className="sr-only">Go to Transactions</span>
                         </Button>
-                    </AddExpenseDialog>
+                     )}
                 </div>
             </div>
         </div>

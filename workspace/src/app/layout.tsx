@@ -6,6 +6,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from 'next-themes';
 import Script from 'next/script';
 import pkg from '../../package.json';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const appVersion = pkg.version;
 
@@ -63,7 +64,9 @@ export default function RootLayout({
           themes={['light', 'dark', 'chat', 'fintech', 'dark-fintech']}
         >
             <FirebaseClientProvider>
-              {children}
+              <TooltipProvider>
+                {children}
+              </TooltipProvider>
             </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>

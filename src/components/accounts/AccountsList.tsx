@@ -24,6 +24,7 @@ import { Dialog, DialogTrigger, DialogHeader, DialogTitle, DialogContent, Dialog
 import Image from "next/image";
 import { PayBillDialog } from "@/components/accounts/PayBillDialog";
 import { renderIcon } from '@/lib/render-icon';
+import { useRouter } from 'next/navigation';
 
 interface AccountsListProps {
     accounts: Account[];
@@ -233,6 +234,7 @@ const CardDisplay = ({ account }: { account: Account }) => {
 
 export function AccountsList({ accounts, isLoading, searchActive }: AccountsListProps) {
     const { user } = useUser();
+    const router = useRouter();
     const firestore = useFirestore();
     const { toast } = useToast();
 
@@ -256,7 +258,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
         return (
             <div className="space-y-4">
                 {Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-32 w-full rounded-[20px]" />
+                    <Skeleton className="h-32 w-full rounded-[20px]" />
                 ))}
             </div>
         )
@@ -311,7 +313,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                                 <div className="min-w-0">
                                     <h3 
                                         className="font-bold text-base truncate cursor-pointer active:text-primary transition-colors"
-                                        onClick={() => window.location.href=`/expenses?accounts=${item.id}`}
+                                        onClick={() => router.push(`/expenses?accounts=${item.id}`)}
                                     >
                                         {item.name}
                                     </h3>

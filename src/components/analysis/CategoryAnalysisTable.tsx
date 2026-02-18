@@ -116,10 +116,10 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                         </div>
                         <div className="flex items-center gap-3">
                             <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full shrink-0">
-                                <TabsList className="bg-transparent h-10 p-0">
-                                    <TabsTrigger value="expense" className="rounded-full text-[12px] h-9 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Expenses</TabsTrigger>
-                                    <TabsTrigger value="income" className="rounded-full text-[12px] h-9 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Income</TabsTrigger>
-                                    <TabsTrigger value="net" className="rounded-full text-[12px] h-9 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Net</TabsTrigger>
+                                <TabsList className="bg-transparent h-9 p-0">
+                                    <TabsTrigger value="expense" className="rounded-full text-[11px] h-8 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Expenses</TabsTrigger>
+                                    <TabsTrigger value="income" className="rounded-full text-[11px] h-8 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Income</TabsTrigger>
+                                    <TabsTrigger value="net" className="rounded-full text-[11px] h-8 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Net</TabsTrigger>
                                 </TabsList>
                             </Tabs>
                         </div>

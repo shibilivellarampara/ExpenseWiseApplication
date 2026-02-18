@@ -49,15 +49,15 @@ export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, 
                         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Analysis Summary</p>
                         <p className={cn(
                             "text-2xl font-bold tracking-tight",
-                            stats.netFlow >= 0 ? "text-green-600" : "text-destructive"
+                            stats.netFlow >= 0 ? "text-primary" : "text-destructive"
                         )}>
                             {currencySymbol}{formatAmount(stats.netFlow)}
                         </p>
                     </div>
                     <div className="text-right space-y-1 mt-1">
                         <div className="flex items-center justify-end gap-2">
-                            <span className="text-[10px] font-bold text-green-600 uppercase tracking-widest">In:</span>
-                            <span className="text-sm sm:text-lg font-bold text-green-600">{currencySymbol}{formatAmount(stats.totalIn)}</span>
+                            <span className="text-[10px] font-bold text-primary uppercase tracking-widest">In:</span>
+                            <span className="text-sm sm:text-lg font-bold text-primary">{currencySymbol}{formatAmount(stats.totalIn)}</span>
                         </div>
                         <div className="flex items-center justify-end gap-2">
                             <span className="text-[10px] font-bold text-destructive uppercase tracking-widest">Out:</span>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from "react";
@@ -105,7 +104,7 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
         <>
             <Card className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden">
                 <CardContent className="p-0">
-                    <div className="flex items-center justify-between p-6">
+                    <div className="flex items-center justify-between p-6 pb-2">
                         <h3 className="font-bold text-lg">{isExpanded ? 'All Categories' : 'Top 5 Categories'}</h3>
                         <div className="flex items-center gap-3">
                             <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full">
@@ -115,12 +114,6 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                                     <TabsTrigger value="net" className="rounded-full text-[10px] h-7 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Net</TabsTrigger>
                                 </TabsList>
                             </Tabs>
-                            <button 
-                                onClick={() => setIsExpanded(!isExpanded)}
-                                className="h-8 w-8 flex items-center justify-center rounded-full bg-muted/50 hover:bg-muted transition-colors"
-                            >
-                                {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                            </button>
                         </div>
                     </div>
 
@@ -159,7 +152,7 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                             </div>
                         </div>
                     ) : (
-                        <div className="px-6 pb-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="px-6 pb-6 pt-4 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
                             {/* Full-width Horizontal Stacked Bar */}
                             <div className="flex h-3 w-full rounded-full overflow-hidden bg-muted/30">
                                 {stats.data.map((item, idx) => (
@@ -236,6 +229,23 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                             </div>
                         </div>
                     )}
+
+                    <button 
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="w-full py-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-primary hover:bg-muted/30 transition-all border-t border-border/50"
+                    >
+                        {isExpanded ? (
+                            <>
+                                <span>Show Less</span>
+                                <ChevronUp className="h-4 w-4" />
+                            </>
+                        ) : (
+                            <>
+                                <span>View All Categories</span>
+                                <ChevronDown className="h-4 w-4" />
+                            </>
+                        )}
+                    </button>
                 </CardContent>
             </Card>
 

@@ -258,7 +258,7 @@ function AnalysisPageContent() {
                     excludedCategoryIds={analysisSettings?.excludedCategoryIds || []}
                 />
 
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar pr-4">
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
@@ -296,7 +296,7 @@ function AnalysisPageContent() {
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-40" align="start">
+                        <DropdownMenuContent className="w-40" align="end">
                             <Command>
                                 <CommandInput placeholder="Search accounts..." />
                                 <CommandList>
@@ -327,7 +327,7 @@ function AnalysisPageContent() {
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-40" align="start">
+                        <DropdownMenuContent className="w-40" align="end">
                             <Command>
                                 <CommandInput placeholder="Search tags..." />
                                 <CommandList>

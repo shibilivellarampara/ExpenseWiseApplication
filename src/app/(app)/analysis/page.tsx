@@ -227,7 +227,6 @@ function AnalysisPageContent() {
             <Suspense fallback={null}>
                 <PageHeader
                     title="Analysis"
-                    description="A detailed breakdown of your income and spending habits."
                 />
 
                 <AnalysisSummary 
@@ -282,6 +281,7 @@ function AnalysisPageContent() {
                             <Command>
                                 <CommandInput placeholder="Search accounts..." />
                                 <CommandList>
+                                    <CommandEmpty>No results found.</CommandEmpty>
                                     <CommandGroup>
                                         <CommandItem onSelect={() => setSelectedAccounts([])} className="flex justify-between">
                                             All Accounts <Check className={cn("h-4 w-4", selectedAccounts.length === 0 ? "opacity-100" : "opacity-0")} />
@@ -312,6 +312,7 @@ function AnalysisPageContent() {
                             <Command>
                                 <CommandInput placeholder="Search tags..." />
                                 <CommandList>
+                                    <CommandEmpty>No results found.</CommandEmpty>
                                     <CommandGroup>
                                         <CommandItem onSelect={() => setSelectedTags([])} className="flex justify-between">
                                             All Tags <Check className={cn("h-4 w-4", selectedTags.length === 0 ? "opacity-100" : "opacity-0")} />

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser } from '@/firebase';
@@ -22,7 +21,13 @@ export function Logo() {
 
   return (
     <Link href={finalHref} className="flex items-center gap-2" prefetch={false}>
-      <Image src="/circlelogo50.png" alt="ExpenseWise Logo" width={28} height={28} className="h-7 w-7" />
+      <Image 
+        src="/logo.png" 
+        alt="ExpenseWise Logo" 
+        width={28} 
+        height={28} 
+        className="h-7 w-7 object-contain" 
+      />
       <div className="relative">
         <span className="text-xl font-headline font-semibold text-foreground">ExpenseWise</span>
         {process.env.NODE_ENV === 'development' && (

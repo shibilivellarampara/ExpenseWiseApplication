@@ -178,23 +178,6 @@ function AnalysisPageContent() {
         setAiAnalysis(null);
     };
 
-    const handleGenerateInsights = () => {
-        if (filteredExpenses.length === 0) return;
-        startAiTransition(async () => {
-            const result = await analyzeExpenses({
-                expenses: filteredExpenses.map(e => ({
-                    type: e.type,
-                    amount: e.amount,
-                    date: e.date.toISOString(),
-                    category: e.category?.name,
-                    account: e.account?.name,
-                    tags: e.tags.map(t => t.name)
-                }))
-            });
-            setAiAnalysis(result);
-        });
-    };
-
     const timeRangeLabels: Record<TimeRangePreset, string> = {
         'week': 'This Week',
         'month': 'This Month',

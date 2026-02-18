@@ -18,6 +18,17 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.8.6",
+        date: "Feb 19, 2026",
+        changes: [
+            { type: 'UI/UX', description: "Implemented 'click knowing' active states for all card headers and account names for immediate interaction feedback." },
+            { type: 'UI/UX', description: "Standardized semantic financial coloring: Primary for positive/income values and Destructive for negative/expense values across summaries." },
+            { type: 'UI/UX', description: "Reduced Analysis filter dropdown widths by 25% and optimized mobile alignment for a cleaner, gap-respecting layout." },
+            { type: 'Feature', description: "Set Analysis chart and insight cards to be closed by default for a more focused initial page view." },
+            { type: 'UI/UX', description: "Refined Category Analysis transaction popups with high-density widths and standardized Inter typography." },
+        ]
+    },
+    {
         version: "1.8.5",
         date: "Feb 18, 2026",
         changes: [
@@ -55,7 +66,7 @@ const changelog = [
             { type: 'UI/UX', description: "Implemented themed fade-out effects for all progress bars, enhancing visual clarity for credit utilization." },
             { type: 'UI/UX', description: "Contextualized filter cancellation in the Debts UI by moving clear buttons inside respective stat boxes." },
             { type: 'Feature', description: "Stabilized the 'Recurring Transactions' module by resolving invalid Firebase document references and segment mismatches." },
-            { type: 'Logic', description: "Synchronized v1.8.2 logic and UI refinements across production and workspace environments for global consistency." },
+            { type: 'Logic', description: "Standardized v1.8.2 logic and UI refinements across production and workspace environments for global consistency." },
         ]
     },
     {

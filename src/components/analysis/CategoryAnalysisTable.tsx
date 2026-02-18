@@ -60,7 +60,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                         amount,
                         percentage: Math.abs(item.amount) > 0 ? (Math.abs(amount) / Math.abs(item.amount)) * 100 : 0
                     }))
-                    .sort((a, b) => b.amount - a.amount);
+                    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
 
                 return {
                     id,
@@ -90,12 +90,11 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
     const handleToggleExpand = () => {
         if (isExpanded) {
             setIsExpanded(false);
-            // Use setTimeout to ensure the collapse transition has started before scrolling
             setTimeout(() => {
                 if (cardRef.current) {
                     cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-            }, 10);
+            }, 50);
         } else {
             setIsExpanded(true);
         }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -19,6 +18,19 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.8.5",
+        date: "Feb 18, 2026",
+        changes: [
+            { type: 'Fix', description: "Resolved critical JSX syntax errors in AssetsList that caused production build failures." },
+            { type: 'Feature', description: "Implemented specific Month & Year picker in Analysis filters for historical deep-dives." },
+            { type: 'UI/UX', description: "Redesigned Category Analysis list with a tiered metadata stack and full-width progress bars." },
+            { type: 'UI/UX', description: "Enhanced 'Hidden Categories' management with a descriptive popover and inline toggle." },
+            { type: 'UI/UX', description: "Added 'All Tags' clear option to Analysis filters for faster interaction." },
+            { type: 'UI/UX', description: "Integrated Tag icons and corrected alignment in the nested category breakdown." },
+            { type: 'Logic', description: "Refined 'Net' view by hiding percentages to avoid balance-based calculation confusion." },
+        ]
+    },
+    {
         version: "1.8.4",
         date: "Feb 18, 2026",
         changes: [
@@ -27,29 +39,6 @@ const changelog = [
             { type: 'UI/UX', description: "Applied global shadow-md elevation to all major dashboard cards for enhanced visual depth." },
             { type: 'Fix', description: "Resolved critical ReferenceErrors for 'orderBy' and 'Badge' across various holding components." },
             { type: 'Logic', description: "Standardized the premium fintech UI setup across Accounts, Debts, and Assets screens." },
-        ]
-    },
-    {
-        version: "1.8.3",
-        date: "Feb 18, 2026",
-        changes: [
-            { type: 'UI/UX', description: "Finalized premium fintech redesign for Accounts and Debts with elevated summary cards and unified search headers." },
-            { type: 'UI/UX', description: "Implemented themed fade-out effects for all progress bars, enhancing visual clarity for credit utilization." },
-            { type: 'UI/UX', description: "Contextualized filter cancellation in the Debts UI by moving clear buttons inside respective stat boxes." },
-            { type: 'Feature', description: "Stabilized the 'Recurring Transactions' module by resolving invalid Firebase document references and segment mismatches." },
-            { type: 'Logic', description: "Synchronized v1.8.2 logic and UI refinements across production and workspace environments for global consistency." },
-        ]
-    },
-    {
-        version: "1.8.2",
-        date: "Feb 18, 2026",
-        changes: [
-            { type: 'Feature', description: "Introduced 'Recurring Transactions' management to automate tracking for regular bills and subscriptions." },
-            { type: 'Feature', description: "Dashboard 'Total Monthly Expense' now automatically excludes the 'Transfer' category for more accurate spending tracking." },
-            { type: 'UI/UX', description: "Redesigned the Accounts and Debts pages with a premium fintech summary card and unified search/add headers." },
-            { type: 'UI/UX', description: "Implemented semantic theme coloring: Blue/Orange for Fintech and Green/Red for Chat themes." },
-            { type: 'UI/UX', description: "Optimized transaction list rendering by removing internal scroll constraints for a more natural natural feel." },
-            { type: 'Fix', description: "Resolved critical JSX tag mismatch and syntax errors in forms and dashboard stats to ensure production stability." },
         ]
     }
 ];

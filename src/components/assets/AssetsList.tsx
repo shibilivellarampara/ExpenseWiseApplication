@@ -144,7 +144,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                      <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <Button variant="ghost" size="icon" className="h-4 w-4">
                                                     <Info className="h-4 w-4 text-muted-foreground" />
                                                 </Button>
                                             </TooltipTrigger>

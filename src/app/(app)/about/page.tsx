@@ -41,6 +41,78 @@ const changelog = [
             { type: 'Fix', description: "Resolved critical ReferenceErrors for 'orderBy' and 'Badge' across various holding components." },
             { type: 'Logic', description: "Standardized the premium fintech UI setup across Accounts, Debts, and Assets screens." },
         ]
+    },
+    {
+        version: "1.8.0",
+        date: "Feb 10, 2026",
+        changes: [
+            { type: 'Feature', description: "Launched 'Recurring Transactions' module for automated tracking of subscriptions and bills." },
+            { type: 'Logic', description: "Implemented automatic Credit Card Due Date calculation (Statement Date + 15 days)." },
+            { type: 'UI/UX', description: "Enhanced transaction form with floating labels and refined date-time pickers." },
+        ]
+    },
+    {
+        version: "1.7.0",
+        date: "Feb 01, 2026",
+        changes: [
+            { type: 'Feature', description: "Introduced 'Debts & Dues' tracking with person-based grouping and balance settlement logic." },
+            { type: 'UI/UX', description: "Added a 'More' expandable menu to the mobile navigation bar for better feature discovery." },
+            { type: 'Logic', description: "Improved data validation for large-scale transaction bulk deletions." },
+        ]
+    },
+    {
+        version: "1.6.0",
+        date: "Jan 20, 2026",
+        changes: [
+            { type: 'Feature', description: "Launched 'Asset Management' dashboard to track Net Worth, Mutual Funds, and Equity." },
+            { type: 'Logic', description: "Integrated real-time Bank balance syncing with the Assets portfolio view." },
+            { type: 'UI/UX', description: "Implemented 'Compact View' mode for transaction lists to improve data density." },
+        ]
+    },
+    {
+        version: "1.5.0",
+        date: "Jan 10, 2026",
+        changes: [
+            { type: 'Feature', description: "Enhanced Excel Importer with intelligent account mapping and category auto-matching." },
+            { type: 'Feature', description: "Added 'Backup & Restore' utility for full data portability via encrypted JSON files." },
+            { type: 'UI/UX', description: "Standardized system-wide icons using a centralized high-performance renderer." },
+        ]
+    },
+    {
+        version: "1.4.0",
+        date: "Dec 28, 2025",
+        changes: [
+            { type: 'Feature', description: "Integrated GenAI for spending insights and automatic transaction detail suggestions." },
+            { type: 'UI/UX', description: "Redesigned Dashboard stats with comparative month-over-month trend analysis." },
+            { type: 'Feature', description: "Implemented 'Analysis' view with spending by tag, category, and cash flow trends." },
+        ]
+    },
+    {
+        version: "1.3.0",
+        date: "Dec 15, 2025",
+        changes: [
+            { type: 'Feature', description: "Added 'Transaction Field Customization' to allow users to reorder and hide form fields." },
+            { type: 'Logic', description: "Implemented dual-mode transaction grouping (Daily vs. Monthly) based on user preference." },
+            { type: 'UI/UX', description: "Introduced the 'Fintech' premium theme with soft beige backgrounds and navy typography." },
+        ]
+    },
+    {
+        version: "1.2.0",
+        date: "Nov 30, 2025",
+        changes: [
+            { type: 'Feature', description: "Launched multi-account support with specialized logic for Credit Card limits and utilization." },
+            { type: 'Security', description: "Implemented robust Firebase Security Rules to ensure owner-only data access." },
+            { type: 'UI/UX', description: "Added 'Dark Mode' support and dynamic color coding for transaction categories." },
+        ]
+    },
+    {
+        version: "1.1.0",
+        date: "Nov 15, 2025",
+        changes: [
+            { type: 'Feature', description: "Initial release of core Expense & Income tracking engine." },
+            { type: 'Feature', description: "Implemented Firebase Auth integration with Email and Phone OTP support." },
+            { type: 'UI/UX', description: "Designed the foundation responsive layout and basic financial summary cards." },
+        ]
     }
 ];
 
@@ -68,7 +140,7 @@ export default function AboutPage() {
         <div className="w-full max-w-2xl mx-auto pb-32">
             <PageHeader
                 title="Release Notes"
-                description="Release notes and improvements."
+                description="Our journey from 1.1.0 to the latest improvements."
             >
                 <Button variant="outline" asChild size="sm" className="text-muted-foreground hover:text-foreground">
                     <Link href="/profile">

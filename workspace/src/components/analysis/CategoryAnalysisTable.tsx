@@ -107,7 +107,13 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                 <CardContent className="p-0">
                     <div className="flex items-center justify-between p-6 pb-2">
                         <div>
-                            <h3 className="font-bold text-lg">{isExpanded ? 'All Categories' : 'Top 5 Categories'}</h3>
+                            <h3 
+                                className="font-bold text-lg cursor-pointer hover:text-primary transition-colors inline-flex items-center gap-2 group"
+                                onClick={handleToggleExpand}
+                            >
+                                {isExpanded ? 'All Categories' : 'Top Categories'}
+                                <ChevronDown className={cn("h-4 w-4 text-muted-foreground/50 transition-transform group-hover:text-primary", isExpanded && "rotate-180")} />
+                            </h3>
                         </div>
                         <div className="flex items-center gap-3">
                             <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full shrink-0">

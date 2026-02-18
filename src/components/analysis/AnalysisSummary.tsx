@@ -1,105 +1,70 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EnrichedExpense, UserProfile } from "@/lib/types";
+import { EnrichedExpense } from "@/lib/types";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { cn, formatAmount } from "@/lib/utils";
-import { Separator } from "../ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface AnalysisSummaryProps {
-    allExpenses: EnrichedExpense[];
-    analysisExpenses: EnrichedExpense[];
+    expenses: EnrichedExpense[];
     currency?: string;
     isLoading?: boolean;
-    showNormal: boolean;
-    showAdjusted: boolean;
+    includeHidden: boolean;
+    onIncludeHiddenChange: (value: boolean) => void;
 }
 
-const calculateSummary = (expenses: EnrichedExpense[]) => {
-    if (!expenses) {
-        return { totalIn: 0, totalOut: 0, netFlow: 0 };
-    }
-    const totalIn = expenses.filter(exp => exp.type === 'income').reduce((sum, exp) => sum + exp.amount, 0);
-    const totalOut = expenses.filter(exp => exp.type === 'expense').reduce((sum, exp) => sum + exp.amount, 0);
-    const netFlow = totalIn - totalOut;
-    return { totalIn, totalOut, netFlow };
-};
-
-export function AnalysisSummary({ isLoading, currency, allExpenses, analysisExpenses, showNormal, showAdjusted }: AnalysisSummaryProps) {
+export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, onIncludeHiddenChange }: AnalysisSummaryProps) {
     const currencySymbol = getCurrencySymbol(currency);
 
-    const normalSummary = useMemo(() => calculateSummary(allExpenses), [allExpenses]);
-    const adjustedSummary = useMemo(() => calculateSummary(analysisExpenses), [analysisExpenses]);
-
-    const isDifferent = JSON.stringify(normalSummary) !== JSON.stringify(adjustedSummary);
-
-    if (!showNormal && !showAdjusted) {
-        return null;
-    }
+    const stats = useMemo(() => {
+        const totalIn = expenses.filter(exp => exp.type === 'income').reduce((sum, exp) => sum + exp.amount, 0);
+        const totalOut = expenses.filter(exp => exp.type === 'expense').reduce((sum, exp) => sum + exp.amount, 0);
+        const netFlow = totalIn - totalOut;
+        return { totalIn, totalOut, netFlow };
+    }, [expenses]);
 
     if (isLoading) {
-        return (
-            <Card>
-                <CardContent className="p-4">
-                    <div className="flex justify-between items-center">
-                        <div>
-                             <Skeleton className="h-4 w-20 mb-2" />
-                             <Skeleton className="h-6 w-28" />
-                        </div>
-                        <div className="text-right">
-                             <Skeleton className="h-4 w-24 mb-2" />
-                             <Skeleton className="h-4 w-20" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        );
+        return <Skeleton className="h-44 w-full rounded-[24px]" />;
     }
-    
-    const renderSummaryBlock = (title: string, summary: { totalIn: number; totalOut: number; netFlow: number }, isAdjusted: boolean) => (
-        <div className="flex-1">
-             <h3 className="font-semibold text-base mb-1">{title}</h3>
-            {isAdjusted && <p className="text-xs text-muted-foreground mb-3">Excludes categories hidden from analysis.</p>}
-             <div className="flex justify-between items-center text-sm">
-                <div>
-                    <p className="text-muted-foreground">Net Balance</p>
-                    <p className={cn(
-                        "text-lg font-bold",
-                        summary.netFlow >= 0 ? "text-green-600" : "text-red-500"
-                    )}>
-                        {currencySymbol}{formatAmount(summary.netFlow)}
-                    </p>
-                </div>
-                <div className="text-right">
-                    <p className="text-green-600">
-                       <span className="text-muted-foreground">IN:</span> {currencySymbol}{formatAmount(summary.totalIn)}
-                    </p>
-                     <p className="text-red-500">
-                       <span className="text-muted-foreground">OUT:</span> {currencySymbol}{formatAmount(summary.totalOut)}
-                    </p>
-                </div>
-            </div>
-        </div>
-    )
-    
-    // Determine which blocks to show
-    const shouldShowNormal = showNormal;
-    const shouldShowAdjusted = showAdjusted && isDifferent;
 
     return (
-        <Card className="bg-card/80 backdrop-blur-sm">
-            <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                    {shouldShowNormal && renderSummaryBlock('Normal Total', normalSummary, false)}
-                    
-                    {shouldShowNormal && shouldShowAdjusted && (
-                         <Separator orientation="vertical" className="h-auto hidden md:block" />
-                    )}
+        <Card className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden">
+            <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-6">
+                    <div className="space-y-1">
+                        <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Analysis Summary</p>
+                        <p className={cn(
+                            "text-2xl sm:text-4xl font-bold tracking-tight",
+                            stats.netFlow >= 0 ? "text-primary" : "text-destructive"
+                        )}>
+                            {currencySymbol}{formatAmount(stats.netFlow)}
+                        </p>
+                    </div>
+                    <div className="text-right space-y-2">
+                        <div className="space-y-0.5">
+                            <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest">In</p>
+                            <p className="text-sm sm:text-lg font-bold text-green-600">{currencySymbol}{formatAmount(stats.totalIn)}</p>
+                        </div>
+                        <div className="space-y-0.5">
+                            <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">Out</p>
+                            <p className="text-sm sm:text-lg font-bold text-destructive">{currencySymbol}{formatAmount(stats.totalOut)}</p>
+                        </div>
+                    </div>
+                </div>
 
-                    {shouldShowAdjusted && renderSummaryBlock('Adjusted for Analysis', adjustedSummary, true)}
+                <div className="pt-4 border-t border-muted/50 flex items-center justify-between">
+                    <Label htmlFor="include-hidden" className="text-xs font-medium text-muted-foreground">Include Hidden Categories</Label>
+                    <Switch 
+                        id="include-hidden" 
+                        checked={includeHidden} 
+                        onCheckedChange={onIncludeHiddenChange}
+                        className="scale-75 origin-right"
+                    />
                 </div>
             </CardContent>
         </Card>

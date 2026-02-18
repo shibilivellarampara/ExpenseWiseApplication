@@ -229,7 +229,6 @@ function AnalysisPageContent() {
             <Suspense fallback={null}>
                 <PageHeader
                     title="Expense Analysis"
-                    description="A detailed breakdown of your income and spending habits."
                 />
 
                 <AnalysisSummary 

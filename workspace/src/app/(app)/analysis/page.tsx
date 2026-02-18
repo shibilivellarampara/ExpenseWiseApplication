@@ -11,7 +11,7 @@ import { SpendingTrendChart } from "@/components/analysis/SpendingTrendChart";
 import { AiInsights } from "@/components/analysis/AiInsights";
 import { AnalysisSummary } from "@/components/analysis/AnalysisSummary";
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronDown, CalendarDays } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -274,7 +274,7 @@ function AnalysisPageContent() {
                                 {selectedAccounts.length === 0 ? "All Accounts" : `${selectedAccounts.length} Accts`}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
-                        </DropdownMenuTrigger>
+                        </PopoverTrigger>
                         <DropdownMenuContent className="w-56" align="start">
                             <Command>
                                 <CommandInput placeholder="Search accounts..." />
@@ -337,7 +337,7 @@ function AnalysisPageContent() {
                             <CardContent className="p-6">
                                 <div className="mb-4 flex items-center justify-between">
                                     <div>
-                                        <h3 className="font-bold text-lg">Monthly Savings Trend</h3>
+                                        h3 className="font-bold text-lg">Monthly Savings Trend</h3>
                                         <p className="text-xs text-muted-foreground">Your net savings each month.</p>
                                     </div>
                                     <ChevronDown className="h-5 w-5 text-muted-foreground/50" />

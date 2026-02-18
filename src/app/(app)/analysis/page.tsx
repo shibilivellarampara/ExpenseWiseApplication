@@ -227,7 +227,6 @@ function AnalysisPageContent() {
             <Suspense fallback={null}>
                 <PageHeader
                     title="Expense Analysis"
-                    description="A detailed breakdown of your income and spending habits."
                 />
 
                 <AnalysisSummary 
@@ -243,7 +242,7 @@ function AnalysisPageContent() {
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-8 rounded-full px-3 border-border/60 text-[11px] font-medium bg-card shadow-sm shrink-0">
+                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
                                 {timeRangeLabels[timeRangePreset]}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
@@ -269,7 +268,7 @@ function AnalysisPageContent() {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-8 rounded-full px-3 border-border/60 text-[11px] font-medium bg-card shadow-sm shrink-0">
+                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
                                 {selectedAccounts.length === 0 ? "All Accounts" : `${selectedAccounts.length} Accts`}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
@@ -295,7 +294,7 @@ function AnalysisPageContent() {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-8 rounded-full px-3 border-border/60 text-[11px] font-medium bg-card shadow-sm shrink-0">
+                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
                                 {selectedTags.length === 0 ? "All Tags" : `${selectedTags.length} Tags`}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>

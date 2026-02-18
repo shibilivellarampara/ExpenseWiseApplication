@@ -102,15 +102,15 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
 
     return (
         <>
-            <Card ref={cardRef} className="rounded-[20px] border-none shadow-xl bg-card overflow-hidden scroll-mt-20">
+            <Card ref={cardRef} className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden scroll-mt-20">
                 <CardContent className="p-0">
                     <div className="flex items-center justify-between p-6 pb-2">
                         <h3 className="font-bold text-lg">{isExpanded ? 'All Categories' : 'Top 5 Categories'}</h3>
                         <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full shrink-0">
-                            <TabsList className="bg-transparent h-9 p-0">
-                                <TabsTrigger value="expense" className="rounded-full text-[11px] h-7 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Expenses</TabsTrigger>
-                                <TabsTrigger value="income" className="rounded-full text-[11px] h-7 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Income</TabsTrigger>
-                                <TabsTrigger value="net" className="rounded-full text-[11px] h-7 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Net</TabsTrigger>
+                            <TabsList className="bg-transparent h-10 p-0">
+                                <TabsTrigger value="expense" className="rounded-full text-[12px] h-8 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Expenses</TabsTrigger>
+                                <TabsTrigger value="income" className="rounded-full text-[12px] h-8 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Income</TabsTrigger>
+                                <TabsTrigger value="net" className="rounded-full text-[12px] h-8 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Net</TabsTrigger>
                             </TabsList>
                         </Tabs>
                     </div>

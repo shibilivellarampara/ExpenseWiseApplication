@@ -38,17 +38,17 @@ export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, 
     }, [categories, excludedCategoryIds]);
 
     if (isLoading) {
-        return <Skeleton className="h-44 w-full rounded-[20px]" />;
+        return <Skeleton className="h-44 w-full rounded-[24px]" />;
     }
 
     return (
-        <Card className="rounded-[20px] border-none shadow-xl bg-card overflow-hidden">
+        <Card className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden">
             <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-6">
                     <div className="space-y-1">
-                        <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Analysis Summary</p>
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Analysis Summary</p>
                         <p className={cn(
-                            "text-3xl sm:text-4xl font-bold tracking-tight",
+                            "text-4xl sm:text-5xl font-bold tracking-tight",
                             stats.netFlow >= 0 ? "text-[#27AE60]" : "text-[#EB5757]"
                         )}>
                             {currencySymbol}{formatAmount(stats.netFlow)}

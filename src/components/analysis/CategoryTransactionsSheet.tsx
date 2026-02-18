@@ -55,7 +55,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                         </div>
                         <div className="text-right shrink-0">
                             <p className={cn(
-                                "text-lg font-medium whitespace-nowrap",
+                                "text-lg font-bold whitespace-nowrap",
                                 getAmountColor()
                             )}>
                                 {currencySymbol}{formatAmount(Math.abs(category?.amount || 0))}
@@ -84,7 +84,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                                     </div>
                                     <div className="shrink-0 text-right">
                                         <p className={cn(
-                                            "text-[15px] font-normal whitespace-nowrap",
+                                            "text-[15px] font-medium whitespace-nowrap",
                                             expense.type === 'income' ? "text-green-600" : "text-destructive"
                                         )}>
                                             {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}

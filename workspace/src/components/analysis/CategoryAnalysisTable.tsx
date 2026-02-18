@@ -129,7 +129,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                     </div>
 
                     {!isExpanded ? (
-                        <div className="px-6 pb-6 flex items-center gap-4 pt-4 animate-in fade-in duration-300">
+                        <div className="px-6 pb-6 flex items-center gap-4 sm:gap-8 pt-4 animate-in fade-in duration-300">
                             <div className="h-32 w-32 shrink-0">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
@@ -158,7 +158,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                             )}
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <p className={cn("text-xs font-medium whitespace-nowrap", getAmountColor(item.amount))}>
+                                            <p className={cn("text-xs font-bold whitespace-nowrap", getAmountColor(item.amount))}>
                                                 {currencySymbol}{formatAmount(Math.abs(item.amount))}
                                             </p>
                                             {view !== 'net' && <p className="text-[10px] text-muted-foreground">{item.percentage.toFixed(1)}%</p>}
@@ -204,7 +204,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                             )}
                                                         </div>
                                                         <div className="text-right shrink-0">
-                                                            <p className={cn("text-sm font-medium", getAmountColor(item.amount))}>
+                                                            <p className={cn("text-sm font-bold", getAmountColor(item.amount))}>
                                                                 {currencySymbol}{formatAmount(Math.abs(item.amount))}
                                                             </p>
                                                         </div>
@@ -240,7 +240,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                                 <span className="text-[11px] font-medium text-muted-foreground truncate">{tag.name}</span>
                                                             </div>
                                                             <div className="text-right shrink-0">
-                                                                <p className="text-[11px] font-medium text-muted-foreground/80">{currencySymbol}{formatAmount(Math.abs(tag.amount))}</p>
+                                                                <p className="text-[11px] font-bold text-muted-foreground/80">{currencySymbol}{formatAmount(Math.abs(tag.amount))}</p>
                                                             </div>
                                                         </div>
                                                     ))}

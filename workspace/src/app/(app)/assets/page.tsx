@@ -117,7 +117,7 @@ export default function AssetsPage() {
                     )}
                 </div>
                 <AddAssetDialog>
-                     <Button className="h-12 px-6 bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-md gap-2 shrink-0">
+                     <Button className="h-12 px-6 bg-primary/10 hover:bg-primary/20 text-primary rounded-2xl shadow-none gap-2 shrink-0">
                         <PlusCircle className="h-5 w-5" />
                         <span className="hidden sm:inline">Add Asset</span>
                         <span className="sm:hidden">Add</span>

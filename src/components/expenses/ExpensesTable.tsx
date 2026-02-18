@@ -184,30 +184,30 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                     <div className="text-xs text-muted-foreground flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <button
-                                                className="flex items-center gap-1 rounded-md px-1 -mx-1 transition-colors hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring"
+                                                className="flex items-center gap-1 rounded-md px-1 -mx-1 transition-colors hover:bg-accent"
                                                 onClick={(e) => { e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}
                                                 disabled={!row.expense.account}
                                             >
-                                                {renderIcon(row.expense.account?.icon, "h-3 w-3 mr-0")}
+                                                {renderIcon(row.expense.account?.icon, "h-3 w-3")}
                                                 <span>{row.expense.account?.name}</span>
                                             </button>
                                             <span className="text-muted-foreground/50">&bull;</span>
                                             <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                         {typeof row.expense.runningBalance === 'number' && (
-                                            <div className="text-muted-foreground">
+                                            <div className="text-muted-foreground font-medium">
                                                 Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
                                             </div>
                                         )}
                                     </div>
                                     
                                     {viewMode === 'normal' && (
-                                        <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
+                                        <div className="flex flex-wrap items-center gap-1.5 pt-1.5 w-full">
                                             {row.expense.category && (
                                                 <Badge
                                                     variant="outline"
                                                     style={generateColorStyle(row.expense.category.name)}
-                                                    className="badge-colorful text-[10px] px-1.5 py-0 h-5 font-bold tracking-tight cursor-pointer"
+                                                    className="badge-colorful text-[10px] px-2 py-0 h-5 font-medium cursor-pointer"
                                                     onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
                                                 >
                                                     {renderIcon(row.expense.category.icon, "h-3 w-3 mr-1")}
@@ -220,7 +220,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                     key={tag.id}
                                                     variant="outline"
                                                     style={generateColorStyle(tag.name)}
-                                                    className="badge-colorful text-[10px] px-1.5 py-0 h-5 font-bold tracking-tight cursor-pointer"
+                                                    className="badge-colorful text-[10px] px-2 py-0 h-5 font-medium cursor-pointer"
                                                     onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
                                                 >
                                                     {renderIcon(tag.icon, "h-3 w-3 mr-1")}
@@ -230,13 +230,13 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                             {(row.expense.tags?.length || 0) > 3 && (
                                                 <Badge
                                                     variant="secondary"
-                                                    className="text-[10px] px-1.5 py-0 h-5 font-bold tracking-tight cursor-pointer"
+                                                    className="text-[10px] px-2 py-0 h-5 font-medium cursor-pointer"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setExpandedTags(prev => ({...prev, [row.expense.id]: !prev[row.expense.id]}));
                                                     }}
                                                 >
-                                                    {expandedTags[row.expense.id] ? 'Less' : `+${(row.expense.tags?.length || 0) - 3} more`}
+                                                    {expandedTags[row.expense.id] ? 'Less' : `+${(row.expense.tags?.length || 0) - 3}`}
                                                 </Badge>
                                             )}
                                         </div>
@@ -254,7 +254,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 )}
                             >
                                 <h3 className="text-sm font-semibold">
-                                    {new Date(row.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                    {new Date(row.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                                 </h3>
                             </div>
                         );

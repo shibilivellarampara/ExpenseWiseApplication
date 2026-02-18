@@ -90,12 +90,11 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
     const handleToggleExpand = () => {
         if (isExpanded) {
             setIsExpanded(false);
-            // Smoothly snap back to the card top after shrinking
             setTimeout(() => {
                 if (cardRef.current) {
                     cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-            }, 50);
+            }, 100);
         } else {
             setIsExpanded(true);
         }
@@ -109,15 +108,13 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                         <div>
                             <h3 className="font-bold text-lg">{isExpanded ? 'All Categories' : 'Top 5 Categories'}</h3>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full shrink-0">
-                                <TabsList className="bg-transparent h-10 p-0">
-                                    <TabsTrigger value="expense" className="rounded-full text-[12px] h-9 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Expenses</TabsTrigger>
-                                    <TabsTrigger value="income" className="rounded-full text-[12px] h-9 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Income</TabsTrigger>
-                                    <TabsTrigger value="net" className="rounded-full text-[12px] h-9 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Net</TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                        </div>
+                        <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full shrink-0">
+                            <TabsList className="bg-transparent h-9 p-0">
+                                <TabsTrigger value="expense" className="rounded-full text-[12px] h-8 px-4 data-[state=active]:bg-card">Expenses</TabsTrigger>
+                                <TabsTrigger value="income" className="rounded-full text-[12px] h-8 px-4 data-[state=active]:bg-card">Income</TabsTrigger>
+                                <TabsTrigger value="net" className="rounded-full text-[12px] h-8 px-4 data-[state=active]:bg-card">Net</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
                     </div>
 
                     {!isExpanded ? (
@@ -145,9 +142,6 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                         <div className="flex items-center gap-2">
                                             <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }} />
                                             <span className="text-xs font-medium truncate max-w-[100px]">{item.name}</span>
-                                            {excludedCategoryIds.includes(item.id) && (
-                                                <Badge variant="outline" className="h-3.5 text-[8px] font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
-                                            )}
                                         </div>
                                         <div className="text-right">
                                             <p className="text-xs font-medium">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
@@ -158,8 +152,8 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                             </div>
                         </div>
                     ) : (
-                        <div className="px-6 pb-6 pt-4 space-y-6 animate-in fade-in slide-in-from-top-2 duration-500 ease-in-out">
-                            <div className="flex h-3 w-full rounded-full overflow-hidden bg-muted/30">
+                        <div className="px-6 pb-6 pt-4 space-y-6 animate-in fade-in slide-in-from-top-2 duration-500">
+                            <div className="flex h-2 w-full rounded-full overflow-hidden bg-muted/30">
                                 {stats.data.map((item, idx) => (
                                     <div 
                                         key={idx} 
@@ -183,63 +177,42 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                 onClick={() => setSelectedCategory(item)}
                                                 className="flex items-start gap-3 cursor-pointer group"
                                             >
-                                                {/* Color Indicator sitting outside the vertical data stack */}
                                                 <div className="h-2 w-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: color }} />
-                                                
-                                                <div className="flex-grow min-w-0 space-y-1.5">
+                                                <div className="flex-grow min-w-0 space-y-1">
                                                     <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-2 min-w-0">
-                                                            <span className={cn("text-sm font-medium truncate", isHidden && "text-muted-foreground/70")}>{item.name}</span>
-                                                            {isHidden && (
-                                                                <Badge variant="outline" className="h-3.5 text-[8px] font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-right shrink-0">
-                                                            <p className="text-sm font-medium">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
-                                                        </div>
+                                                        <span className={cn("text-sm font-medium", isHidden && "text-muted-foreground/70")}>{item.name}</span>
+                                                        <p className="text-sm font-medium">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
                                                     </div>
-                                                    
-                                                    {view !== 'net' && (
-                                                        <div className="text-[11px] font-medium text-muted-foreground">{item.percentage.toFixed(1)}%</div>
-                                                    )}
-
-                                                    <div className="relative h-1.5 w-full bg-muted/30 rounded-full overflow-hidden">
+                                                    {view !== 'net' && <div className="text-[11px] font-medium text-muted-foreground">{item.percentage.toFixed(1)}%</div>}
+                                                    <div className="h-1 w-full bg-muted/30 rounded-full overflow-hidden">
                                                         <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${item.percentage}%`, backgroundColor: color }} />
                                                     </div>
                                                 </div>
-
-                                                <div className="flex items-center gap-1 text-muted-foreground/40 transition-colors shrink-0 ml-1 mt-0.5">
-                                                    <button 
-                                                        onClick={(e) => toggleTags(e, item.id)}
-                                                        className={cn("p-1 rounded-full hover:bg-muted group-hover:text-primary transition-all", isTagsOpen && "rotate-180")}
-                                                    >
-                                                        <ChevronDown className="h-4 w-4" />
-                                                    </button>
-                                                </div>
+                                                <button 
+                                                    onClick={(e) => toggleTags(e, item.id)}
+                                                    className={cn("p-1 rounded-full hover:bg-muted transition-all shrink-0 mt-0.5", isTagsOpen && "rotate-180")}
+                                                >
+                                                    <ChevronDown className="h-4 w-4" />
+                                                </button>
                                             </div>
 
                                             {isTagsOpen && (
-                                                <div className="pl-5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <div className="pl-5 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
                                                     {item.tags.map((tag, tIdx) => (
                                                         <div key={tIdx} className="flex items-start gap-3 py-1 border-l-2 border-muted pl-3">
-                                                            <div className="flex-grow min-w-0 space-y-1.5">
+                                                            <div className="flex-grow min-w-0 space-y-1">
                                                                 <div className="flex justify-between items-center">
                                                                     <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
                                                                         <LucideTag className="h-3 w-3" />
                                                                         {tag.name}
                                                                     </p>
-                                                                    <p className="text-[11px] font-medium text-muted-foreground/80">{currencySymbol}{formatAmount(Math.abs(tag.amount))}</p>
+                                                                    <p className="text-[11px] font-medium">{currencySymbol}{formatAmount(Math.abs(tag.amount))}</p>
                                                                 </div>
-                                                                {view !== 'net' && (
-                                                                    <div className="text-[10px] font-medium text-muted-foreground/60">
-                                                                        {tag.percentage.toFixed(0)}%
-                                                                    </div>
-                                                                )}
-                                                                <div className="h-1 w-full bg-muted/20 rounded-full overflow-hidden">
+                                                                {view !== 'net' && <div className="text-[10px] font-medium text-muted-foreground/60">{tag.percentage.toFixed(0)}%</div>}
+                                                                <div className="h-0.5 w-full bg-muted/20 rounded-full overflow-hidden">
                                                                     <div className="h-full bg-muted-foreground/20" style={{ width: `${tag.percentage}%` }} />
                                                                 </div>
                                                             </div>
-                                                            <div className="w-8 shrink-0" />
                                                         </div>
                                                     ))}
                                                 </div>
@@ -253,18 +226,12 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
 
                     <button 
                         onClick={handleToggleExpand}
-                        className="w-full py-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-primary hover:bg-muted/30 transition-all border-t border-border/50"
+                        className="w-full py-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-primary hover:bg-muted/30 transition-all border-t"
                     >
                         {isExpanded ? (
-                            <>
-                                <span>Show Less</span>
-                                <ChevronUp className="h-4 w-4" />
-                            </>
+                            <><span>Show Less</span><ChevronUp className="h-4 w-4" /></>
                         ) : (
-                            <>
-                                <span>View All Categories</span>
-                                <ChevronDown className="h-4 w-4" />
-                            </>
+                            <><span>View All Categories</span><ChevronDown className="h-4 w-4" /></>
                         )}
                     </button>
                 </CardContent>

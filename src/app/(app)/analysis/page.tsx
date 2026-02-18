@@ -199,8 +199,8 @@ function AnalysisPageContent() {
         'week': 'This Week',
         'month': 'This Month',
         'last-month': 'Last Month',
-        '3-months': 'Last 3 mo',
-        '6-months': 'Last 6 mo',
+        '3-months': 'Last 3 Months',
+        '6-months': 'Last 6 Months',
         'year': 'This Year',
         'last-year': 'Last Year',
         'all': 'All Time',
@@ -270,7 +270,7 @@ function AnalysisPageContent() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
-                                {selectedAccounts.length === 0 ? "All Accounts" : `${selectedAccounts.length} Accts`}
+                                {selectedAccounts.length === 0 ? "All Accounts" : `${selectedAccounts.length} Accounts`}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -350,7 +350,7 @@ function AnalysisPageContent() {
                                 <div className="mb-4 flex items-center justify-between">
                                     <div>
                                         <h3 className="font-bold text-lg">Top Spending Categories</h3>
-                                        <p className="text-xs text-muted-foreground">A bar chart showing your top spending categories.</p>
+                                        <p className="text-xs text-muted-foreground">A bar chart showing your top categories.</p>
                                     </div>
                                     <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
                                 </div>
@@ -395,7 +395,7 @@ function AnalysisPageContent() {
                                 <div className="mb-4 flex items-center justify-between">
                                     <div>
                                         <h3 className="font-bold text-lg">Cash Flow Trend</h3>
-                                        <p className="text-xs text-muted-foreground">Detailed monthly cash flow analysis.</p>
+                                        <p className="text-xs text-muted-foreground">Monthly cash flow analysis.</p>
                                     </div>
                                     <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
                                 </div>
@@ -422,7 +422,7 @@ function AnalysisPageContent() {
                     <DialogContent className="rounded-[24px]">
                         <DialogHeader>
                             <DialogTitle>Select Month</DialogTitle>
-                            <DialogDescription>Choose a specific month and year for analysis.</DialogDescription>
+                            <DialogDescription>Choose a month and year for analysis.</DialogDescription>
                         </DialogHeader>
                         <div className="grid grid-cols-2 gap-4 py-4">
                             <div className="space-y-2">
@@ -449,7 +449,7 @@ function AnalysisPageContent() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button onClick={() => setIsMonthPickerOpen(false)} className="rounded-xl h-12 w-full sm:w-auto">
+                            <Button onClick={() => setIsMonthPickerOpen(false)} className="rounded-xl h-12 w-full">
                                 Apply Filter
                             </Button>
                         </DialogFooter>

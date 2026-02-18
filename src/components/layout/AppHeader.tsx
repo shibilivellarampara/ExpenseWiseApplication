@@ -27,17 +27,6 @@ import {
   HandCoins,
 } from 'lucide-react';
 
-const baseNavItems = [
-  { href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
-  { href: '/transactions', special_href: '/expenses', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
-  { href: '/accounts', icon: <Wallet className="h-5 w-5" />, label: 'Accounts' },
-  { href: '/analysis', icon: <BarChartHorizontal className="h-5 w-5" />, label: 'Analysis' },
-  { href: '/debts', icon: <HandCoins className="h-5 w-5" />, label: 'Debts' },
-  { href: '/data', icon: <FileUp className="h-5 w-5" />, label: 'Import / Export' },
-  { href: '/profile', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
-  { href: '/about', icon: <Info className="h-5 w-5" />, label: 'About' },
-];
-
 const getPageTitle = (path: string): string => {
     if (path.startsWith('/admin/users')) return 'User Management';
     if (path.startsWith('/admin')) return 'Admin Dashboard';
@@ -47,7 +36,7 @@ const getPageTitle = (path: string): string => {
       { href: '/debts', label: 'Debts & Dues' },
       { href: '/data', label: 'Import / Export' },
       { href: '/about', label: 'About' },
-      { href: '/analysis', label: 'Expense Analysis' },
+      { href: '/analysis', label: 'Analysis' },
       { href: '/accounts', label: 'Accounts' },
       { href: '/dashboard', label: 'Dashboard' },
       { href: '/transactions', label: 'Transactions' },

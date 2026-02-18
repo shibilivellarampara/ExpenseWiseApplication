@@ -12,7 +12,7 @@ import { SpendingTrendChart } from "@/components/analysis/SpendingTrendChart";
 import { AiInsights } from "@/components/analysis/AiInsights";
 import { AnalysisSummary } from "@/components/analysis/AnalysisSummary";
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, CalendarDays } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,9 @@ import { SavingsTrendChart } from "@/components/analysis/SavingsTrendChart";
 import { CategoryBarChart } from "@/components/analysis/CategoryBarChart";
 import { TagSpendingChart } from "@/components/analysis/TagSpendingChart";
 import { IncomeBreakdownChart } from "@/components/analysis/IncomeBreakdownChart";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'specific-month' | 'custom';
 type StoredFilters = {
@@ -46,6 +49,7 @@ function AnalysisPageContent() {
     const [aiAnalysis, setAiAnalysis] = useState<any>(null);
     const [customDateRange, setCustomDateRange] = useState<{ from?: Date, to?: Date }>({ from: undefined, to: undefined });
     const [specificMonth, setSpecificMonth] = useState<Date>(new Date());
+    const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [includeHidden, setIncludeHidden] = useState(false);
@@ -207,6 +211,20 @@ function AnalysisPageContent() {
         'custom': 'Custom...'
     };
 
+    const years = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const years = [];
+        for (let i = currentYear; i >= currentYear - 10; i--) {
+            years.push(i);
+        }
+        return years;
+    }, []);
+
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
     return (
         <div className="w-full space-y-6 pb-32">
             <Suspense fallback={null}>
@@ -244,6 +262,7 @@ function AnalysisPageContent() {
                                         <CommandItem onSelect={() => handleTimeRangeChange('6-months')}>Last 6 Months</CommandItem>
                                         <CommandItem onSelect={() => handleTimeRangeChange('year')}>This Year</CommandItem>
                                         <CommandItem onSelect={() => handleTimeRangeChange('last-year')}>Last Year</CommandItem>
+                                        <CommandItem onSelect={() => { handleTimeRangeChange('specific-month'); setIsMonthPickerOpen(true); }}>Specific Month...</CommandItem>
                                         <CommandItem onSelect={() => handleTimeRangeChange('all')}>All Time</CommandItem>
                                     </CommandGroup>
                                 </CommandList>
@@ -402,6 +421,44 @@ function AnalysisPageContent() {
                         </Card>
                     )}
                 </div>
+
+                <Dialog open={isMonthPickerOpen} onOpenChange={setIsMonthPickerOpen}>
+                    <DialogContent className="rounded-[24px]">
+                        <DialogHeader>
+                            <DialogTitle>Select Month</DialogTitle>
+                            <DialogDescription>Choose a specific month and year for analysis.</DialogDescription>
+                        </DialogHeader>
+                        <div className="grid grid-cols-2 gap-4 py-4">
+                            <div className="space-y-2">
+                                <Label>Year</Label>
+                                <Select value={String(specificMonth.getFullYear())} onValueChange={(v) => setSpecificMonth(new Date(Number(v), specificMonth.getMonth()))}>
+                                    <SelectTrigger className="rounded-xl h-12">
+                                        <SelectValue placeholder="Year" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Month</Label>
+                                <Select value={String(specificMonth.getMonth())} onValueChange={(v) => setSpecificMonth(new Date(specificMonth.getFullYear(), Number(v)))}>
+                                    <SelectTrigger className="rounded-xl h-12">
+                                        <SelectValue placeholder="Month" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {months.map((m, i) => <SelectItem key={m} value={String(i)}>{m}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button onClick={() => setIsMonthPickerOpen(false)} className="rounded-xl h-12 w-full sm:w-auto">
+                                Apply Filter
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </Suspense>
         </div>
     );

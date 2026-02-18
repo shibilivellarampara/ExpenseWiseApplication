@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -220,6 +221,8 @@ function AnalysisPageContent() {
                     currency={userProfile?.defaultCurrency}
                     includeHidden={includeHidden}
                     onIncludeHiddenChange={setIncludeHidden}
+                    categories={categories || []}
+                    excludedCategoryIds={analysisSettings?.excludedCategoryIds || []}
                 />
 
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">

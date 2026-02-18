@@ -180,56 +180,65 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                         <div key={item.id} className="space-y-3">
                                             <div 
                                                 onClick={() => setSelectedCategory(item)}
-                                                className="flex items-center justify-between cursor-pointer group"
+                                                className="flex items-start gap-3 cursor-pointer group"
                                             >
-                                                <div className="flex-grow min-w-0 space-y-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                                                        <span className={cn("text-sm font-bold truncate", isHidden && "text-muted-foreground/70")}>{item.name}</span>
-                                                        {isHidden && (
-                                                            <Badge variant="outline" className="h-3.5 text-[8px] uppercase font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
-                                                        )}
+                                                {/* Color Indicator aligned with Label Stack */}
+                                                <div className="h-2 w-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: color }} />
+                                                
+                                                <div className="flex-grow min-w-0 space-y-1.5">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <span className={cn("text-sm font-medium truncate", isHidden && "text-muted-foreground/70")}>{item.name}</span>
+                                                            {isHidden && (
+                                                                <Badge variant="outline" className="h-3.5 text-[8px] uppercase font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-right shrink-0">
+                                                            <p className="text-sm font-bold">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
+                                                        </div>
                                                     </div>
-                                                    {view !== 'net' && <div className="text-[11px] font-bold text-muted-foreground">{item.percentage.toFixed(1)}%</div>}
+                                                    
+                                                    {view !== 'net' && (
+                                                        <div className="text-[11px] font-bold text-muted-foreground">{item.percentage.toFixed(1)}%</div>
+                                                    )}
+
                                                     <div className="relative h-1.5 w-full bg-muted/30 rounded-full overflow-hidden">
                                                         <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${item.percentage}%`, backgroundColor: color }} />
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-3 shrink-0 ml-4">
-                                                    <div className="text-right">
-                                                        <p className="text-sm font-bold">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
-                                                    </div>
-                                                    <div className="flex items-center gap-1 text-muted-foreground/40 transition-colors">
-                                                        <button 
-                                                            onClick={(e) => toggleTags(e, item.id)}
-                                                            className={cn("p-1 rounded-full hover:bg-muted group-hover:text-primary transition-all", isTagsOpen && "rotate-180")}
-                                                        >
-                                                            <ChevronDown className="h-4 w-4" />
-                                                        </button>
-                                                    </div>
+
+                                                <div className="flex items-center gap-1 text-muted-foreground/40 transition-colors shrink-0 ml-1 mt-0.5">
+                                                    <button 
+                                                        onClick={(e) => toggleTags(e, item.id)}
+                                                        className={cn("p-1 rounded-full hover:bg-muted group-hover:text-primary transition-all", isTagsOpen && "rotate-180")}
+                                                    >
+                                                        <ChevronDown className="h-4 w-4" />
+                                                    </button>
                                                 </div>
                                             </div>
 
                                             {isTagsOpen && (
-                                                <div className="pl-6 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <div className="pl-5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                                                     {item.tags.map((tag, tIdx) => (
-                                                        <div key={tIdx} className="flex items-center justify-between py-1 border-l-2 border-muted pl-3">
-                                                            <div className="space-y-1 flex-grow">
-                                                                <div className="flex justify-between items-center pr-4">
-                                                                    <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                                                        <div key={tIdx} className="flex items-start gap-3 py-1 border-l-2 border-muted pl-3">
+                                                            <div className="flex-grow min-w-0 space-y-1.5">
+                                                                <div className="flex justify-between items-center">
+                                                                    <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
                                                                         <LucideTag className="h-3 w-3" />
                                                                         {tag.name}
                                                                     </p>
-                                                                    {view !== 'net' && <p className="text-[10px] font-bold text-muted-foreground/60">{tag.percentage.toFixed(0)}%</p>}
+                                                                    <p className="text-[11px] font-bold text-muted-foreground/80">{currencySymbol}{formatAmount(Math.abs(tag.amount))}</p>
                                                                 </div>
+                                                                {view !== 'net' && (
+                                                                    <div className="text-[10px] font-bold text-muted-foreground/60">
+                                                                        {tag.percentage.toFixed(0)}%
+                                                                    </div>
+                                                                )}
                                                                 <div className="h-1 w-full bg-muted/20 rounded-full overflow-hidden">
                                                                     <div className="h-full bg-muted-foreground/20" style={{ width: `${tag.percentage}%` }} />
                                                                 </div>
                                                             </div>
-                                                            <div className="text-right shrink-0 ml-4 flex items-center gap-1">
-                                                                <p className="text-[11px] font-bold text-muted-foreground/80">{currencySymbol}{formatAmount(Math.abs(tag.amount))}</p>
-                                                                <div className="w-8" />
-                                                            </div>
+                                                            <div className="w-8 shrink-0" />
                                                         </div>
                                                     ))}
                                                 </div>

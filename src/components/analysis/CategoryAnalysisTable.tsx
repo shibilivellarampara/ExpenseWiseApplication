@@ -103,7 +103,6 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
 
     const handleToggleExpand = () => {
         if (isExpanded) {
-            // Collapse logic: scroll back to top of the card
             setIsExpanded(false);
             if (cardRef.current) {
                 const topOffset = cardRef.current.getBoundingClientRect().top + window.pageYOffset - 80;
@@ -120,7 +119,7 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                 <CardContent className="p-0">
                     <div className="flex items-center justify-between p-6 pb-2">
                         <div>
-                            <h3 className="font-bold text-lg">Spending by Category</h3>
+                            <h3 className="font-bold text-lg">{isExpanded ? 'All Categories' : 'Top 5 Categories'}</h3>
                             <p className="text-xs text-muted-foreground">Your spending, organized by category.</p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -194,9 +193,12 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                                                 className="flex items-center justify-between cursor-pointer group"
                                             >
                                                 <div className="flex-grow min-w-0 space-y-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                                                        <span className="text-sm font-bold truncate">{item.name}</span>
+                                                    <div className="flex items-center justify-between pr-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                                                            <span className="text-sm font-bold truncate">{item.name}</span>
+                                                        </div>
+                                                        <span className="text-[10px] font-medium text-muted-foreground">{item.percentage.toFixed(1)}%</span>
                                                     </div>
                                                     <div className="relative h-[3px] w-full max-w-[200px] bg-muted/30 rounded-full overflow-hidden">
                                                         <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${item.percentage}%`, backgroundColor: color }} />
@@ -205,7 +207,6 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                                                 <div className="flex items-center gap-3 shrink-0 ml-4">
                                                     <div className="text-right">
                                                         <p className="text-sm font-bold">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
-                                                        <p className="text-[10px] font-medium text-muted-foreground">{item.percentage.toFixed(1)}%</p>
                                                     </div>
                                                     <div className="flex items-center gap-1 text-muted-foreground/40 transition-colors">
                                                         <button 
@@ -266,6 +267,7 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                 category={selectedCategory} 
                 expenses={expenses}
                 currency={currency}
+                view={view}
                 onClose={() => setSelectedCategory(null)}
             />
         </>

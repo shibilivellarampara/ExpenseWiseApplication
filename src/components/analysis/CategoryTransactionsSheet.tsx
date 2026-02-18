@@ -19,14 +19,16 @@ interface CategoryTransactionsSheetProps {
     category: { id: string; name: string; amount: number } | null;
     expenses: EnrichedExpense[];
     currency?: string;
+    view?: 'expense' | 'income' | 'net';
     onClose: () => void;
 }
 
-export function CategoryTransactionsSheet({ category, expenses, currency, onClose }: CategoryTransactionsSheetProps) {
+export function CategoryTransactionsSheet({ category, expenses, currency, view = 'expense', onClose }: CategoryTransactionsSheetProps) {
     const currencySymbol = getCurrencySymbol(currency);
 
     const categoryExpenses = expenses
         .filter(e => (e.category?.id || 'other') === category?.id)
+        .filter(e => view === 'net' ? true : e.type === view)
         .sort((a, b) => b.date.getTime() - a.date.getTime());
 
     return (

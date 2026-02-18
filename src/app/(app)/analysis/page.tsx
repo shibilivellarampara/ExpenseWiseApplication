@@ -5,25 +5,21 @@ import { PageHeader } from "@/components/PageHeader";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { Expense, Category, EnrichedExpense, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, query, where, Timestamp, doc, orderBy } from 'firebase/firestore';
-import { useMemo, useState, useTransition, useEffect } from "react";
-import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, parse, format, subYears, isValid, getYear } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useMemo, useState, useTransition, useEffect, Suspense } from "react";
+import { subMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfWeek, endOfWeek, parse, format, subYears, isValid } from "date-fns";
 import { CategoryAnalysisTable } from "@/components/analysis/CategoryAnalysisTable";
 import { SpendingTrendChart } from "@/components/analysis/SpendingTrendChart";
 import { AiInsights } from "@/components/analysis/AiInsights";
 import { AnalysisSummary } from "@/components/analysis/AnalysisSummary";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronDown, Settings, X, XCircle, Filter } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
-import { SavingsTrendChart } from "@/components/analysis/SavingsTrendChart";
-import { Card, CardContent } from "@/components/ui/card";
+import { analyzeExpenses } from "@/ai/flows/analyze-expenses";
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'specific-month' | 'custom';
 type StoredFilters = {
@@ -34,7 +30,7 @@ type StoredFilters = {
     selectedTags: string[];
 };
 
-export default function AnalysisPage() {
+function AnalysisPageContent() {
     const { user } = useUser();
     const firestore = useFirestore();
     const searchParams = useSearchParams();
@@ -177,6 +173,23 @@ export default function AnalysisPage() {
         setAiAnalysis(null);
     };
 
+    const handleGenerateInsights = () => {
+        if (filteredExpenses.length === 0) return;
+        startAiTransition(async () => {
+            const result = await analyzeExpenses({
+                expenses: filteredExpenses.map(e => ({
+                    type: e.type,
+                    amount: e.amount,
+                    date: e.date.toISOString(),
+                    category: e.category?.name,
+                    account: e.account?.name,
+                    tags: e.tags.map(t => t.name)
+                }))
+            });
+            setAiAnalysis(result);
+        });
+    };
+
     const timeRangeLabels: Record<TimeRangePreset, string> = {
         'week': 'This Week',
         'month': 'This Month',
@@ -205,7 +218,6 @@ export default function AnalysisPage() {
                 onIncludeHiddenChange={setIncludeHidden}
             />
 
-            {/* Slim Filters Row */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
                 <Popover>
                     <PopoverTrigger asChild>
@@ -298,7 +310,7 @@ export default function AnalysisPage() {
                     <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
                         <CardContent className="p-6">
                             <AiInsights
-                                onGenerate={() => {}}
+                                onGenerate={handleGenerateInsights}
                                 analysis={aiAnalysis}
                                 isLoading={isAiLoading}
                                 hasData={filteredExpenses.length > 0}
@@ -308,5 +320,13 @@ export default function AnalysisPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function AnalysisPage() {
+    return (
+        <Suspense fallback={null}>
+            <AnalysisPageContent />
+        </Suspense>
     );
 }

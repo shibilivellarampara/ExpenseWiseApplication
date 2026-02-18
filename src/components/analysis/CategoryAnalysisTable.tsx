@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { EnrichedExpense, Tag, Category } from "@/lib/types";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { cn, formatAmount } from "@/lib/utils";
@@ -38,6 +38,7 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
     const [isExpanded, setIsExpanded] = useState(false);
     const [expandedTags, setExpandedTags] = useState<Set<string>>(new Set());
     const [selectedCategory, setSelectedCategory] = useState<CategoryStat | null>(null);
+    const cardRef = useRef<HTMLDivElement>(null);
 
     const stats = useMemo(() => {
         const filtered = expenses.filter(e => view === 'net' ? true : e.type === view);
@@ -100,12 +101,28 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
         setExpandedTags(next);
     };
 
+    const handleToggleExpand = () => {
+        if (isExpanded) {
+            // Collapse logic: scroll back to top of the card
+            setIsExpanded(false);
+            if (cardRef.current) {
+                const topOffset = cardRef.current.getBoundingClientRect().top + window.pageYOffset - 80;
+                window.scrollTo({ top: topOffset, behavior: 'smooth' });
+            }
+        } else {
+            setIsExpanded(true);
+        }
+    };
+
     return (
         <>
-            <Card className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden">
+            <Card ref={cardRef} className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden">
                 <CardContent className="p-0">
                     <div className="flex items-center justify-between p-6 pb-2">
-                        <h3 className="font-bold text-lg">{isExpanded ? 'All Categories' : 'Top 5 Categories'}</h3>
+                        <div>
+                            <h3 className="font-bold text-lg">Spending by Category</h3>
+                            <p className="text-xs text-muted-foreground">Your spending, organized by category.</p>
+                        </div>
                         <div className="flex items-center gap-3">
                             <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full">
                                 <TabsList className="bg-transparent h-8 p-0">
@@ -118,7 +135,7 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                     </div>
 
                     {!isExpanded ? (
-                        <div className="px-6 pb-6 flex items-center gap-8">
+                        <div className="px-6 pb-6 flex items-center gap-8 pt-4">
                             <div className="h-32 w-32 shrink-0">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
@@ -153,7 +170,6 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                         </div>
                     ) : (
                         <div className="px-6 pb-6 pt-4 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                            {/* Full-width Horizontal Stacked Bar */}
                             <div className="flex h-3 w-full rounded-full overflow-hidden bg-muted/30">
                                 {stats.data.map((item, idx) => (
                                     <div 
@@ -166,7 +182,6 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                                 ))}
                             </div>
 
-                            {/* Detailed Category List */}
                             <div className="space-y-6">
                                 {stats.data.map((item, idx) => {
                                     const isTagsOpen = expandedTags.has(item.id);
@@ -203,7 +218,6 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                                                 </div>
                                             </div>
 
-                                            {/* Nested Tag Breakdown */}
                                             {isTagsOpen && (
                                                 <div className="pl-6 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                                                     {item.tags.map((tag, tIdx) => (
@@ -230,7 +244,7 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                     )}
 
                     <button 
-                        onClick={() => setIsExpanded(!isExpanded)}
+                        onClick={handleToggleExpand}
                         className="w-full py-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-primary hover:bg-muted/30 transition-all border-t border-border/50"
                     >
                         {isExpanded ? (

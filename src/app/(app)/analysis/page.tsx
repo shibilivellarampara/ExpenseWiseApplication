@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -20,6 +19,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { analyzeExpenses } from "@/ai/flows/analyze-expenses";
+import { SavingsTrendChart } from "@/components/analysis/SavingsTrendChart";
+import { CategoryBarChart } from "@/components/analysis/CategoryBarChart";
+import { TagSpendingChart } from "@/components/analysis/TagSpendingChart";
+import { IncomeBreakdownChart } from "@/components/analysis/IncomeBreakdownChart";
 
 type TimeRangePreset = 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'specific-month' | 'custom';
 type StoredFilters = {
@@ -293,19 +296,90 @@ function AnalysisPageContent() {
                 </DropdownMenu>
             </div>
 
-            <CategoryAnalysisTable expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+            <div className="space-y-6">
+                {/* Category Analysis - Expanding Table */}
+                {(analysisSettings?.showCategoryTable ?? true) && (
+                    <CategoryAnalysisTable expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                )}
 
-            <div className="grid gap-6">
-                <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                    <CardContent className="p-6">
-                        <div className="mb-4">
-                            <h3 className="font-bold text-lg">Spending Trends</h3>
-                            <p className="text-xs text-muted-foreground">Monthly cash flow analysis.</p>
-                        </div>
-                        <SpendingTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
-                    </CardContent>
-                </Card>
+                {/* Monthly Savings Trend */}
+                {(analysisSettings?.showSavingsTrendChart ?? true) && (
+                    <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                        <CardContent className="p-6">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-bold text-lg">Monthly Savings Trend</h3>
+                                    <p className="text-xs text-muted-foreground">Your net savings each month.</p>
+                                </div>
+                                <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
+                            </div>
+                            <SavingsTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                        </CardContent>
+                    </Card>
+                )}
 
+                {/* Top Spending Categories - Bar Chart */}
+                {(analysisSettings?.showCategoryBarChart ?? true) && (
+                    <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                        <CardContent className="p-6">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-bold text-lg">Top Spending Categories</h3>
+                                    <p className="text-xs text-muted-foreground">A bar chart showing your top spending categories.</p>
+                                </div>
+                                <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
+                            </div>
+                            <CategoryBarChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Spending by Tag - Pie Chart */}
+                {(analysisSettings?.showTagPieChart ?? true) && (
+                    <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                        <CardContent className="p-6">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-bold text-lg">Spending by Tag</h3>
+                                    <p className="text-xs text-muted-foreground">A breakdown of your expenses by tags.</p>
+                                </div>
+                                <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
+                            </div>
+                            <TagSpendingChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Income Sources - Pie Chart */}
+                {(analysisSettings?.showIncomePieChart ?? true) && (
+                    <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                        <CardContent className="p-6">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-bold text-lg">Income Sources</h3>
+                                    <p className="text-xs text-muted-foreground">A breakdown of your income by category.</p>
+                                </div>
+                                <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
+                            </div>
+                            <IncomeBreakdownChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Spending Trends - Line Chart */}
+                {(analysisSettings?.showTrendChart ?? true) && (
+                    <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                        <CardContent className="p-6">
+                            <div className="mb-4">
+                                <h3 className="font-bold text-lg">Cash Flow Trend</h3>
+                                <p className="text-xs text-muted-foreground">Detailed monthly cash flow analysis.</p>
+                            </div>
+                            <SpendingTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* AI Insights Card */}
                 {(analysisSettings?.showAiInsights ?? true) && (
                     <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
                         <CardContent className="p-6">

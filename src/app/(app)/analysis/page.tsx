@@ -11,7 +11,7 @@ import { SpendingTrendChart } from "@/components/analysis/SpendingTrendChart";
 import { AiInsights } from "@/components/analysis/AiInsights";
 import { AnalysisSummary } from "@/components/analysis/AnalysisSummary";
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronDown, CalendarDays } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -53,7 +53,6 @@ function AnalysisPageContent() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [includeHidden, setIncludeHidden] = useState(false);
     
-    // Load filters from localStorage
     useEffect(() => {
         if (user) {
             const storedFiltersRaw = localStorage.getItem(FILTERS_STORAGE_KEY);
@@ -80,7 +79,6 @@ function AnalysisPageContent() {
         }
     }, [user, searchParams, FILTERS_STORAGE_KEY]);
 
-    // Save filters to localStorage
     useEffect(() => {
         if (user && !isInitialLoad) {
             const filtersToStore: StoredFilters = {
@@ -229,6 +227,7 @@ function AnalysisPageContent() {
             <Suspense fallback={null}>
                 <PageHeader
                     title="Expense Analysis"
+                    description="A detailed breakdown of your income and spending habits."
                 />
 
                 <AnalysisSummary 
@@ -244,7 +243,7 @@ function AnalysisPageContent() {
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
+                            <Button variant="outline" size="sm" className="h-8 rounded-full px-3 border-border/60 text-[11px] font-medium bg-card shadow-sm shrink-0">
                                 {timeRangeLabels[timeRangePreset]}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
@@ -270,7 +269,7 @@ function AnalysisPageContent() {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
+                            <Button variant="outline" size="sm" className="h-8 rounded-full px-3 border-border/60 text-[11px] font-medium bg-card shadow-sm shrink-0">
                                 {selectedAccounts.length === 0 ? "All Accounts" : `${selectedAccounts.length} Accts`}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
@@ -296,7 +295,7 @@ function AnalysisPageContent() {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
+                            <Button variant="outline" size="sm" className="h-8 rounded-full px-3 border-border/60 text-[11px] font-medium bg-card shadow-sm shrink-0">
                                 {selectedTags.length === 0 ? "All Tags" : `${selectedTags.length} Tags`}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
@@ -322,7 +321,6 @@ function AnalysisPageContent() {
                 </div>
 
                 <div className="space-y-6">
-                    {/* Category Analysis - Expanding Table */}
                     {(analysisSettings?.showCategoryTable ?? true) && (
                         <CategoryAnalysisTable 
                             expenses={filteredExpenses} 
@@ -331,7 +329,6 @@ function AnalysisPageContent() {
                         />
                     )}
 
-                    {/* Monthly Savings Trend */}
                     {(analysisSettings?.showSavingsTrendChart ?? true) && (
                         <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
                             <CardContent className="p-6">
@@ -347,68 +344,6 @@ function AnalysisPageContent() {
                         </Card>
                     )}
 
-                    {/* Top Spending Categories - Bar Chart */}
-                    {(analysisSettings?.showCategoryBarChart ?? true) && (
-                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                            <CardContent className="p-6">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-lg">Top Spending Categories</h3>
-                                        <p className="text-xs text-muted-foreground">A bar chart showing your top spending categories.</p>
-                                    </div>
-                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                                </div>
-                                <CategoryBarChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Spending by Tag - Pie Chart */}
-                    {(analysisSettings?.showTagPieChart ?? true) && (
-                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                            <CardContent className="p-6">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-lg">Spending by Tag</h3>
-                                        <p className="text-xs text-muted-foreground">A breakdown of your expenses by tags.</p>
-                                    </div>
-                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                                </div>
-                                <TagSpendingChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Income Sources - Pie Chart */}
-                    {(analysisSettings?.showIncomePieChart ?? true) && (
-                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                            <CardContent className="p-6">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-lg">Income Sources</h3>
-                                        <p className="text-xs text-muted-foreground">A breakdown of your income by category.</p>
-                                    </div>
-                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
-                                </div>
-                                <IncomeBreakdownChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Spending Trends - Line Chart */}
-                    {(analysisSettings?.showTrendChart ?? true) && (
-                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                            <CardContent className="p-6">
-                                <div className="mb-4">
-                                    <h3 className="font-bold text-lg">Cash Flow Trend</h3>
-                                    <p className="text-xs text-muted-foreground">Detailed monthly cash flow analysis.</p>
-                                </div>
-                                <SpendingTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* AI Insights Card */}
                     {(analysisSettings?.showAiInsights ?? true) && (
                         <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
                             <CardContent className="p-6">

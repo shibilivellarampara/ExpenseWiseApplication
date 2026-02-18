@@ -38,30 +38,30 @@ export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, 
     }, [categories, excludedCategoryIds]);
 
     if (isLoading) {
-        return <Skeleton className="h-44 w-full rounded-[24px]" />;
+        return <Skeleton className="h-44 w-full rounded-[20px]" />;
     }
 
     return (
-        <Card className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden">
+        <Card className="rounded-[20px] border-none shadow-xl bg-card overflow-hidden">
             <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-6">
                     <div className="space-y-1">
-                        <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Analysis Summary</p>
+                        <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Analysis Summary</p>
                         <p className={cn(
-                            "text-2xl sm:text-4xl font-bold tracking-tight",
-                            stats.netFlow >= 0 ? "text-green-600" : "text-destructive"
+                            "text-3xl sm:text-4xl font-bold tracking-tight",
+                            stats.netFlow >= 0 ? "text-[#27AE60]" : "text-[#EB5757]"
                         )}>
                             {currencySymbol}{formatAmount(stats.netFlow)}
                         </p>
                     </div>
-                    <div className="text-right space-y-1 mt-1">
+                    <div className="text-right space-y-2 mt-1">
                         <div className="flex items-center justify-end gap-2">
-                            <span className="text-[10px] font-bold text-green-600 uppercase tracking-widest">In:</span>
-                            <span className="text-sm sm:text-lg font-bold text-green-600">{currencySymbol}{formatAmount(stats.totalIn)}</span>
+                            <span className="text-[10px] font-bold text-[#27AE60] uppercase tracking-widest">In</span>
+                            <span className="text-sm sm:text-base font-bold text-[#27AE60]">{currencySymbol}{formatAmount(stats.totalIn)}</span>
                         </div>
                         <div className="flex items-center justify-end gap-2">
-                            <span className="text-[10px] font-bold text-destructive uppercase tracking-widest">Out:</span>
-                            <span className="text-sm sm:text-lg font-bold text-destructive">{currencySymbol}{formatAmount(stats.totalOut)}</span>
+                            <span className="text-[10px] font-bold text-[#EB5757] uppercase tracking-widest">Out</span>
+                            <span className="text-sm sm:text-base font-bold text-[#EB5757]">{currencySymbol}{formatAmount(stats.totalOut)}</span>
                         </div>
                     </div>
                 </div>
@@ -69,10 +69,10 @@ export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, 
                 <div className="pt-4 border-t border-muted/50 flex items-center justify-between">
                     <Popover>
                         <PopoverTrigger asChild>
-                            <button className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5 py-2 group">
+                            <button className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 py-2 group">
                                 <span>Include Hidden Categories</span>
                                 {excludedCategoryIds.length > 0 && (
-                                    <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-bold bg-muted group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                    <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-bold bg-muted group-hover:bg-primary/10 group-hover:text-primary transition-colors rounded-full">
                                         {excludedCategoryIds.length}
                                     </Badge>
                                 )}
@@ -100,11 +100,6 @@ export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, 
                                         </div>
                                     )}
                                 </ScrollArea>
-                                <div className="pt-3 border-t border-muted/50">
-                                    <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 leading-relaxed">
-                                        {includeHidden ? "Currently including hidden categories in calculations." : "Hidden categories are currently excluded from calculations."}
-                                    </p>
-                                </div>
                             </div>
                         </PopoverContent>
                     </Popover>

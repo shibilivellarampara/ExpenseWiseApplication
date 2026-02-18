@@ -90,6 +90,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
     const handleToggleExpand = () => {
         if (isExpanded) {
             setIsExpanded(false);
+            // Smoothly snap back to the card top after shrinking
             setTimeout(() => {
                 if (cardRef.current) {
                     cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -120,7 +121,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                     </div>
 
                     {!isExpanded ? (
-                        <div className="px-6 pb-6 flex items-center gap-8 pt-4">
+                        <div className="px-6 pb-6 flex items-center gap-8 pt-4 animate-in fade-in duration-300">
                             <div className="h-32 w-32 shrink-0">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
@@ -157,7 +158,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                             </div>
                         </div>
                     ) : (
-                        <div className="px-6 pb-6 pt-4 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="px-6 pb-6 pt-4 space-y-6 animate-in fade-in slide-in-from-top-2 duration-500 ease-in-out">
                             <div className="flex h-3 w-full rounded-full overflow-hidden bg-muted/30">
                                 {stats.data.map((item, idx) => (
                                     <div 
@@ -182,10 +183,9 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                 onClick={() => setSelectedCategory(item)}
                                                 className="flex items-start gap-3 cursor-pointer group"
                                             >
-                                                {/* Color Indicator sitting outside the stack */}
+                                                {/* Color Indicator sitting outside the vertical data stack */}
                                                 <div className="h-2 w-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: color }} />
                                                 
-                                                {/* The tiered stack (Name, Percentage, Bar) aligned vertically */}
                                                 <div className="flex-grow min-w-0 space-y-1.5">
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-2 min-w-0">

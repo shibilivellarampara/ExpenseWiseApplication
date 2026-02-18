@@ -89,7 +89,6 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
         if (isExpanded) {
             setIsExpanded(false);
             // Robust scroll retention for mobile using scrollIntoView
-            // requestAnimationFrame ensures the layout has shrunk before we scroll
             requestAnimationFrame(() => {
                 if (cardRef.current) {
                     cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });

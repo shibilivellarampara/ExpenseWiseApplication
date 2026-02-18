@@ -107,7 +107,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                     <div className="flex items-center justify-between p-6 pb-2 gap-4">
                         <div className="flex-1 min-w-0">
                             <h3 
-                                className="font-bold text-lg cursor-pointer hover:text-primary transition-colors truncate"
+                                className="font-bold text-lg cursor-pointer active:text-primary transition-colors truncate"
                                 onClick={handleToggleExpand}
                             >
                                 {isExpanded ? 'All Categories' : 'Top Categories'}

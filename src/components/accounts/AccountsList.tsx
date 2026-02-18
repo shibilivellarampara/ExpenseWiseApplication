@@ -310,7 +310,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                             <div className="flex justify-between items-start mb-1">
                                 <div className="min-w-0">
                                     <h3 
-                                        className="font-bold text-base truncate cursor-pointer hover:text-primary transition-colors"
+                                        className="font-bold text-base truncate cursor-pointer active:text-primary transition-colors"
                                         onClick={() => window.location.href=`/expenses?accounts=${item.id}`}
                                     >
                                         {item.name}

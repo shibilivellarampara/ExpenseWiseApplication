@@ -55,7 +55,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                         </div>
                         <div className="text-right shrink-0">
                             <p className={cn(
-                                "text-lg font-medium whitespace-nowrap",
+                                "text-lg font-normal whitespace-nowrap",
                                 getAmountColor()
                             )}>
                                 {currencySymbol}{formatAmount(Math.abs(category?.amount || 0))}
@@ -84,7 +84,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                                     </div>
                                     <div className="shrink-0 text-right">
                                         <p className={cn(
-                                            "text-[15px] font-medium whitespace-nowrap",
+                                            "text-[15px] font-normal whitespace-nowrap",
                                             expense.type === 'income' ? "text-green-600" : "text-destructive"
                                         )}>
                                             {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}
@@ -111,7 +111,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                         {categoryExpenses.length === 0 && (
                             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
                                 {renderIcon("SearchX", "h-12 w-12 mb-2")}
-                                <p className="text-sm font-medium">No transactions found for this period.</p>
+                                <p className="text-sm font-medium">No transactions found.</p>
                             </div>
                         )}
                     </div>

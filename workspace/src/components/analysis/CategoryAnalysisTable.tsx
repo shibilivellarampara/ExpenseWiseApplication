@@ -161,7 +161,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                             <p className={cn("text-xs font-medium whitespace-nowrap", getAmountColor(item.amount))}>
                                                 {currencySymbol}{formatAmount(Math.abs(item.amount))}
                                             </p>
-                                            <p className="text-[10px] text-muted-foreground">{item.percentage.toFixed(1)}%</p>
+                                            {view !== 'net' && <p className="text-[10px] text-muted-foreground">{item.percentage.toFixed(1)}%</p>}
                                         </div>
                                     </div>
                                 ))}
@@ -211,7 +211,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                     </div>
                                                     
                                                     <div className="space-y-1.5">
-                                                        <div className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tight">{item.percentage.toFixed(1)}%</div>
+                                                        {view !== 'net' && <div className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tight">{item.percentage.toFixed(1)}%</div>}
                                                         <div className="h-1 w-full bg-muted/30 rounded-full overflow-hidden">
                                                             <div 
                                                                 className="h-full rounded-full transition-all duration-500" 

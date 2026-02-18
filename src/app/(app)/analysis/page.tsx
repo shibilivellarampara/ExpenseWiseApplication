@@ -266,7 +266,7 @@ function AnalysisPageContent() {
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-56 p-0" align="start">
+                        <PopoverContent className="w-48 p-0" align="start">
                             <Command>
                                 <CommandList>
                                     <CommandGroup>
@@ -296,7 +296,7 @@ function AnalysisPageContent() {
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56" align="start">
+                        <DropdownMenuContent className="w-48" align="start">
                             <Command>
                                 <CommandInput placeholder="Search accounts..." />
                                 <CommandList>
@@ -327,7 +327,7 @@ function AnalysisPageContent() {
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56" align="start">
+                        <DropdownMenuContent className="w-48" align="start">
                             <Command>
                                 <CommandInput placeholder="Search tags..." />
                                 <CommandList>

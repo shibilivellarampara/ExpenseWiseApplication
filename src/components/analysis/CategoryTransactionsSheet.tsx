@@ -42,7 +42,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
 
     return (
         <Dialog open={!!category} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-sm w-[95vw] h-[65vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden">
+            <DialogContent className="max-w-[340px] w-[95vw] h-[65vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden">
                 <DialogHeader className="p-6 pb-4 border-b bg-card shrink-0">
                     <div className="flex justify-between items-center pr-10 gap-4">
                         <div className="min-w-0 flex flex-col gap-0.5">

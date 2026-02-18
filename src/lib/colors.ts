@@ -6,14 +6,18 @@ type ColorInfo = {
 // A vibrant, professional palette for generating dynamic badge colors.
 // Refined to match high-quality fintech standards: light background with darker, high-contrast same-hue text.
 export const COLORS: ColorInfo[] = [
-  { light: { bg: '210 80% 96%', text: '210 80% 40%' }, dark: { bg: '210 40% 20%', text: '210 80% 85%' } },   // Blue (Shopping)
-  { light: { bg: '280 70% 96%', text: '280 70% 45%' }, dark: { bg: '280 40% 25%', text: '280 70% 88%' } },   // Purple (Flipkart)
-  { light: { bg: '345 80% 96%', text: '345 80% 45%' }, dark: { bg: '345 50% 25%', text: '345 80% 88%' } },   // Pink/Red (Sweet Home)
-  { light: { bg: '160 60% 96%', text: '160 60% 35%' }, dark: { bg: '160 45% 20%', text: '160 45% 85%' } },   // Green (Refund)
-  { light: { bg: '220 15% 94%', text: '220 15% 40%' }, dark: { bg: '220 25% 25%', text: '220 15% 80%' } },   // Slate/Gray (Transfer)
-  { light: { bg: '30 90% 96%', text: '30 90% 40%' }, dark: { bg: '30 80% 22%', text: '30 80% 85%' } },       // Orange/Amber
-  { light: { bg: '190 70% 96%', text: '190 70% 40%' }, dark: { bg: '190 40% 22%', text: '190 60% 85%' } },   // Cyan/Teal
-  { light: { bg: '260 60% 96%', text: '260 60% 45%' }, dark: { bg: '260 30% 25%', text: '260 50% 85%' } },   // Indigo
+  { light: { bg: '210 80% 95%', text: '210 80% 30%' }, dark: { bg: '210 40% 20%', text: '210 80% 85%' } },   // Blue
+  { light: { bg: '180 45% 95%', text: '180 45% 30%' }, dark: { bg: '180 45% 20%', text: '180 45% 85%' } },   // Teal
+  { light: { bg: '30 90% 95%', text: '30 90% 40%' }, dark: { bg: '30 80% 22%', text: '30 80% 85%' } },       // Orange
+  { light: { bg: '300 70% 95%', text: '300 70% 40%' }, dark: { bg: '300 40% 25%', text: '300 70% 88%' } },   // Purple
+  { light: { bg: '120 40% 95%', text: '120 40% 30%' }, dark: { bg: '120 30% 20%', text: '120 40% 85%' } },   // Green
+  { light: { bg: '350 80% 96%', text: '350 80% 50%' }, dark: { bg: '350 50% 25%', text: '350 80% 88%' } },   // Red/Pink
+  { light: { bg: '40 80% 95%', text: '40 80% 45%' }, dark: { bg: '40 60% 23%', text: '40 80% 88%' } },       // Yellow/Gold
+  { light: { bg: '260 50% 95%', text: '260 50% 40%' }, dark: { bg: '260 30% 25%', text: '260 50% 85%' } },   // Indigo
+  { light: { bg: '190 60% 94%', text: '190 60% 30%' }, dark: { bg: '190 40% 22%', text: '190 60% 85%' } },   // Cyan
+  { light: { bg: '0 80% 96%', text: '0 80% 50%' }, dark: { bg: '0 50% 25%', text: '0 80% 88%' } },           // Bright Red
+  { light: { bg: '220 25% 94%', text: '220 25% 30%' }, dark: { bg: '220 25% 25%', text: '220 15% 80%' } },   // Muted Navy
+  { light: { bg: '230 20% 93%', text: '230 20% 35%' }, dark: { bg: '230 15% 28%', text: '230 20% 82%' } },   // Slate
 ];
 
 

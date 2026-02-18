@@ -35,20 +35,20 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
         .sort((a, b) => b.date.getTime() - a.date.getTime());
 
     const getAmountColor = () => {
-        if (view === 'expense') return 'text-[#EB5757]';
-        if (view === 'income') return 'text-[#27AE60]';
-        return (category?.amount || 0) >= 0 ? 'text-[#27AE60]' : 'text-[#EB5757]';
+        if (view === 'expense') return 'text-destructive';
+        if (view === 'income') return 'text-green-600';
+        return (category?.amount || 0) >= 0 ? 'text-green-600' : 'text-destructive';
     };
 
     return (
         <Dialog open={!!category} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-md w-full sm:w-[95vw] h-[75vh] flex flex-col p-0 gap-0 rounded-t-[24px] sm:rounded-[24px] overflow-hidden">
+            <DialogContent className="max-w-md w-[95vw] h-[65vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden">
                 <DialogHeader className="p-6 pb-4 border-b bg-card shrink-0">
-                    <div className="flex justify-between items-start pr-8 gap-4">
+                    <div className="flex justify-between items-start pr-12 gap-4">
                         <div className="min-w-0">
                             <DialogTitle className="text-xl font-bold font-headline truncate">{category?.name}</DialogTitle>
-                            <DialogDescription className="text-[13px] font-semibold text-muted-foreground/70 uppercase tracking-widest mt-1">
-                                {categoryExpenses.length} Transactions
+                            <DialogDescription className="text-sm font-medium">
+                                {categoryExpenses.length} transactions found
                             </DialogDescription>
                         </div>
                         <div className="text-right shrink-0">
@@ -62,28 +62,28 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                     </div>
                 </DialogHeader>
                 
-                <ScrollArea className="flex-1 px-4 py-4 bg-background/30">
-                    <div className="space-y-3 pb-8">
+                <ScrollArea className="flex-1 px-4 py-4 bg-background/50">
+                    <div className="space-y-3 pb-6">
                         {categoryExpenses.map((expense) => (
-                            <div key={expense.id} className="flex flex-col gap-2 p-4 rounded-[20px] bg-card border border-border/40 shadow-sm hover:shadow-md transition-all">
+                            <div key={expense.id} className="flex flex-col gap-2 p-4 rounded-2xl bg-card border border-border/40 shadow-sm hover:shadow-md transition-all">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex-grow min-w-0">
-                                        <p className="text-[15px] font-semibold truncate leading-tight">
+                                        <p className="text-[15px] font-bold truncate leading-tight">
                                             {expense.description || category?.name}
                                         </p>
-                                        <div className="flex items-center gap-1.5 mt-1.5 text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest">
+                                        <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                                             <span className="flex items-center gap-1">
                                                 {renderIcon(expense.account?.icon, "h-3 w-3")}
                                                 {expense.account?.name}
                                             </span>
-                                            <span className="opacity-30">&bull;</span>
-                                            <span>{format(expense.date, 'h:mm a')}</span>
+                                            <span>&bull;</span>
+                                            <span>{format(expense.date, 'MMM d, h:mm a')}</span>
                                         </div>
                                     </div>
                                     <div className="shrink-0 text-right">
                                         <p className={cn(
                                             "text-[15px] font-bold",
-                                            expense.type === 'income' ? "text-[#27AE60]" : "text-[#EB5757]"
+                                            expense.type === 'income' ? "text-green-600" : "text-destructive"
                                         )}>
                                             {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}
                                         </p>
@@ -91,13 +91,13 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                                 </div>
 
                                 {expense.tags && expense.tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 pt-1">
+                                    <div className="flex flex-wrap gap-1.5 pt-1">
                                         {expense.tags.map(tag => (
                                             <Badge 
                                                 key={tag.id} 
                                                 variant="outline"
                                                 style={generateColorStyle(tag.name)}
-                                                className="badge-colorful text-[9px] h-4 px-1.5 font-bold border-none rounded-full"
+                                                className="badge-colorful text-[10px] h-5 px-2 font-bold tracking-tighter"
                                             >
                                                 {tag.name}
                                             </Badge>
@@ -107,9 +107,9 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                             </div>
                         ))}
                         {categoryExpenses.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-24 text-muted-foreground/40">
+                            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
                                 {renderIcon("SearchX", "h-12 w-12 mb-2")}
-                                <p className="text-sm font-semibold uppercase tracking-widest">No matching records</p>
+                                <p className="text-sm font-medium">No transactions found for this period.</p>
                             </div>
                         )}
                     </div>

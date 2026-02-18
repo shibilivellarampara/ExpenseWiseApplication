@@ -5,13 +5,13 @@
 
 @layer base {
   :root {
-    --background: 40 33% 96%;
+    --background: 220 12% 95%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 210 80% 55%;
+    --primary: 262.1 83.3% 57.8%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -19,25 +19,25 @@
     --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 30 90% 60%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 210 80% 55%;
-    --radius: 1.25rem;
+    --ring: 262.1 83.3% 57.8%;
+    --radius: 0.75rem;
 
     /* New Sidebar Vars - Light */
     --sidebar-background: 220 13% 97%;
     --sidebar-foreground: 222.2 84% 4.9%;
     --sidebar-muted-foreground: 215.4 16.3% 46.9%;
-    --sidebar-active: 210 80% 55%;
+    --sidebar-active: 262.1 83.3% 57.8%;
     --sidebar-active-foreground: 210 40% 98%;
     --sidebar-border: 214.3 31.8% 91.4%;
     
     /* Chart colors */
-    --chart-1: 210 80% 55%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 90% 60%;
+    --chart-1: 262.1 83.3% 57.8%;
+    --chart-2: 210 40% 50%;
+    --chart-3: 10 80% 50%;
     --chart-4: 150 50% 50%;
     --chart-5: 300 70% 50%;
     --chart-6: 180 55% 50%;
@@ -56,7 +56,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 90% 65%;
+    --primary: 263.4 95.2% 66.3%;
     --primary-foreground: 210 40% 98%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -64,24 +64,24 @@
     --muted-foreground: 215 20.2% 65.1%;
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 30 80% 60%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 210 90% 65%;
+    --ring: 263.4 95.2% 66.3%;
 
     /* New Sidebar Vars - Dark */
     --sidebar-background: 224 71% 4%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-muted-foreground: 215 20.2% 65.1%;
-    --sidebar-active: 210 90% 65%;
+    --sidebar-active: 263.4 95.2% 66.3%;
     --sidebar-active-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
     
     /* Chart colors */
-    --chart-1: 210 90% 65%;
-    --chart-2: 160 60% 60%;
-    --chart-3: 30 80% 65%;
+    --chart-1: 263.4 95.2% 66.3%;
+    --chart-2: 210 40% 70%;
+    --chart-3: 10 80% 70%;
     --chart-4: 150 50% 70%;
     --chart-5: 300 70% 70%;
     --chart-6: 180 55% 70%;
@@ -140,7 +140,7 @@
 
   .fintech, .dark-fintech {
     --chart-1: 210 80% 55%;
-    --chart-2: 160 60% 45%;
+    --chart-2: 180 45% 55%;
     --chart-3: 30 90% 60%;
     --chart-4: 220 25% 65%;
     --chart-5: 210 80% 75%;
@@ -154,26 +154,26 @@
   }
 
   .fintech {
-    --background: 40 33% 96%;
-    --foreground: 220 25% 15%;
-    --card: 0 0% 100%;
+    --background: 40 33% 96%; /* Soft Off-White/Light Beige */
+    --foreground: 220 25% 15%; /* Dark Navy/Charcoal */
+    --card: 40 33% 99%;
     --card-foreground: 220 25% 15%;
-    --popover: 0 0% 100%;
+    --popover: 40 33% 99%;
     --popover-foreground: 220 25% 15%;
-    --primary: 210 80% 55%;
+    --primary: 210 80% 55%; /* Primary Blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 180 45% 95%;
+    --secondary: 180 45% 95%; /* Light Teal/Green */
     --secondary-foreground: 180 45% 25%;
     --muted: 220 15% 94%;
     --muted-foreground: 220 15% 45%;
-    --accent: 180 45% 90%;
+    --accent: 180 45% 90%; /* Teal/Green Accent */
     --accent-foreground: 180 45% 20%;
-    --destructive: 30 90% 60%;
+    --destructive: 30 90% 60%; /* Orange/Amber */
     --destructive-foreground: 0 0% 100%;
     --border: 220 15% 90%;
     --input: 220 15% 90%;
     --ring: 210 80% 55%;
-    --radius: 1.25rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 220 15% 98%;
     --sidebar-foreground: 220 25% 15%;
@@ -184,21 +184,21 @@
   }
 
   .dark-fintech {
-    --background: 220 25% 12%;
-    --foreground: 220 15% 95%;
+    --background: 220 25% 12%; /* Dark Navy/Charcoal */
+    --foreground: 220 15% 95%; /* Off-white */
     --card: 220 25% 18%;
     --card-foreground: 220 15% 95%;
     --popover: 220 25% 14%;
     --popover-foreground: 220 15% 95%;
-    --primary: 210 90% 65%;
+    --primary: 210 90% 65%; /* Primary Blue */
     --primary-foreground: 220 25% 10%;
-    --secondary: 180 45% 20%;
+    --secondary: 180 45% 20%; /* Dark Teal/Green */
     --secondary-foreground: 180 45% 90%;
     --muted: 220 25% 20%;
     --muted-foreground: 220 15% 65%;
-    --accent: 180 45% 30%;
+    --accent: 180 45% 30%; /* Teal/Green Accent */
     --accent-foreground: 180 45% 95%;
-    --destructive: 30 80% 60%;
+    --destructive: 30 80% 60%; /* Orange/Amber */
     --destructive-foreground: 30 80% 5%;
     --border: 220 25% 22%;
     --input: 220 25% 22%;
@@ -220,13 +220,13 @@
 
   body {
     @apply bg-background text-foreground;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-    viewport-fit: cover;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+    -webkit-touch-callout: none; /* iOS Safari */
   }
 
+  /* Hide spinner arrows on number inputs */
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
@@ -248,4 +248,47 @@
     color: var(--badge-text-dark) !important;
     border: none !important;
   }
+}
+
+
+/* Custom styles for react-phone-number-input */
+.PhoneInput {
+  @apply flex items-center w-full;
+}
+
+.PhoneInputCountry {
+  @apply relative flex items-center justify-center;
+  @apply h-10;
+  @apply rounded-md rounded-r-none border border-r-0 border-input;
+  @apply bg-background;
+  @apply ring-offset-background;
+  @apply pr-2; /* Add some padding to the right */
+}
+
+.PhoneInputCountrySelect {
+  @apply absolute inset-0 opacity-0 cursor-pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.PhoneInputCountryIcon {
+  @apply !h-6 !w-auto;
+  box-shadow: none;
+}
+
+.PhoneInputInput {
+  @apply !h-10 !w-full !flex-1 !rounded-md !rounded-l-none !border !border-input !bg-background !px-3 !py-2 !text-sm !ring-offset-background;
+  @apply placeholder:!text-muted-foreground;
+  @apply focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-ring focus-visible:!ring-offset-2;
+  @apply disabled:!cursor-not-allowed disabled:!opacity-50;
+}
+
+/* Hide the country name label inside the dropdown button */
+.PhoneInputCountrySelect .PhoneInputCountrySelect-v2-label {
+    display: none;
+}
+
+/* Hide the arrow in the dropdown button */
+.PhoneInputCountrySelectArrow {
+    display: none;
 }

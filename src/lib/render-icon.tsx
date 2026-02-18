@@ -13,7 +13,7 @@ export const renderIcon = (iconName: string | undefined, className?: string) => 
   // Use specific key access to allow for tree-shaking and better Turbopack performance
   const IconComponent = (LucideIcons as any)[iconName];
   
-  // Icons inside chips will naturally inherit the parent's color if we don't force text-muted-foreground.
+  // Removed hardcoded text-muted-foreground so icons inherit parent badge color.
   return IconComponent ? 
     <IconComponent className={cn("h-4 w-4", className)} /> : 
     <LucideIcons.Pilcrow className={cn("h-4 w-4", className)} />;

@@ -100,6 +100,12 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
         }
     };
 
+    const getAmountColor = (amount: number) => {
+        if (view === 'expense') return 'text-destructive';
+        if (view === 'income') return 'text-primary';
+        return amount >= 0 ? 'text-primary' : 'text-destructive';
+    };
+
     return (
         <>
             <Card ref={cardRef} className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden scroll-mt-20">
@@ -152,7 +158,9 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                             )}
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <p className="text-xs font-medium whitespace-nowrap">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
+                                            <p className={cn("text-xs font-medium whitespace-nowrap", getAmountColor(item.amount))}>
+                                                {currencySymbol}{formatAmount(Math.abs(item.amount))}
+                                            </p>
                                             <p className="text-[10px] text-muted-foreground">{item.percentage.toFixed(1)}%</p>
                                         </div>
                                     </div>
@@ -196,7 +204,9 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                             )}
                                                         </div>
                                                         <div className="text-right shrink-0">
-                                                            <p className="text-sm font-medium">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
+                                                            <p className={cn("text-sm font-medium", getAmountColor(item.amount))}>
+                                                                {currencySymbol}{formatAmount(Math.abs(item.amount))}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     

@@ -201,7 +201,15 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                     </div>
                                                     
                                                     {view !== 'net' && (
-                                                        <div className="text-[11px] font-medium text-muted-foreground">{item.percentage.toFixed(1)}%</div>
+                                                        <div className="space-y-1.5">
+                                                            <div className="h-1 w-full bg-muted/30 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className="h-full rounded-full transition-all duration-500" 
+                                                                    style={{ width: `${item.percentage}%`, backgroundColor: color }} 
+                                                                />
+                                                            </div>
+                                                            <div className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tight">{item.percentage.toFixed(1)}%</div>
+                                                        </div>
                                                     )}
                                                 </div>
 

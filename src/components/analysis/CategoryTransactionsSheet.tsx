@@ -46,7 +46,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                 <DialogHeader className="p-6 pb-4 border-b bg-card shrink-0">
                     <div className="flex justify-between items-center pr-10 gap-4">
                         <div className="min-w-0 flex flex-col gap-0.5">
-                            <DialogTitle className="text-lg font-medium font-headline truncate">
+                            <DialogTitle className="text-lg font-normal font-headline truncate">
                                 {category?.name}
                             </DialogTitle>
                             <DialogDescription className="text-xs text-muted-foreground font-normal">
@@ -70,7 +70,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                             <div key={expense.id} className="flex flex-col gap-2 p-4 rounded-2xl bg-card border border-border/40 shadow-sm hover:shadow-md transition-all">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[15px] font-medium truncate leading-tight">
+                                        <p className="text-[15px] font-normal truncate leading-tight">
                                             {expense.description || category?.name}
                                         </p>
                                         <div className="flex items-center gap-1.5 mt-1 text-[11px] font-normal text-muted-foreground uppercase tracking-wider">

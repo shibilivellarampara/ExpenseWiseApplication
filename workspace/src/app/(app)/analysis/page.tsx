@@ -297,7 +297,7 @@ function AnalysisPageContent() {
                                         : `${selectedAccounts.length} Accounts`}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
-                        </PopoverTrigger>
+                        </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-40" align="end">
                             <Command>
                                 <CommandInput placeholder="Search accounts..." />

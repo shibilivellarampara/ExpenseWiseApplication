@@ -112,7 +112,6 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                 onClick={handleToggleExpand}
                             >
                                 {isExpanded ? 'All Categories' : 'Top Categories'}
-                                <ChevronDown className={cn("h-4 w-4 text-muted-foreground/50 transition-transform group-hover:text-primary", isExpanded && "rotate-180")} />
                             </h3>
                         </div>
                         <div className="flex items-center gap-3">

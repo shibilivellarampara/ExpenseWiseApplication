@@ -31,16 +31,16 @@ export function CategoryTransactionsSheet({ category, expenses, currency, onClos
 
     return (
         <Dialog open={!!category} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-md w-[95vw] h-[70vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden">
+            <DialogContent className="max-w-md w-[95vw] h-[65vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden">
                 <DialogHeader className="p-6 pb-4 border-b bg-card shrink-0">
-                    <div className="flex justify-between items-start pr-8">
-                        <div>
-                            <DialogTitle className="text-xl font-bold font-headline">{category?.name}</DialogTitle>
+                    <div className="flex justify-between items-start pr-8 gap-4">
+                        <div className="min-w-0">
+                            <DialogTitle className="text-xl font-bold font-headline truncate">{category?.name}</DialogTitle>
                             <DialogDescription className="text-sm font-medium">
                                 {categoryExpenses.length} transactions found
                             </DialogDescription>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0">
                             <p className={cn(
                                 "text-xl font-bold",
                                 (category?.amount || 0) >= 0 ? "text-green-600" : "text-destructive"

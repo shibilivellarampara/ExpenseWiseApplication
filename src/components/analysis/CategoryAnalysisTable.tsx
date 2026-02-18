@@ -6,7 +6,7 @@ import { getCurrencySymbol } from "@/lib/currencies";
 import { cn, formatAmount } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { CHART_COLORS } from "@/lib/colors";
 import { CategoryTransactionsSheet } from "./CategoryTransactionsSheet";
@@ -192,14 +192,13 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
                                                         <p className="text-sm font-bold">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
                                                         <p className="text-[10px] font-medium text-muted-foreground">{item.percentage.toFixed(1)}%</p>
                                                     </div>
-                                                    <div className="flex items-center gap-1 text-muted-foreground/40 group-hover:text-primary transition-colors">
+                                                    <div className="flex items-center gap-1 text-muted-foreground/40 transition-colors">
                                                         <button 
                                                             onClick={(e) => toggleTags(e, item.id)}
-                                                            className={cn("p-1 rounded-full hover:bg-muted transition-transform", isTagsOpen && "rotate-180")}
+                                                            className={cn("p-1 rounded-full hover:bg-muted group-hover:text-primary transition-all", isTagsOpen && "rotate-180")}
                                                         >
                                                             <ChevronDown className="h-4 w-4" />
                                                         </button>
-                                                        <ChevronRight className="h-4 w-4" />
                                                     </div>
                                                 </div>
                                             </div>

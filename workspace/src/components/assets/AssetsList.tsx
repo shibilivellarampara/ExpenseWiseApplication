@@ -129,7 +129,8 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                     {renderIcon(categoryInfo.icon, 'h-5 w-5')}
                                 </div>
                                 <div>
-                                    <CardTitle className="font-headline text-lg">{categoryInfo.label}</CardTitle(CardDescription className="font-bold text-foreground/80">{currencySymbol}{formatAmount(categoryTotal)}</CardDescription>
+                                    <CardTitle className="font-headline text-lg">{categoryInfo.label}</CardTitle>
+                                    <CardDescription className="font-bold text-foreground/80">{currencySymbol}{formatAmount(categoryTotal)}</CardDescription>
                                 </div>
                             </div>
                            <div className="flex items-center">

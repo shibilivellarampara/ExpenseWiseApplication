@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState, useRef } from "react";
@@ -91,11 +90,12 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
     const handleToggleExpand = () => {
         if (isExpanded) {
             setIsExpanded(false);
-            requestAnimationFrame(() => {
+            // Use setTimeout to ensure the collapse transition has started before scrolling
+            setTimeout(() => {
                 if (cardRef.current) {
                     cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-            });
+            }, 10);
         } else {
             setIsExpanded(true);
         }

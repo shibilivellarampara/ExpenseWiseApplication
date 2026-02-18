@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState, useRef } from "react";
@@ -91,11 +90,12 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
     const handleToggleExpand = () => {
         if (isExpanded) {
             setIsExpanded(false);
-            requestAnimationFrame(() => {
+            // Use setTimeout to ensure the collapse transition has started before scrolling
+            setTimeout(() => {
                 if (cardRef.current) {
                     cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-            });
+            }, 10);
         } else {
             setIsExpanded(true);
         }
@@ -108,7 +108,6 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                     <div className="flex items-center justify-between p-6 pb-2">
                         <div>
                             <h3 className="font-bold text-lg">{isExpanded ? 'All Categories' : 'Top 5 Categories'}</h3>
-                            <p className="text-xs text-muted-foreground">Your spending, organized by category.</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full">
@@ -152,7 +151,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                         </div>
                                         <div className="text-right">
                                             <p className="text-xs font-bold">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
-                                            <p className="text-[10px] text-muted-foreground">{item.percentage.toFixed(1)}%</p>
+                                            {view !== 'net' && <p className="text-[10px] text-muted-foreground">{item.percentage.toFixed(1)}%</p>}
                                         </div>
                                     </div>
                                 ))}
@@ -192,7 +191,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                             <Badge variant="outline" className="h-3.5 text-[8px] uppercase font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
                                                         )}
                                                     </div>
-                                                    <div className="text-[11px] font-bold text-muted-foreground">{item.percentage.toFixed(1)}%</div>
+                                                    {view !== 'net' && <div className="text-[11px] font-bold text-muted-foreground">{item.percentage.toFixed(1)}%</div>}
                                                     <div className="relative h-1.5 w-full bg-muted/30 rounded-full overflow-hidden">
                                                         <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${item.percentage}%`, backgroundColor: color }} />
                                                     </div>
@@ -222,14 +221,15 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                                         <LucideTag className="h-3 w-3" />
                                                                         {tag.name}
                                                                     </p>
-                                                                    <p className="text-[10px] font-bold text-muted-foreground/60">{tag.percentage.toFixed(0)}%</p>
+                                                                    {view !== 'net' && <p className="text-[10px] font-bold text-muted-foreground/60">{tag.percentage.toFixed(0)}%</p>}
                                                                 </div>
                                                                 <div className="h-1 w-full bg-muted/20 rounded-full overflow-hidden">
                                                                     <div className="h-full bg-muted-foreground/20" style={{ width: `${tag.percentage}%` }} />
                                                                 </div>
                                                             </div>
-                                                            <div className="text-right shrink-0 ml-4">
+                                                            <div className="text-right shrink-0 ml-4 flex items-center gap-1">
                                                                 <p className="text-[11px] font-bold text-muted-foreground/80">{currencySymbol}{formatAmount(Math.abs(tag.amount))}</p>
+                                                                <div className="w-8" />
                                                             </div>
                                                         </div>
                                                     ))}

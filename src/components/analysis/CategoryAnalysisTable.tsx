@@ -153,7 +153,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                         </div>
                                         <div className="text-right">
                                             <p className="text-xs font-medium">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
-                                            {view !== 'net' && <p className="text-[10px] text-muted-foreground">{item.percentage.toFixed(1)}%</p>}
+                                            <p className="text-[10px] text-muted-foreground">{item.percentage.toFixed(1)}%</p>
                                         </div>
                                     </div>
                                 ))}
@@ -200,17 +200,15 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                         </div>
                                                     </div>
                                                     
-                                                    {view !== 'net' && (
-                                                        <div className="space-y-1.5">
-                                                            <div className="h-1 w-full bg-muted/30 rounded-full overflow-hidden">
-                                                                <div 
-                                                                    className="h-full rounded-full transition-all duration-500" 
-                                                                    style={{ width: `${item.percentage}%`, backgroundColor: color }} 
-                                                                />
-                                                            </div>
-                                                            <div className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tight">{item.percentage.toFixed(1)}%</div>
+                                                    <div className="space-y-1.5">
+                                                        <div className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tight">{item.percentage.toFixed(1)}%</div>
+                                                        <div className="h-1 w-full bg-muted/30 rounded-full overflow-hidden">
+                                                            <div 
+                                                                className="h-full rounded-full transition-all duration-500" 
+                                                                style={{ width: `${item.percentage}%`, backgroundColor: color }} 
+                                                            />
                                                         </div>
-                                                    )}
+                                                    </div>
                                                 </div>
 
                                                 <div className="flex items-center gap-1 text-muted-foreground/40 transition-colors shrink-0 ml-1 mt-0.5">

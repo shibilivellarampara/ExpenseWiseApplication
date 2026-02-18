@@ -1,12 +1,19 @@
-
 'use client';
 
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogHeader, 
+    DialogTitle, 
+    DialogDescription 
+} from "@/components/ui/dialog";
 import { EnrichedExpense } from "@/lib/types";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { cn, formatAmount } from "@/lib/utils";
+import { cn, formatAmount, generateColorStyle } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { renderIcon } from "@/lib/render-icon";
 
 interface CategoryTransactionsSheetProps {
     category: { id: string; name: string; amount: number } | null;
@@ -23,15 +30,15 @@ export function CategoryTransactionsSheet({ category, expenses, currency, onClos
         .sort((a, b) => b.date.getTime() - a.date.getTime());
 
     return (
-        <Drawer open={!!category} onOpenChange={(open) => !open && onClose()}>
-            <DrawerContent className="max-h-[85vh] rounded-t-[32px]">
-                <DrawerHeader className="pb-2">
+        <Dialog open={!!category} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-md w-[95vw] h-[80vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden">
+                <DialogHeader className="p-6 pb-4 border-b bg-card shrink-0">
                     <div className="flex justify-between items-start">
                         <div>
-                            <DrawerTitle className="text-xl font-bold">{category?.name}</DrawerTitle>
-                            <DrawerDescription className="text-sm font-medium">
-                                {categoryExpenses.length} transactions
-                            </DrawerDescription>
+                            <DialogTitle className="text-xl font-bold font-headline">{category?.name}</DialogTitle>
+                            <DialogDescription className="text-sm font-medium">
+                                {categoryExpenses.length} transactions found
+                            </DialogDescription>
                         </div>
                         <div className="text-right">
                             <p className={cn(
@@ -42,36 +49,61 @@ export function CategoryTransactionsSheet({ category, expenses, currency, onClos
                             </p>
                         </div>
                     </div>
-                </DrawerHeader>
+                </DialogHeader>
                 
-                <ScrollArea className="flex-1 px-4 pb-8 mt-4">
-                    <div className="space-y-4">
+                <ScrollArea className="flex-1 px-4 py-4 bg-background/50">
+                    <div className="space-y-3 pb-6">
                         {categoryExpenses.map((expense) => (
-                            <div key={expense.id} className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                                <div className="flex-grow min-w-0 pr-4">
-                                    <p className="text-sm font-bold truncate">{expense.description || category?.name}</p>
-                                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                                        {expense.account?.name} &bull; {format(expense.date, 'MMM d, h:mm a')}
-                                    </p>
+                            <div key={expense.id} className="flex flex-col gap-2 p-4 rounded-2xl bg-card border border-border/40 shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex-grow min-w-0">
+                                        <p className="text-[15px] font-bold truncate leading-tight">
+                                            {expense.description || category?.name}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                            <span className="flex items-center gap-1">
+                                                {renderIcon(expense.account?.icon, "h-3 w-3")}
+                                                {expense.account?.name}
+                                            </span>
+                                            <span>&bull;</span>
+                                            <span>{format(expense.date, 'MMM d, h:mm a')}</span>
+                                        </div>
+                                    </div>
+                                    <div className="shrink-0 text-right">
+                                        <p className={cn(
+                                            "text-[15px] font-bold",
+                                            expense.type === 'income' ? "text-green-600" : "text-destructive"
+                                        )}>
+                                            {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="text-right shrink-0">
-                                    <p className={cn(
-                                        "text-sm font-bold",
-                                        expense.type === 'income' ? "text-green-600" : "text-destructive"
-                                    )}>
-                                        {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}
-                                    </p>
-                                </div>
+
+                                {expense.tags && expense.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 pt-1">
+                                        {expense.tags.map(tag => (
+                                            <Badge 
+                                                key={tag.id} 
+                                                variant="outline"
+                                                style={generateColorStyle(tag.name)}
+                                                className="badge-colorful text-[10px] h-5 px-2 font-bold uppercase tracking-tighter"
+                                            >
+                                                {tag.name}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         ))}
                         {categoryExpenses.length === 0 && (
-                            <div className="text-center py-12 text-muted-foreground">
-                                No transactions found for this period.
+                            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
+                                <renderIcon iconName="SearchX" className="h-12 w-12 mb-2" />
+                                <p className="text-sm font-medium">No transactions found for this period.</p>
                             </div>
                         )}
                     </div>
                 </ScrollArea>
-            </DrawerContent>
-        </Drawer>
+            </DialogContent>
+        </Dialog>
     );
 }

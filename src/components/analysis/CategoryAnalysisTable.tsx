@@ -143,13 +143,13 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                     <div key={idx} className="flex justify-between items-start">
                                         <div className="flex items-center gap-2">
                                             <div className="h-2 w-2 rounded-full" style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }} />
-                                            <span className="text-xs font-semibold truncate max-w-[100px]">{item.name}</span>
+                                            <span className="text-xs font-medium truncate max-w-[100px]">{item.name}</span>
                                             {excludedCategoryIds.includes(item.id) && (
                                                 <Badge variant="outline" className="h-3.5 text-[8px] uppercase font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
                                             )}
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-xs font-bold">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
+                                            <p className="text-xs font-medium">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
                                             {view !== 'net' && <p className="text-[10px] text-muted-foreground">{item.percentage.toFixed(1)}%</p>}
                                         </div>
                                     </div>
@@ -194,12 +194,12 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                             )}
                                                         </div>
                                                         <div className="text-right shrink-0">
-                                                            <p className="text-sm font-bold">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
+                                                            <p className="text-sm font-medium">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
                                                         </div>
                                                     </div>
                                                     
                                                     {view !== 'net' && (
-                                                        <div className="text-[11px] font-bold text-muted-foreground">{item.percentage.toFixed(1)}%</div>
+                                                        <div className="text-[11px] font-medium text-muted-foreground">{item.percentage.toFixed(1)}%</div>
                                                     )}
 
                                                     <div className="relative h-1.5 w-full bg-muted/30 rounded-full overflow-hidden">
@@ -227,10 +227,10 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                                         <LucideTag className="h-3 w-3" />
                                                                         {tag.name}
                                                                     </p>
-                                                                    <p className="text-[11px] font-bold text-muted-foreground/80">{currencySymbol}{formatAmount(Math.abs(tag.amount))}</p>
+                                                                    <p className="text-[11px] font-medium text-muted-foreground/80">{currencySymbol}{formatAmount(Math.abs(tag.amount))}</p>
                                                                 </div>
                                                                 {view !== 'net' && (
-                                                                    <div className="text-[10px] font-bold text-muted-foreground/60">
+                                                                    <div className="text-[10px] font-medium text-muted-foreground/60">
                                                                         {tag.percentage.toFixed(0)}%
                                                                     </div>
                                                                 )}

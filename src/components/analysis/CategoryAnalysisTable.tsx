@@ -109,11 +109,11 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                             <h3 className="font-bold text-lg">{isExpanded ? 'All Categories' : 'Top 5 Categories'}</h3>
                         </div>
                         <div className="flex items-center gap-3">
-                            <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full">
-                                <TabsList className="bg-transparent h-8 p-0">
-                                    <TabsTrigger value="expense" className="rounded-full text-[10px] h-7 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Expenses</TabsTrigger>
-                                    <TabsTrigger value="income" className="rounded-full text-[10px] h-7 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Income</TabsTrigger>
-                                    <TabsTrigger value="net" className="rounded-full text-[10px] h-7 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Net</TabsTrigger>
+                            <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full shrink-0">
+                                <TabsList className="bg-transparent h-10 p-0">
+                                    <TabsTrigger value="expense" className="rounded-full text-[12px] h-9 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Expenses</TabsTrigger>
+                                    <TabsTrigger value="income" className="rounded-full text-[12px] h-9 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Income</TabsTrigger>
+                                    <TabsTrigger value="net" className="rounded-full text-[12px] h-9 px-4 data-[state=active]:bg-card data-[state=active]:shadow-sm">Net</TabsTrigger>
                                 </TabsList>
                             </Tabs>
                         </div>
@@ -138,7 +138,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                     </PieChart>
                                 </ResponsiveContainer>
                             </div>
-                            <div className="flex-grow space-y-3">
+                            <div className="flex-grow min-w-0 space-y-3">
                                 {top3.map((item, idx) => (
                                     <div key={idx} className="flex justify-between items-start">
                                         <div className="flex items-center gap-2">
@@ -182,9 +182,10 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                 onClick={() => setSelectedCategory(item)}
                                                 className="flex items-start gap-3 cursor-pointer group"
                                             >
-                                                {/* Color Indicator aligned with Label Stack */}
+                                                {/* Color Indicator sitting outside the stack */}
                                                 <div className="h-2 w-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: color }} />
                                                 
+                                                {/* The tiered stack (Name, Percentage, Bar) aligned vertically */}
                                                 <div className="flex-grow min-w-0 space-y-1.5">
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-2 min-w-0">

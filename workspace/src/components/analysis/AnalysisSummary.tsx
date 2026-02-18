@@ -81,14 +81,7 @@ export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, 
                         </PopoverTrigger>
                         <PopoverContent className="w-64 p-4 rounded-[20px] shadow-2xl border-none bg-card" align="start">
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="font-bold text-sm">Hidden Categories</h4>
-                                    <Switch 
-                                        checked={includeHidden} 
-                                        onCheckedChange={onIncludeHiddenChange}
-                                        className="scale-75 origin-right"
-                                    />
-                                </div>
+                                <h4 className="font-bold text-sm">Hidden Categories</h4>
                                 <Separator className="bg-muted/50" />
                                 <ScrollArea className="h-40 pr-2">
                                     {excludedCategories.length > 0 ? (
@@ -116,6 +109,11 @@ export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, 
                             </div>
                         </PopoverContent>
                     </Popover>
+                    <Switch 
+                        checked={includeHidden} 
+                        onCheckedChange={onIncludeHiddenChange}
+                        className="scale-75 origin-right"
+                    />
                 </div>
             </CardContent>
         </Card>

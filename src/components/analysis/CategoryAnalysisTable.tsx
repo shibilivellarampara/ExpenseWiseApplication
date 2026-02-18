@@ -7,7 +7,7 @@ import { getCurrencySymbol } from "@/lib/currencies";
 import { cn, formatAmount } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Tag as LucideTag } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { CHART_COLORS } from "@/lib/colors";
 import { CategoryTransactionsSheet } from "./CategoryTransactionsSheet";
@@ -218,7 +218,10 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                         <div key={tIdx} className="flex items-center justify-between py-1 border-l-2 border-muted pl-3">
                                                             <div className="space-y-1 flex-grow">
                                                                 <div className="flex justify-between items-center pr-4">
-                                                                    <p className="text-[11px] font-medium text-muted-foreground">{tag.name}</p>
+                                                                    <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                                                                        <LucideTag className="h-3 w-3" />
+                                                                        {tag.name}
+                                                                    </p>
                                                                     <p className="text-[10px] font-bold text-muted-foreground/60">{tag.percentage.toFixed(0)}%</p>
                                                                 </div>
                                                                 <div className="h-1 w-full bg-muted/20 rounded-full overflow-hidden">

@@ -175,6 +175,30 @@ function AnalysisPageContent() {
 
     const handleTimeRangeChange = (value: string) => {
         setTimeRangePreset(value as TimeRangePreset);
+        setAiAnalysis(null);
+    };
+
+    const handleGenerateInsights = () => {
+        if (filteredExpenses.length === 0) return;
+
+        startAiTransition(async () => {
+            try {
+                const result = await analyzeExpenses({
+                    expenses: filteredExpenses.map(e => ({
+                        type: e.type,
+                        amount: e.amount,
+                        date: format(e.date, 'yyyy-MM-dd'),
+                        description: e.description,
+                        category: e.category?.name,
+                        account: e.account?.name,
+                        tags: e.tags.map(t => t.name)
+                    }))
+                });
+                setAiAnalysis(result);
+            } catch (error) {
+                console.error("AI Analysis failed:", error);
+            }
+        });
     };
 
     const timeRangeLabels: Record<TimeRangePreset, string> = {
@@ -399,9 +423,9 @@ function AnalysisPageContent() {
                         <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
                             <CardContent className="p-6">
                                 <AiInsights
-                                    onGenerate={()=>{}}
-                                    analysis={null}
-                                    isLoading={false}
+                                    onGenerate={handleGenerateInsights}
+                                    analysis={aiAnalysis}
+                                    isLoading={isAiLoading}
                                     hasData={filteredExpenses.length > 0}
                                 />
                             </CardContent>

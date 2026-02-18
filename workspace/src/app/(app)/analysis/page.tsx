@@ -270,7 +270,11 @@ function AnalysisPageContent() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
-                                {selectedAccounts.length === 0 ? "All Accounts" : `${selectedAccounts.length} Accts`}
+                                {selectedAccounts.length === 0 
+                                    ? "All Accounts" 
+                                    : selectedAccounts.length === 1 
+                                        ? "1 Account" 
+                                        : `${selectedAccounts.length} Accounts`}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -296,7 +300,11 @@ function AnalysisPageContent() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-card shadow-sm shrink-0">
-                                {selectedTags.length === 0 ? "All Tags" : `${selectedTags.length} Tags`}
+                                {selectedTags.length === 0 
+                                    ? "All Tags" 
+                                    : selectedTags.length === 1 
+                                        ? "1 Tag" 
+                                        : `${selectedTags.length} Tags`}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>

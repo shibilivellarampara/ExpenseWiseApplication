@@ -226,7 +226,8 @@ function AnalysisPageContent() {
         <div className="w-full space-y-6 pb-32">
             <Suspense fallback={null}>
                 <PageHeader
-                    title="Expense Analysis"
+                    title="Analysis"
+                    description="A detailed breakdown of your income and spending habits."
                 />
 
                 <AnalysisSummary 
@@ -339,6 +340,66 @@ function AnalysisPageContent() {
                                     <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
                                 </div>
                                 <SavingsTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {(analysisSettings?.showCategoryBarChart ?? true) && (
+                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <CardContent className="p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-lg">Top Spending Categories</h3>
+                                        <p className="text-xs text-muted-foreground">A bar chart showing your top spending categories.</p>
+                                    </div>
+                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
+                                </div>
+                                <CategoryBarChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {(analysisSettings?.showTagPieChart ?? true) && (
+                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <CardContent className="p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-lg">Spending by Tag</h3>
+                                        <p className="text-xs text-muted-foreground">A breakdown of your expenses by tags.</p>
+                                    </div>
+                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
+                                </div>
+                                <TagSpendingChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {(analysisSettings?.showIncomePieChart ?? true) && (
+                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <CardContent className="p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-lg">Income Sources</h3>
+                                        <p className="text-xs text-muted-foreground">A breakdown of your income by category.</p>
+                                    </div>
+                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
+                                </div>
+                                <IncomeBreakdownChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {(analysisSettings?.showTrendChart ?? true) && (
+                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <CardContent className="p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-lg">Cash Flow Trend</h3>
+                                        <p className="text-xs text-muted-foreground">Detailed monthly cash flow analysis.</p>
+                                    </div>
+                                    <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
+                                </div>
+                                <SpendingTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
                             </CardContent>
                         </Card>
                     )}

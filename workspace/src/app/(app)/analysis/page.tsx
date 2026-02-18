@@ -53,7 +53,6 @@ function AnalysisPageContent() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [includeHidden, setIncludeHidden] = useState(false);
     
-    // Load filters from localStorage
     useEffect(() => {
         if (user) {
             const storedFiltersRaw = localStorage.getItem(FILTERS_STORAGE_KEY);
@@ -80,7 +79,6 @@ function AnalysisPageContent() {
         }
     }, [user, searchParams, FILTERS_STORAGE_KEY]);
 
-    // Save filters to localStorage
     useEffect(() => {
         if (user && !isInitialLoad) {
             const filtersToStore: StoredFilters = {
@@ -228,7 +226,8 @@ function AnalysisPageContent() {
         <div className="w-full space-y-6 pb-32">
             <Suspense fallback={null}>
                 <PageHeader
-                    title="Expense Analysis"
+                    title="Analysis"
+                    description="A detailed breakdown of your income and spending habits."
                 />
 
                 <AnalysisSummary 
@@ -274,7 +273,7 @@ function AnalysisPageContent() {
                                 {selectedAccounts.length === 0 ? "All Accounts" : `${selectedAccounts.length} Accts`}
                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                             </Button>
-                        </PopoverTrigger>
+                        </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56" align="start">
                             <Command>
                                 <CommandInput placeholder="Search accounts..." />
@@ -322,7 +321,6 @@ function AnalysisPageContent() {
                 </div>
 
                 <div className="space-y-6">
-                    {/* Category Analysis - Expanding Table */}
                     {(analysisSettings?.showCategoryTable ?? true) && (
                         <CategoryAnalysisTable 
                             expenses={filteredExpenses} 
@@ -331,13 +329,12 @@ function AnalysisPageContent() {
                         />
                     )}
 
-                    {/* Monthly Savings Trend */}
                     {(analysisSettings?.showSavingsTrendChart ?? true) && (
                         <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
                             <CardContent className="p-6">
                                 <div className="mb-4 flex items-center justify-between">
                                     <div>
-                                        h3 className="font-bold text-lg">Monthly Savings Trend</h3>
+                                        <h3 className="font-bold text-lg">Monthly Savings Trend</h3>
                                         <p className="text-xs text-muted-foreground">Your net savings each month.</p>
                                     </div>
                                     <ChevronDown className="h-5 w-5 text-muted-foreground/50" />
@@ -347,7 +344,6 @@ function AnalysisPageContent() {
                         </Card>
                     )}
 
-                    {/* Top Spending Categories - Bar Chart */}
                     {(analysisSettings?.showCategoryBarChart ?? true) && (
                         <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
                             <CardContent className="p-6">
@@ -363,7 +359,6 @@ function AnalysisPageContent() {
                         </Card>
                     )}
 
-                    {/* Spending by Tag - Pie Chart */}
                     {(analysisSettings?.showTagPieChart ?? true) && (
                         <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
                             <CardContent className="p-6">
@@ -379,7 +374,6 @@ function AnalysisPageContent() {
                         </Card>
                     )}
 
-                    {/* Income Sources - Pie Chart */}
                     {(analysisSettings?.showIncomePieChart ?? true) && (
                         <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
                             <CardContent className="p-6">
@@ -395,20 +389,6 @@ function AnalysisPageContent() {
                         </Card>
                     )}
 
-                    {/* Spending Trends - Line Chart */}
-                    {(analysisSettings?.showTrendChart ?? true) && (
-                        <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
-                            <CardContent className="p-6">
-                                <div className="mb-4">
-                                    <h3 className="font-bold text-lg">Cash Flow Trend</h3>
-                                    <p className="text-xs text-muted-foreground">Detailed monthly cash flow analysis.</p>
-                                </div>
-                                <SpendingTrendChart expenses={filteredExpenses} currency={userProfile?.defaultCurrency} timeRange={timeRangePreset} />
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* AI Insights Card */}
                     {(analysisSettings?.showAiInsights ?? true) && (
                         <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
                             <CardContent className="p-6">

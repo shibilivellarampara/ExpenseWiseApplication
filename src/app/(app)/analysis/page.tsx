@@ -308,6 +308,9 @@ function AnalysisPageContent() {
                                 <CommandInput placeholder="Search tags..." />
                                 <CommandList>
                                     <CommandGroup>
+                                        <CommandItem onSelect={() => setSelectedTags([])} className="flex justify-between">
+                                            All Tags <Check className={cn("h-4 w-4", selectedTags.length === 0 ? "opacity-100" : "opacity-0")} />
+                                        </CommandItem>
                                         {tags?.map(tag => (
                                             <CommandItem key={tag.id} onSelect={() => setSelectedTags(prev => prev.includes(tag.id) ? prev.filter(id => id !== tag.id) : [...prev, tag.id])} className="flex justify-between">
                                                 {tag.name} <Check className={cn("h-4 w-4", selectedTags.includes(tag.id) ? "opacity-100" : "opacity-0")} />

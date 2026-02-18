@@ -5,28 +5,25 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, commitBatchNonBlocking } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment, limit } from "firebase/firestore";
-import { Plus, Minus, Trash2 } from "lucide-react";
-import { useMemo, useState, useCallback, useEffect, Suspense } from "react";
-import { ExpensesFilters, Filters } from "@/components/expenses/ExpensesFilters";
+import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment }from "firebase/firestore";
+import { Plus, Minus, ArrowUp, ArrowDown, Trash2, X } from "lucide-react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
+import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useToast } from "@/hooks/use-toast";
-import { Pagination } from "@/components/ui/pagination";
 
-const PAGE_SIZE = 50;
-
-function ExpensesPageContent() {
+export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
     const isMobile = useMediaQuery("(max-width: 768px)");
     const [selectedExpenseIds, setSelectedExpenseIds] = useState<string[]>([]);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [displayLimit, setDisplayLimit] = useState(PAGE_SIZE);
 
     const searchParams = useSearchParams();
 
@@ -39,6 +36,7 @@ function ExpensesPageContent() {
         searchQuery: '',
     });
     
+    // Set initial filters from URL params
     useEffect(() => {
         const accountId = searchParams.get('accounts');
         const type = searchParams.get('type');
@@ -53,56 +51,44 @@ function ExpensesPageContent() {
     
     const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
 
-    const dateFrom = filters.dateRange.from?.getTime();
-    const dateTo = filters.dateRange.to?.getTime();
-
-    const listQuery = useMemoFirebase(() => {
+    const expensesQuery = useMemoFirebase(() => {
         if (!user) return null;
 
-        let q = query(
-            collection(firestore, `users/${user.uid}/expenses`), 
-            orderBy('date', 'desc'),
-            limit(displayLimit)
-        );
+        let q = query(collection(firestore, `users/${user.uid}/expenses`), orderBy('date', 'desc'));
         
-        if (dateFrom) {
-            q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(new Date(dateFrom)))));
+        if (filters.dateRange.from) {
+            q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(filters.dateRange.from))));
         }
-        if (dateTo) {
-            q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(new Date(dateTo)))));
+        if (filters.dateRange.to) {
+            q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(filters.dateRange.to))));
         }
         
         return q;
-    }, [user, firestore, dateFrom, dateTo, displayLimit]);
-
-    const summaryQuery = useMemoFirebase(() => {
-        if (!user) return null;
-
-        let q = query(collection(firestore, `users/${user.uid}/expenses`));
-        
-        if (dateFrom) {
-            q = query(q, where('date', '>=', Timestamp.fromDate(startOfDay(new Date(dateFrom)))));
-        }
-        if (dateTo) {
-            q = query(q, where('date', '<=', Timestamp.fromDate(endOfDay(new Date(dateTo)))));
-        }
-        
-        return q;
-    }, [user, firestore, dateFrom, dateTo]);
+    }, [user, firestore, filters.dateRange]);
     
+    // Queries for filter dropdowns
     const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [firestore, user]);
     const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [firestore, user]);
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
-    const { data: listExpenses, isLoading: listLoading, error: listError } = useCollection<Expense>(listQuery);
-    const { data: summaryExpenses, isLoading: summaryLoading } = useCollection<Expense>(summaryQuery);
-    const { data: categories } = useCollection<Category>(categoriesQuery);
-    const { data: accounts } = useCollection<Account>(accountsQuery);
-    const { data: tags } = useCollection<Tag>(tagsQuery);
+    const { data: allExpenses, isLoading: expensesLoading, error: expensesError, } = useCollection<Expense>(expensesQuery);
+    const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
+    const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
+    const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
-    const isLoading = listLoading || profileLoading;
+    const handleDataChange = useCallback(() => {
+        setSelectedExpenseIds([]);
+    }, []);
+
+    useEffect(() => {
+        if(expensesLoading) {
+            setSelectedExpenseIds([]);
+        }
+    }, [expensesLoading])
+
+    const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
 
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
@@ -115,10 +101,10 @@ function ExpensesPageContent() {
         return undefined;
     }, [filters.accounts, accounts]);
 
-    const enrichAndFilter = useCallback((data: Expense[] | null) => {
-        if (!data || !accounts) return [];
+    const filteredAndEnrichedExpenses = useMemo(() => {
+        if (!allExpenses || !accounts) return [];
 
-        return data
+        let clientFiltered = allExpenses
             .map(expense => ({
                 ...expense,
                 date: (expense.date as Timestamp).toDate(),
@@ -136,65 +122,83 @@ function ExpensesPageContent() {
                 }
                 return true;
             });
-    }, [filters, debouncedSearchQuery, accounts]);
-
-    const filteredSummaryExpenses = useMemo(() => {
-        const enriched = enrichAndFilter(summaryExpenses);
-        return enriched.map((expense): EnrichedExpense => ({
-            ...expense,
-            category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
-            account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
-            tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
-        }));
-    }, [summaryExpenses, enrichAndFilter, categoryMap, accountMap, tagMap]);
-
-    const filteredAndEnrichedListExpenses = useMemo(() => {
-        const enriched = enrichAndFilter(listExpenses);
+            
+        const getAmountChange = (tx: Expense, accType: Account['type']) => {
+            if (accType === 'credit_card') {
+               return tx.type === 'income' ? tx.amount : -tx.amount;
+            }
+            return tx.type === 'income' ? tx.amount : -tx.amount;
+        };
         
-        const transactionsByAccount = enriched.reduce((acc, tx) => {
+        const transactionsByAccount = clientFiltered.reduce((acc, tx) => {
             if (tx.accountId) {
-                if (!acc[tx.accountId]) acc[tx.accountId] = [];
+                if (!acc[tx.accountId]) {
+                    acc[tx.accountId] = [];
+                }
                 acc[tx.accountId].push(tx as (Expense & { date: Date}));
             }
             return acc;
         }, {} as Record<string, (Expense & {date: Date})[]>);
 
         let finalWithBalance: (Expense & {date: Date})[] = [];
+
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
             const account = accountMap.get(accountId);
+
             if (account) {
                 accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
+                
                 let startingBalance = 0;
+
                 accountTransactions.forEach(tx => {
-                    startingBalance += (tx.type === 'income' ? tx.amount : -tx.amount);
+                    const amountChange = getAmountChange(tx, account.type);
+                    startingBalance += amountChange;
                     tx.runningBalance = startingBalance;
                 });
+                
                 finalWithBalance.push(...accountTransactions);
             }
         }
         
-        return finalWithBalance.map((expense): EnrichedExpense => ({
+        let enriched = finalWithBalance.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
             account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
-        })).sort((a, b) => b.date.getTime() - a.date.getTime());
+        }));
 
-    }, [listExpenses, enrichAndFilter, accountMap, categoryMap, tagMap]);
+        return enriched.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    }, [allExpenses, filters, debouncedSearchQuery, categoryMap, accountMap, tagMap, accounts]);
     
     const handleFiltersChange = (newFilters: Filters) => {
         setFilters(newFilters);
-        setDisplayLimit(PAGE_SIZE); 
     };
 
     const handleBadgeClick = (type: 'category' | 'tag' | 'account', id: string) => {
-        setFilters(prev => ({
-            ...prev,
-            [type === 'category' ? 'categories' : type === 'tag' ? 'tags' : 'accounts']: [id],
-            searchQuery: '',
-        }));
-        setDisplayLimit(PAGE_SIZE);
+        if (type === 'category') {
+            setFilters(prev => ({
+                ...prev,
+                categories: [id],
+                tags: [],
+                accounts: [],
+            }));
+        } else if (type === 'tag') {
+            setFilters(prev => ({
+                ...prev,
+                tags: [id],
+                categories: [],
+                accounts: [],
+            }));
+        } else { // account
+             setFilters(prev => ({
+                ...prev,
+                accounts: [id],
+                categories: [],
+                tags: [],
+            }));
+        }
     };
     
     const handleDeleteSelected = async () => {
@@ -206,7 +210,7 @@ function ExpensesPageContent() {
             const accountBalanceUpdates = new Map<string, number>();
 
             selectedExpenseIds.forEach(id => {
-                const expense = filteredAndEnrichedListExpenses.find(e => e.id === id);
+                const expense = filteredAndEnrichedExpenses.find(e => e.id === id);
                 if (expense) {
                     const expenseRef = doc(firestore, `users/${user.uid}/expenses`, id);
                     batch.delete(expenseRef);
@@ -240,15 +244,12 @@ function ExpensesPageContent() {
         }
     };
 
-    const hasMore = (listExpenses?.length || 0) >= displayLimit;
-    const loadMore = () => setDisplayLimit(prev => prev + PAGE_SIZE);
-
     return (
         <div className="w-full space-y-4">
             <ExpensesSummary 
-                expenses={filteredSummaryExpenses}
+                expenses={filteredAndEnrichedExpenses}
                 currency={userProfile?.defaultCurrency} 
-                isLoading={summaryLoading || profileLoading}
+                isLoading={isLoading}
                 selectedAccount={selectedAccount} 
             />
 
@@ -261,10 +262,10 @@ function ExpensesPageContent() {
             />
             
             <ExpensesTable 
-                expenses={filteredAndEnrichedListExpenses} 
-                isLoading={listLoading && filteredAndEnrichedListExpenses.length === 0} 
-                onDataChange={() => setSelectedExpenseIds([])} 
-                error={listError ? 'Error loading transactions' : null}
+                expenses={filteredAndEnrichedExpenses} 
+                isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
+                onDataChange={handleDataChange} 
+                error={expensesError ? 'Error loading transactions' : null}
                 onBadgeClick={handleBadgeClick}
                 selectedIds={selectedExpenseIds}
                 onSelectionChange={setSelectedExpenseIds}
@@ -272,20 +273,14 @@ function ExpensesPageContent() {
                 onDeleteSelected={handleDeleteSelected}
             />
 
-            <Pagination 
-                onLoadMore={loadMore} 
-                isLoading={listLoading} 
-                hasMore={hasMore} 
-            />
-
              <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">
-                <AddExpenseDialog initialType="income" onSaveSuccess={() => setSelectedExpenseIds([])}>
+                <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
                         <Plus className="h-6 w-6" />
                         <span className="sr-only">Add Income</span>
                     </Button>
                 </AddExpenseDialog>
-                <AddExpenseDialog initialType="expense" onSaveSuccess={() => setSelectedExpenseIds([])}>
+                <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg">
                         <Minus className="h-6 w-6" />
                         <span className="sr-only">Add Expense</span>
@@ -293,13 +288,5 @@ function ExpensesPageContent() {
                 </AddExpenseDialog>
             </div>
         </div>
-    );
-}
-
-export default function ExpensesPage() {
-    return (
-        <Suspense fallback={null}>
-            <ExpensesPageContent />
-        </Suspense>
     );
 }

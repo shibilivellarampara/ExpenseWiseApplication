@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Account, EnrichedExpense } from "@/lib/types";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { cn, formatAmount } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Separator } from "../ui/separator";
 
 interface ExpensesSummaryProps {
@@ -74,7 +73,7 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
                 summary.netFlow >= 0 && "text-green-600",
                 summary.netFlow < 0 && "text-red-500"
             )}>
-                {currencySymbol}{formatAmount(summary.netFlow)}
+                {currencySymbol}{summary.netFlow.toFixed(2)}
             </p>
         </div>
     );
@@ -93,7 +92,7 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
                     "text-lg font-bold",
                     isPositive ? "text-red-500" : "text-green-600"
                 )}>
-                    {isNegative ? '-' : ''}{currencySymbol}{formatAmount(Math.abs(outstanding))}
+                    {isNegative ? '-' : ''}{currencySymbol}{Math.abs(outstanding).toFixed(2)}
                 </p>
             </div>
         )
@@ -107,14 +106,14 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
                    {creditCardSummary ? renderCreditCardSummary() : renderNormalSummary()}
                     <div className="text-right">
                         <p className="text-green-600">
-                           <span className="text-muted-foreground">IN:</span> {currencySymbol}{formatAmount(summary.totalIn)}
+                           <span className="text-muted-foreground">IN:</span> {currencySymbol}{summary.totalIn.toFixed(2)}
                         </p>
                          <p className="text-red-500">
-                           <span className="text-muted-foreground">OUT:</span> {currencySymbol}{formatAmount(summary.totalOut)}
+                           <span className="text-muted-foreground">OUT:</span> {currencySymbol}{summary.totalOut.toFixed(2)}
                         </p>
                          {creditCardSummary?.limit && (
                             <p className="text-muted-foreground text-xs mt-1">
-                                Limit: {currencySymbol}{formatAmount(creditCardSummary.limit)}
+                                Limit: {currencySymbol}{creditCardSummary.limit.toFixed(2)}
                             </p>
                          )}
                     </div>

@@ -5,20 +5,19 @@ import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, commitBatchNonBlocking } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment, limit } from "firebase/firestore";
+import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment }from "firebase/firestore";
 import { Plus, Minus, ArrowLeft } from "lucide-react";
-import { useMemo, useState, useCallback, useEffect } from "react";
-import { ExpensesFilters, Filters } from "@/components/expenses/ExpensesFilters";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
 import { endOfMonth, startOfMonth, parse, format } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
+import { useSearchParams } from 'next/navigation';
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useToast } from "@/hooks/use-toast";
-import { Pagination } from "@/components/ui/pagination";
-
-const PAGE_SIZE = 50;
 
 interface MonthlyExpensesClientProps {
     year: string;
@@ -32,7 +31,6 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
     const { toast } = useToast();
     const [selectedExpenseIds, setSelectedExpenseIds] = useState<string[]>([]);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [displayLimit, setDisplayLimit] = useState(PAGE_SIZE);
     
     const pageDate = useMemo(() => {
         if (typeof year === 'string' && typeof month === 'string') {
@@ -60,43 +58,36 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             collection(firestore, `users/${user.uid}/expenses`),
             where('date', '>=', Timestamp.fromDate(filters.dateRange.from)),
             where('date', '<=', Timestamp.fromDate(filters.dateRange.to)),
-            orderBy('date', 'desc'),
-            limit(displayLimit)
+            orderBy('date', 'desc')
         );
-    }, [user, firestore, filters.dateRange.from, filters.dateRange.to, displayLimit]);
-
-    // Summary query for the full month
-    const summaryQuery = useMemoFirebase(() => {
-        if (!user || !filters.dateRange.from || !filters.dateRange.to) return null;
-        return query(
-            collection(firestore, `users/${user.uid}/expenses`),
-            where('date', '>=', Timestamp.fromDate(filters.dateRange.from)),
-            where('date', '<=', Timestamp.fromDate(filters.dateRange.to))
-        );
-    }, [user, firestore, filters.dateRange.from, filters.dateRange.to]);
+    }, [user, firestore, filters.dateRange]);
     
+    // Queries for filter dropdowns
     const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [firestore, user]);
     const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [firestore, user]);
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
 
-    const { data: listExpenses, isLoading: listLoading, error: expensesError } = useCollection<Expense>(expensesQuery);
-    const { data: summaryExpenses, isLoading: summaryLoading } = useCollection<Expense>(summaryQuery);
-    const { data: categories } = useCollection<Category>(categoriesQuery);
-    const { data: accounts } = useCollection<Account>(accountsQuery);
-    const { data: tags } = useCollection<Tag>(tagsQuery);
+    const { data: allExpenses, isLoading: expensesLoading, error: expensesError, } = useCollection<Expense>(expensesQuery);
+    const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
+    const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
+    const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
-    const isLoading = listLoading || profileLoading;
+    const handleDataChange = useCallback(() => {
+        setSelectedExpenseIds([]);
+    }, []);
+
+    const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
 
     const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
-    const enrichAndFilter = useCallback((data: Expense[] | null) => {
-        if (!data || !accounts) return [];
+    const filteredAndEnrichedExpenses = useMemo(() => {
+        if (!allExpenses || !accounts) return [];
 
-        return data
+        let clientFiltered = allExpenses
             .map(expense => ({
                 ...expense,
                 date: (expense.date as Timestamp).toDate(),
@@ -114,22 +105,15 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                 }
                 return true;
             });
-    }, [filters, debouncedSearchQuery, accounts]);
-
-    const filteredSummaryExpenses = useMemo(() => {
-        const enriched = enrichAndFilter(summaryExpenses);
-        return enriched.map((expense): EnrichedExpense => ({
-            ...expense,
-            category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
-            account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
-            tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
-        }));
-    }, [summaryExpenses, enrichAndFilter, categoryMap, accountMap, tagMap]);
-
-    const filteredAndEnrichedListExpenses = useMemo(() => {
-        const enriched = enrichAndFilter(listExpenses);
+            
+        const getAmountChange = (tx: Expense, accType: Account['type']) => {
+            if (accType === 'credit_card') {
+               return tx.type === 'income' ? tx.amount : -tx.amount;
+            }
+            return tx.type === 'income' ? tx.amount : -tx.amount;
+        };
         
-        const transactionsByAccount = enriched.reduce((acc, tx) => {
+        const transactionsByAccount = clientFiltered.reduce((acc, tx) => {
             if(tx.accountId) {
               if (!acc[tx.accountId]) { acc[tx.accountId] = []; }
               acc[tx.accountId].push(tx as (Expense & { date: Date}));
@@ -138,41 +122,62 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
         }, {} as Record<string, (Expense & {date: Date})[]>);
 
         let finalWithBalance: (Expense & {date: Date})[] = [];
+
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
             const account = accountMap.get(accountId);
+
             if (account) {
                 accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
                 let startingBalance = 0;
                 accountTransactions.forEach(tx => {
-                    startingBalance += (tx.type === 'income' ? tx.amount : -tx.amount);
+                    const amountChange = getAmountChange(tx, account.type);
+                    startingBalance += amountChange;
                     tx.runningBalance = startingBalance;
                 });
                 finalWithBalance.push(...accountTransactions);
             }
         }
         
-        return finalWithBalance.map((expense): EnrichedExpense => ({
+        let enriched = finalWithBalance.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
             account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
-        })).sort((a, b) => b.date.getTime() - a.date.getTime());
+        }));
 
-    }, [listExpenses, enrichAndFilter, categoryMap, accountMap, tagMap]);
+        return enriched.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    }, [allExpenses, filters, debouncedSearchQuery, categoryMap, accountMap, tagMap, accounts]);
     
     const handleFiltersChange = (newFilters: Filters) => {
+        // Keep date range fixed to the month
         setFilters({ ...newFilters, dateRange: filters.dateRange });
-        setDisplayLimit(PAGE_SIZE);
     };
 
      const handleBadgeClick = (type: 'category' | 'tag' | 'account', id: string) => {
-        setFilters(prev => ({
-            ...prev,
-            [type === 'category' ? 'categories' : type === 'tag' ? 'tags' : 'accounts']: [id],
-            searchQuery: '',
-        }));
-        setDisplayLimit(PAGE_SIZE);
+        if (type === 'category') {
+            setFilters(prev => ({
+                ...prev,
+                categories: [id],
+                tags: [],
+                accounts: [],
+            }));
+        } else if (type === 'tag'){
+            setFilters(prev => ({
+                ...prev,
+                tags: [id],
+                categories: [],
+                accounts: [],
+            }));
+        } else { // account
+             setFilters(prev => ({
+                ...prev,
+                accounts: [id],
+                categories: [],
+                tags: [],
+            }));
+        }
     };
     
     const handleDeleteSelected = async () => {
@@ -184,7 +189,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             const accountBalanceUpdates = new Map<string, number>();
 
             selectedExpenseIds.forEach(id => {
-                const expense = filteredAndEnrichedListExpenses.find(e => e.id === id);
+                const expense = filteredAndEnrichedExpenses.find(e => e.id === id);
                 if (expense && expense.account) {
                     const expenseRef = doc(firestore, `users/${user.uid}/expenses`, id);
                     batch.delete(expenseRef);
@@ -216,11 +221,8 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
         }
     };
 
-    const hasMore = (listExpenses?.length || 0) >= displayLimit;
-    const loadMore = () => setDisplayLimit(prev => prev + PAGE_SIZE);
-
     return (
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-4 pb-24">
              <PageHeader title={pageTitle} description={`A summary of your transactions for ${pageTitle}.`}>
                 <Button variant="outline" asChild>
                     <Link href="/transactions">
@@ -228,26 +230,12 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                         Back to Months
                     </Link>
                 </Button>
-                 <div className="flex items-center gap-2">
-                    <AddExpenseDialog initialType="income" onSaveSuccess={() => setSelectedExpenseIds([])}>
-                        <Button size="sm">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Cash In
-                        </Button>
-                    </AddExpenseDialog>
-                    <AddExpenseDialog initialType="expense" onSaveSuccess={() => setSelectedExpenseIds([])}>
-                        <Button size="sm" variant="destructive">
-                             <Minus className="mr-2 h-4 w-4" />
-                            Cash Out
-                        </Button>
-                    </AddExpenseDialog>
-                </div>
             </PageHeader>
             <div className="space-y-4 sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm pt-4">
                  <ExpensesSummary 
-                    expenses={filteredSummaryExpenses}
+                    expenses={filteredAndEnrichedExpenses}
                     currency={userProfile?.defaultCurrency} 
-                    isLoading={summaryLoading || profileLoading} 
+                    isLoading={isLoading} 
                 />
                 <ExpensesFilters 
                     filters={filters}
@@ -260,21 +248,15 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             </div>
             
             <ExpensesTable 
-                expenses={filteredAndEnrichedListExpenses} 
-                isLoading={listLoading && filteredAndEnrichedListExpenses.length === 0} 
-                onDataChange={() => setSelectedExpenseIds([])} 
+                expenses={filteredAndEnrichedExpenses} 
+                isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
+                onDataChange={handleDataChange} 
                 error={expensesError ? 'Error loading transactions' : null}
                 onBadgeClick={handleBadgeClick}
                 selectedIds={selectedExpenseIds}
                 onSelectionChange={setSelectedExpenseIds}
                 isDeleting={isDeleting}
                 onDeleteSelected={handleDeleteSelected}
-            />
-
-            <Pagination 
-                onLoadMore={loadMore} 
-                isLoading={listLoading} 
-                hasMore={hasMore} 
             />
         </div>
     );

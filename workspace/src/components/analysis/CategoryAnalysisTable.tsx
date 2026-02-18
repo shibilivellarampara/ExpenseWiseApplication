@@ -123,7 +123,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                     </div>
 
                     {!isExpanded ? (
-                        <div className="px-6 pb-6 flex items-center gap-8 pt-4 animate-in fade-in duration-300">
+                        <div className="px-6 pb-6 flex items-center gap-4 sm:gap-8 pt-4 animate-in fade-in duration-300">
                             <div className="h-32 w-32 shrink-0">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
@@ -143,16 +143,16 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                             </div>
                             <div className="flex-grow min-w-0 space-y-3">
                                 {top3.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between items-start">
-                                        <div className="flex items-center gap-2">
+                                    <div key={idx} className="flex justify-between items-start gap-2">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
                                             <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }} />
-                                            <span className="text-xs font-medium truncate max-w-[100px]">{item.name}</span>
+                                            <span className="text-xs font-medium truncate">{item.name}</span>
                                             {excludedCategoryIds.includes(item.id) && (
-                                                <Badge variant="outline" className="h-3.5 text-[8px] font-bold text-muted-foreground/60 border-muted-foreground/20 px-1">Hidden</Badge>
+                                                <Badge variant="outline" className="h-3.5 text-[8px] font-bold text-muted-foreground/60 border-muted-foreground/20 px-1 shrink-0">Hidden</Badge>
                                             )}
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-xs font-medium">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
+                                        <div className="text-right shrink-0">
+                                            <p className="text-xs font-medium whitespace-nowrap">{currencySymbol}{formatAmount(Math.abs(item.amount))}</p>
                                             <p className="text-[10px] text-muted-foreground">{item.percentage.toFixed(1)}%</p>
                                         </div>
                                     </div>

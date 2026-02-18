@@ -105,24 +105,22 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
         <>
             <Card ref={cardRef} className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden scroll-mt-20">
                 <CardContent className="p-0">
-                    <div className="flex items-center justify-between p-6 pb-2">
-                        <div>
+                    <div className="flex items-center justify-between p-6 pb-2 gap-4">
+                        <div className="flex-1 min-w-0">
                             <h3 
-                                className="font-bold text-lg cursor-pointer hover:text-primary transition-colors inline-flex items-center gap-2 group"
+                                className="font-bold text-lg cursor-pointer hover:text-primary transition-colors truncate"
                                 onClick={handleToggleExpand}
                             >
                                 {isExpanded ? 'All Categories' : 'Top Categories'}
                             </h3>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full shrink-0">
-                                <TabsList className="bg-transparent h-9 p-0">
-                                    <TabsTrigger value="expense" className="rounded-full text-[11px] h-8 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Expenses</TabsTrigger>
-                                    <TabsTrigger value="income" className="rounded-full text-[11px] h-8 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Income</TabsTrigger>
-                                    <TabsTrigger value="net" className="rounded-full text-[11px] h-8 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Net</TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                        </div>
+                        <Tabs value={view} onValueChange={(v) => setView(v as any)} className="bg-muted/50 p-1 rounded-full shrink-0">
+                            <TabsList className="bg-transparent h-9 p-0">
+                                <TabsTrigger value="expense" className="rounded-full text-[11px] h-8 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Expenses</TabsTrigger>
+                                <TabsTrigger value="income" className="rounded-full text-[11px] h-8 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Income</TabsTrigger>
+                                <TabsTrigger value="net" className="rounded-full text-[11px] h-8 px-3 data-[state=active]:bg-card data-[state=active]:shadow-sm">Net</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
                     </div>
 
                     {!isExpanded ? (
@@ -188,7 +186,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                                 onClick={() => setSelectedCategory(item)}
                                                 className="flex items-start gap-3 cursor-pointer group"
                                             >
-                                                {/* Color Indicator sitting outside the vertical data stack */}
+                                                {/* Color Indicator */}
                                                 <div className="h-2 w-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: color }} />
                                                 
                                                 <div className="flex-grow min-w-0 space-y-1.5">
@@ -226,25 +224,14 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
                                             {isTagsOpen && (
                                                 <div className="pl-5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                                                     {item.tags.map((tag, tIdx) => (
-                                                        <div key={tIdx} className="flex items-start gap-3 py-1 border-l-2 border-muted pl-3">
-                                                            <div className="flex-grow min-w-0 space-y-1.5">
-                                                                <div className="flex justify-between items-center">
-                                                                    <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
-                                                                        <LucideTag className="h-3 w-3" />
-                                                                        {tag.name}
-                                                                    </p>
-                                                                    <p className="text-[11px] font-medium text-muted-foreground/80">{currencySymbol}{formatAmount(Math.abs(tag.amount))}</p>
-                                                                </div>
-                                                                {view !== 'net' && (
-                                                                    <div className="text-[10px] font-medium text-muted-foreground/60">
-                                                                        {tag.percentage.toFixed(0)}%
-                                                                    </div>
-                                                                )}
-                                                                <div className="h-1 w-full bg-muted/20 rounded-full overflow-hidden">
-                                                                    <div className="h-full bg-muted-foreground/20" style={{ width: `${tag.percentage}%` }} />
-                                                                </div>
+                                                        <div key={tIdx} className="flex items-center justify-between py-1.5 border-l-2 border-muted pl-3">
+                                                            <div className="flex items-center gap-1.5 min-w-0 pr-4">
+                                                                <LucideTag className="h-3 w-3 text-muted-foreground/40 shrink-0" />
+                                                                <span className="text-[11px] font-medium text-muted-foreground truncate">{tag.name}</span>
                                                             </div>
-                                                            <div className="w-8 shrink-0" />
+                                                            <div className="text-right shrink-0">
+                                                                <p className="text-[11px] font-medium text-muted-foreground/80">{currencySymbol}{formatAmount(Math.abs(tag.amount))}</p>
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>

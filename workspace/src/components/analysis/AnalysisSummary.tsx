@@ -46,7 +46,7 @@ export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, 
             <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-6">
                     <div className="space-y-1">
-                        <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Analysis Summary</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Analysis Summary</p>
                         <p className={cn(
                             "text-2xl font-bold tracking-tight",
                             stats.netFlow >= 0 ? "text-green-600" : "text-destructive"

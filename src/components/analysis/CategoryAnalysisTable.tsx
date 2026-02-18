@@ -105,7 +105,7 @@ export function CategoryAnalysisTable({ expenses, currency, excludedCategoryIds 
         <>
             <Card ref={cardRef} className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden scroll-mt-20">
                 <CardContent className="p-0">
-                    <div className="flex items-center justify-between gap-4 p-6 pb-2">
+                    <div className="flex items-center justify-between p-6 pb-2 gap-4">
                         <div className="flex-1 min-w-0">
                             <h3 
                                 className="font-bold text-lg cursor-pointer hover:text-primary transition-colors truncate"

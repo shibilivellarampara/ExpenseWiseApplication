@@ -102,7 +102,7 @@ export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, 
                                 </ScrollArea>
                                 <div className="pt-3 border-t border-muted/50">
                                     <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 leading-relaxed">
-                                        {includeHidden ? "Currently including hidden categories." : "Hidden categories are currently excluded."}
+                                        {includeHidden ? "Currently including hidden categories in calculations." : "Hidden categories are currently excluded from calculations."}
                                     </p>
                                 </div>
                             </div>

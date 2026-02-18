@@ -48,7 +48,7 @@ export function AnalysisSummary({ isLoading, currency, expenses, includeHidden, 
                     <div className="space-y-1">
                         <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Analysis Summary</p>
                         <p className={cn(
-                            "text-2xl sm:text-4xl font-bold tracking-tight",
+                            "text-2xl font-bold tracking-tight",
                             stats.netFlow >= 0 ? "text-green-600" : "text-destructive"
                         )}>
                             {currencySymbol}{formatAmount(stats.netFlow)}

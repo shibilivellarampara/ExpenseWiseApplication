@@ -1,4 +1,3 @@
-
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -169,3 +168,19 @@ export type EnrichedAsset = Omit<Asset, 'startDate' | 'lastUpdated'> & {
     startDate?: Date;
     lastUpdated: Date;
 };
+
+export interface TagStat {
+    name: string;
+    amount: number;
+    percentage: number;
+}
+
+export interface CategoryStat {
+    id: string;
+    name: string;
+    icon?: string;
+    amount: number;
+    count: number;
+    percentage: number;
+    tags: TagStat[];
+}

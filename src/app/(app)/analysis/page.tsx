@@ -239,6 +239,7 @@ function AnalysisPageContent() {
                                     <CommandItem onSelect={() => handleTimeRangeChange('3-months')}>Last 3 Months</CommandItem>
                                     <CommandItem onSelect={() => handleTimeRangeChange('6-months')}>Last 6 Months</CommandItem>
                                     <CommandItem onSelect={() => handleTimeRangeChange('year')}>This Year</CommandItem>
+                                    <CommandItem onSelect={() => handleTimeRangeChange('last-year')}>Last Year</CommandItem>
                                     <CommandItem onSelect={() => handleTimeRangeChange('all')}>All Time</CommandItem>
                                 </CommandGroup>
                             </CommandList>

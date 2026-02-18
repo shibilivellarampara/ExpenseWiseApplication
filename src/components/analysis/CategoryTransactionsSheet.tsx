@@ -7,7 +7,7 @@ import {
     DialogTitle, 
     DialogDescription 
 } from "@/components/ui/dialog";
-import { EnrichedExpense } from "@/lib/types";
+import { EnrichedExpense, CategoryStat } from "@/lib/types";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { cn, formatAmount, generateColorStyle } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { renderIcon } from "@/lib/render-icon";
 
 interface CategoryTransactionsSheetProps {
-    category: { id: string; name: string; amount: number } | null;
+    category: CategoryStat | null;
     expenses: EnrichedExpense[];
     currency?: string;
     view?: 'expense' | 'income' | 'net';
@@ -30,6 +30,13 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
         .filter(e => (e.category?.id || 'other') === category?.id)
         .filter(e => view === 'net' ? true : e.type === view)
         .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    // Helper to determine amount color in header
+    const getAmountColor = () => {
+        if (view === 'expense') return 'text-destructive';
+        if (view === 'income') return 'text-green-600';
+        return (category?.amount || 0) >= 0 ? 'text-green-600' : 'text-destructive';
+    };
 
     return (
         <Dialog open={!!category} onOpenChange={(open) => !open && onClose()}>
@@ -45,7 +52,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                         <div className="text-right shrink-0">
                             <p className={cn(
                                 "text-xl font-bold",
-                                (category?.amount || 0) >= 0 ? "text-green-600" : "text-destructive"
+                                getAmountColor()
                             )}>
                                 {currencySymbol}{formatAmount(Math.abs(category?.amount || 0))}
                             </p>
@@ -99,7 +106,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                         ))}
                         {categoryExpenses.length === 0 && (
                             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
-                                <renderIcon iconName="SearchX" className="h-12 w-12 mb-2" />
+                                {renderIcon("SearchX", "h-12 w-12 mb-2")}
                                 <p className="text-sm font-medium">No transactions found for this period.</p>
                             </div>
                         )}

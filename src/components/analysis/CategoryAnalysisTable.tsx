@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState, useRef, useEffect } from "react";
-import { EnrichedExpense, Tag, Category } from "@/lib/types";
+import { useMemo, useState, useRef } from "react";
+import { EnrichedExpense, TagStat, CategoryStat } from "@/lib/types";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { cn, formatAmount } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,22 +14,6 @@ import { CategoryTransactionsSheet } from "./CategoryTransactionsSheet";
 interface CategoryAnalysisTableProps {
     expenses: EnrichedExpense[];
     currency?: string;
-}
-
-interface TagStat {
-    name: string;
-    amount: number;
-    percentage: number;
-}
-
-interface CategoryStat {
-    id: string;
-    name: string;
-    icon?: string;
-    amount: number;
-    count: number;
-    percentage: number;
-    tags: TagStat[];
 }
 
 export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTableProps) {
@@ -105,8 +89,10 @@ export function CategoryAnalysisTable({ expenses, currency }: CategoryAnalysisTa
         if (isExpanded) {
             setIsExpanded(false);
             if (cardRef.current) {
-                const topOffset = cardRef.current.getBoundingClientRect().top + window.pageYOffset - 80;
-                window.scrollTo({ top: topOffset, behavior: 'smooth' });
+                const yOffset = -80; 
+                const element = cardRef.current;
+                const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+                window.scrollTo({ top: y, behavior: 'smooth' });
             }
         } else {
             setIsExpanded(true);

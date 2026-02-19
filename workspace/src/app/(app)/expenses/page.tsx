@@ -219,7 +219,7 @@ export default function ExpensesPage() {
                         const amountChange = expense.type === 'income' ? -expense.amount : expense.amount;
                         accountBalanceUpdates.set(
                             expense.account.id,
-                            (accountBalanceUpdates.get(expense.account.id) || 0) + change
+                            (accountBalanceUpdates.get(expense.account.id) || 0) + amountChange
                         );
                     }
                 }

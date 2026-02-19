@@ -48,28 +48,19 @@ import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '@/components/DateTimePicker';
 
+// Fixed dynamic schema creation to avoid Zod type mismatch errors
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
-  let schema = z.object({
+  const shape = {
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
-    categoryId: z.string().optional(),
-    description: z.string().optional(),
-    tagIds: z.array(z.string()).optional(),
-  });
+    categoryId: settings?.isCategoryRequired ? z.string().min(1, 'Category is required.') : z.string().optional(),
+    description: settings?.isDescriptionRequired ? z.string().min(1, 'Description is required.') : z.string().optional(),
+    tagIds: settings?.isTagRequired ? z.array(z.string()).min(1, 'At least one tag is required.') : z.array(z.string()).optional(),
+  };
 
-  if (settings?.isDescriptionRequired) {
-    schema = schema.extend({ description: z.string().min(1, 'Description is required.').optional() });
-  }
-  if (settings?.isTagRequired) {
-      schema = schema.extend({ tagIds: z.array(z.string()).min(1, 'At least one tag is required.').optional() });
-  }
-  if (settings?.isCategoryRequired) {
-      schema = schema.extend({ categoryId: z.string().min(1, 'Category is required.').optional() });
-  }
-
-  return schema;
+  return z.object(shape);
 };
 
 interface QuickAddItemDialogProps {

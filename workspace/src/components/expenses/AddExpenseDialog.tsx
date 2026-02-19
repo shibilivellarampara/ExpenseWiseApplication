@@ -25,7 +25,7 @@ import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, PlusCircle, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -48,28 +48,19 @@ import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '@/components/DateTimePicker';
 
+// Fixed dynamic schema creation to avoid Zod type mismatch errors
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
-  let schema = z.object({
+  const shape = {
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
-    categoryId: z.string().optional(),
-    description: z.string().optional(),
-    tagIds: z.array(z.string()).optional(),
-  });
+    categoryId: settings?.isCategoryRequired ? z.string().min(1, 'Category is required.') : z.string().optional(),
+    description: settings?.isDescriptionRequired ? z.string().min(1, 'Description is required.') : z.string().optional(),
+    tagIds: settings?.isTagRequired ? z.array(z.string()).min(1, 'At least one tag is required.') : z.array(z.string()).optional(),
+  };
 
-  if (settings?.isDescriptionRequired) {
-    schema = schema.extend({ description: z.string().min(1, 'Description is required.').optional() });
-  }
-  if (settings?.isTagRequired) {
-      schema = schema.extend({ tagIds: z.array(z.string()).min(1, 'At least one tag is required.').optional() });
-  }
-  if (settings?.isCategoryRequired) {
-      schema = schema.extend({ categoryId: z.string().min(1, 'Category is required.').optional() });
-  }
-
-  return schema;
+  return z.object(shape);
 };
 
 interface QuickAddItemDialogProps {
@@ -685,7 +676,7 @@ export function AddExpenseDialog({
                                         Delete
                                     </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent>
+                                <AlertDialogContent className="rounded-[24px]">
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
@@ -718,7 +709,7 @@ export function AddExpenseDialog({
                                 variant="outline" 
                                 className="w-full px-1 text-[14px] border-primary text-primary hover:bg-primary/5 hover:text-primary"
                             >
-                                {loadingState === 'saveAndNew' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save & New'}
+                                {loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}
                             </Button>
                             <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-[14px] px-1">
                                 {loadingState === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save'}

@@ -1,1 +1,1 @@
-// This file is now redundant as its logic has been moved into AddExpenseDialog.tsx for consolidation.
+// Logic moved to AddExpenseDialog.tsx

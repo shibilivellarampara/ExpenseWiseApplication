@@ -35,9 +35,7 @@ export default function AccountsPage() {
 
     return (
         <div className="w-full space-y-6 pb-32">
-            <div className="space-y-1">
-                <h1 className="text-3xl font-bold font-headline text-foreground">Accounts</h1>
-            </div>
+            <PageHeader title="Accounts" />
 
             <AccountsSummary 
                 accounts={accounts || []} 
@@ -45,14 +43,14 @@ export default function AccountsPage() {
                 currency={userProfile?.defaultCurrency}
             />
 
-            <div className="flex items-center gap-3">
-                <div className="relative flex-1">
+            <div className="flex items-center gap-3 bg-muted/20 -mx-4 px-4 py-3 mb-2 overflow-x-auto no-scrollbar">
+                <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search accounts..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 h-12 bg-card border-none shadow-sm rounded-2xl"
+                        className="pl-9 h-10 bg-card border-none shadow-sm rounded-full"
                     />
                     {searchQuery && (
                         <Button 
@@ -66,8 +64,8 @@ export default function AccountsPage() {
                     )}
                 </div>
                 <AddAccountSheet>
-                     <Button className="h-12 px-6 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-2xl shadow-none gap-2 shrink-0">
-                        <PlusCircle className="h-5 w-5" />
+                     <Button variant="outline" size="sm" className="h-10 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-transparent shadow-none shrink-0 hover:bg-card gap-2">
+                        <PlusCircle className="h-4 w-4" />
                         <span className="hidden sm:inline">Add Account</span>
                         <span className="sm:hidden">Add</span>
                     </Button>

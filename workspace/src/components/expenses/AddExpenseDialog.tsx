@@ -38,17 +38,15 @@ import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/type
 import * as LucideIcons from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { cn, generateColorStyle, formatAmount } from '@/lib/utils';
 import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
 import { availableIcons } from '@/lib/defaults';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandPrimitive } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
-import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '@/components/DateTimePicker';
 
-// Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
   const shape: any = {
     type: z.enum(['expense', 'income']).default('expense'),
@@ -63,7 +61,6 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
   return z.object(shape);
 };
 
-// Component for quick adding of Categories or Tags
 interface QuickAddItemDialogProps {
     type: 'Category' | 'Tag';
     onSave: (name: string, icon: string) => Promise<string | undefined>;
@@ -80,9 +77,7 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
 
     const handleOpen = (newOpen: boolean) => {
         setOpen(newOpen);
-        if (onOpenChange) {
-            onOpenChange(newOpen);
-        }
+        if (onOpenChange) onOpenChange(newOpen);
     }
 
     const renderIcon = (iconName: string) => {
@@ -227,9 +222,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                     }
                 }
             }
-            if (e.key === "Escape") {
-                input.blur();
-            }
+            if (e.key === "Escape") input.blur();
         }
     };
     
@@ -242,7 +235,6 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
         const IconComponent = (LucideIcons as any)[iconName];
         return IconComponent ? <IconComponent className={cn("h-4 w-4", className)} /> : <Pilcrow className={cn("h-4 w-4", className)} />;
     };
-
 
     return (
         <Command onKeyDown={handleKeyDown} className={cn('overflow-visible bg-transparent', isSuggesting && 'animate-pulse border-primary/50')}>
@@ -285,31 +277,16 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                     tags.length > 10 ? 'grid grid-cols-2 gap-1' : 'flex flex-col gap-1'
                                 )}>
                                     <QuickAddItemDialog type="Tag" onSave={onQuickAdd} onOpenChange={setOpen}>
-                                        <CommandItem
-                                            onSelect={() => {
-                                                inputRef.current?.blur();
-                                            }}
-                                            className="flex items-center gap-2 text-primary cursor-pointer w-full"
-                                        >
-                                            <PlusCircle className="h-4 w-4" />
-                                            Create new tag
+                                        <CommandItem onSelect={() => inputRef.current?.blur()} className="flex items-center gap-2 text-primary cursor-pointer w-full">
+                                            <PlusCircle className="h-4 w-4" /> Create new tag
                                         </CommandItem>
                                     </QuickAddItemDialog>
                                     {filteredTags.map(tag => (
                                         <CommandItem
                                             key={tag.id}
-                                            onMouseDown={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                            }}
-                                            onSelect={() => {
-                                                setInputValue("")
-                                                field.onChange([...selectedTagIds, tag.id])
-                                            }}
-                                            className={cn(
-                                                "flex items-center justify-between cursor-pointer rounded-md border px-2 py-1",
-                                                selectedTagIds.has(tag.id) && "bg-muted"
-                                            )}
+                                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                            onSelect={() => { setInputValue(""); field.onChange([...selectedTagIds, tag.id]) }}
+                                            className={cn("flex items-center justify-between cursor-pointer rounded-md border px-2 py-1", selectedTagIds.has(tag.id) && "bg-muted")}
                                         >
                                             <div className="flex items-center gap-2 truncate">
                                                 {renderIcon(tag.icon)}
@@ -318,19 +295,6 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                             <Check className={cn("h-4 w-4", selectedTagIds.has(tag.id) ? "opacity-100" : "opacity-0")} />
                                         </CommandItem>
                                     ))}
-                                    {filteredTags.length === 0 && inputValue.length > 0 && (
-                                         <QuickAddItemDialog type="Tag" onSave={onQuickAdd} onOpenChange={setOpen}>
-                                            <CommandItem
-                                                onSelect={() => {
-                                                    inputRef.current?.blur();
-                                                }}
-                                                className="flex items-center gap-2 text-primary cursor-pointer w-full"
-                                            >
-                                                <PlusCircle className="h-4 w-4" />
-                                                Create new tag "{inputValue}"
-                                            </CommandItem>
-                                        </QuickAddItemDialog>
-                                    )}
                                 </CommandGroup>
                             </ScrollArea>
                         </CommandList>
@@ -341,22 +305,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     );
 };
 
-
-function ExpenseForm({
-  form,
-  onSubmit,
-  id,
-  accounts,
-  categories,
-  tags,
-}: {
-  form: UseFormReturn<any>;
-  onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>;
-  id: string;
-  accounts: Account[];
-  categories: Category[];
-  tags: Tag[];
-}) {
+function ExpenseForm({ form, onSubmit, id, accounts, categories, tags }: { form: UseFormReturn<any>; onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>; id: string; accounts: Account[]; categories: Category[]; tags: Tag[]; }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -387,12 +336,9 @@ function ExpenseForm({
         return IconComponent ? <IconComponent className={cn("mr-2 h-4 w-4", className)} /> : <Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
     };
 
-
     useEffect(() => {
         const hasInput = debouncedDescription || debouncedCategoryId || (debouncedTagIds && debouncedTagIds.length > 0);
-        if (!hasInput || !isAiSuggestionEnabled || !userProfile?.dashboardSettings?.isAiSuggestionEnabled || activeCategories.length === 0 || activeAccounts.length === 0) {
-            return;
-        }
+        if (!hasInput || !isAiSuggestionEnabled || activeCategories.length === 0 || activeAccounts.length === 0) return;
 
         startSuggestionTransition(async () => {
             try {
@@ -421,39 +367,8 @@ function ExpenseForm({
                 console.error("AI suggestion failed:", error);
             }
         });
+    }, [debouncedDescription, debouncedCategoryId, debouncedTagIds, form, activeCategories, activeTags, activeAccounts, isAiSuggestionEnabled]);
 
-    }, [debouncedDescription, debouncedCategoryId, debouncedTagIds, form, activeCategories, activeTags, activeAccounts, isAiSuggestionEnabled, userProfile, toast]);
-
-
-    const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string): Promise<string | undefined> => {
-        if (!user || !firestore) return;
-        const collectionName = type === 'Category' ? 'categories' : 'tags';
-        
-        let basePath = `users/${user.uid}`;
-        
-        const ref = collection(firestore, `${basePath}/${collectionName}`);
-        try {
-            const newDocRef = doc(ref);
-            const docId = newDocRef.id;
-            const data = { id: docId, name, icon, userId: user.uid, status: 'active' };
-            
-            await setDocumentNonBlocking(newDocRef, data);
-            
-            toast({ title: `${type} Added`, description: `"${name}" has been created.` });
-
-            if (type === 'Category') {
-                form.setValue('categoryId', docId, { shouldValidate: true });
-            } else {
-                const currentTagIds = form.getValues('tagIds') || [];
-                form.setValue('tagIds', [...currentTagIds, docId], { shouldValidate: true });
-            }
-            return docId;
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: `Error Adding ${type}`, description: "There was an unexpected error. Please try again." });
-            return undefined;
-        }
-    };
-    
     const isDescriptionRequired = userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false;
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
     const isCategoryRequired = userProfile?.expenseFieldSettings?.isCategoryRequired ?? true;
@@ -461,260 +376,120 @@ function ExpenseForm({
     const fieldOrder = userProfile?.transactionFieldOrder || ['description', 'accountId', 'categoryId', 'tagIds'];
     let visibleFields = userProfile?.expenseFieldSettings?.visibleFields || ['description', 'accountId', 'categoryId', 'tagIds'];
 
+    const handleQuickAdd = async (type: 'Category' | 'Tag', name: string, icon: string): Promise<string | undefined> => {
+        if (!user || !firestore) return;
+        const ref = collection(firestore, `users/${user.uid}/${type === 'Category' ? 'categories' : 'tags'}`);
+        try {
+            const newDocRef = doc(ref);
+            const docId = newDocRef.id;
+            await setDocumentNonBlocking(newDocRef, { id: docId, name, icon, userId: user.uid, status: 'active' });
+            toast({ title: `${type} Added` });
+            if (type === 'Category') form.setValue('categoryId', docId, { shouldValidate: true });
+            else {
+                const currentTagIds = form.getValues('tagIds') || [];
+                form.setValue('tagIds', [...currentTagIds, docId], { shouldValidate: true });
+            }
+            return docId;
+        } catch (error) {
+            toast({ variant: 'destructive', title: `Error Adding ${type}` });
+            return undefined;
+        }
+    };
+
     const formFields: Record<string, React.ReactNode> = {
         description: (
-            <FormField
-                key="description"
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                    <FormItem>
-                         <FloatingLabelInput
-                            label={`Description${isDescriptionRequired ? ' *' : ''}`}
-                            id="description"
-                            {...field}
-                            value={field.value ?? ''}
-                            className={cn(isSuggesting && 'animate-pulse border-primary/50')}
-                        />
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+            <FormField key="description" control={form.control} name="description" render={({ field }) => (
+                <FormItem>
+                    <FloatingLabelInput label={`Description${isDescriptionRequired ? ' *' : ''}`} id="description" {...field} value={field.value ?? ''} className={cn(isSuggesting && 'animate-pulse border-primary/50')} />
+                    <FormMessage />
+                </FormItem>
+            )} />
         ),
         accountId: (
-             <FormField
-                key="accountId"
-                control={form.control}
-                name="accountId"
-                render={({ field }) => (
-                    <FormItem>
-                        <FloatingLabelSelect
-                            label="Account *"
-                            id="accountId"
-                            onValueChange={field.onChange}
-                            value={field.value}
-                        >
-                            {activeAccounts?.map(acc => (
-                                <SelectItem key={acc.id} value={acc.id}>
-                                    <div className="flex items-center">
-                                        {renderIcon(acc.icon)}
-                                        {acc.name}
-                                    </div>
-                                </SelectItem>
-                            ))}
-                         </FloatingLabelSelect>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+             <FormField key="accountId" control={form.control} name="accountId" render={({ field }) => (
+                <FormItem>
+                    <FloatingLabelSelect label="Account *" id="accountId" onValueChange={field.onChange} value={field.value}>
+                        {activeAccounts?.map(acc => (
+                            <SelectItem key={acc.id} value={acc.id}><div className="flex items-center">{renderIcon(acc.icon)}{acc.name}</div></SelectItem>
+                        ))}
+                    </FloatingLabelSelect>
+                    <FormMessage />
+                </FormItem>
+            )} />
         ),
         categoryId: (
-            <FormField
-                key="categoryId"
-                control={form.control}
-                name="categoryId"
-                render={({ field }) => (
-                    <FormItem>
-                         <FloatingLabelSelect
-                            label={`Category${isCategoryRequired ? ' *' : ''}`}
-                            id="categoryId"
-                            onValueChange={field.onChange}
-                            value={field.value}
-                        >
-                             <QuickAddItemDialog type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)}>
-                                 <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-accent rounded-md text-primary">
-                                    <PlusCircle className="h-4 w-4" />
-                                    Create new category
-                                </div>
-                             </QuickAddItemDialog>
-                             <SelectItem value="__none__">No Category</SelectItem>
-                             {activeCategories?.map(cat => (
-                                 <SelectItem key={cat.id} value={cat.id}>
-                                     <div className="flex items-center">
-                                         {renderIcon(cat.icon)}
-                                         {cat.name}
-                                     </div>
-                                 </SelectItem>
-                             ))}
-                         </FloatingLabelSelect>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+            <FormField key="categoryId" control={form.control} name="categoryId" render={({ field }) => (
+                <FormItem>
+                    <FloatingLabelSelect label={`Category${isCategoryRequired ? ' *' : ''}`} id="categoryId" onValueChange={field.onChange} value={field.value}>
+                        <QuickAddItemDialog type="Category" onSave={(name, icon) => handleQuickAdd('Category', name, icon)}>
+                            <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-accent rounded-md text-primary"><PlusCircle className="h-4 w-4" />Create new category</div>
+                        </QuickAddItemDialog>
+                        <SelectItem value="__none__">No Category</SelectItem>
+                        {activeCategories?.map(cat => (
+                            <SelectItem key={cat.id} value={cat.id}><div className="flex items-center">{renderIcon(cat.icon)}{cat.name}</div></SelectItem>
+                        ))}
+                    </FloatingLabelSelect>
+                    <FormMessage />
+                </FormItem>
+            )} />
         ),
         tagIds: (
-            <FormField
-                key="tagIds"
-                control={form.control}
-                name="tagIds"
-                render={({ field }) => (
-                    <FormItem>
-                        <TagCombobox
-                            field={field}
-                            tags={activeTags}
-                            onQuickAdd={(name, icon) => handleQuickAdd('Tag', name, icon)}
-                            isRequired={isTagRequired}
-                            isSuggesting={isSuggesting}
-                        />
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+            <FormField key="tagIds" control={form.control} name="tagIds" render={({ field }) => (
+                <FormItem>
+                    <TagCombobox field={field} tags={activeTags} onQuickAdd={(name, icon) => handleQuickAdd('Tag', name, icon)} isRequired={isTagRequired} isSuggesting={isSuggesting} />
+                    <FormMessage />
+                </FormItem>
+            )} />
         )
     }
 
     return (
         <Form {...form}>
             <form id={id} onSubmit={onSubmit} className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormControl>
-                            <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="grid grid-cols-2 gap-4"
-                            >
-                                <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base cursor-pointer transition-all", field.value === 'expense' ? "border-destructive text-destructive bg-destructive/5" : "border-muted")}>
-                                        <RadioGroupItem value="expense" className="sr-only" />
-                                        <span>Cash Out</span>
-                                    </Label>
-                                </FormItem>
-                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base cursor-pointer transition-all", field.value === 'income' ? "border-green-600 text-green-600 bg-green-600/5" : "border-muted")}>
-                                        <RadioGroupItem value="income" className="sr-only" />
-                                        <span>Cash In</span>
-                                    </Label>
-                                </FormItem>
-                            </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 
-                 <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                        <FormItem>
-                            <DateTimePicker field={field} />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    key="amount"
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                        <FormItem>
-                             <FloatingLabelInput
-                                label="Amount *"
-                                id="amount"
-                                type="number"
-                                {...field}
-                                value={field.value ?? ''}
-                                className={cn(
-                                    'font-bold',
-                                    transactionType === 'expense' && 'text-red-500',
-                                    transactionType === 'income' && 'text-green-600'
-                                )}
-                            />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                
-                 {fieldOrder.filter(f => visibleFields.includes(f)).map(fieldName => formFields[fieldName])}
+                <FormField control={form.control} name="type" render={({ field }) => (
+                    <FormItem><FormControl>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-4">
+                            <FormItem><Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base cursor-pointer transition-all", field.value === 'expense' ? "border-destructive text-destructive bg-destructive/5" : "border-muted")}><RadioGroupItem value="expense" className="sr-only" /><span>Cash Out</span></Label></FormItem>
+                            <FormItem><Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base cursor-pointer transition-all", field.value === 'income' ? "border-green-600 text-green-600 bg-green-600/5" : "border-muted")}><RadioGroupItem value="income" className="sr-only" /><span>Cash In</span></Label></FormItem>
+                        </RadioGroup>
+                    </FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="date" render={({ field }) => (
+                    <FormItem><DateTimePicker field={field} /><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="amount" render={({ field }) => (
+                    <FormItem><FloatingLabelInput label="Amount *" id="amount" type="number" {...field} value={field.value ?? ''} className={cn('font-bold', transactionType === 'expense' ? 'text-red-500' : 'text-green-600')} /><FormMessage /></FormItem>
+                )} />
+                {fieldOrder.filter(f => visibleFields.includes(f)).map(fieldName => formFields[fieldName])}
             </form>
         </Form>
     );
 }
 
-export function AddExpenseDialog({ 
-    children, 
-    expenseToEdit,
-    initialType,
-    onSaveSuccess,
-}: { 
-    children: React.ReactNode, 
-    expenseToEdit?: EnrichedExpense,
-    initialType?: 'income' | 'expense';
-    onSaveSuccess?: () => void;
-}) {
+export function AddExpenseDialog({ children, expenseToEdit, initialType, onSaveSuccess }: { children: React.ReactNode, expenseToEdit?: EnrichedExpense, initialType?: 'income' | 'expense'; onSaveSuccess?: () => void; }) {
     const [open, setOpen] = useState(false);
-    
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, loadingState, isEditMode, formId, accounts, categories, tags } = useExpenseForm({
-        setOpen, 
-        expenseToEdit, 
-        initialType,
-        open,
-        onSaveSuccess,
-    });
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, loadingState, isEditMode, formId, accounts, categories, tags } = useExpenseForm({ setOpen, expenseToEdit, initialType, open, onSaveSuccess });
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="sm:max-w-md w-[calc(100%-2rem)] flex flex-col max-h-[90vh] rounded-[24px]" onOpenAutoFocus={(e) => e.preventDefault()}>
-                <DialogHeader>
-                    <DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle>
-                </DialogHeader>
-                <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                    <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} />
-                </div>
-                 <DialogFooter className="w-full pt-4">
+                <DialogHeader><DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle></DialogHeader>
+                <div className="flex-1 overflow-y-auto -mx-6 px-6"><ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} /></div>
+                <DialogFooter className="w-full pt-4">
                     {isEditMode ? (
                         <div className="flex items-center justify-between w-full">
                             <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button type="button" variant="destructive" disabled={loadingState !== 'idle'}>
-                                         {loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                                        Delete
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent className="rounded-[24px]">
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete this transaction.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                            {loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
+                                <AlertDialogTrigger asChild><Button type="button" variant="destructive" disabled={loadingState !== 'idle'}>{loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}Delete</Button></AlertDialogTrigger>
+                                <AlertDialogContent className="rounded-[24px]"><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                             </AlertDialog>
-                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px] text-[14px]">
-                                {loadingState === 'save' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}
-                            </Button>
+                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px]">{loadingState === 'save' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}</Button>
                         </div>
                     ) : (
                         <div className="grid grid-cols-3 gap-2 w-full">
-                            <DialogClose asChild>
-                                <Button type="button" variant="outline" className="w-full text-[14px] px-1">
-                                    Cancel
-                                </Button>
-                            </DialogClose>
-                            <Button 
-                                type="button" 
-                                onClick={onSaveAndNewSubmit} 
-                                disabled={loadingState !== 'idle'} 
-                                variant="outline" 
-                                className="w-full px-1 text-[14px] border-primary text-primary hover:bg-primary/5 hover:text-primary"
-                            >
-                                {loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}
-                            </Button>
-                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-[14px] px-1">
-                                {loadingState === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save'}
-                            </Button>
+                            <DialogClose asChild><Button type="button" variant="outline" className="w-full text-[14px]">Cancel</Button></DialogClose>
+                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={loadingState !== 'idle'} variant="outline" className="w-full text-[14px] border-primary text-primary">{loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}</Button>
+                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-[14px]">{loadingState === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save'}</Button>
                         </div>
                     )}
                 </DialogFooter>
@@ -723,22 +498,7 @@ export function AddExpenseDialog({
     );
 }
 
-interface UseExpenseFormProps {
-    setOpen: (open: boolean) => void;
-    expenseToEdit?: EnrichedExpense; 
-    initialType?: 'income' | 'expense';
-    open: boolean;
-    onSaveSuccess?: () => void;
-}
-
-// Shared hook for form logic
-export function useExpenseForm({
-    setOpen,
-    expenseToEdit,
-    initialType,
-    open,
-    onSaveSuccess,
-}: UseExpenseFormProps) {
+function useExpenseForm({ setOpen, expenseToEdit, initialType, open, onSaveSuccess }: { setOpen: (open: boolean) => void; expenseToEdit?: EnrichedExpense; initialType?: 'income' | 'expense'; open: boolean; onSaveSuccess?: () => void; }) {
     const { toast } = useToast();
     const [loadingState, setLoadingState] = useState<'idle' | 'save' | 'saveAndNew' | 'delete'>('idle');
     const { user } = useUser();
@@ -746,327 +506,83 @@ export function useExpenseForm({
     const formId = useMemo(() => `expense-form-${Math.random().toString(36).substring(7)}`, []);
     const isEditMode = !!expenseToEdit;
 
-    // Fetch user-specific data
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-    
     const userCategoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [user, firestore]);
     const userAccountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [user, firestore]);
     const userTagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [user, firestore]);
 
-    const { data: userCategories } = useCollection<Category>(userCategoriesQuery);
-    const { data: userAccounts } = useCollection<Account>(userAccountsQuery);
-    const { data: userTags } = useCollection<Tag>(userTagsQuery);
-
-    const accounts = userAccounts || [];
-    const categories = userCategories || [];
-    const tags = userTags || [];
+    const { data: categories } = useCollection<Category>(userCategoriesQuery);
+    const { data: accounts } = useCollection<Account>(userAccountsQuery);
+    const { data: tags } = useCollection<Tag>(userTagsQuery);
 
     const expenseSchema = useMemo(() => createExpenseSchema(userProfile?.expenseFieldSettings), [userProfile?.expenseFieldSettings]);
+    const getNewFormValues = useCallback((keepDate?: Date, keepAccount?: string) => ({
+        type: initialType || 'expense', amount: undefined, date: keepDate || new Date(),
+        accountId: keepAccount || userProfile?.expenseFieldSettings?.defaultAccountId || '',
+        categoryId: '', description: '', tagIds: [],
+    }), [initialType, userProfile]);
     
-    // Function to get clean default values
-    const getNewFormValues = useCallback((keepDate?: Date, keepAccount?: string) => {
-        let type: 'income' | 'expense' = 'expense';
-        if (initialType) {
-            type = initialType;
-        }
-
-        return {
-            type,
-            amount: undefined,
-            date: keepDate || new Date(),
-            accountId: keepAccount || userProfile?.expenseFieldSettings?.defaultAccountId || '',
-            categoryId: '',
-            description: '',
-            tagIds: [],
-        }
-    }, [initialType, userProfile]);
+    const form = useForm<z.infer<typeof expenseSchema>>({ resolver: zodResolver(expenseSchema), defaultValues: getNewFormValues() });
     
-    const form = useForm<z.infer<typeof expenseSchema>>({
-        resolver: zodResolver(expenseSchema),
-        defaultValues: getNewFormValues(),
-    });
-    
-    // Effect to reset the form when the dialog opens
     useEffect(() => {
         if (open) {
-            if (isEditMode && expenseToEdit) {
-                form.reset({
-                    type: expenseToEdit.type,
-                    amount: expenseToEdit.amount,
-                    date: expenseToEdit.date,
-                    accountId: expenseToEdit.account?.id || '',
-                    categoryId: expenseToEdit.category?.id || '',
-                    description: expenseToEdit.description || '',
-                    tagIds: expenseToEdit.tags?.map(t => t.id) || [],
-                });
-            } else {
-                 form.reset(getNewFormValues());
-            }
+            if (isEditMode && expenseToEdit) form.reset({ type: expenseToEdit.type, amount: expenseToEdit.amount, date: expenseToEdit.date, accountId: expenseToEdit.account?.id || '', categoryId: expenseToEdit.category?.id || '', description: expenseToEdit.description || '', tagIds: expenseToEdit.tags?.map(t => t.id) || [] });
+            else form.reset(getNewFormValues());
         }
     }, [open, isEditMode, expenseToEdit, form, getNewFormValues]);
 
-
     const handleTransactionSave = async (values: z.infer<typeof expenseSchema>, action: 'save' | 'saveAndNew') => {
-        if (!firestore || !user) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Authentication not ready.' });
-            return false;
-        }
-        if (!userCategories) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Required data (categories) is not loaded.' });
-            return false;
-        }
+        if (!firestore || !user || !categories || !accounts) return false;
         setLoadingState(action);
-
         try {
             const batch = writeBatch(firestore);
-            const collectionPath = `users/${user.uid}/expenses`;
-            const allCategories = userCategories || [];
-            const allAccounts = userAccounts || [];
+            const expenseRef = isEditMode ? doc(firestore, `users/${user.uid}/expenses`, expenseToEdit!.id) : doc(collection(firestore, `users/${user.uid}/expenses`));
+            const selectedAccount = accounts.find(a => a.id === values.accountId);
+            const selectedCategory = categories.find(c => c.id === values.categoryId);
 
-            const finalCategoryId = values.categoryId === '__none__' ? undefined : values.categoryId;
-            const selectedCategory = allCategories.find(c => c.id === finalCategoryId);
-            const selectedAccount = allAccounts.find(a => a.id === values.accountId);
+            const isLimitOp = selectedCategory?.name.includes('Credit Limit');
+            const amountChange = values.type === 'income' ? values.amount : -values.amount;
 
-            const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
-            const isCreditLimitDowngrade = selectedCategory?.name === 'Credit Limit Downgrade';
-            const isCreditCardPayment = selectedCategory?.name === 'Credit Card Payment';
-            
-            if (isCreditCardPayment) {
-                if (selectedAccount?.type === 'credit_card' && values.type !== 'income') {
-                    toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments to a credit card must be an "income" transaction for that card.' });
-                    setLoadingState('idle');
-                    return false;
+            if (isEditMode && expenseToEdit) {
+                const oldAmountChange = expenseToEdit.type === 'income' ? expenseToEdit.amount : -expenseToEdit.amount;
+                if (expenseToEdit.account?.id === values.accountId) {
+                    const diff = amountChange - oldAmountChange;
+                    batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(diff), ...(isLimitOp && { limit: increment(diff) }) });
+                } else if (expenseToEdit.account?.id) {
+                    batch.update(doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account.id), { balance: increment(-oldAmountChange) });
+                    batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(amountChange), ...(isLimitOp && { limit: increment(amountChange) }) });
                 }
-                if (selectedAccount?.type !== 'credit_card' && values.type !== 'expense') {
-                     toast({ variant: 'destructive', title: 'Invalid Operation', description: 'Payments from a bank account for a credit card must be an "expense" transaction.' });
-                     setLoadingState('idle');
-                     return false;
-                }
-            }
-
-
-            const isAddOperation = !isEditMode;
-
-            // --- Record the transaction itself ---
-            const expenseCol = collection(firestore, collectionPath);
-            const expenseRef = isAddOperation ? doc(expenseCol) : doc(firestore, collectionPath, expenseToEdit!.id);
-
-            const finalDescription = (values.description || selectedCategory?.name || 'Transaction').trim();
-
-            const expenseData: any = {
-                id: expenseRef.id,
-                userId: user.uid,
-                type: values.type,
-                amount: values.amount,
-                description: finalDescription,
-                date: values.date,
-                createdAt: isAddOperation ? serverTimestamp() : expenseToEdit!.createdAt,
-                updatedAt: serverTimestamp(),
-                tagIds: values.tagIds || [],
-                categoryId: finalCategoryId,
-                accountId: values.accountId,
-            };
-            
-            if (!expenseData.categoryId) {
-                delete expenseData.categoryId;
-            }
-            
-            const handleLimitChange = (
-                operation: 'upgrade' | 'downgrade',
-                currentValues: typeof values,
-                previousExpense?: EnrichedExpense
-            ) => {
-                if (!currentValues.accountId) {
-                    toast({ variant: 'destructive', title: 'Invalid Operation', description: `An account must be selected for a "${selectedCategory?.name}" transaction.`});
-                    return false;
-                }
-
-                const amount = currentValues.amount;
-                const type = currentValues.type;
-                const expectedType = operation === 'upgrade' ? 'income' : 'expense';
-                const increment_or_decrement = operation === 'upgrade' ? amount : -amount;
-
-                if (selectedAccount?.type === 'credit_card' && type === expectedType) {
-                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, currentValues.accountId);
-                    const updatePayload = { 
-                        limit: increment(increment_or_decrement),
-                        balance: increment(increment_or_decrement) // Also update available balance
-                    };
-
-                    if (!previousExpense) { // New transaction
-                        batch.update(accountRef, updatePayload);
-                    } else { // Editing transaction
-                        const oldCategoryName = userCategories?.find(c => c.id === previousExpense.category?.id)?.name;
-                        const oldType = previousExpense.type;
-                        const oldAmount = previousExpense.amount;
-                        
-                        if (oldCategoryName === selectedCategory?.name && oldType === type) {
-                            // same category, same type -> adjust by difference
-                            const difference = increment_or_decrement - (operation === 'upgrade' ? oldAmount : -oldAmount);
-                            batch.update(accountRef, { limit: increment(difference), balance: increment(difference) });
-                        } else {
-                            // different category or type -> revert old (if applicable), apply new
-                            if ((oldCategoryName === 'Credit Limit Upgrade' || oldCategoryName === 'Credit Limit Downgrade') && previousExpense.account?.id) {
-                                const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, previousExpense.account.id);
-                                const oldIncrement = oldCategoryName === 'Credit Limit Upgrade' ? oldAmount : -oldAmount;
-                                batch.update(oldAccountRef, { limit: increment(-oldIncrement), balance: increment(-oldIncrement) });
-                            }
-                            batch.update(accountRef, updatePayload);
-                        }
-                    }
-                    return true;
-                }
-                toast({ variant: 'destructive', title: 'Invalid Operation', description: `"${selectedCategory?.name}" must be an "${expectedType}" transaction for a credit card account.`});
-                return false;
-            }
-            
-            if (isCreditLimitUpgrade) {
-                if (!handleLimitChange('upgrade', values, expenseToEdit)) {
-                    setLoadingState('idle');
-                    return false;
-                }
-            }
-            if (isCreditLimitDowngrade) {
-                if (!handleLimitChange('downgrade', values, expenseToEdit)) {
-                    setLoadingState('idle');
-                    return false;
-                }
-            }
-
-            // Handle regular balance changes if it's NOT a credit limit change
-            if (!isCreditLimitUpgrade && !isCreditLimitDowngrade) {
-                const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
-                    return type === 'income' ? amount : -amount;
-                };
-
-                if (isAddOperation) {
-                    const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId!);
-                    const amountToUpdate = getAmountChange(values.type, values.amount, selectedAccount!.type);
-                    batch.update(accountRef, { balance: increment(amountToUpdate) });
-                } else if (expenseToEdit) {
-                    const oldAccount = allAccounts.find(a => a.id === expenseToEdit.account?.id);
-                    if (oldAccount) {
-                        const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account!.id);
-                        const oldAmountReversal = -getAmountChange(expenseToEdit.type, expenseToEdit.amount, oldAccount.type);
-                        batch.update(oldAccountRef, { balance: increment(oldAmountReversal) });
-                    }
-
-                    if (selectedAccount) {
-                        const newAccountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId!);
-                        const newAmount = getAmountChange(values.type, values.amount, selectedAccount.type);
-                        batch.update(newAccountRef, { balance: increment(newAmount) });
-                    }
-                }
-            }
-
-
-            if(isAddOperation) {
-                batch.set(expenseRef, expenseData);
             } else {
-                batch.update(expenseRef, expenseData);
+                batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(amountChange), ...(isLimitOp && { limit: increment(amountChange) }) });
             }
-            
-            await commitBatchNonBlocking(batch, collectionPath);
 
-            if (isCreditLimitUpgrade || isCreditLimitDowngrade) {
-                toast({ title: `Credit Limit Updated!`, description: `The limit for ${selectedAccount?.name} has been changed.`});
-            } else {
-                 toast({ title: isEditMode ? 'Transaction Updated!' : 'Transaction Added!', description: `Your ${values.type} has been recorded.` });
-            }
+            batch[isEditMode ? 'update' : 'set'](expenseRef, { ...values, id: expenseRef.id, userId: user.uid, createdAt: isEditMode ? expenseToEdit!.createdAt : serverTimestamp(), updatedAt: serverTimestamp() });
+            await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);
+            toast({ title: isEditMode ? 'Transaction Updated' : 'Transaction Added' });
             onSaveSuccess?.();
             return true;
-        } catch (error: any) {
-             toast({ variant: 'destructive', title: 'Could Not Save Transaction', description: 'An unexpected error occurred. Please check your inputs and try again.' });
-             return false;
-        } finally {
-            setLoadingState('idle');
-        }
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Error Saving' });
+            return false;
+        } finally { setLoadingState('idle'); }
     }
-    
-    const resetForm = useCallback((keepDate?: Date, keepAccount?: string) => {
-        const newValues = getNewFormValues(keepDate, keepAccount);
-        form.reset(newValues);
-    }, [form, getNewFormValues]);
 
-
-    const onFinalSubmit = form.handleSubmit(async (values) => {
-        const success = await handleTransactionSave(values, 'save');
-        if (success) {
-            setOpen(false);
-        }
-    });
-
-    const onSaveAndNewSubmit = form.handleSubmit(async (values) => {
-        const success = await handleTransactionSave(values, 'saveAndNew');
-        if (success) {
-            resetForm(values.date, values.accountId);
-        }
-    });
-
+    const onFinalSubmit = form.handleSubmit(async (v) => { if (await handleTransactionSave(v, 'save')) setOpen(false); });
+    const onSaveAndNewSubmit = form.handleSubmit(async (v) => { if (await handleTransactionSave(v, 'saveAndNew')) form.reset(getNewFormValues(v.date, v.accountId)); });
     const handleDelete = async () => {
-        if (!firestore || !user || !isEditMode || !expenseToEdit || !userAccounts || !userCategories) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete transaction. Required data missing.' });
-            return;
-        }
+        if (!firestore || !user || !expenseToEdit || !accounts) return;
         setLoadingState('delete');
         try {
             const batch = writeBatch(firestore);
-            const collectionPath = `users/${user.uid}/expenses`;
-            const expenseRef = doc(firestore, collectionPath, expenseToEdit.id);
-
-            const allCategories = userCategories || [];
-            const allAccounts = userAccounts || [];
-
-            const selectedCategory = allCategories.find(c => c.id === expenseToEdit.category?.id);
-            const isCreditLimitUpgrade = selectedCategory?.name === 'Credit Limit Upgrade';
-            const isCreditLimitDowngrade = selectedCategory?.name === 'Credit Limit Downgrade';
-            
-            batch.delete(expenseRef);
-
-            if (expenseToEdit.account?.id) {
-                const accountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account.id);
-                const selectedAccount = allAccounts.find(acc => acc.id === expenseToEdit.account!.id);
-
-                if ((isCreditLimitUpgrade || isCreditLimitDowngrade) && selectedAccount?.type === 'credit_card') {
-                     const amountToRevert = isCreditLimitUpgrade ? -expenseToEdit.amount : expenseToEdit.amount;
-                     batch.update(accountRef, { limit: increment(amountToRevert), balance: increment(amountToRevert) });
-                } else {
-                    if (selectedAccount) {
-                        let amountToRevert: number;
-                         if (selectedAccount.type === 'credit_card') {
-                            amountToRevert = expenseToEdit.type === 'expense' ? expenseToEdit.amount : -expenseToEdit.amount;
-                        } else {
-                            amountToRevert = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
-                        }
-                        batch.update(accountRef, { balance: increment(amountToRevert) });
-                    }
-                }
-            }
-
-
-            await commitBatchNonBlocking(batch, collectionPath);
-            toast({ title: 'Transaction Deleted', description: 'The transaction has been permanently removed.' });
-            onSaveSuccess?.();
+            const amountReversal = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
+            batch.delete(doc(firestore, `users/${user.uid}/expenses`, expenseToEdit.id));
+            batch.update(doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account!.id), { balance: increment(amountReversal) });
+            await commitBatchNonBlocking(batch);
             setOpen(false);
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Delete Failed', description: "There was an unexpected error. Please try again." });
-        } finally {
-            setLoadingState('idle');
-        }
-    };
+            onSaveSuccess?.();
+        } finally { setLoadingState('idle'); }
+    }
 
-
-    return { 
-      form, 
-      onFinalSubmit, 
-      onSaveAndNewSubmit, 
-      handleDelete, 
-      loadingState, 
-      isEditMode, 
-      formId,
-      accounts: accounts || [],
-      categories: categories || [],
-      tags: tags || []
-    };
+    return { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, loadingState, isEditMode, formId, accounts, categories, tags };
 }

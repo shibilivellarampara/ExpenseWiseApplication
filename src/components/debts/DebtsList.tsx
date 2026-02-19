@@ -57,7 +57,7 @@ function SettleUpButton({ group, currencySymbol }: { group: GroupedDebt, currenc
     const { toast } = useToast();
 
     const handleSettle = async (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent dropdown from toggling
+        e.stopPropagation();
         if (!user || !firestore || group.netAmount === 0) return;
         setIsSettling(true);
 
@@ -152,7 +152,7 @@ function DeleteTransactionButton({ debt, currencySymbol }: { debt: EnrichedDebt,
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                 <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                 <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive focus-visible:ring-0 focus-visible:ring-offset-0">
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </AlertDialogTrigger>
@@ -224,7 +224,7 @@ function DebtGroup({ group, currencySymbol, onSelect, isSelected, selectionMode 
                                 </div>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground focus-visible:ring-0">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0">
                                             <MoreVertical className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>

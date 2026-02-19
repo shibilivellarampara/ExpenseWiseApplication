@@ -1,4 +1,3 @@
-
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -198,7 +197,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                 selectionMode && 'hover:bg-primary/20'
                                             )}
                                         >
-                                            {renderIcon(row.expense.category?.icon, cn(row.expense.type === 'income' ? 'text-green-500' : 'text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
+                                            {renderIcon(row.expense.category?.icon, cn(row.expense.type === 'income' ? 'text-primary' : 'text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
                                         </button>
                                         <div className="flex-grow space-y-0.5 w-full min-w-0">
                                             <div className="flex justify-between items-start">
@@ -212,7 +211,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                 expenseToEdit={row.expense}
                                                                 onSaveSuccess={onDataChange}
                                                             >
-                                                                <Button variant="ghost" size="icon" className="h-7 w-7 mr-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                                                <Button variant="ghost" size="icon" className="h-7 w-7 mr-1 opacity-0 group-hover:opacity-100 transition-opacity focus-visible:ring-0 focus-visible:ring-offset-0" onClick={(e) => e.stopPropagation()}>
                                                                     <Edit className="h-4 w-4 text-muted-foreground" />
                                                                 </Button>
                                                             </AddExpenseDialog>
@@ -220,7 +219,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                         <div className={cn(
                                                             'font-bold',
                                                             viewMode === 'compact' ? 'text-sm' : 'text-base',
-                                                            row.expense.type === 'income' ? 'text-green-600' : 'text-red-500'
+                                                            row.expense.type === 'income' ? 'text-primary' : 'text-destructive'
                                                         )}>
                                                             {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
                                                         </div>

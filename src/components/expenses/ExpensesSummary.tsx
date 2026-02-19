@@ -67,11 +67,10 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
     
     const renderNormalSummary = () => (
          <div>
-            <p className="text-muted-foreground text-xs">Net Balance</p>
+            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Net Balance</p>
             <p className={cn(
                 "text-lg font-bold",
-                summary.netFlow >= 0 && "text-green-600",
-                summary.netFlow < 0 && "text-red-500"
+                summary.netFlow >= 0 ? "text-primary" : "text-destructive"
             )}>
                 {currencySymbol}{summary.netFlow.toFixed(2)}
             </p>
@@ -87,10 +86,10 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
 
         return (
             <div>
-                <p className="text-muted-foreground text-xs">Outstanding Amount</p>
+                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Outstanding</p>
                 <p className={cn(
                     "text-lg font-bold",
-                    isPositive ? "text-red-500" : "text-green-600"
+                    isPositive ? "text-destructive" : "text-primary"
                 )}>
                     {isNegative ? '-' : ''}{currencySymbol}{Math.abs(outstanding).toFixed(2)}
                 </p>
@@ -100,16 +99,16 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
 
 
     return (
-        <Card className="bg-card/80 backdrop-blur-sm border-none shadow-sm">
+        <Card className="bg-card/80 backdrop-blur-sm border-none shadow-sm rounded-2xl">
             <CardContent className="p-4">
                 <div className="flex justify-between items-center text-sm">
                    {creditCardSummary ? renderCreditCardSummary() : renderNormalSummary()}
                     <div className="text-right">
-                        <p className="text-green-600 font-medium">
-                           <span className="text-muted-foreground font-normal">IN:</span> {currencySymbol}{summary.totalIn.toFixed(2)}
+                        <p className="text-primary font-bold">
+                           <span className="text-muted-foreground font-medium text-[10px] uppercase tracking-wider">IN:</span> {currencySymbol}{summary.totalIn.toFixed(2)}
                         </p>
-                         <p className="text-red-500 font-medium">
-                           <span className="text-muted-foreground font-normal">OUT:</span> {currencySymbol}{summary.totalOut.toFixed(2)}
+                         <p className="text-destructive font-bold">
+                           <span className="text-muted-foreground font-medium text-[10px] uppercase tracking-wider">OUT:</span> {currencySymbol}{summary.totalOut.toFixed(2)}
                         </p>
                          {creditCardSummary?.limit && (
                             <p className="text-muted-foreground text-[10px] mt-1 uppercase font-bold tracking-widest">

@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -299,7 +299,14 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                         <CommandItem
                                             key={tag.id}
                                             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                            onSelect={() => { setInputValue(""); field.onChange([...selectedTagIds, tag.id]) }}
+                                            onSelect={() => { 
+                                                setInputValue(""); 
+                                                const currentIds = Array.from(selectedTagIds);
+                                                const newIds = selectedTagIds.has(tag.id)
+                                                    ? currentIds.filter(id => id !== tag.id)
+                                                    : [...currentIds, tag.id];
+                                                field.onChange(newIds); 
+                                            }}
                                             className={cn("flex items-center justify-between cursor-pointer rounded-md border px-2 py-1", selectedTagIds.has(tag.id) && "bg-muted")}
                                         >
                                             <div className="flex items-center gap-2 truncate">
@@ -319,7 +326,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     );
 };
 
-function ExpenseForm({ form, onSubmit, id, accounts, categories, tags }: { form: UseFormReturn<any>; onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>; id: string; accounts: Account[]; categories: Category[]; tags: Tag[]; }) {
+function ExpenseForm({ form, onSubmit, id, accounts, categories, tags, isEditMode }: { form: UseFormReturn<any>; onSubmit: (e: React.BaseSyntheticEvent) => Promise<void>; id: string; accounts: Account[]; categories: Category[]; tags: Tag[]; isEditMode: boolean; }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -342,7 +349,7 @@ function ExpenseForm({ form, onSubmit, id, accounts, categories, tags }: { form:
     const activeCategories = useMemo(() => categories?.filter(c => c.status === 'active' || c.status === undefined) || [], [categories]);
     const activeTags = useMemo(() => tags?.filter(t => t.status === 'active' || t.status === undefined) || [], [tags]);
     
-    const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? true;
+    const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? false;
 
     const renderIcon = (iconName: string | undefined, className?: string) => {
         const IconComponent = (LucideIcons as any)[iconName || 'Pilcrow'];
@@ -350,6 +357,8 @@ function ExpenseForm({ form, onSubmit, id, accounts, categories, tags }: { form:
     };
 
     useEffect(() => {
+        if (isEditMode) return; // Don't run suggestions when editing existing tx
+        
         const hasInput = debouncedDescription || debouncedCategoryId || (debouncedTagIds && debouncedTagIds.length > 0);
         if (!hasInput || !isAiSuggestionEnabled || activeCategories.length === 0 || activeAccounts.length === 0) return;
 
@@ -380,7 +389,7 @@ function ExpenseForm({ form, onSubmit, id, accounts, categories, tags }: { form:
                 console.error("AI suggestion failed:", error);
             }
         });
-    }, [debouncedDescription, debouncedCategoryId, debouncedTagIds, form, activeCategories, activeTags, activeAccounts, isAiSuggestionEnabled]);
+    }, [debouncedDescription, debouncedCategoryId, debouncedTagIds, form, activeCategories, activeTags, activeAccounts, isAiSuggestionEnabled, isEditMode]);
 
     const isDescriptionRequired = userProfile?.expenseFieldSettings?.isDescriptionRequired ?? false;
     const isTagRequired = userProfile?.expenseFieldSettings?.isTagRequired ?? false;
@@ -488,15 +497,35 @@ export function AddExpenseDialog({ children, expenseToEdit, initialType, onSaveS
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="sm:max-w-md w-[calc(100%-2rem)] flex flex-col max-h-[90vh] rounded-[24px]" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader><DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle></DialogHeader>
-                <div className="flex-1 overflow-y-auto -mx-6 px-6"><ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts || []} categories={categories || []} tags={tags || []} /></div>
+                <div className="flex-1 overflow-y-auto -mx-6 px-6">
+                    <ExpenseForm 
+                        form={form} 
+                        onSubmit={onFinalSubmit} 
+                        id={formId} 
+                        accounts={accounts || []} 
+                        categories={categories || []} 
+                        tags={tags || []} 
+                        isEditMode={isEditMode}
+                    />
+                </div>
                 <DialogFooter className="w-full pt-4">
                     {isEditMode ? (
                         <div className="flex items-center justify-between w-full">
                             <AlertDialog>
-                                <AlertDialogTrigger asChild><Button type="button" variant="destructive" disabled={loadingState !== 'idle'}>{loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}Delete</Button></AlertDialogTrigger>
-                                <AlertDialogContent className="rounded-[24px]"><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                                <AlertDialogTrigger asChild>
+                                    <Button type="button" variant="destructive" disabled={loadingState !== 'idle'}>
+                                        {loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                                        Delete
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="rounded-[24px]">
+                                    <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter>
+                                </AlertDialogContent>
                             </AlertDialog>
-                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px] text-[14px]">{loadingState === 'save' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}</Button>
+                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px] text-[14px]">
+                                {loadingState === 'save' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}
+                            </Button>
                         </div>
                     ) : (
                         <div className="grid grid-cols-3 gap-2 w-full">
@@ -551,30 +580,34 @@ function useExpenseForm({ setOpen, expenseToEdit, initialType, open, onSaveSucce
         try {
             const batch = writeBatch(firestore);
             const expenseRef = isEditMode ? doc(firestore, `users/${user.uid}/expenses`, expenseToEdit!.id) : doc(collection(firestore, `users/${user.uid}/expenses`));
-            const selectedAccount = accounts.find(a => a.id === values.accountId);
-            const selectedCategory = categories.find(c => c.id === values.categoryId);
-
-            const isLimitOp = selectedCategory?.name.includes('Credit Limit');
+            
             const amountChange = values.type === 'income' ? values.amount : -values.amount;
 
             if (isEditMode && expenseToEdit) {
                 const oldAmountChange = expenseToEdit.type === 'income' ? expenseToEdit.amount : -expenseToEdit.amount;
                 if (expenseToEdit.account?.id === values.accountId) {
                     const diff = amountChange - oldAmountChange;
-                    batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(diff), ...(isLimitOp && { limit: increment(diff) }) });
+                    batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(diff) });
                 } else if (expenseToEdit.account?.id) {
                     batch.update(doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account.id), { balance: increment(-oldAmountChange) });
-                    batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(amountChange), ...(isLimitOp && { limit: increment(amountChange) }) });
+                    batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(amountChange) });
                 }
             } else {
-                batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(amountChange), ...(isLimitOp && { limit: increment(amountChange) }) });
+                batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(amountChange) });
             }
 
-            const finalData = { ...values, id: expenseRef.id, userId: user.uid, updatedAt: serverTimestamp() };
+            const finalData = { 
+                ...values, 
+                id: expenseRef.id, 
+                userId: user.uid, 
+                updatedAt: serverTimestamp(),
+                createdAt: isEditMode ? expenseToEdit!.createdAt : serverTimestamp()
+            };
+            
             if (isEditMode) {
-                batch.update(expenseRef, { ...finalData, createdAt: expenseToEdit!.createdAt });
+                batch.update(expenseRef, finalData);
             } else {
-                batch.set(expenseRef, { ...finalData, createdAt: serverTimestamp() });
+                batch.set(expenseRef, finalData);
             }
 
             await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);
@@ -589,6 +622,7 @@ function useExpenseForm({ setOpen, expenseToEdit, initialType, open, onSaveSucce
 
     const onFinalSubmit = form.handleSubmit(async (v) => { if (await handleTransactionSave(v, 'save')) setOpen(false); });
     const onSaveAndNewSubmit = form.handleSubmit(async (v) => { if (await handleTransactionSave(v, 'saveAndNew')) form.reset(getNewFormValues(v.date, v.accountId)); });
+    
     const handleDelete = async () => {
         if (!firestore || !user || !expenseToEdit || !accounts) return;
         setLoadingState('delete');
@@ -597,7 +631,7 @@ function useExpenseForm({ setOpen, expenseToEdit, initialType, open, onSaveSucce
             const amountReversal = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
             batch.delete(doc(firestore, `users/${user.uid}/expenses`, expenseToEdit.id));
             batch.update(doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account!.id), { balance: increment(amountReversal) });
-            await commitBatchNonBlocking(batch);
+            await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);
             setOpen(false);
             onSaveSuccess?.();
         } finally { setLoadingState('idle'); }

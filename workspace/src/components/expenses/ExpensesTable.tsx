@@ -9,12 +9,11 @@ import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { useMemo, useRef, useState, useCallback, useEffect } from "react";
-import { cn, formatAmount } from "@/lib/utils";
+import { cn, formatAmount, generateColorStyle } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { generateColorStyle } from "@/lib/utils";
 import { renderIcon } from '@/lib/render-icon';
 import { Checkbox } from "@/components/ui/checkbox";
 import {

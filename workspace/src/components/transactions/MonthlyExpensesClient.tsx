@@ -96,18 +96,21 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
         }));
 
         // 2. Group ALL fetched transactions per account to calc balances before filtering
-        const transactionsByAccount: Record<string, typeof allProcessed> = {};
+        const transactionsByAccount: Record<string, (Omit<Expense, 'date'> & { date: Date })[]> = {};
 
         allProcessed.forEach(tx => {
             if (tx.accountId) {
                 if (!transactionsByAccount[tx.accountId]) {
                     transactionsByAccount[tx.accountId] = [];
                 }
-                transactionsByAccount[tx.accountId].push(tx);
+                transactionsByAccount[tx.accountId].push({
+                    ...tx,
+                    date: tx.date
+                });
             }
         });
 
-        const allWithBalances: (typeof allProcessed[number] & { runningBalance?: number })[] = [];
+        const allWithBalances: (Omit<Expense, 'date'> & { date: Date; runningBalance?: number })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];

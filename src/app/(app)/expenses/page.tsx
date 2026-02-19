@@ -106,21 +106,24 @@ export default function ExpensesPage() {
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Correctly type the transactions for processing
+        // 1. Process all fetched transactions into local dates
         const allProcessed = allExpenses.map(tx => ({
             ...tx,
             date: (tx.date as any).toDate() as Date
         }));
 
         // 2. Group ALL fetched transactions per account to calc balances before filtering
-        const transactionsByAccount: Record<string, typeof allProcessed> = {};
+        const transactionsByAccount: Record<string, (Omit<Expense, 'date'> & { date: Date })[]> = {};
 
         allProcessed.forEach(tx => {
             if (tx.accountId) {
                 if (!transactionsByAccount[tx.accountId]) {
                     transactionsByAccount[tx.accountId] = [];
                 }
-                transactionsByAccount[tx.accountId].push(tx);
+                transactionsByAccount[tx.accountId].push({
+                    ...tx,
+                    date: tx.date
+                });
             }
         });
 

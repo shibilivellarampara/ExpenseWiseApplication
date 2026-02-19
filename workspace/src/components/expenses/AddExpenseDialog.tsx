@@ -483,13 +483,13 @@ export function AddExpenseDialog({ children, expenseToEdit, initialType, onSaveS
                                 <AlertDialogTrigger asChild><Button type="button" variant="destructive" disabled={loadingState !== 'idle'}>{loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}Delete</Button></AlertDialogTrigger>
                                 <AlertDialogContent className="rounded-[24px]"><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                             </AlertDialog>
-                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px]">{loadingState === 'save' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}</Button>
+                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="min-w-[120px] text-[14px]">{loadingState === 'save' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}</Button>
                         </div>
                     ) : (
                         <div className="grid grid-cols-3 gap-2 w-full">
-                            <DialogClose asChild><Button type="button" variant="outline" className="w-full text-[14px]">Cancel</Button></DialogClose>
-                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={loadingState !== 'idle'} variant="outline" className="w-full text-[14px] border-primary text-primary">{loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}</Button>
-                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-[14px]">{loadingState === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save'}</Button>
+                            <DialogClose asChild><Button type="button" variant="outline" className="w-full text-[14px] px-1">Cancel</Button></DialogClose>
+                            <Button type="button" onClick={onSaveAndNewSubmit} disabled={loadingState !== 'idle'} variant="outline" className="w-full text-[14px] border-primary text-primary px-1">{loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}</Button>
+                            <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-[14px] px-1">{loadingState === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save'}</Button>
                         </div>
                     )}
                 </DialogFooter>
@@ -584,5 +584,5 @@ function useExpenseForm({ setOpen, expenseToEdit, initialType, open, onSaveSucce
         } finally { setLoadingState('idle'); }
     }
 
-    return { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, loadingState, isEditMode, formId, accounts, categories, tags };
+    return { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, loadingState, isEditMode, formId, accounts: accounts || [], categories: categories || [], tags: tags || [] };
 }

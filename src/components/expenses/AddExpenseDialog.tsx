@@ -24,7 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, PlusCircle, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -240,9 +240,12 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
         }
     };
     
-    const filteredTags = tags.filter(tag =>
-        tag.name.toLowerCase().includes(inputValue.toLowerCase())
-    );
+    // Manual filtering to ensure reactivity when typos are corrected
+    const filteredTags = useMemo(() => {
+        return tags.filter(tag =>
+            tag.name.toLowerCase().includes(inputValue.toLowerCase())
+        );
+    }, [tags, inputValue]);
 
     const renderIcon = (iconName: string | undefined, className?: string) => {
         if (!iconName) return null;
@@ -274,7 +277,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                         ref={inputRef}
                         value={inputValue}
                         onValueChange={setInputValue}
-                        onBlur={() => setOpen(false)}
+                        onBlur={() => setTimeout(() => setOpen(false), 200)}
                         onFocus={() => setOpen(true)}
                         placeholder={selectedTagIds.size > 0 ? "" : `Tags ${isRequired ? '*' : ''}`}
                         className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-base md:text-sm h-full p-0 border-none shadow-none focus-visible:ring-0"
@@ -291,19 +294,19 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                     tags.length > 10 ? 'grid grid-cols-2 gap-1' : 'flex flex-col gap-1'
                                 )}>
                                     <QuickAddItemDialog type="Tag" onSave={onQuickAdd} onOpenChange={setOpen}>
-                                        <CommandItem onSelect={() => inputRef.current?.blur()} className="flex items-center gap-2 text-primary cursor-pointer w-full">
+                                        <div className="flex items-center gap-2 p-2 text-sm text-primary cursor-pointer w-full hover:bg-accent rounded-sm">
                                             <PlusCircle className="h-4 w-4" /> Create new tag
-                                        </CommandItem>
+                                        </div>
                                     </QuickAddItemDialog>
                                     {filteredTags.map(tag => (
                                         <CommandItem
                                             key={tag.id}
-                                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                            value={tag.name}
                                             onSelect={() => { 
                                                 setInputValue(""); 
-                                                const currentIds = Array.from(selectedTagIds);
+                                                const currentIds = field.value || [];
                                                 const newIds = selectedTagIds.has(tag.id)
-                                                    ? currentIds.filter(id => id !== tag.id)
+                                                    ? currentIds.filter((id: string) => id !== tag.id)
                                                     : [...currentIds, tag.id];
                                                 field.onChange(newIds); 
                                             }}

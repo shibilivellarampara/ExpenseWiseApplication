@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -133,7 +134,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                     </AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
-                        </AlertDialog>
+                         </AlertDialog>
                         <Button variant="ghost" size="sm" onClick={() => { setSelectionMode(false); onSelectionChange([]); }}>Cancel</Button>
                     </div>
                 </div>
@@ -358,5 +359,5 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={onSelectionChange} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} />;
+  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={selectedIds => onSelectionChange(selectedIds)} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} />;
 }

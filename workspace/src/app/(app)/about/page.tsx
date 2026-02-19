@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -17,6 +18,17 @@ import { cn } from "@/lib/utils";
 const appVersion = pkg.version;
 
 const changelog = [
+    {
+        version: "1.8.7",
+        date: "Feb 19, 2026",
+        changes: [
+            { type: 'UI/UX', description: "Updated tag display logic: 3 or fewer tags show all; more than 3 tags show exactly 2 followed by a '+N' expansion badge." },
+            { type: 'Logic', description: "Optimized tag search reactivity in the transaction form, ensuring immediate suggestions on every keystroke, even when multiple tags are already selected." },
+            { type: 'Feature', description: "Strictly enforced conditional AI suggestions: now disabled by default and automatically suppressed in Edit Mode to protect existing data." },
+            { type: 'Fix', description: "Resolved critical build errors related to Firestore WriteBatch signatures, Zod schema type mismatches, and duplicate properties in the monthly view." },
+            { type: 'UI/UX', description: "Standardized the tag expander label to use negative counts (e.g., '-2') for a more intuitive collapse action." },
+        ]
+    },
     {
         version: "1.8.6",
         date: "Feb 19, 2026",
@@ -119,7 +131,7 @@ const changelog = [
         changes: [
             { type: 'Fix', description: "Resolved a critical build failure caused by incorrect component import paths on the 'Debts & Dues' page." },
             { type: 'UI/UX', description: "Clarified the 'Net Position' label on the Debts summary to dynamically show 'Net Owed' or 'You Owe'." },
-            { type: 'UI/UX', description: "Made the Debts summary card more compact for a cleaner look." },
+            { type: 'UI/UX', description: "Made the_debts summary card more compact for a cleaner look." },
         ]
     },
     {
@@ -296,7 +308,7 @@ const changelog = [
         changes: [
             { type: 'UI', description: "Adjusted transaction filter controls to prevent wrapping on mobile for a cleaner single-line layout." },
             { type: 'UI', description: "Increased the size and added a border to the 'Clear Filters' button for better visibility and easier tapping on mobile." },
-            { type: 'Fix', description: "Corrected an issue where the 'Scroll to Top/Bottom' buttons were not website visible on mobile devices in the transaction list." },
+            { type: 'Fix', description: "Corrected an issue where the 'Scroll to Top/Bottom' buttons were not visible on mobile devices in the transaction list." },
         ]
     },
     {

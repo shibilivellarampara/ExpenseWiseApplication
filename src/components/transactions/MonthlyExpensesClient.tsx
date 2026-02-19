@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -159,7 +160,6 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             setFilters(prev => ({
                 ...prev,
                 categories: [id],
-                tags: prev.tags,
                 accounts: [],
             }));
         } else if (type === 'tag'){

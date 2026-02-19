@@ -43,7 +43,7 @@ export default function AccountsPage() {
                 currency={userProfile?.defaultCurrency}
             />
 
-            <div className="flex items-center gap-3 bg-muted/20 -mx-4 px-4 py-3 mb-2 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-3 bg-muted/20 -mx-4 px-4 py-3 mb-2 overflow-x-auto no-scrollbar pr-4">
                 <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input

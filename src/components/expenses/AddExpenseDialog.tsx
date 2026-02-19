@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -252,7 +253,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
 
     return (
         <Command shouldFilter={false} onKeyDown={handleKeyDown} className={cn('overflow-visible bg-transparent', isSuggesting && 'animate-pulse border-primary/50')}>
-             <div className={cn("group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background")}>
+             <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background">
                  <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-14">
                     {tags.filter(tag => selectedTagIds.has(tag.id)).map(tag => (
                         <Badge

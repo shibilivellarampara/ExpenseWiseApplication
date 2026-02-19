@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -238,8 +239,9 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     };
     
     const filteredTags = useMemo(() => {
+        const query = inputValue.toLowerCase().trim();
         return tags.filter(tag =>
-            tag.name.toLowerCase().includes(inputValue.toLowerCase())
+            tag.name.toLowerCase().includes(query)
         );
     }, [tags, inputValue]);
 
@@ -274,7 +276,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                         value={inputValue}
                         onValueChange={(val) => {
                             setInputValue(val);
-                            setOpen(true);
+                            if (val.length > 0) setOpen(true);
                         }}
                         onBlur={() => setTimeout(() => setOpen(false), 200)}
                         onFocus={() => setOpen(true)}
@@ -300,7 +302,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                     {filteredTags.map(tag => (
                                         <CommandItem
                                             key={tag.id}
-                                            value={tag.name}
+                                            value={tag.id}
                                             onSelect={() => { 
                                                 setInputValue(""); 
                                                 const currentIds = field.value || [];

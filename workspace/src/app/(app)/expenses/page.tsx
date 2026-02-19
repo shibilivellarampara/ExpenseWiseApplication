@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -16,6 +17,8 @@ import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useToast } from "@/hooks/use-toast";
+
+type ProcessedExpense = Omit<Expense, 'date'> & { date: Date };
 
 export default function ExpensesPage() {
     const { user } = useUser();
@@ -106,23 +109,18 @@ export default function ExpensesPage() {
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Process all fetched transactions into local dates
-        const allProcessed = allExpenses.map(tx => ({
-            ...tx,
-            date: (tx.date as any).toDate() as Date
-        }));
-
-        // 2. Group ALL fetched transactions per account to calc balances before filtering
+        // 1. Group ALL fetched transactions per account to calc balances before filtering
         const transactionsByAccount: Record<string, (Omit<Expense, 'date'> & { date: Date })[]> = {};
 
-        allProcessed.forEach(tx => {
+        allExpenses.forEach(tx => {
             if (tx.accountId) {
                 if (!transactionsByAccount[tx.accountId]) {
                     transactionsByAccount[tx.accountId] = [];
                 }
+                const date = (tx.date as any).toDate() as Date;
                 transactionsByAccount[tx.accountId].push({
                     ...tx,
-                    date: tx.date
+                    date
                 });
             }
         });
@@ -143,7 +141,7 @@ export default function ExpensesPage() {
             });
         }
 
-        // 3. Apply visibility filters
+        // 2. Apply visibility filters
         let finalFiltered = allWithBalances.filter(expense => {
             if (filters.type !== 'all' && expense.type !== filters.type) return false;
             if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
@@ -158,7 +156,7 @@ export default function ExpensesPage() {
             return true;
         });
         
-        // 4. Enrich and sort for final display
+        // 3. Enrich and sort for final display
         let enriched = finalFiltered.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
@@ -223,9 +221,9 @@ export default function ExpensesPage() {
                 }
             });
 
-            accountBalanceUpdates.forEach((changeVal, accountId) => {
+            accountBalanceUpdates.forEach((amountChange, accountId) => {
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
-                batch.update(accountRef, { balance: increment(changeVal) });
+                batch.update(accountRef, { balance: increment(amountChange) });
             });
 
             await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);

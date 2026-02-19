@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -109,21 +110,22 @@ export default function ExpensesPage() {
         };
         
         // 1. Group ALL fetched transactions per account to calc balances before filtering
-        const transactionsByAccount: Record<string, ProcessedExpense[]> = {};
+        const transactionsByAccount: Record<string, (Omit<Expense, 'date'> & { date: Date })[]> = {};
 
         allExpenses.forEach(tx => {
             if (tx.accountId) {
                 if (!transactionsByAccount[tx.accountId]) {
                     transactionsByAccount[tx.accountId] = [];
                 }
+                const date = (tx.date as any).toDate() as Date;
                 transactionsByAccount[tx.accountId].push({
                     ...tx,
-                    date: (tx.date as any).toDate()
+                    date
                 });
             }
         });
 
-        const allWithBalances: (ProcessedExpense & { runningBalance?: number })[] = [];
+        const allWithBalances: (Omit<Expense, 'date'> & { date: Date; runningBalance?: number })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
@@ -219,9 +221,9 @@ export default function ExpensesPage() {
                 }
             });
 
-            accountBalanceUpdates.forEach((changeVal, accountId) => {
+            accountBalanceUpdates.forEach((amountChange, accountId) => {
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
-                batch.update(accountRef, { balance: increment(changeVal) });
+                batch.update(accountRef, { balance: increment(amountChange) });
             });
 
             await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);

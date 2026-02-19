@@ -88,19 +88,25 @@ const renderActiveShape = (
   }
 
   const textAnchor = cos >= 0 ? 'start' : 'end';
+  const label = payload.name;
 
   return (
     <g>
-      {/* Center label */}
+      {/* Center label with dynamic font size */}
       <text
         x={cx}
         y={cy}
         textAnchor="middle"
         dominantBaseline="central"
         fill={fill}
-        className="text-base font-semibold"
+        className={cn(
+          "font-semibold transition-all duration-300",
+          label.length > 20 ? "text-[10px]" : 
+          label.length > 15 ? "text-xs" : 
+          label.length > 10 ? "text-sm" : "text-base"
+        )}
       >
-        {payload.name}
+        {label}
       </text>
 
       {/* Main slice */}

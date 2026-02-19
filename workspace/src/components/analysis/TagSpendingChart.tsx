@@ -9,7 +9,7 @@ import { getCurrencySymbol } from '@/lib/currencies';
 import { CHART_COLORS } from '@/lib/colors';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { formatAmount } from '@/lib/utils';
+import { cn, formatAmount } from '@/lib/utils';
 
 interface PieChartDataPoint {
   name: string;
@@ -38,11 +38,24 @@ const renderActiveShape = (props: any, currencySymbol: string) => {
   const ex = mx + (cos >= 0 ? 1 : -1) * 12;
   const ey = my;
   const textAnchor = cos >= 0 ? 'start' : 'end';
+  const label = payload.name;
 
   return (
     <g>
-      <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="font-headline text-lg">
-        {payload.name}
+      <text 
+        x={cx} 
+        y={cy} 
+        dy={8} 
+        textAnchor="middle" 
+        fill={fill} 
+        className={cn(
+          "font-headline transition-all duration-300",
+          label.length > 20 ? "text-xs" : 
+          label.length > 15 ? "text-sm" : 
+          label.length > 10 ? "text-base" : "text-lg"
+        )}
+      >
+        {label}
       </text>
       <Sector
         cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius} startAngle={startAngle} endAngle={endAngle} fill={fill}

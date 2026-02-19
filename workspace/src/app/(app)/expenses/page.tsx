@@ -225,9 +225,9 @@ export default function ExpensesPage() {
                 }
             });
 
-            accountBalanceUpdates.forEach((change, accountId) => {
+            accountBalanceUpdates.forEach((changeVal, accountId) => {
                 const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
-                batch.update(accountRef, { balance: increment(change) });
+                batch.update(accountRef, { balance: increment(changeVal) });
             });
 
             await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);

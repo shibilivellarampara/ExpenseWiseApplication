@@ -24,11 +24,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, PlusCircle, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -48,7 +48,7 @@ import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '@/components/DateTimePicker';
 
-// Fixed dynamic schema creation to avoid Zod type mismatch errors
+// Updated dynamic schema function to be type-safe
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
   const shape = {
     type: z.enum(['expense', 'income']).default('expense'),
@@ -686,7 +686,7 @@ export function AddExpenseDialog({
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                            {loadingState === 'delete' ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+                                            {loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>

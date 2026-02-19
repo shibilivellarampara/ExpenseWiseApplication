@@ -42,11 +42,6 @@ interface ExpensesTableProps {
   hideBalance?: boolean;
 }
 
-const getInitials = (name?: string | null) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-};
-
 type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense: EnrichedExpense };
 
 function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting, hideBalance }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; hideBalance?: boolean }) {
@@ -100,7 +95,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         count: allRows.length,
         getScrollElement: () => parentRef.current,
         estimateSize: (index) => {
-             const row = allRows[index];
+             const row = allRows[virtualItem.index];
              if (row.type === 'header') return viewMode === 'compact' ? 30 : 38;
              if (viewMode === 'compact') return 48;
              let height = 60;

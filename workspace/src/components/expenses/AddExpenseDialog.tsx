@@ -24,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, PlusCircle, X, Check } from 'lucide-react';
@@ -46,29 +47,18 @@ import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '@/components/DateTimePicker';
-import { Button } from '@/components/ui/button';
 
-// Robust dynamic schema creation
+// Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
   const shape: any = {
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
-    categoryId: z.string().optional(),
-    description: z.string().optional(),
-    tagIds: z.array(z.string()).optional(),
+    categoryId: settings?.isCategoryRequired ? z.string().min(1, 'Category is required.') : z.string().optional(),
+    description: settings?.isDescriptionRequired ? z.string().min(1, 'Description is required.') : z.string().optional(),
+    tagIds: settings?.isTagRequired ? z.array(z.string()).min(1, 'At least one tag is required.') : z.array(z.string()).optional(),
   };
-
-  if (settings?.isDescriptionRequired) {
-    shape.description = z.string().min(1, 'Description is required.');
-  }
-  if (settings?.isTagRequired) {
-    shape.tagIds = z.array(z.string()).min(1, 'At least one tag is required.');
-  }
-  if (settings?.isCategoryRequired) {
-    shape.categoryId = z.string().min(1, 'Category is required.');
-  }
 
   return z.object(shape);
 };
@@ -256,7 +246,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
 
     return (
         <Command onKeyDown={handleKeyDown} className={cn('overflow-visible bg-transparent', isSuggesting && 'animate-pulse border-primary/50')}>
-             <div className group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background">
+             <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background">
                  <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-14">
                     {tags.filter(tag => selectedTagIds.has(tag.id)).map(tag => (
                         <Badge
@@ -588,13 +578,13 @@ function ExpenseForm({
                             className="grid grid-cols-2 gap-4"
                             >
                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'expense' ? "border-destructive text-destructive" : "border-muted")}>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base cursor-pointer transition-all", field.value === 'expense' ? "border-destructive text-destructive bg-destructive/5" : "border-muted")}>
                                         <RadioGroupItem value="expense" className="sr-only" />
                                         <span>Cash Out</span>
                                     </Label>
                                 </FormItem>
                                  <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'income' ? "border-green-600 text-green-600" : "border-muted")}>
+                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base cursor-pointer transition-all", field.value === 'income' ? "border-green-600 text-green-600 bg-green-600/5" : "border-muted")}>
                                         <RadioGroupItem value="income" className="sr-only" />
                                         <span>Cash In</span>
                                     </Label>

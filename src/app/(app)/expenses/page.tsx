@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, commitBatchNonBlocking } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment }from "firebase/firestore";
-import { Plus, Minus, ArrowUp, ArrowDown, Trash2, X } from "lucide-react";
-import { useMemo, useState, useCallback, useEffect, useRef } from "react";
-import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
+import { Plus, Minus, Trash2, X } from "lucide-react";
+import { useMemo, useState, useCallback, useEffect } from "react";
+import { ExpensesFilters, Filters } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
@@ -36,7 +36,6 @@ export default function ExpensesPage() {
         searchQuery: '',
     });
     
-    // Set initial filters from URL params
     useEffect(() => {
         const accountId = searchParams.get('accounts');
         const type = searchParams.get('type');
@@ -66,7 +65,6 @@ export default function ExpensesPage() {
         return q;
     }, [user, firestore, filters.dateRange]);
     
-    // Queries for filter dropdowns
     const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [firestore, user]);
     const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [firestore, user]);
@@ -104,25 +102,27 @@ export default function ExpensesPage() {
     const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses || !accounts) return [];
 
-        const getAmountChange = (tx: Expense, accType: Account['type']) => {
+        const getAmountChange = (tx: { type: string; amount: number }) => {
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
         // 1. Group ALL fetched transactions per account to calc balances before filtering
-        const transactionsByAccount = allExpenses.reduce((acc, tx) => {
-            if (tx.accountId) {
-                if (!acc[tx.accountId]) {
-                    acc[tx.accountId] = [];
-                }
-                acc[tx.accountId].push({
-                    ...tx,
-                    date: (tx.date as Timestamp).toDate()
-                });
-            }
-            return acc;
-        }, {} as Record<string, (Omit<Expense, 'date'> & { date: Date })[]>);
+        const transactionsByAccount: Record<string, (Omit<Expense, 'date'> & { date: Date })[]> = {};
 
-        const allWithBalances: (Omit<Expense, 'date'> & { date: Date })[] = [];
+        allExpenses.forEach(tx => {
+            if (tx.accountId) {
+                if (!transactionsByAccount[tx.accountId]) {
+                    transactionsByAccount[tx.accountId] = [];
+                }
+                const txDate = tx.date instanceof Date ? tx.date : (tx.date as any).toDate();
+                transactionsByAccount[tx.accountId].push({
+                    ...tx,
+                    date: txDate
+                } as any);
+            }
+        });
+
+        const allWithBalances: (Omit<Expense, 'date'> & { date: Date } & { runningBalance?: number })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
@@ -132,8 +132,8 @@ export default function ExpensesPage() {
                 accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
                 let running = 0;
                 accountTransactions.forEach(tx => {
-                    running += getAmountChange(tx as any, account.type);
-                    tx.runningBalance = running;
+                    running += getAmountChange(tx);
+                    (tx as any).runningBalance = running;
                 });
                 allWithBalances.push(...accountTransactions);
             }

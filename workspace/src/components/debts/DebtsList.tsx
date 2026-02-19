@@ -178,7 +178,7 @@ function DebtGroup({ group, currencySymbol, onSelect, isSelected, selectionMode 
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
-         <Card className="rounded-[20px] border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 bg-card overflow-hidden">
+         <Card className="rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.08),0_-8px_24px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04)] -translate-y-0.5 border-none overflow-hidden bg-card transition-all duration-300 relative z-10 hover:z-20">
             <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                     <div className="flex-shrink-0">

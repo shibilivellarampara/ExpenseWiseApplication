@@ -122,7 +122,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                 const categoryTotal = categoryAssets?.reduce((sum, asset) => sum + asset.currentValue, 0) || 0;
 
                 return (
-                    <Card key={assetType} className="rounded-[20px] border border-border/50 shadow-md bg-card overflow-hidden">
+                    <Card key={assetType} className="rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.08),0_-8px_24px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04)] -translate-y-0.5 border-none overflow-hidden bg-card transition-all duration-300 relative z-10 hover:z-20">
                         <CardHeader className="flex flex-row justify-between items-start pb-4">
                              <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -136,7 +136,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                            <div className="flex items-center">
                                 {assetType !== 'savings_cash' ? (
                                     <AddAssetDialog initialAssetType={assetType}>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary focus-visible:ring-0 focus-visible:ring-offset-0">
                                             <PlusCircle className="h-5 w-5" />
                                         </Button>
                                     </AddAssetDialog>
@@ -144,7 +144,7 @@ export function AssetsList({ assets, isLoading }: AssetsListProps) {
                                      <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <Button variant="ghost" size="icon" className="h-4 w-4">
                                                     <Info className="h-4 w-4 text-muted-foreground" />
                                                 </Button>
                                             </TooltipTrigger>

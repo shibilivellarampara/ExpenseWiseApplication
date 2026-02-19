@@ -18,14 +18,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, PlusCircle, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,6 +45,7 @@ import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '@/components/DateTimePicker';
+import { Button } from '@/components/ui/button';
 
 // Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
@@ -700,7 +699,7 @@ export function AddExpenseDialog({
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                            {loadingState === 'delete' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                                            {loadingState === 'delete' ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>

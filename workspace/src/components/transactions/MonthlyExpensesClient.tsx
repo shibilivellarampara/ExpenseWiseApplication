@@ -257,6 +257,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                 onSelectionChange={setSelectedExpenseIds}
                 isDeleting={isDeleting}
                 onDeleteSelected={handleDeleteSelected}
+                hideBalance={filters.categories.length > 0 || filters.tags.length > 0}
             />
         </div>
     );

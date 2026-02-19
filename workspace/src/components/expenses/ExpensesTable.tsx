@@ -357,5 +357,5 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={selectedIds => onSelectionChange(selectedIds)} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} hideBalance={hideBalance} />;
+  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={onSelectionChange} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} hideBalance={hideBalance} />;
 }

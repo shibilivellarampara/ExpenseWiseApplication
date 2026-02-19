@@ -240,6 +240,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     
     const filteredTags = useMemo(() => {
         const query = inputValue.toLowerCase().trim();
+        if (!query) return tags;
         return tags.filter(tag =>
             tag.name.toLowerCase().includes(query)
         );

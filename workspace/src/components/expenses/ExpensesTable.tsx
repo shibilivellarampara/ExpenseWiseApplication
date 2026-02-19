@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Pilcrow, Edit, User as UserIcon, Wallet, AlertTriangle, Trash2, X, Loader2 } from "lucide-react";
+import { Pilcrow, Edit, User as UserIcon, Wallet, AlertTriangle, Trash2, X, Loader2, ChevronDown } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -12,7 +12,6 @@ import { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { cn, formatAmount, generateColorStyle } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { renderIcon } from '@/lib/render-icon';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -274,7 +273,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                 setExpandedTags(prev => ({...prev, [row.expense.id]: !prev[row.expense.id]}));
                                                             }}
                                                         >
-                                                            {expandedTags[row.expense.id] ? 'Less' : `+${(row.expense.tags?.length || 0) - 3}`}
+                                                            {expandedTags[row.expense.id] ? `-${(row.expense.tags?.length || 0) - 3}` : `+${(row.expense.tags?.length || 0) - 3}`}
                                                         </Badge>
                                                     )}
                                                 </div>

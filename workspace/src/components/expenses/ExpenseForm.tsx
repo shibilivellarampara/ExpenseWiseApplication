@@ -29,10 +29,20 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
-    categoryId: settings?.isCategoryRequired ? z.string().min(1, 'Category is required.') : z.string().optional(),
-    description: settings?.isDescriptionRequired ? z.string().min(1, 'Description is required.') : z.string().optional(),
-    tagIds: settings?.isTagRequired ? z.array(z.string()).min(1, 'At least one tag is required.') : z.array(z.string()).optional(),
+    categoryId: z.string().optional().or(z.literal('')),
+    description: z.string().optional().or(z.literal('')),
+    tagIds: z.array(z.string()).optional(),
   };
+
+  if (settings?.isCategoryRequired) {
+    shape.categoryId = z.string().min(1, 'Category is required.');
+  }
+  if (settings?.isDescriptionRequired) {
+    shape.description = z.string().min(1, 'Description is required.');
+  }
+  if (settings?.isTagRequired) {
+    shape.tagIds = z.array(z.string()).min(1, 'At least one tag is required.');
+  }
 
   return z.object(shape);
 };
@@ -79,8 +89,7 @@ export function ExpenseForm({
     const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? true;
 
     const renderIcon = (iconName: string | undefined, className?: string) => {
-        if (!iconName) return <Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
-        const IconComponent = (LucideIcons as any)[iconName];
+        const IconComponent = (LucideIcons as any)[iconName || 'Pilcrow'];
         return IconComponent ? <IconComponent className={cn("mr-2 h-4 w-4", className)} /> : <Pilcrow className={cn("mr-2 h-4 w-4", className)} />;
     };
 

@@ -276,7 +276,10 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                     <CommandPrimitive.Input
                         ref={inputRef}
                         value={inputValue}
-                        onValueChange={setInputValue}
+                        onValueChange={(val) => {
+                            setInputValue(val);
+                            setOpen(true);
+                        }}
                         onBlur={() => setTimeout(() => setOpen(false), 200)}
                         onFocus={() => setOpen(true)}
                         placeholder={selectedTagIds.size > 0 ? "" : `Tags ${isRequired ? '*' : ''}`}
@@ -451,7 +454,7 @@ function ExpenseForm({ form, onSubmit, id, accounts, categories, tags, isEditMod
                         </QuickAddItemDialog>
                         <SelectItem value="__none__">No Category</SelectItem>
                         {activeCategories?.map(cat => (
-                            <SelectItem key={cat.id} value={cat.id}><div className="flex items-center">{renderIcon(cat.icon)}{cat.name}</div></SelectItem>
+                            <SelectItem key={cat.id} value={cat.id}><div className="flex items-center">{renderIcon(acc.icon)}{cat.name}</div></SelectItem>
                         ))}
                     </FloatingLabelSelect>
                     <FormMessage />

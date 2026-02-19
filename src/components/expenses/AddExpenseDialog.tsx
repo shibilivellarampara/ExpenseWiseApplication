@@ -276,7 +276,10 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                     <CommandPrimitive.Input
                         ref={inputRef}
                         value={inputValue}
-                        onValueChange={setInputValue}
+                        onValueChange={(val) => {
+                            setInputValue(val);
+                            setOpen(true);
+                        }}
                         onBlur={() => setTimeout(() => setOpen(false), 200)}
                         onFocus={() => setOpen(true)}
                         placeholder={selectedTagIds.size > 0 ? "" : `Tags ${isRequired ? '*' : ''}`}

@@ -280,7 +280,7 @@ export default function ExpensesPage() {
                 </AddExpenseDialog>
                 <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg">
-                        <Minus className="h-6 w-6" />
+                        <Plus className="h-6 w-6" />
                         <span className="sr-only">Add Expense</span>
                     </Button>
                 </AddExpenseDialog>

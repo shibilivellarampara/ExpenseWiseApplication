@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -108,7 +107,7 @@ const changelog = [
         version: "1.8.0",
         date: "Feb 12, 2026",
         changes: [
-            { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 15 days after statement date if left empty)." },
+            { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 20 days after statement date if left empty)." },
             { type: 'Feature', description: "Redesigned the 'Add Account' form with a logic-first field order and floating labels for a better user experience." },
             { type: 'UI/UX', description: "Enhanced form accessibility by preventing automatic keyboard popup on form open." },
             { type: 'Fix', description: "Resolved a validation issue in the account form where empty optional numeric fields caused submission failures." },
@@ -119,7 +118,7 @@ const changelog = [
         version: "1.7.9",
         date: "Feb 01, 2026",
         changes: [
-            { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 15 days after statement date if left empty)." },
+            { type: 'Feature', description: "Implemented auto-calculation for credit card due dates (set to 20 days after statement date if left empty)." },
             { type: 'Fix', description: "Resolved a persistent issue with form submission in the 'Add Account' view where hidden fields caused validation failures." },
             { type: 'UI/UX', description: "Implemented a more robust context-driven field order for the 'Add Account' form with floating labels." },
             { type: 'UI/UX', description: "Improved form responsiveness and loading states for a smoother entry experience." },

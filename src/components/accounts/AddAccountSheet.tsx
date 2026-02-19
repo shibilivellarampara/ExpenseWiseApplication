@@ -459,9 +459,9 @@ export function AddAccountSheet({ children, accountToEdit }: { children: React.R
         const accountData: any = { ...values };
         delete accountData.balance;
 
-        // Auto-calculate billingDate (Due Date) if empty for credit cards (Stmt Date + 15 days)
+        // Auto-calculate billingDate (Due Date) if empty for credit cards (Stmt Date + 20 days)
         if (values.type === 'credit_card' && !values.billingDate && values.cardDetails?.statementDate) {
-            accountData.billingDate = ((values.cardDetails.statementDate + 15 - 1) % 31) + 1;
+            accountData.billingDate = ((values.cardDetails.statementDate + 20 - 1) % 31) + 1;
         }
     
         if (accountData.cardDetails) {

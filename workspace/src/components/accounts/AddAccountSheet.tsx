@@ -9,27 +9,27 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Button } from '../ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { Input, InputProps } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '../ui/form';
+import { Input, InputProps } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useCollection, useFirestore, useUser, useMemoFirebase, commitBatchNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, setDoc as setDocFirestore, writeBatch } from 'firebase/firestore';
 import { Loader2, Pilcrow, ChevronDown } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { availableIcons } from '@/lib/defaults';
 import * as LucideIcons from 'lucide-react';
 import { Account } from '@/lib/types';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '../ui/separator';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from '../ui/scroll-area';
 import React from 'react';
 
 // Helper to handle empty strings in numeric fields
@@ -454,14 +454,13 @@ export function AddAccountSheet({ children, accountToEdit }: { children: React.R
              toast({ variant: 'destructive', title: 'Error', description: 'Authentication not ready.' });
              setIsLoading(false);
              return;
-        }
-    
+        }    
         const accountData: any = { ...values };
         delete accountData.balance;
 
-        // Auto-calculate billingDate (Due Date) if empty for credit cards (Stmt Date + 15 days)
+        // Auto-calculate billingDate (Due Date) if empty for credit cards (Stmt Date + 20 days)
         if (values.type === 'credit_card' && !values.billingDate && values.cardDetails?.statementDate) {
-            accountData.billingDate = ((values.cardDetails.statementDate + 15 - 1) % 31) + 1;
+            accountData.billingDate = ((values.cardDetails.statementDate + 20 - 1) % 31) + 1;
         }
     
         if (accountData.cardDetails) {

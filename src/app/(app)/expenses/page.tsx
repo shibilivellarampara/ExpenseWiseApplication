@@ -108,7 +108,7 @@ export default function ExpensesPage() {
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Group ALL fetched transactions (for the current period) by account to calculate static balances
+        // 1. Group ALL fetched transactions per account to calc balances before filtering
         const transactionsByAccount = allExpenses.reduce((acc, tx) => {
             if (tx.accountId) {
                 if (!acc[tx.accountId]) {
@@ -120,31 +120,26 @@ export default function ExpensesPage() {
                 });
             }
             return acc;
-        }, {} as Record<string, (Expense & { date: Date })[]>);
+        }, {} as Record<string, (Omit<Expense, 'date'> & { date: Date })[]>);
 
-        const allWithBalances: (Expense & { date: Date })[] = [];
+        const allWithBalances: (Omit<Expense, 'date'> & { date: Date })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
             const account = accountMap.get(accountId);
 
             if (account) {
-                // Sort ascending to calculate running total correctly
                 accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
-                
-                let startingBalance = 0;
-
+                let running = 0;
                 accountTransactions.forEach(tx => {
-                    const amountChange = getAmountChange(tx, account.type);
-                    startingBalance += amountChange;
-                    tx.runningBalance = startingBalance;
+                    running += getAmountChange(tx as any, account.type);
+                    tx.runningBalance = running;
                 });
-                
                 allWithBalances.push(...accountTransactions);
             }
         }
 
-        // 2. Now apply visibility filters (Category, Tag, Type, etc.) to the pre-balanced set
+        // 2. Filter visibility
         let finalFiltered = allWithBalances.filter(expense => {
             if (filters.type !== 'all' && expense.type !== filters.type) return false;
             if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;

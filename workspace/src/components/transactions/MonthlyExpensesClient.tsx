@@ -91,19 +91,21 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Group ALL fetched period transactions by account to calc balances before filtering
+        // 1. Group ALL fetched transactions per account to calc balances before filtering
         const transactionsByAccount = allExpenses.reduce((acc, tx) => {
-            if(tx.accountId) {
-              if (!acc[tx.accountId]) { acc[tx.accountId] = []; }
-              acc[tx.accountId].push({
-                  ...tx,
-                  date: (tx.date as Timestamp).toDate()
-              });
+            if (tx.accountId) {
+                if (!acc[tx.accountId]) {
+                    acc[tx.accountId] = [];
+                }
+                acc[tx.accountId].push({
+                    ...tx,
+                    date: (tx.date as Timestamp).toDate()
+                });
             }
             return acc;
-        }, {} as Record<string, (Expense & { date: Date })[]>);
+        }, {} as Record<string, (Omit<Expense, 'date'> & { date: Date })[]>);
 
-        const allWithBalances: (Expense & { date: Date })[] = [];
+        const allWithBalances: (Omit<Expense, 'date'> & { date: Date })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
@@ -113,7 +115,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                 accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
                 let running = 0;
                 accountTransactions.forEach(tx => {
-                    running += getAmountChange(tx, account.type);
+                    running += getAmountChange(tx as any, account.type);
                     tx.runningBalance = running;
                 });
                 allWithBalances.push(...accountTransactions);

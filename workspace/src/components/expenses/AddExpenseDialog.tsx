@@ -24,7 +24,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, PlusCircle, X, Check } from 'lucide-react';
@@ -47,20 +46,31 @@ import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '@/components/DateTimePicker';
+import { Button } from '@/components/ui/button';
 
-// Function to create a dynamic schema
+// Robust dynamic schema creation
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
-  const baseShape = {
+  const shape: any = {
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
-    categoryId: settings?.isCategoryRequired ? z.string().min(1, 'Category is required.') : z.string().optional(),
-    description: settings?.isDescriptionRequired ? z.string().min(1, 'Description is required.') : z.string().optional(),
-    tagIds: settings?.isTagRequired ? z.array(z.string()).min(1, 'At least one tag is required.') : z.array(z.string()).optional(),
+    categoryId: z.string().optional(),
+    description: z.string().optional(),
+    tagIds: z.array(z.string()).optional(),
   };
 
-  return z.object(baseShape);
+  if (settings?.isDescriptionRequired) {
+    shape.description = z.string().min(1, 'Description is required.');
+  }
+  if (settings?.isTagRequired) {
+    shape.tagIds = z.array(z.string()).min(1, 'At least one tag is required.');
+  }
+  if (settings?.isCategoryRequired) {
+    shape.categoryId = z.string().min(1, 'Category is required.');
+  }
+
+  return z.object(shape);
 };
 
 // Component for quick adding of Categories or Tags
@@ -246,7 +256,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
 
     return (
         <Command onKeyDown={handleKeyDown} className={cn('overflow-visible bg-transparent', isSuggesting && 'animate-pulse border-primary/50')}>
-             <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background">
+             <div className group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background">
                  <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-14">
                     {tags.filter(tag => selectedTagIds.has(tag.id)).map(tag => (
                         <Badge

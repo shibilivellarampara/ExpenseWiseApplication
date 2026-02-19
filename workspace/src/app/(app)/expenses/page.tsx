@@ -120,9 +120,9 @@ export default function ExpensesPage() {
                 });
             }
             return acc;
-        }, {} as Record<string, (Expense & { date: Date })[]>);
+        }, {} as Record<string, (Omit<Expense, 'date'> & { date: Date })[]>);
 
-        const allWithBalances: (Expense & { date: Date })[] = [];
+        const allWithBalances: (Omit<Expense, 'date'> & { date: Date })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
@@ -132,7 +132,7 @@ export default function ExpensesPage() {
                 accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
                 let running = 0;
                 accountTransactions.forEach(tx => {
-                    running += getAmountChange(tx, account.type);
+                    running += getAmountChange(tx as any, account.type);
                     tx.runningBalance = running;
                 });
                 allWithBalances.push(...accountTransactions);

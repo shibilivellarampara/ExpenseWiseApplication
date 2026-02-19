@@ -106,7 +106,7 @@ export default function ExpensesPage() {
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Convert Timestamps to Dates and create typed objects
+        // 1. Correctly type the transactions for processing
         const allProcessed = allExpenses.map(tx => ({
             ...tx,
             date: (tx.date as any).toDate() as Date
@@ -124,7 +124,7 @@ export default function ExpensesPage() {
             }
         });
 
-        const allWithBalances: (typeof allProcessed[number] & { runningBalance?: number })[] = [];
+        const allWithBalances: (Omit<Expense, 'date'> & { date: Date; runningBalance?: number })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];

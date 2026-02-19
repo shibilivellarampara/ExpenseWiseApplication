@@ -89,25 +89,57 @@ const renderActiveShape = (
 
   const textAnchor = cos >= 0 ? 'start' : 'end';
   const label = payload.name;
+  const words = label.split(' ');
+  const isMultiLine = label.length > 10 && words.length > 1;
+  
+  let line1 = label;
+  let line2 = "";
+  
+  if (isMultiLine) {
+    let bestSplitIndex = 1;
+    let minDiff = Infinity;
+    for (let i = 1; i < words.length; i++) {
+      const l1 = words.slice(0, i).join(' ').length;
+      const l2 = words.slice(i).join(' ').length;
+      const diff = Math.abs(l1 - l2);
+      if (diff <= minDiff) {
+        minDiff = diff;
+        bestSplitIndex = i;
+      }
+    }
+    line1 = words.slice(0, bestSplitIndex).join(' ');
+    line2 = words.slice(bestSplitIndex).join(' ');
+  }
 
   return (
     <g>
-      {/* Center label with dynamic font size */}
-      <text
-        x={cx}
-        y={cy}
-        textAnchor="middle"
-        dominantBaseline="central"
-        fill={fill}
-        className={cn(
-          "font-semibold transition-all duration-300",
-          label.length > 20 ? "text-[10px]" : 
-          label.length > 15 ? "text-xs" : 
-          label.length > 10 ? "text-sm" : "text-base"
-        )}
-      >
-        {label}
-      </text>
+      {/* Center label with dynamic font size or multi-line wrap */}
+      {isMultiLine ? (
+        <>
+          <text x={cx} y={cy} dy={-4} textAnchor="middle" fill={fill} className="font-semibold text-xs transition-all duration-300">
+            {line1}
+          </text>
+          <text x={cx} y={cy} dy={14} textAnchor="middle" fill={fill} className="font-semibold text-xs transition-all duration-300">
+            {line2}
+          </text>
+        </>
+      ) : (
+        <text
+          x={cx}
+          y={cy}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill={fill}
+          className={cn(
+            "font-semibold transition-all duration-300",
+            label.length > 20 ? "text-[10px]" : 
+            label.length > 15 ? "text-xs" : 
+            label.length > 10 ? "text-sm" : "text-base"
+          )}
+        >
+          {label}
+        </text>
+      )}
 
       {/* Main slice */}
       <Sector

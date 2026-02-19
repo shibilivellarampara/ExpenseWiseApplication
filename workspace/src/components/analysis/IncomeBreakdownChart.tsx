@@ -39,24 +39,56 @@ const renderActiveShape = (props: any, currencySymbol: string) => {
   const ey = my;
   const textAnchor = cos >= 0 ? 'start' : 'end';
   const label = payload.name;
+  const words = label.split(' ');
+  const isMultiLine = label.length > 10 && words.length > 1;
+  
+  let line1 = label;
+  let line2 = "";
+  
+  if (isMultiLine) {
+    let bestSplitIndex = 1;
+    let minDiff = Infinity;
+    for (let i = 1; i < words.length; i++) {
+      const l1 = words.slice(0, i).join(' ').length;
+      const l2 = words.slice(i).join(' ').length;
+      const diff = Math.abs(l1 - l2);
+      if (diff <= minDiff) {
+        minDiff = diff;
+        bestSplitIndex = i;
+      }
+    }
+    line1 = words.slice(0, bestSplitIndex).join(' ');
+    line2 = words.slice(bestSplitIndex).join(' ');
+  }
 
   return (
     <g>
-      <text 
-        x={cx} 
-        y={cy} 
-        dy={8} 
-        textAnchor="middle" 
-        fill={fill} 
-        className={cn(
-          "font-headline transition-all duration-300",
-          label.length > 20 ? "text-xs" : 
-          label.length > 15 ? "text-sm" : 
-          label.length > 10 ? "text-base" : "text-lg"
-        )}
-      >
-        {label}
-      </text>
+      {isMultiLine ? (
+        <>
+          <text x={cx} y={cy} dy={-4} textAnchor="middle" fill={fill} className="font-headline font-semibold text-xs transition-all duration-300">
+            {line1}
+          </text>
+          <text x={cx} y={cy} dy={16} textAnchor="middle" fill={fill} className="font-headline font-semibold text-xs transition-all duration-300">
+            {line2}
+          </text>
+        </>
+      ) : (
+        <text 
+          x={cx} 
+          y={cy} 
+          dy={8} 
+          textAnchor="middle" 
+          fill={fill} 
+          className={cn(
+            "font-headline transition-all duration-300",
+            label.length > 20 ? "text-xs" : 
+            label.length > 15 ? "text-sm" : 
+            label.length > 10 ? "text-base" : "text-lg"
+          )}
+        >
+          {label}
+        </text>
+      )}
       <Sector
         cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius} startAngle={startAngle} endAngle={endAngle} fill={fill}
       />

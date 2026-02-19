@@ -48,18 +48,14 @@ import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '@/components/DateTimePicker';
 
-// Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
   let schema = z.object({
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
-    
     categoryId: z.string().optional(),
-    
     description: z.string().optional(),
-    
     tagIds: z.array(z.string()).optional(),
   });
 
@@ -76,7 +72,6 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
   return schema;
 };
 
-// Component for quick adding of Categories or Tags
 interface QuickAddItemDialogProps {
     type: 'Category' | 'Tag';
     onSave: (name: string, icon: string) => Promise<string | undefined>;

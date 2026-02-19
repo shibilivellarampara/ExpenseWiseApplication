@@ -18,12 +18,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, PlusCircle, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -45,20 +47,15 @@ import { generateColorStyle } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '@/components/DateTimePicker';
-import { Button } from '@/components/ui/button';
 
-// Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
   let schema = z.object({
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
-    
     categoryId: z.string().optional(),
-    
     description: z.string().optional(),
-    
     tagIds: z.array(z.string()).optional(),
   });
 
@@ -75,7 +72,6 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
   return schema;
 };
 
-// Component for quick adding of Categories or Tags
 interface QuickAddItemDialogProps {
     type: 'Category' | 'Tag';
     onSave: (name: string, icon: string) => Promise<string | undefined>;
@@ -689,7 +685,7 @@ export function AddExpenseDialog({
                                         Delete
                                     </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent className="rounded-[24px]">
+                                <AlertDialogContent>
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
@@ -722,7 +718,7 @@ export function AddExpenseDialog({
                                 variant="outline" 
                                 className="w-full px-1 text-[14px] border-primary text-primary hover:bg-primary/5 hover:text-primary"
                             >
-                                {loadingState === 'saveAndNew' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & New'}
+                                {loadingState === 'saveAndNew' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save & New'}
                             </Button>
                             <Button type="submit" form={formId} disabled={loadingState !== 'idle'} className="w-full text-[14px] px-1">
                                 {loadingState === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save'}

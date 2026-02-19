@@ -50,6 +50,12 @@ function AnalysisPageContent() {
     const [customDateRange, setCustomDateRange] = useState<{ from?: Date, to?: Date }>({ from: undefined, to: undefined });
     const [specificMonth, setSpecificMonth] = useState<Date>(new Date());
     const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+    
+    // Controlled states for dropdowns/popovers to auto-close on select
+    const [isTimeRangeOpen, setIsTimeRangeOpen] = useState(false);
+    const [isAccountsOpen, setIsAccountsOpen] = useState(false);
+    const [isTagsOpen, setIsTagsOpen] = useState(false);
+
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [includeHidden, setIncludeHidden] = useState(false);
@@ -210,6 +216,7 @@ function AnalysisPageContent() {
     const handleTimeRangeChange = (value: string) => {
         setTimeRangePreset(value as TimeRangePreset);
         setAiAnalysis(null);
+        setIsTimeRangeOpen(false); // Close the popover on selection
     };
 
     const timeRangeLabels: Record<TimeRangePreset, string> = {
@@ -263,7 +270,7 @@ function AnalysisPageContent() {
                 />
 
                 <div className="flex items-center gap-2 overflow-x-auto pb-3 pt-1 no-scrollbar pr-4 bg-muted/20 -mx-4 px-4 mb-2">
-                    <Popover>
+                    <Popover open={isTimeRangeOpen} onOpenChange={setIsTimeRangeOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-transparent shadow-none shrink-0 hover:bg-card">
                                 {timeRangeLabels[timeRangePreset]}
@@ -289,7 +296,7 @@ function AnalysisPageContent() {
                         </PopoverContent>
                     </Popover>
 
-                    <DropdownMenu>
+                    <DropdownMenu open={isAccountsOpen} onOpenChange={setIsAccountsOpen}>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-transparent shadow-none shrink-0 hover:bg-card">
                                 {selectedAccounts.length === 0 
@@ -306,11 +313,18 @@ function AnalysisPageContent() {
                                 <CommandList>
                                     <CommandEmpty>No results found.</CommandEmpty>
                                     <CommandGroup>
-                                        <CommandItem onSelect={() => setSelectedAccounts([])} className="flex justify-between">
+                                        <CommandItem onSelect={() => { setSelectedAccounts([]); setIsAccountsOpen(false); }} className="flex justify-between">
                                             All Accounts <Check className={cn("h-4 w-4", selectedAccounts.length === 0 ? "opacity-100" : "opacity-0")} />
                                         </CommandItem>
                                         {allAccounts?.map(acc => (
-                                            <CommandItem key={acc.id} onSelect={() => setSelectedAccounts(prev => prev.includes(acc.id) ? prev.filter(id => id !== acc.id) : [...prev, acc.id])} className="flex justify-between">
+                                            <CommandItem 
+                                                key={acc.id} 
+                                                onSelect={() => {
+                                                    setSelectedAccounts(prev => prev.includes(acc.id) ? prev.filter(id => id !== acc.id) : [...prev, acc.id]);
+                                                    setIsAccountsOpen(false);
+                                                }} 
+                                                className="flex justify-between"
+                                            >
                                                 {acc.name} <Check className={cn("h-4 w-4", selectedAccounts.includes(acc.id) ? "opacity-100" : "opacity-0")} />
                                             </CommandItem>
                                         ))}
@@ -320,7 +334,7 @@ function AnalysisPageContent() {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <DropdownMenu>
+                    <DropdownMenu open={isTagsOpen} onOpenChange={setIsTagsOpen}>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="sm" className="h-9 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-transparent shadow-none shrink-0 hover:bg-card">
                                 {selectedTags.length === 0 
@@ -337,11 +351,18 @@ function AnalysisPageContent() {
                                 <CommandList>
                                     <CommandEmpty>No results found.</CommandEmpty>
                                     <CommandGroup>
-                                        <CommandItem onSelect={() => setSelectedTags([])} className="flex justify-between">
+                                        <CommandItem onSelect={() => { setSelectedTags([]); setIsTagsOpen(false); }} className="flex justify-between">
                                             All Tags <Check className={cn("h-4 w-4", selectedTags.length === 0 ? "opacity-100" : "opacity-0")} />
                                         </CommandItem>
                                         {tags?.map(tag => (
-                                            <CommandItem key={tag.id} onSelect={() => setSelectedTags(prev => prev.includes(tag.id) ? prev.filter(id => id !== tag.id) : [...prev, tag.id])} className="flex justify-between">
+                                            <CommandItem 
+                                                key={tag.id} 
+                                                onSelect={() => {
+                                                    setSelectedTags(prev => prev.includes(tag.id) ? prev.filter(id => id !== tag.id) : [...prev, tag.id]);
+                                                    setIsTagsOpen(false);
+                                                }} 
+                                                className="flex justify-between"
+                                            >
                                                 {tag.name} <Check className={cn("h-4 w-4", selectedTags.includes(tag.id) ? "opacity-100" : "opacity-0")} />
                                             </CommandItem>
                                         ))}

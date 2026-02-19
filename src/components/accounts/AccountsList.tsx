@@ -273,7 +273,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
         );
     }
 
-    const renderAccountCard = (item: Account) => {
+    const renderAccountCard = (item: Account, isFeatured: boolean = false) => {
         const isCreditCard = item.type === 'credit_card';
         const limit = item.limit || 0;
         const available = item.balance;
@@ -282,7 +282,15 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
         const availablePercent = limit > 0 ? (available / limit) * 100 : 0;
 
         return (
-            <Card key={item.id} className="rounded-[20px] border border-border/50 shadow-md hover:shadow-lg transition-all duration-300 bg-card overflow-hidden group">
+            <Card 
+                key={item.id} 
+                className={cn(
+                    "rounded-[20px] border border-border/50 transition-all duration-300 bg-card overflow-hidden group",
+                    isFeatured 
+                        ? "shadow-[0_8px_24px_rgba(0,0,0,0.08),0_-8px_24px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04)] -translate-y-0.5 z-10" 
+                        : "shadow-md hover:shadow-lg"
+                )}
+            >
                 <CardContent className="p-4">
                     <div className="flex items-start gap-4">
                         <div className="flex-shrink-0">
@@ -420,7 +428,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                     )}
                 </div>
                 <div className="grid gap-4">
-                    {activeCreditCards.map(renderAccountCard)}
+                    {activeCreditCards.map((card, idx) => renderAccountCard(card, idx === 0))}
                     {activeCreditCards.length === 0 && !isLoading && (
                         <p className="text-sm text-muted-foreground/60 text-center py-4 bg-muted/10 rounded-[20px] border border-dashed">No active credit cards</p>
                     )}
@@ -439,7 +447,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                     )}
                 </div>
                 <div className="grid gap-4">
-                    {activeOtherAccounts.map(renderAccountCard)}
+                    {activeOtherAccounts.map((account) => renderAccountCard(account))}
                     {activeOtherAccounts.length === 0 && !isLoading && (
                         <p className="text-sm text-muted-foreground/60 text-center py-4 bg-muted/10 rounded-[20px] border border-dashed">No active savings accounts</p>
                     )}

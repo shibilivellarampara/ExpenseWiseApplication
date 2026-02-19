@@ -407,7 +407,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
         <div className="space-y-8">
             {/* Active Credit Cards Section */}
             <div className="space-y-4">
-                <div className="flex justify-between items-end px-1">
+                <div className="flex justify-between items-center px-1">
                     <div>
                         <h2 className="text-xl font-bold font-headline">Credit Cards</h2>
                     </div>
@@ -415,9 +415,6 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                         <div className="text-right">
                             <p className="text-xl font-bold text-destructive">
                                 {currencySymbol}{formatAmount(activeCreditCards.reduce((sum, c) => sum + Math.max(0, (c.limit || 0) - c.balance), 0))}
-                            </p>
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-widest leading-none mt-1">
-                                Available: {currencySymbol}{formatAmount(activeCreditCards.reduce((sum, c) => sum + c.balance, 0))}
                             </p>
                         </div>
                     )}

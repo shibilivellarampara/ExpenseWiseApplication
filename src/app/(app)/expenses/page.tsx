@@ -271,6 +271,7 @@ export default function ExpensesPage() {
                 onSelectionChange={setSelectedExpenseIds}
                 isDeleting={isDeleting}
                 onDeleteSelected={handleDeleteSelected}
+                hideBalance={filters.categories.length > 0 || filters.tags.length > 0}
             />
 
              <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">

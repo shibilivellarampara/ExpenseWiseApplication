@@ -9,7 +9,7 @@ import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { useMemo, useRef, useState, useCallback, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,6 +39,7 @@ interface ExpensesTableProps {
   onSelectionChange: (ids: string[]) => void;
   isDeleting: boolean;
   onDeleteSelected: () => void;
+  hideBalance?: boolean;
 }
 
 const getInitials = (name?: string | null) => {
@@ -46,16 +47,9 @@ const getInitials = (name?: string | null) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 };
 
-const formatAmount = (amount: number) => {
-    if (amount % 1 === 0) {
-        return amount.toString();
-    }
-    return amount.toFixed(2);
-};
-
 type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense: EnrichedExpense };
 
-function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; }) {
+function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting, hideBalance }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; hideBalance?: boolean }) {
     
     const [expandedTags, setExpandedTags] = useState<Record<string, boolean>>({});
     const [selectionMode, setSelectionMode] = useState(false);
@@ -65,14 +59,6 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         setSelectionMode(selectedIds.length > 0);
     }, [selectedIds]);
 
-    const handleToggleSelectionMode = () => {
-        const newMode = !selectionMode;
-        setSelectionMode(newMode);
-        if(!newMode) {
-            onSelectionChange([]);
-        }
-    }
-    
     const handleSelection = (id: string) => {
         const newSelectedIds = selectedIds.includes(id)
             ? selectedIds.filter(i => i !== id)
@@ -101,7 +87,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
             return acc;
         }, {} as { [key: string]: EnrichedExpense[] });
 
-        Object.keys(groupedExpenses).forEach(date => {
+        Object.keys(groupedExpenses).sort((a,b) => b.localeCompare(a)).forEach(date => {
             rows.push({ type: 'header', date });
             groupedExpenses[date].forEach(expense => {
                 rows.push({ type: 'expense', expense });
@@ -116,8 +102,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         estimateSize: (index) => {
              const row = allRows[index];
              if (row.type === 'header') return viewMode === 'compact' ? 30 : 38;
-             if (viewMode === 'compact') return 48; // Compact view row height
-             // Estimate normal view height
+             if (viewMode === 'compact') return 48;
              let height = 60;
              if (row.expense.tags && row.expense.tags.length > 0) height += 20;
              if (row.expense.category) height += 20;
@@ -144,7 +129,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                     Delete
                                 </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
+                            <AlertDialogContent className="rounded-[24px]">
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                     <AlertDialogDescription>This will permanently delete {selectedIds.length} transaction(s).</AlertDialogDescription>
@@ -244,29 +229,30 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                             <div className="text-xs text-muted-foreground flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <button
-                                                        className="flex items-center gap-1 rounded-md px-1 -mx-1 transition-colors hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring"
+                                                        className="flex items-center gap-1 rounded-md px-1 -mx-1 transition-colors hover:bg-accent"
                                                         onClick={(e) => { e.stopPropagation(); onBadgeClick?.('account', row.expense.account!.id)}}
                                                         disabled={!row.expense.account}
                                                     >
-                                                        {renderIcon(row.expense.account?.icon, "h-3 w-3 mr-0")}
+                                                        {renderIcon(row.expense.account?.icon, "h-3 w-3")}
                                                         <span>{row.expense.account?.name}</span>
                                                     </button>
                                                     <span className="text-muted-foreground/50">&bull;</span>
                                                     <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
-                                                {typeof row.expense.runningBalance === 'number' && (
-                                                    <div className="text-muted-foreground">
+                                                {!hideBalance && typeof row.expense.runningBalance === 'number' && (
+                                                    <div className="text-muted-foreground font-medium">
                                                         Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
                                                     </div>
                                                 )}
                                             </div>
                                             
                                             {viewMode === 'normal' && (
-                                                <div className="flex flex-wrap items-center gap-1 pt-1 w-full">
+                                                <div className="flex flex-wrap items-center gap-1.5 pt-1.5 w-full">
                                                     {row.expense.category && (
                                                         <Badge
+                                                            variant="outline"
                                                             style={generateColorStyle(row.expense.category.name)}
-                                                            className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                            className="badge-colorful text-[10px] px-2 py-0 h-5 font-medium cursor-pointer"
                                                             onClick={(e) => { e.stopPropagation(); onBadgeClick?.('category', row.expense.category!.id)}}
                                                         >
                                                             {renderIcon(row.expense.category.icon, "h-3 w-3 mr-1")}
@@ -277,8 +263,9 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                     {(expandedTags[row.expense.id] ? row.expense.tags : (row.expense.tags || []).slice(0, 3)).map(tag => (
                                                         <Badge
                                                             key={tag.id}
+                                                            variant="outline"
                                                             style={generateColorStyle(tag.name)}
-                                                            className="badge-colorful text-xs px-1.5 py-0 cursor-pointer"
+                                                            className="badge-colorful text-[10px] px-2 py-0 h-5 font-medium cursor-pointer"
                                                             onClick={(e) => { e.stopPropagation(); onBadgeClick?.('tag', tag.id)}}
                                                         >
                                                             {renderIcon(tag.icon, "h-3 w-3 mr-1")}
@@ -288,13 +275,13 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                     {(row.expense.tags?.length || 0) > 3 && (
                                                         <Badge
                                                             variant="secondary"
-                                                            className="text-xs px-1.5 py-0 cursor-pointer"
+                                                            className="text-[10px] px-2 py-0 h-5 font-medium cursor-pointer"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 setExpandedTags(prev => ({...prev, [row.expense.id]: !prev[row.expense.id]}));
                                                             }}
                                                         >
-                                                            {expandedTags[row.expense.id] ? 'Less' : `+${(row.expense.tags?.length || 0) - 3} more`}
+                                                            {expandedTags[row.expense.id] ? 'Less' : `+${(row.expense.tags?.length || 0) - 3}`}
                                                         </Badge>
                                                     )}
                                                 </div>
@@ -303,12 +290,11 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                     </div>
                                 ) : (
                                     <div className={cn(
-                                        "px-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b",
-                                        viewMode === 'compact' ? 'py-1' : 'py-2',
-                                        selectionMode && 'pt-12' 
+                                        "px-3 py-2 sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b",
+                                        viewMode === 'compact' && 'py-1'
                                     )}>
                                         <h3 className="text-sm font-semibold">
-                                            {new Date(row.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                            {new Date(row.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                                         </h3>
                                     </div>
                                 )}
@@ -321,7 +307,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
     );
 }
 
-export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadgeClick, selectedIds, onSelectionChange, isDeleting, onDeleteSelected }: ExpensesTableProps) {
+export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadgeClick, selectedIds, onSelectionChange, isDeleting, onDeleteSelected, hideBalance }: ExpensesTableProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -371,5 +357,5 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={onSelectionChange} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} />;
+  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={onSelectionChange} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} hideBalance={hideBalance} />;
 }

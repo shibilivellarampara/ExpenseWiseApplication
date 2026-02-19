@@ -18,6 +18,8 @@ interface DebtsSummaryProps {
     activeFilter: 'all' | 'lent' | 'borrowed';
 }
 
+const featuredCardClass = "rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.08),0_-8px_24px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04)] -translate-y-0.5 border-none overflow-hidden bg-card transition-all duration-300 relative z-10";
+
 export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }: DebtsSummaryProps) {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -57,7 +59,7 @@ export function DebtsSummary({ debts, isLoading, onFilterChange, activeFilter }:
     }
 
     return (
-        <Card className="rounded-[24px] border-none shadow-xl bg-card overflow-hidden relative">
+        <Card className={featuredCardClass}>
             <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-8">
                     <div 

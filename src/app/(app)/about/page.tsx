@@ -21,7 +21,7 @@ const changelog = [
         version: "1.8.8",
         date: "Feb 19, 2026",
         changes: [
-            { type: 'UI/UX', description: "Implemented 'Liquid Glass' design for bottom navigation and FAB, featuring backdrop-blur-2xl, inner edge highlights, and ambient floating shadows." },
+            { type: 'UI/UX', description: "Implemented 'Liquid Glass' design for bottom navigation and FAB, featuring backdrop-blur-2xl, inner edge highlights, and deep ambient floating shadows." },
             { type: 'UI/UX', description: "Enhanced secondary navigation transitions with liquid-scale animations and refined glassmorphic depth." },
             { type: 'UI/UX', description: "Optimized mobile typography for bottom navigation labels with bold uppercase tracking for maximum legibility on glass surfaces." },
         ]

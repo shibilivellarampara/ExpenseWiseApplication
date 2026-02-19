@@ -167,7 +167,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                 ...prev,
                 tags: [id],
                 categories: [],
-                tags: [],
+                accounts: [],
             }));
         } else { // account
              setFilters(prev => ({

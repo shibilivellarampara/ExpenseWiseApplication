@@ -32,7 +32,7 @@ import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
-import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy, Timestamp } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import * as LucideIcons from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -215,7 +215,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [open, setOpen] = useState(false);
     const [inputValue, setInputValue] = useState("");
-    const selectedTagIds = new Set(field.value || []);
+    const selectedTagIds = new Set<string>(field.value || []);
 
     const handleUnselect = useCallback((tagId: string) => {
         const currentIds = field.value || [];
@@ -227,8 +227,8 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
         if (input) {
             if (e.key === "Delete" || e.key === "Backspace") {
                 if (input.value === "" && selectedTagIds.size > 0) {
-                    const tagIdsArray = Array.from(selectedTagIds) as string[];
-                    const lastTagId = tagIdsArray[tagIdsArray.length - 1];
+                    const tagIdsArray = Array.from(selectedTagIds);
+                    const lastTagId = tagIdsArray.pop();
                     if(lastTagId) {
                       handleUnselect(lastTagId);
                     }

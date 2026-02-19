@@ -54,7 +54,7 @@ function AnalysisPageContent() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [includeHidden, setIncludeHidden] = useState(false);
     
-    // Default to closed for all collapsible cards
+    // Set all cards to false (closed) by default per user request
     const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({
         savings: false,
         topCats: false,
@@ -243,6 +243,8 @@ function AnalysisPageContent() {
         setExpandedCards(prev => ({ ...prev, [card]: !prev[card] }));
     };
 
+    const featuredCardClass = "rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.08),0_-8px_24px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04)] -translate-y-0.5 border-none overflow-hidden bg-card transition-all duration-300";
+
     return (
         <div className="w-full space-y-6 pb-32">
             <Suspense fallback={null}>
@@ -361,7 +363,7 @@ function AnalysisPageContent() {
 
                     {(analysisSettings?.showSavingsTrendChart ?? true) && (
                         <Collapsible open={expandedCards.savings} onOpenChange={() => toggleCard('savings')}>
-                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <Card className={featuredCardClass}>
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>
@@ -382,7 +384,7 @@ function AnalysisPageContent() {
 
                     {(analysisSettings?.showCategoryBarChart ?? true) && (
                         <Collapsible open={expandedCards.topCats} onOpenChange={() => toggleCard('topCats')}>
-                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <Card className={featuredCardClass}>
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>
@@ -403,7 +405,7 @@ function AnalysisPageContent() {
 
                     {(analysisSettings?.showTagPieChart ?? true) && (
                         <Collapsible open={expandedCards.tags} onOpenChange={() => toggleCard('tags')}>
-                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <Card className={featuredCardClass}>
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>
@@ -424,7 +426,7 @@ function AnalysisPageContent() {
 
                     {(analysisSettings?.showIncomePieChart ?? true) && (
                         <Collapsible open={expandedCards.income} onOpenChange={() => toggleCard('income')}>
-                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <Card className={featuredCardClass}>
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>
@@ -445,7 +447,7 @@ function AnalysisPageContent() {
 
                     {(analysisSettings?.showTrendChart ?? true) && (
                         <Collapsible open={expandedCards.trend} onOpenChange={() => toggleCard('trend')}>
-                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <Card className={featuredCardClass}>
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>
@@ -466,7 +468,7 @@ function AnalysisPageContent() {
 
                     {(analysisSettings?.showAiInsights ?? true) && (
                         <Collapsible open={expandedCards.ai} onOpenChange={() => toggleCard('ai')}>
-                            <Card className="rounded-[20px] shadow-md border-none overflow-hidden bg-card">
+                            <Card className={featuredCardClass}>
                                 <CollapsibleTrigger asChild>
                                     <div className="p-6 pb-2 flex items-center justify-between cursor-pointer group">
                                         <div>

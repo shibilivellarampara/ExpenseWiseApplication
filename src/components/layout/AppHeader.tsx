@@ -94,7 +94,7 @@ function Notifications() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full hover:bg-muted">
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full hover:bg-muted focus-visible:ring-0 focus-visible:ring-offset-0">
                     <Bell className="h-[1.1rem] w-[1.1rem] text-muted-foreground" />
                     {unreadCount > 0 && (
                         <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
@@ -131,7 +131,7 @@ function DevReloadButton() {
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => window.location.reload()}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0" onClick={() => window.location.reload()}>
                         <RefreshCw className="h-[1.1rem] w-[1.1rem] text-muted-foreground" />
                     </Button>
                 </TooltipTrigger>

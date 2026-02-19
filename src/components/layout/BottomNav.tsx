@@ -135,7 +135,7 @@ export function BottomNav() {
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className={cn(
-                        'flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors pointer-events-auto',
+                        'flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-colors pointer-events-auto focus:outline-none',
                         isExpanded ? 'text-primary' : 'text-muted-foreground hover:text-primary'
                         )}
                     >
@@ -150,7 +150,7 @@ export function BottomNav() {
                         <AddExpenseDialog onSaveSuccess={handleDataChange}>
                             <Button
                                 size="icon"
-                                className="h-[72px] w-[72px] rounded-full bg-primary border-4 border-background shadow-[0_4px_8px_rgba(0,0,0,0.1)]"
+                                className="h-[72px] w-[72px] rounded-full bg-primary border-4 border-background shadow-[0_4px_8px_rgba(0,0,0,0.1)] focus-visible:ring-0 focus-visible:ring-offset-0"
                             >
                                 <Plus className="h-8 w-8" />
                                 <span className="sr-only">Add Transaction</span>
@@ -160,7 +160,7 @@ export function BottomNav() {
                         <Button
                             size="icon"
                             onClick={() => router.push(transactionsHref)}
-                            className="h-[72px] w-[72px] rounded-full bg-primary border-4 border-background shadow-[0_4px_8px_rgba(0,0,0,0.1)]"
+                            className="h-[72px] w-[72px] rounded-full bg-primary border-4 border-background shadow-[0_4px_8px_rgba(0,0,0,0.1)] focus-visible:ring-0 focus-visible:ring-offset-0"
                         >
                             <ArrowRightLeft className="h-7 w-7" />
                             <span className="sr-only">Go to Transactions</span>

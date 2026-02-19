@@ -675,9 +675,9 @@ export function AddExpenseDialog({
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="sm:max-w-md w-[calc(100%-2rem)] flex flex-col max-h-[90vh] rounded-[24px]" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
-                    <DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add Transaction'}</DialogTitle>
+                    <DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle>
                 </DialogHeader>
-                <div className="flex-1 overflow-y-auto -mx-6 px-6 py-2">
+                <div className="flex-1 overflow-y-auto -mx-6 px-6">
                     <ExpenseForm form={form} onSubmit={onFinalSubmit} id={formId} accounts={accounts} categories={categories} tags={tags} />
                 </div>
                  <DialogFooter className="w-full pt-4">

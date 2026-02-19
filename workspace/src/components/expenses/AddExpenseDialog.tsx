@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -33,7 +32,7 @@ import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
-import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy, Timestamp } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
 import * as LucideIcons from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -276,7 +275,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                         value={inputValue}
                         onValueChange={(val) => {
                             setInputValue(val);
-                            if (val.length > 0) setOpen(true);
+                            if (val.length >= 0) setOpen(true);
                         }}
                         onBlur={() => setTimeout(() => setOpen(false), 200)}
                         onFocus={() => setOpen(true)}

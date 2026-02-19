@@ -1,4 +1,3 @@
-
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -110,7 +109,7 @@ export default function ExpensesPage() {
         };
         
         // 1. Group ALL fetched transactions per account to calc balances before filtering
-        const transactionsByAccount: Record<string, (Omit<Expense, 'date'> & { date: Date })[]> = {};
+        const transactionsByAccount: Record<string, ProcessedExpense[]> = {};
 
         allExpenses.forEach(tx => {
             if (tx.accountId) {
@@ -125,7 +124,7 @@ export default function ExpensesPage() {
             }
         });
 
-        const allWithBalances: (Omit<Expense, 'date'> & { date: Date; runningBalance?: number })[] = [];
+        const allWithBalances: (ProcessedExpense & { runningBalance?: number })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];

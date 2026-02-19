@@ -50,7 +50,7 @@ export default function AccountsPage() {
                         placeholder="Search accounts..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 h-10 bg-card border-none shadow-sm rounded-full"
+                        className="pl-9 h-10 bg-transparent border-none shadow-none rounded-full focus-visible:ring-0"
                     />
                     {searchQuery && (
                         <Button 

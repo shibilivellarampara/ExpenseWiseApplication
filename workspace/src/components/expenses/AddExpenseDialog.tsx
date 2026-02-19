@@ -218,9 +218,8 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     const selectedTagIds = new Set(field.value || []);
 
     const handleUnselect = useCallback((tagId: string) => {
-        const newSelectedIds = new Set(field.value || []);
-        newSelectedIds.delete(tagId);
-        field.onChange(Array.from(newSelectedIds));
+        const currentIds = field.value || [];
+        field.onChange(currentIds.filter((id: string) => id !== tagId));
     }, [field]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -230,9 +229,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                 if (input.value === "" && selectedTagIds.size > 0) {
                     const lastTagId = Array.from(selectedTagIds).pop();
                     if(lastTagId) {
-                      const newSelectedIds = new Set(field.value || []);
-                      newSelectedIds.delete(lastTagId);
-                      field.onChange(Array.from(newSelectedIds));
+                      handleUnselect(lastTagId);
                     }
                 }
             }
@@ -240,7 +237,6 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
         }
     };
     
-    // Manual filtering to ensure reactivity when typos are corrected
     const filteredTags = useMemo(() => {
         return tags.filter(tag =>
             tag.name.toLowerCase().includes(inputValue.toLowerCase())
@@ -363,7 +359,7 @@ function ExpenseForm({ form, onSubmit, id, accounts, categories, tags, isEditMod
     };
 
     useEffect(() => {
-        if (isEditMode) return; // Don't run suggestions when editing existing tx
+        if (isEditMode) return;
         
         const hasInput = debouncedDescription || debouncedCategoryId || (debouncedTagIds && debouncedTagIds.length > 0);
         if (!hasInput || !isAiSuggestionEnabled || activeCategories.length === 0 || activeAccounts.length === 0) return;
@@ -454,7 +450,7 @@ function ExpenseForm({ form, onSubmit, id, accounts, categories, tags, isEditMod
                         </QuickAddItemDialog>
                         <SelectItem value="__none__">No Category</SelectItem>
                         {activeCategories?.map(cat => (
-                            <SelectItem key={cat.id} value={cat.id}><div className="flex items-center">{renderIcon(acc.icon)}{cat.name}</div></SelectItem>
+                            <SelectItem key={cat.id} value={cat.id}><div className="flex items-center">{renderIcon(cat.icon)}{cat.name}</div></SelectItem>
                         ))}
                     </FloatingLabelSelect>
                     <FormMessage />
@@ -591,12 +587,13 @@ function useExpenseForm({ setOpen, expenseToEdit, initialType, open, onSaveSucce
 
             if (isEditMode && expenseToEdit) {
                 const oldAmountChange = expenseToEdit.type === 'income' ? expenseToEdit.amount : -expenseToEdit.amount;
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, values.accountId);
                 if (expenseToEdit.account?.id === values.accountId) {
-                    const diff = amountChange - oldAmountChange;
-                    batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(diff) });
+                    batch.update(accountRef, { balance: increment(amountChange - oldAmountChange) });
                 } else if (expenseToEdit.account?.id) {
-                    batch.update(doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account.id), { balance: increment(-oldAmountChange) });
-                    batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(amountChange) });
+                    const oldAccountRef = doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account.id);
+                    batch.update(oldAccountRef, { balance: increment(-oldAmountChange) });
+                    batch.update(accountRef, { balance: increment(amountChange) });
                 }
             } else {
                 batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(amountChange) });

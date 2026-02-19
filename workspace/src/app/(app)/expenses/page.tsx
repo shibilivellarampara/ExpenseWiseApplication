@@ -106,40 +106,41 @@ export default function ExpensesPage() {
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Group ALL fetched transactions per account to calc balances before filtering
-        const transactionsByAccount: Record<string, (Omit<Expense, 'date'> & { date: Date })[]> = {};
+        // 1. Process dates correctly for calculations
+        const allProcessed = allExpenses.map(tx => ({
+            ...tx,
+            date: (tx.date as any).toDate() as Date
+        }));
 
-        allExpenses.forEach(tx => {
+        // 2. Group ALL fetched transactions per account to calc balances before filtering
+        const transactionsByAccount: Record<string, typeof allProcessed> = {};
+
+        allProcessed.forEach(tx => {
             if (tx.accountId) {
                 if (!transactionsByAccount[tx.accountId]) {
                     transactionsByAccount[tx.accountId] = [];
                 }
-                const txDate = tx.date instanceof Date ? tx.date : (tx.date as any).toDate();
-                transactionsByAccount[tx.accountId].push({
-                    ...tx,
-                    date: txDate
-                } as any);
+                transactionsByAccount[tx.accountId].push(tx);
             }
         });
 
-        const allWithBalances: (Omit<Expense, 'date'> & { date: Date } & { runningBalance?: number })[] = [];
+        const allWithBalances: (typeof allProcessed[number] & { runningBalance?: number })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
-            const account = accountMap.get(accountId);
-
-            if (account) {
-                accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
-                let running = 0;
-                accountTransactions.forEach(tx => {
-                    running += getAmountChange(tx);
-                    (tx as any).runningBalance = running;
+            accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
+            
+            let running = 0;
+            accountTransactions.forEach(tx => {
+                running += getAmountChange(tx);
+                allWithBalances.push({
+                    ...tx,
+                    runningBalance: running
                 });
-                allWithBalances.push(...accountTransactions);
-            }
+            });
         }
 
-        // 2. Filter visibility
+        // 3. Apply visibility filters
         let finalFiltered = allWithBalances.filter(expense => {
             if (filters.type !== 'all' && expense.type !== filters.type) return false;
             if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
@@ -154,6 +155,7 @@ export default function ExpensesPage() {
             return true;
         });
         
+        // 4. Enrich and sort for final display
         let enriched = finalFiltered.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,

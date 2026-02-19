@@ -24,7 +24,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, PlusCircle, X, Check } from 'lucide-react';
@@ -46,6 +45,9 @@ import { Badge } from '@/components/ui/badge';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '@/components/DateTimePicker';
+import { Button } from '@/components/ui/button';
+
+// --- Helper Logic ---
 
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
   const shape: any = {
@@ -53,13 +55,15 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
     accountId: z.string().min(1, 'Please select an account.'),
-    categoryId: settings?.isCategoryRequired ? z.string().min(1, 'Category is required.') : z.string().optional(),
-    description: settings?.isDescriptionRequired ? z.string().min(1, 'Description is required.') : z.string().optional(),
+    categoryId: settings?.isCategoryRequired ? z.string().min(1, 'Category is required.') : z.string().optional().or(z.literal('')),
+    description: settings?.isDescriptionRequired ? z.string().min(1, 'Description is required.') : z.string().optional().or(z.literal('')),
     tagIds: settings?.isTagRequired ? z.array(z.string()).min(1, 'At least one tag is required.') : z.array(z.string()).optional(),
   };
 
   return z.object(shape);
 };
+
+// --- Internal Components ---
 
 interface QuickAddItemDialogProps {
     type: 'Category' | 'Tag';
@@ -557,7 +561,15 @@ function useExpenseForm({ setOpen, expenseToEdit, initialType, open, onSaveSucce
                 batch.update(doc(firestore, `users/${user.uid}/accounts`, values.accountId), { balance: increment(amountChange), ...(isLimitOp && { limit: increment(amountChange) }) });
             }
 
-            batch[isEditMode ? 'update' : 'set'](expenseRef, { ...values, id: expenseRef.id, userId: user.uid, createdAt: isEditMode ? expenseToEdit!.createdAt : serverTimestamp(), updatedAt: serverTimestamp() });
+            const finalData: any = { ...values, id: expenseRef.id, userId: user.uid, updatedAt: serverTimestamp() };
+            if (isEditMode) {
+                finalData.createdAt = expenseToEdit!.createdAt;
+                batch.update(expenseRef, finalData);
+            } else {
+                finalData.createdAt = serverTimestamp();
+                batch.set(expenseRef, finalData);
+            }
+
             await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);
             toast({ title: isEditMode ? 'Transaction Updated' : 'Transaction Added' });
             onSaveSuccess?.();

@@ -17,6 +17,8 @@ import { useSearchParams } from "next/navigation";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useToast } from "@/hooks/use-toast";
 
+type ProcessedExpense = Omit<Expense, 'date'> & { date: Date };
+
 export default function ExpensesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -106,28 +108,22 @@ export default function ExpensesPage() {
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Process all fetched transactions into local dates
-        const allProcessed = allExpenses.map(tx => ({
-            ...tx,
-            date: (tx.date as any).toDate() as Date
-        }));
+        // 1. Group ALL fetched transactions per account to calc balances before filtering
+        const transactionsByAccount: Record<string, ProcessedExpense[]> = {};
 
-        // 2. Group ALL fetched transactions per account to calc balances before filtering
-        const transactionsByAccount: Record<string, (Omit<Expense, 'date'> & { date: Date })[]> = {};
-
-        allProcessed.forEach(tx => {
+        allExpenses.forEach(tx => {
             if (tx.accountId) {
                 if (!transactionsByAccount[tx.accountId]) {
                     transactionsByAccount[tx.accountId] = [];
                 }
                 transactionsByAccount[tx.accountId].push({
                     ...tx,
-                    date: tx.date
+                    date: (tx.date as any).toDate()
                 });
             }
         });
 
-        const allWithBalances: (Omit<Expense, 'date'> & { date: Date; runningBalance?: number })[] = [];
+        const allWithBalances: (ProcessedExpense & { runningBalance?: number })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
@@ -143,7 +139,7 @@ export default function ExpensesPage() {
             });
         }
 
-        // 3. Apply visibility filters
+        // 2. Apply visibility filters
         let finalFiltered = allWithBalances.filter(expense => {
             if (filters.type !== 'all' && expense.type !== filters.type) return false;
             if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
@@ -158,7 +154,7 @@ export default function ExpensesPage() {
             return true;
         });
         
-        // 4. Enrich and sort for final display
+        // 3. Enrich and sort for final display
         let enriched = finalFiltered.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,

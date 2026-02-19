@@ -238,8 +238,9 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     };
     
     const filteredTags = useMemo(() => {
+        const query = inputValue.toLowerCase().trim();
         return tags.filter(tag =>
-            tag.name.toLowerCase().includes(inputValue.toLowerCase())
+            tag.name.toLowerCase().includes(query)
         );
     }, [tags, inputValue]);
 
@@ -251,7 +252,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
 
     return (
         <Command shouldFilter={false} onKeyDown={handleKeyDown} className={cn('overflow-visible bg-transparent', isSuggesting && 'animate-pulse border-primary/50')}>
-             <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background">
+             <div className={cn("group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background")}>
                  <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-14">
                     {tags.filter(tag => selectedTagIds.has(tag.id)).map(tag => (
                         <Badge
@@ -274,7 +275,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                         value={inputValue}
                         onValueChange={(val) => {
                             setInputValue(val);
-                            setOpen(true);
+                            if (val.length > 0) setOpen(true);
                         }}
                         onBlur={() => setTimeout(() => setOpen(false), 200)}
                         onFocus={() => setOpen(true)}
@@ -300,7 +301,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                                     {filteredTags.map(tag => (
                                         <CommandItem
                                             key={tag.id}
-                                            value={tag.name}
+                                            value={tag.id}
                                             onSelect={() => { 
                                                 setInputValue(""); 
                                                 const currentIds = field.value || [];

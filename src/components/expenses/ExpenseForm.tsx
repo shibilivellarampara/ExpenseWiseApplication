@@ -86,7 +86,7 @@ export function ExpenseForm({
     const activeCategories = useMemo(() => userCategories?.filter(c => c.status === 'active' || c.status === undefined) || [], [userCategories]);
     const activeTags = useMemo(() => userTags?.filter(t => t.status === 'active' || t.status === undefined) || [], [userTags]);
     
-    const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? true;
+    const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? false;
 
     const renderIcon = (iconName: string | undefined, className?: string) => {
         const IconComponent = (LucideIcons as any)[iconName || 'Pilcrow'];
@@ -138,8 +138,8 @@ export function ExpenseForm({
                 <FormField control={form.control} name="type" render={({ field }) => (
                     <FormItem><FormControl>
                         <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-4">
-                            <FormItem><Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base cursor-pointer transition-all", field.value === 'expense' ? "border-destructive text-destructive" : "border-muted")}><RadioGroupItem value="expense" className="sr-only" /><span>Cash Out</span></Label></FormItem>
-                            <FormItem><Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base cursor-pointer transition-all", field.value === 'income' ? "border-green-600 text-green-600" : "border-muted")}><RadioGroupItem value="income" className="sr-only" /><span>Cash In</span></Label></FormItem>
+                            <FormItem><Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base cursor-pointer transition-all", field.value === 'expense' ? "border-destructive text-destructive bg-destructive/5" : "border-muted")}><RadioGroupItem value="expense" className="sr-only" /><span>Cash Out</span></Label></FormItem>
+                            <FormItem><Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base cursor-pointer transition-all", field.value === 'income' ? "border-green-600 text-green-600 bg-green-600/5" : "border-muted")}><RadioGroupItem value="income" className="sr-only" /><span>Cash In</span></Label></FormItem>
                         </RadioGroup>
                     </FormControl><FormMessage /></FormItem>
                 )} />

@@ -7,6 +7,7 @@ import { TrendingUp, Tag, TrendingDown, Minus, ArrowRightLeft } from "lucide-rea
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { formatAmount } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface DashboardStatsProps {
     currentMonthExpenses: EnrichedExpense[];
@@ -14,6 +15,8 @@ interface DashboardStatsProps {
     isLoading?: boolean;
     currency?: string;
 }
+
+const featuredCardClass = "rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.08),0_-8px_24px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04)] -translate-y-0.5 border-none overflow-hidden bg-card transition-all duration-300";
 
 export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoading, currency }: DashboardStatsProps) {
 
@@ -73,7 +76,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
 
     return (
         <div className="grid gap-4 md:grid-cols-3">
-            <Card className="shadow-md border-none rounded-2xl">
+            <Card className={featuredCardClass}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Monthly Expense</CardTitle>
                     <span className="text-muted-foreground font-bold">{currencySymbol}</span>
@@ -88,7 +91,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                     </div>
                 </CardContent>
             </Card>
-            <Card className="shadow-md border-none rounded-2xl">
+            <Card className={featuredCardClass}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Top Spending Category</CardTitle>
                     <Tag className="h-4 w-4 text-muted-foreground" />
@@ -98,7 +101,7 @@ export function DashboardStats({ currentMonthExpenses, lastMonthExpenses, isLoad
                     <p className="text-xs text-muted-foreground">{currencySymbol}{formatAmount(stats.topCategoryAmount)} spent this month</p>
                 </CardContent>
             </Card>
-            <Card className="shadow-md border-none rounded-2xl">
+            <Card className={featuredCardClass}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Month-over-Month</CardTitle>
                      {stats.monthOverMonthChange > 0 ? (

@@ -19,10 +19,13 @@ import Link from 'next/link';
 import { PlusCircle, Upload } from 'lucide-react';
 import { AddAccountSheet } from '@/components/accounts/AddAccountSheet';
 import { A2HSInstallPrompt } from '@/components/pwa/A2HSInstallPrompt';
+import { cn } from '@/lib/utils';
+
+const featuredCardClass = "rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.08),0_-8px_24px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04)] -translate-y-0.5 border-none overflow-hidden bg-card transition-all duration-300";
 
 function WelcomeCard() {
     return (
-        <Card className="bg-primary/5 border-primary/10 shadow-md">
+        <Card className={cn(featuredCardClass, "bg-primary/5 border-primary/10")}>
             <CardHeader>
                 <CardTitle className="font-headline text-primary">Welcome to ExpenseWise!</CardTitle>
                 <CardDescription>It looks like you're new here. Let's get you started.</CardDescription>
@@ -278,7 +281,7 @@ export default function DashboardPage() {
                     />
 
                     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
-                        <Card className="lg:col-span-4 shadow-md border-none rounded-2xl overflow-hidden">
+                        <Card className={cn("lg:col-span-4", featuredCardClass)}>
                             <CardHeader>
                                 <CardTitle className="font-headline">Expenses Overview</CardTitle>
                             </CardHeader>
@@ -313,7 +316,7 @@ export default function DashboardPage() {
                                 </Tabs>
                             </CardContent>
                         </Card>
-                        <Card className="lg:col-span-3 h-auto shadow-md border-none rounded-2xl overflow-hidden">
+                        <Card className={cn("lg:col-span-3 h-auto", featuredCardClass)}>
                             <CardHeader>
                                 <CardTitle className="font-headline">Spending Breakdown</CardTitle>
                                  <CardDescription>Breakdown of expenses for {timeRangeLabel}.</CardDescription>
@@ -333,7 +336,7 @@ export default function DashboardPage() {
                                                 <CategoryPieChart data={pieChartCategoryData} allData={allCategoryData} currencySymbol={currencySymbol} />
                                             </TabsContent>
                                             <TabsContent value="account">
-                                                <CategoryPieChart data={pieChartAccountData} allData={allAccountData} currencySymbol={currencySymbol} />
+                                                <CategoryPieChart data={pieChartAccountData} allData={allCategoryData} currencySymbol={currencySymbol} />
                                             </TabsContent>
                                             <TabsContent value="tag">
                                                 <CategoryPieChart data={pieChartTagData} allData={allTagData} currencySymbol={currencySymbol} totalAmountForPercentage={totalTagExpenses}/>

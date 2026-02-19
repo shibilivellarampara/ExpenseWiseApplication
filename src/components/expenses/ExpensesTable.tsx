@@ -150,6 +150,15 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                         const row = allRows[virtualItem.index];
                         const isExpenseRow = row.type === 'expense';
                         
+                        const numTags = isExpenseRow ? (row.expense.tags?.length || 0) : 0;
+                        const showExpander = isExpenseRow && numTags > 3;
+                        const isExpanded = isExpenseRow && expandedTags[row.expense.id];
+                        const displayedTags = isExpenseRow 
+                            ? (showExpander && !isExpanded) 
+                                ? (row.expense.tags || []).slice(0, 2) 
+                                : (row.expense.tags || [])
+                            : [];
+
                         return (
                             <div
                                 key={virtualItem.key}
@@ -252,7 +261,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                         </Badge>
                                                     )}
                                                     
-                                                    {(expandedTags[row.expense.id] ? row.expense.tags : (row.expense.tags || []).slice(0, 3)).map(tag => (
+                                                    {displayedTags.map(tag => (
                                                         <Badge
                                                             key={tag.id}
                                                             variant="outline"
@@ -264,7 +273,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                             {tag.name}
                                                         </Badge>
                                                     ))}
-                                                    {(row.expense.tags?.length || 0) > 3 && (
+                                                    {showExpander && (
                                                         <Badge
                                                             variant="secondary"
                                                             className="text-[10px] px-2 py-0 h-5 font-medium cursor-pointer"
@@ -273,7 +282,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                 setExpandedTags(prev => ({...prev, [row.expense.id]: !prev[row.expense.id]}));
                                                             }}
                                                         >
-                                                            {expandedTags[row.expense.id] ? `-${(row.expense.tags?.length || 0) - 3}` : `+${(row.expense.tags?.length || 0) - 3}`}
+                                                            {isExpanded ? `-${numTags - 2}` : `+${numTags - 2}`}
                                                         </Badge>
                                                     )}
                                                 </div>

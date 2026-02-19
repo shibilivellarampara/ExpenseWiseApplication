@@ -215,7 +215,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [open, setOpen] = useState(false);
     const [inputValue, setInputValue] = useState("");
-    const selectedTagIds = new Set<string>(field.value || []);
+    const selectedTagIds = new Set<string>(field.value as string[] || []);
 
     const handleUnselect = useCallback((tagId: string) => {
         const currentIds = field.value || [];
@@ -229,7 +229,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                 if (input.value === "" && selectedTagIds.size > 0) {
                     const tagIdsArray = Array.from(selectedTagIds);
                     const lastTagId = tagIdsArray.pop();
-                    if(lastTagId) {
+                    if (typeof lastTagId === 'string') {
                       handleUnselect(lastTagId);
                     }
                 }
@@ -485,7 +485,7 @@ function ExpenseForm({ form, onSubmit, id, accounts, categories, tags, isEditMod
                     <FormItem><DateTimePicker field={field} /><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="amount" render={({ field }) => (
-                    <FormItem><FloatingLabelInput label="Amount *" id="amount" type="number" {...field} value={field.value ?? ''} className={cn('font-bold', transactionType === 'expense' ? 'text-red-500' : 'text-green-600')} /><FormMessage /></FormItem>
+                    <FormItem><FloatingLabelInput label="Amount *" id="amount" type="number" {...field} value={field.value ?? ''} className={cn('font-bold', transactionType === 'expense' ? 'text-destructive' : 'text-green-600')} /><FormMessage /></FormItem>
                 )} />
                 {fieldOrder.filter(f => visibleFields.includes(f)).map(fieldName => formFields[fieldName])}
             </form>

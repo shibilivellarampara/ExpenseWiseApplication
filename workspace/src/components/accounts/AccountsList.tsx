@@ -24,6 +24,7 @@ import { Dialog, DialogTrigger, DialogHeader, DialogTitle, DialogContent, Dialog
 import Image from "next/image";
 import { PayBillDialog } from "@/components/accounts/PayBillDialog";
 import { renderIcon } from '@/lib/render-icon';
+import { useRouter } from 'next/navigation';
 
 interface AccountsListProps {
     accounts: Account[];
@@ -233,6 +234,7 @@ const CardDisplay = ({ account }: { account: Account }) => {
 
 export function AccountsList({ accounts, isLoading, searchActive }: AccountsListProps) {
     const { user } = useUser();
+    const router = useRouter();
     const firestore = useFirestore();
     const { toast } = useToast();
 
@@ -319,7 +321,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                                 <div className="min-w-0">
                                     <h3 
                                         className="font-bold text-base truncate cursor-pointer active:text-primary transition-colors"
-                                        onClick={() => window.location.href=`/expenses?accounts=${item.id}`}
+                                        onClick={() => router.push(`/expenses?accounts=${item.id}`)}
                                     >
                                         {item.name}
                                     </h3>
@@ -426,7 +428,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                     )}
                 </div>
                 <div className="grid gap-4">
-                    {activeCreditCards.map((card, idx) => renderAccountCard(card, idx === 0))}
+                    {activeCreditCards.map((card) => renderAccountCard(card, true))}
                     {activeCreditCards.length === 0 && !isLoading && (
                         <p className="text-sm text-muted-foreground/60 text-center py-4 bg-muted/10 rounded-[20px] border border-dashed">No active credit cards</p>
                     )}
@@ -445,7 +447,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                     )}
                 </div>
                 <div className="grid gap-4">
-                    {activeOtherAccounts.map((account) => renderAccountCard(account))}
+                    {activeOtherAccounts.map((account) => renderAccountCard(account, true))}
                     {activeOtherAccounts.length === 0 && !isLoading && (
                         <p className="text-sm text-muted-foreground/60 text-center py-4 bg-muted/10 rounded-[20px] border border-dashed">No active savings accounts</p>
                     )}

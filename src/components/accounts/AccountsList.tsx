@@ -428,7 +428,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                     )}
                 </div>
                 <div className="grid gap-4">
-                    {activeCreditCards.map((card, idx) => renderAccountCard(card, idx === 0))}
+                    {activeCreditCards.map((card) => renderAccountCard(card, true))}
                     {activeCreditCards.length === 0 && !isLoading && (
                         <p className="text-sm text-muted-foreground/60 text-center py-4 bg-muted/10 rounded-[20px] border border-dashed">No active credit cards</p>
                     )}
@@ -447,7 +447,7 @@ export function AccountsList({ accounts, isLoading, searchActive }: AccountsList
                     )}
                 </div>
                 <div className="grid gap-4">
-                    {activeOtherAccounts.map((account) => renderAccountCard(account))}
+                    {activeOtherAccounts.map((account) => renderAccountCard(account, true))}
                     {activeOtherAccounts.length === 0 && !isLoading && (
                         <p className="text-sm text-muted-foreground/60 text-center py-4 bg-muted/10 rounded-[20px] border border-dashed">No active savings accounts</p>
                     )}

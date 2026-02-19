@@ -46,7 +46,7 @@ const NavLink = ({ href, currentPath, children }: { href: string; currentPath: s
                 isActive ? 'text-primary scale-110' : 'text-muted-foreground/80 hover:text-primary'
             )} 
         >
-            <div className={cn("transition-transform duration-300 ease-in-out", isActive && "drop-shadow-[0_0_12px_rgba(59,130,246,0.5)]")}>
+            <div className={cn("transition-transform duration-300 ease-in-out", isActive && "drop-shadow-[0_0_12px_hsl(var(--primary)/0.5)]")}>
                 {icon}
             </div>
             <span className={cn("text-[9px] font-bold uppercase tracking-wider", isActive && "opacity-100", !isActive && "opacity-60")}>{label}</span>
@@ -147,7 +147,7 @@ export function BottomNav() {
                         <AddExpenseDialog onSaveSuccess={handleDataChange}>
                             <Button
                                 size="icon"
-                                className="h-[72px] w-[72px] rounded-full bg-primary/95 backdrop-blur-xl border-4 border-white/40 dark:border-white/10 shadow-[0_30px_60px_-12px_rgba(59,130,246,0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] active:scale-90 active:shadow-inner transition-all duration-300 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                className="h-[72px] w-[72px] rounded-full bg-primary/95 backdrop-blur-xl border-4 border-white/40 dark:border-white/10 shadow-[0_30px_60px_-12px_hsl(var(--primary)/0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] active:scale-90 active:shadow-inner transition-all duration-300 focus-visible:ring-0 focus-visible:ring-offset-0"
                             >
                                 <Plus className="h-9 w-9 text-primary-foreground drop-shadow-lg" />
                                 <span className="sr-only">Add Transaction</span>
@@ -157,7 +157,7 @@ export function BottomNav() {
                         <Button
                             size="icon"
                             onClick={() => router.push(transactionsHref)}
-                            className="h-[72px] w-[72px] rounded-full bg-primary/95 backdrop-blur-xl border-4 border-white/40 dark:border-white/10 shadow-[0_30px_60px_-12px_rgba(59,130,246,0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] active:scale-90 active:shadow-inner transition-all duration-300 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="h-[72px] w-[72px] rounded-full bg-primary/95 backdrop-blur-xl border-4 border-white/40 dark:border-white/10 shadow-[0_30px_60px_-12px_hsl(var(--primary)/0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] active:scale-90 active:shadow-inner transition-all duration-300 focus-visible:ring-0 focus-visible:ring-offset-0"
                         >
                             <ArrowRightLeft className="h-8 w-8 text-primary-foreground drop-shadow-lg" />
                             <span className="sr-only">Go to Transactions</span>

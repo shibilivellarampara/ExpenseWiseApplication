@@ -23,6 +23,7 @@ const changelog = [
         changes: [
             { type: 'UI/UX', description: "Implemented 'Liquid Glass' design for bottom navigation and FAB, featuring backdrop-blur-2xl, inner edge highlights, and deep ambient floating shadows." },
             { type: 'UI/UX', description: "Enhanced secondary navigation transitions with liquid-scale animations and refined glassmorphic depth." },
+            { type: 'UI/UX', description: "Optimized shadow layers to use theme-based primary colors instead of hardcoded blue for a truly native feel." },
             { type: 'UI/UX', description: "Optimized mobile typography for bottom navigation labels with bold uppercase tracking for maximum legibility on glass surfaces." },
         ]
     },
@@ -138,7 +139,7 @@ const changelog = [
         version: "1.7.8",
         date: "Jan 31, 2026",
         changes: [
-            { type: 'Fix', description: "Resolved a critical build error caused by incorrect component import paths on the 'Debts & Dues' page." },
+            { type: 'Fix', description: "Resolved a critical build error caused by an incorrect component import paths on the 'Debts & Dues' page." },
             { type: 'UI/UX', description: "Clarified the 'Net Position' label on the Debts summary to dynamically show 'Net Owed' or 'You Owe'." },
             { type: 'UI/UX', description: "Made the Debts summary card more compact for a cleaner look." },
         ]

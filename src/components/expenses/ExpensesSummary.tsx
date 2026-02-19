@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Account, EnrichedExpense } from "@/lib/types";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { cn } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
 interface ExpensesSummaryProps {

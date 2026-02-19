@@ -24,11 +24,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input, InputProps } from '@/components/ui/input';
 import { Loader2, Pilcrow, Trash2, PlusCircle, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -48,9 +48,9 @@ import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateTimePicker } from '@/components/DateTimePicker';
 
-// Updated dynamic schema function to be type-safe
+// Function to create a dynamic schema
 const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => {
-  const shape = {
+  const baseShape = {
     type: z.enum(['expense', 'income']).default('expense'),
     date: z.date({ required_error: 'A date is required.' }),
     amount: z.coerce.number({ invalid_type_error: 'Please enter a valid amount.' }).positive({ message: 'Amount must be positive.' }),
@@ -60,9 +60,10 @@ const createExpenseSchema = (settings?: UserProfile['expenseFieldSettings']) => 
     tagIds: settings?.isTagRequired ? z.array(z.string()).min(1, 'At least one tag is required.') : z.array(z.string()).optional(),
   };
 
-  return z.object(shape);
+  return z.object(baseShape);
 };
 
+// Component for quick adding of Categories or Tags
 interface QuickAddItemDialogProps {
     type: 'Category' | 'Tag';
     onSave: (name: string, icon: string) => Promise<string | undefined>;
@@ -731,7 +732,7 @@ interface UseExpenseFormProps {
 }
 
 // Shared hook for form logic
-function useExpenseForm({
+export function useExpenseForm({
     setOpen,
     expenseToEdit,
     initialType,
@@ -936,9 +937,6 @@ function useExpenseForm({
             // Handle regular balance changes if it's NOT a credit limit change
             if (!isCreditLimitUpgrade && !isCreditLimitDowngrade) {
                 const getAmountChange = (type: 'income' | 'expense', amount: number, accountType: Account['type']) => {
-                    if (accountType === 'credit_card') {
-                        return type === 'income' ? amount : -amount;
-                    }
                     return type === 'income' ? amount : -amount;
                 };
 

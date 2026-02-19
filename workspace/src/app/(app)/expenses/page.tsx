@@ -104,43 +104,25 @@ export default function ExpensesPage() {
     const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses || !accounts) return [];
 
-        let clientFiltered = allExpenses
-            .map(expense => ({
-                ...expense,
-                date: (expense.date as Timestamp).toDate(),
-            }))
-            .filter(expense => {
-                if (filters.type !== 'all' && expense.type !== filters.type) return false;
-                if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
-                if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) return false;
-                if (filters.tags.length > 0 && !filters.tags.some(tagId => expense.tagIds?.includes(tagId))) return false;
-                if (debouncedSearchQuery) {
-                    const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
-                    const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
-                    const amountMatch = String(expense.amount).includes(lowerCaseQuery);
-                    return descriptionMatch || amountMatch;
-                }
-                return true;
-            });
-            
         const getAmountChange = (tx: Expense, accType: Account['type']) => {
-            if (accType === 'credit_card') {
-               return tx.type === 'income' ? tx.amount : -tx.amount;
-            }
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        const transactionsByAccount = clientFiltered.reduce((acc, tx) => {
+        // 1. Group ALL fetched transactions per account to calc balances before filtering
+        const transactionsByAccount = allExpenses.reduce((acc, tx) => {
             if (tx.accountId) {
                 if (!acc[tx.accountId]) {
                     acc[tx.accountId] = [];
                 }
-                acc[tx.accountId].push(tx as (Expense & { date: Date}));
+                acc[tx.accountId].push({
+                    ...tx,
+                    date: (tx.date as Timestamp).toDate()
+                });
             }
             return acc;
-        }, {} as Record<string, (Expense & {date: Date})[]>);
+        }, {} as Record<string, (Expense & { date: Date })[]>);
 
-        let finalWithBalance: (Expense & {date: Date})[] = [];
+        const allWithBalances: (Expense & { date: Date })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
@@ -148,20 +130,31 @@ export default function ExpensesPage() {
 
             if (account) {
                 accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
-                
-                let startingBalance = 0;
-
+                let running = 0;
                 accountTransactions.forEach(tx => {
-                    const amountChange = getAmountChange(tx, account.type);
-                    startingBalance += amountChange;
-                    tx.runningBalance = startingBalance;
+                    running += getAmountChange(tx, account.type);
+                    tx.runningBalance = running;
                 });
-                
-                finalWithBalance.push(...accountTransactions);
+                allWithBalances.push(...accountTransactions);
             }
         }
+
+        // 2. Filter visibility
+        let finalFiltered = allWithBalances.filter(expense => {
+            if (filters.type !== 'all' && expense.type !== filters.type) return false;
+            if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
+            if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) return false;
+            if (filters.tags.length > 0 && !filters.tags.some(tagId => expense.tagIds?.includes(tagId))) return false;
+            if (debouncedSearchQuery) {
+                const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
+                const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
+                const amountMatch = String(expense.amount).includes(lowerCaseQuery);
+                return descriptionMatch || amountMatch;
+            }
+            return true;
+        });
         
-        let enriched = finalWithBalance.map((expense): EnrichedExpense => ({
+        let enriched = finalFiltered.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
             account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
@@ -271,7 +264,6 @@ export default function ExpensesPage() {
                 onSelectionChange={setSelectedExpenseIds}
                 isDeleting={isDeleting}
                 onDeleteSelected={handleDeleteSelected}
-                hideBalance={filters.categories.length > 0 || filters.tags.length > 0}
             />
 
              <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">

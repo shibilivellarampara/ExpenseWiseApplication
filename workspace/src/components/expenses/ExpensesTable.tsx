@@ -39,12 +39,11 @@ interface ExpensesTableProps {
   onSelectionChange: (ids: string[]) => void;
   isDeleting: boolean;
   onDeleteSelected: () => void;
-  hideBalance?: boolean;
 }
 
 type VirtualRow = { type: 'header'; date: string } | { type: 'expense'; expense: EnrichedExpense };
 
-function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting, hideBalance }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; hideBalance?: boolean }) {
+function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; }) {
     
     const [expandedTags, setExpandedTags] = useState<Record<string, boolean>>({});
     const [selectionMode, setSelectionMode] = useState(false);
@@ -234,7 +233,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                     <span className="text-muted-foreground/50">&bull;</span>
                                                     <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
-                                                {!hideBalance && typeof row.expense.runningBalance === 'number' && (
+                                                {typeof row.expense.runningBalance === 'number' && (
                                                     <div className="text-muted-foreground font-medium">
                                                         Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
                                                     </div>
@@ -302,7 +301,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
     );
 }
 
-export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadgeClick, selectedIds, onSelectionChange, isDeleting, onDeleteSelected, hideBalance }: ExpensesTableProps) {
+export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadgeClick, selectedIds, onSelectionChange, isDeleting, onDeleteSelected }: ExpensesTableProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -352,5 +351,5 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={onSelectionChange} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} hideBalance={hideBalance} />;
+  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={onSelectionChange} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} />;
 }

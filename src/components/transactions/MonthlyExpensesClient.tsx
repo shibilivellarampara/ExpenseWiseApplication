@@ -91,7 +91,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Process dates and group per account
+        // 1. Group ALL fetched transactions per account to calc balances before filtering
         const transactionsByAccount: Record<string, ProcessedExpense[]> = {};
 
         allExpenses.forEach(tx => {
@@ -99,10 +99,11 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                 if (!transactionsByAccount[tx.accountId]) {
                     transactionsByAccount[tx.accountId] = [];
                 }
-                transactionsByAccount[tx.accountId].push({
+                const processed: ProcessedExpense = {
                     ...tx,
                     date: (tx.date as any).toDate()
-                });
+                };
+                transactionsByAccount[tx.accountId].push(processed);
             }
         });
 

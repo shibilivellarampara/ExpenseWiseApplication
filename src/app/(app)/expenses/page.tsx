@@ -116,11 +116,11 @@ export default function ExpensesPage() {
                 if (!transactionsByAccount[tx.accountId]) {
                     transactionsByAccount[tx.accountId] = [];
                 }
-                const date = (tx.date as any).toDate() as Date;
-                transactionsByAccount[tx.accountId].push({
+                const processed: ProcessedExpense = {
                     ...tx,
-                    date
-                });
+                    date: (tx.date as any).toDate()
+                };
+                transactionsByAccount[tx.accountId].push(processed);
             }
         });
 

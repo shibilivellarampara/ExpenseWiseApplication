@@ -37,7 +37,7 @@ import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/type
 import * as LucideIcons from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { cn, generateColorStyle, formatAmount } from '@/lib/utils';
+import { cn, generateColorStyle } from '@/lib/utils';
 import { suggestExpenseDetails } from '@/ai/flows/suggest-expense-details';
 import { availableIcons } from '@/lib/defaults';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandPrimitive } from '@/components/ui/command';
@@ -227,7 +227,8 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
         if (input) {
             if (e.key === "Delete" || e.key === "Backspace") {
                 if (input.value === "" && selectedTagIds.size > 0) {
-                    const lastTagId = Array.from(selectedTagIds).pop();
+                    const tagIdsArray = Array.from(selectedTagIds) as string[];
+                    const lastTagId = tagIdsArray[tagIdsArray.length - 1];
                     if(lastTagId) {
                       handleUnselect(lastTagId);
                     }

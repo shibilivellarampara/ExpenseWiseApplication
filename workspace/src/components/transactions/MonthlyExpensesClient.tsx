@@ -23,6 +23,8 @@ interface MonthlyExpensesClientProps {
     month: string;
 }
 
+type ProcessedExpense = Omit<Expense, 'date'> & { date: Date };
+
 export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProps) {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -89,28 +91,23 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Process dates
-        const allProcessed = allExpenses.map(tx => ({
-            ...tx,
-            date: (tx.date as any).toDate() as Date
-        }));
+        // 1. Group ALL fetched transactions per account to calc balances before filtering
+        const transactionsByAccount: Record<string, ProcessedExpense[]> = {};
 
-        // 2. Group ALL fetched transactions per account to calc balances before filtering
-        const transactionsByAccount: Record<string, (Omit<Expense, 'date'> & { date: Date })[]> = {};
-
-        allProcessed.forEach(tx => {
+        allExpenses.forEach(tx => {
             if (tx.accountId) {
                 if (!transactionsByAccount[tx.accountId]) {
                     transactionsByAccount[tx.accountId] = [];
                 }
-                transactionsByAccount[tx.accountId].push({
+                const processed: ProcessedExpense = {
                     ...tx,
-                    date: tx.date
-                });
+                    date: (tx.date as any).toDate()
+                };
+                transactionsByAccount[tx.accountId].push(processed);
             }
         });
 
-        const allWithBalances: (Omit<Expense, 'date'> & { date: Date; runningBalance?: number })[] = [];
+        const allWithBalances: (ProcessedExpense & { runningBalance?: number })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
@@ -126,7 +123,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             });
         }
 
-        // 3. Apply visibility filters
+        // 2. Apply visibility filters
         let finalFiltered = allWithBalances.filter(expense => {
             if (filters.type !== 'all' && expense.type !== filters.type) return false;
             if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
@@ -141,7 +138,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             return true;
         });
         
-        // 4. Enrich and sort
+        // 3. Enrich and sort
         let enriched = finalFiltered.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
@@ -170,7 +167,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                 ...prev,
                 tags: [id],
                 categories: [],
-                accounts: [],
+                tags: [],
             }));
         } else { // account
              setFilters(prev => ({

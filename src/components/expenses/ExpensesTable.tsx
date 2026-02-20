@@ -355,8 +355,8 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                             {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
                                                         </p>
                                                         {typeof row.expense.runningBalance === 'number' && (
-                                                            <p className="text-[10px] font-bold text-muted-foreground/40 mt-1.5 uppercase tracking-tighter">
-                                                                BAL: {currencySymbol}{formatAmount(row.expense.runningBalance)}
+                                                            <p className="text-[10px] font-bold text-muted-foreground/80 mt-1.5 tracking-tighter">
+                                                                Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
                                                             </p>
                                                         )}
                                                     </>

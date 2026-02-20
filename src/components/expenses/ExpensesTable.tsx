@@ -1,4 +1,3 @@
-
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -64,19 +63,22 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
 
     const handleIconClick = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (!selectionMode) {
-            setSelectionMode(true);
-            onSelectionChange([id]);
-        } else {
+        if (selectionMode) {
             handleSelection(id);
+        } else {
+            // Edit option (revealing the edit button) comes ONLY when clicking the main icon
+            setFocusedId(prev => prev === id ? null : id);
         }
     };
 
     const handleRowClick = (id: string) => {
-        if (selectionMode) {
-            handleSelection(id);
+        if (!selectionMode) {
+            // Clicking the row itself now initiates selection mode
+            setSelectionMode(true);
+            onSelectionChange([id]);
+            setFocusedId(null);
         } else {
-            setFocusedId(prev => prev === id ? null : id);
+            handleSelection(id);
         }
     };
 
@@ -101,11 +103,11 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         <div className="relative">
             {selectionMode && (
                 <div className="sticky top-0 z-30 bg-primary/95 backdrop-blur-md p-3 rounded-2xl border-none shadow-xl flex justify-between items-center mb-4 transition-all animate-in slide-in-from-top-4">
-                    <div className="flex items-center gap-3 pl-2">
-                        <div className="h-5 w-5 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                            <Check className="h-3 w-3 text-primary-foreground" />
+                    <div className="flex items-center gap-3 pl-2 text-primary-foreground">
+                        <div className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center">
+                            <Check className="h-3 w-3" />
                         </div>
-                        <span className="font-bold text-sm text-primary-foreground uppercase tracking-widest">{selectedIds.length} Selected</span>
+                        <span className="font-bold text-sm uppercase tracking-widest">{selectedIds.length} Selected</span>
                     </div>
                     <div className="flex items-center gap-2">
                          <AlertDialog>
@@ -159,8 +161,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 <div 
                                     onClick={() => handleRowClick(row.expense.id)}
                                     className={cn(
-                                        "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative",
-                                        (selectionMode || true) ? 'cursor-pointer' : '',
+                                        "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative cursor-pointer",
                                         selectedIds.includes(row.expense.id) ? "bg-primary/5 ring-1 ring-primary/30" : "shadow-sm hover:shadow-md",
                                         isFocused && !selectionMode && "ring-1 ring-primary/20 bg-primary/[0.02]"
                                     )}
@@ -171,7 +172,8 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                             "flex-shrink-0 rounded-full flex items-center justify-center transition-all",
                                             viewMode === 'compact' ? 'w-10 h-10' : 'w-12 h-12',
                                             row.expense.type === 'income' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
-                                            selectedIds.includes(row.expense.id) ? 'bg-primary text-primary-foreground' : ''
+                                            selectedIds.includes(row.expense.id) ? 'bg-primary text-primary-foreground' : '',
+                                            !selectionMode && "hover:scale-110 active:scale-95"
                                         )}
                                     >
                                         {selectedIds.includes(row.expense.id) ? (

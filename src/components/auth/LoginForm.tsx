@@ -7,18 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { useAuth, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React from 'react';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '../ui/input-otp';
-import { doc, setDoc } from 'firebase/firestore';
-
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 const emailSchema = z.object({
   loginId: z.string().email({ message: 'Please enter a valid email.' }),
@@ -32,13 +30,10 @@ const phoneSchema = z.object({
 
 const formSchema = z.union([emailSchema, phoneSchema]);
 
-
-// Create a stable component for the phone input to prevent re-renders
 const MemoizedPhoneInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>((props, ref) => (
     <Input {...props} ref={ref} className="!rounded-l-none" />
 ));
 MemoizedPhoneInput.displayName = 'MemoizedPhoneInput';
-
 
 export function LoginForm() {
   const { toast } = useToast();
@@ -50,19 +45,16 @@ export function LoginForm() {
   const firestore = useFirestore();
   const [showPassword, setShowPassword] = useState(false);
   
-  // Forgot Password state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [isForgotLoading, setIsForgotLoading] = useState(false);
 
-  // Phone Auth State
   const [showOtpDialog, setShowOtpDialog] = useState(false);
   const [otp, setOtp] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
-  // Set initial login method from localStorage
     useEffect(() => {
         const lastUsedMethod = localStorage.getItem('loginMethod') as 'email' | 'phone';
         if (lastUsedMethod) {
@@ -76,7 +68,6 @@ export function LoginForm() {
         localStorage.setItem('loginMethod', method);
         form.reset();
     }
-
 
   const formResolver = useCallback((data: any, context: any, options: any) => {
     if (loginMethod === 'email') {
@@ -93,7 +84,6 @@ export function LoginForm() {
     },
   });
 
-  // Initialize reCAPTCHA for phone update
     useEffect(() => {
         if (auth && recaptchaContainerRef.current && !recaptchaVerifier.current) {
             recaptchaVerifier.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
@@ -102,7 +92,6 @@ export function LoginForm() {
             recaptchaVerifier.current.render();
         }
     }, [auth]);
-
 
     const handleLoginError = (error: any) => {
         let title = "Login Error";
@@ -123,12 +112,8 @@ export function LoginForm() {
                 title = "Too Many Attempts";
                 description = "You've tried to log in too many times. Please try again later.";
                 break;
-            case 'auth/popup-closed-by-user':
-                title = "Sign-In Canceled";
-                description = "You closed the sign-in window. Please try again.";
-                break;
             default:
-                description = "An unexpected error occurred. Please try again.";
+                description = error.message || "An unexpected error occurred. Please try again.";
                 break;
         }
         
@@ -188,9 +173,7 @@ export function LoginForm() {
       }
   }
 
-
     async function handleGoogleSignIn() {
-        // Show under development toast instead of proceeding
         toast({
             title: "Under Development",
             description: "Google login is currently being set up. Please use email or phone login for now.",
@@ -221,7 +204,6 @@ export function LoginForm() {
       setIsForgotLoading(false);
     }
   }
-
 
   return (
     <div className="space-y-4">
@@ -258,11 +240,8 @@ export function LoginForm() {
                         name="password"
                         render={({ field }) => (
                         <FormItem>
-                            <div className="flex justify-between items-center">
-                                <FormLabel>Password</FormLabel>
-                                
-                            </div>
-                                <FormControl>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
                                 <div className="relative">
                                     <Input 
                                         type={showPassword ? 'text' : 'password'} 
@@ -276,7 +255,7 @@ export function LoginForm() {
                                         className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
                                         onClick={() => setShowPassword(prev => !prev)}
                                     >
-                                        {showPassword ? <EyeOff /> : <Eye />}
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </Button>
                                 </div>
                             </FormControl>

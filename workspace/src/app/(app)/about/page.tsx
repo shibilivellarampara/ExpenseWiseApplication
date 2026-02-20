@@ -20,7 +20,7 @@ const appVersion = pkg.version;
 const changelog = [
     {
         version: "1.8.9",
-        date: "Feb 19, 2026",
+        date: "Feb 20, 2026",
         changes: [
             { type: 'UI/UX', description: "Redesigned Credit Card Summary: Featured outstanding balance on the left with stacked IN:, OUT:, and LIMIT: totals on the right for superior clarity." },
             { type: 'UI/UX', description: "Standardized Summary Labels: Added explicit colons to financial totals (IN:, OUT:, LIMIT:) for a cleaner dashboard aesthetic." },
@@ -98,11 +98,6 @@ const changelog = [
             { type: 'Feature', description: "Aligned Asset performance visuals with semantic themes: primary for gains and destructive for losses." },
             { type: 'Fix', description: "Resolved critical ReferenceErrors for 'orderBy' and 'Badge' across various holding components." },
             { type: 'Logic', description: "Standardized v1.8.3 features across production and workspace environments for global parity." },
-            { type: 'UI/UX', description: "Finalized premium fintech redesign for Accounts and Debts with elevated summary cards and unified search headers." },
-            { type: 'UI/UX', description: "Implemented themed fade-out effects for all progress bars, enhancing visual clarity for credit utilization." },
-            { type: 'UI/UX', description: "Contextualized filter cancellation in the Debts UI by moving clear buttons inside respective stat boxes." },
-            { type: 'Feature', description: "Stabilized the 'Recurring Transactions' module by resolving invalid Firebase document references and segment mismatches." },
-            { type: 'Logic', description: "Standardized v1.8.2 logic and UI refinements across production and workspace environments for global consistency." },
         ]
     },
     {
@@ -752,7 +747,7 @@ export default function AboutPage() {
                         <Badge className="bg-primary text-primary-foreground hover:bg-primary font-bold px-3 py-1 rounded-full">What's New</Badge>
                         <h2 className="text-2xl font-bold font-headline tracking-tight">Version 1.8.9</h2>
                     </div>
-                    <p className="text-[12px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">February 19, 2026</p>
+                    <p className="text-[12px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">February 20, 2026</p>
                     
                     <ul className="space-y-5">
                         <li className="flex items-start gap-4">

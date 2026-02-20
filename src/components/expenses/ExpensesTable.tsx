@@ -13,6 +13,7 @@ import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { renderIcon } from '@/lib/render-icon';
+import { format, isToday, isYesterday } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +38,9 @@ interface ExpensesTableProps {
   onDeleteSelected: () => void;
 }
 
-type VirtualRow = { type: 'expense'; expense: EnrichedExpense };
+type VirtualRowData = 
+  | { type: 'header'; label: string; key: string }
+  | { type: 'expense'; expense: EnrichedExpense };
 
 function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; }) {
     
@@ -98,15 +101,35 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         });
     };
 
-    const allRows = useMemo((): VirtualRow[] => {
-        return expenses.map(expense => ({ type: 'expense', expense }));
+    const allRows = useMemo((): VirtualRowData[] => {
+        const rows: VirtualRowData[] = [];
+        let lastDateLabel = "";
+
+        expenses.forEach(expense => {
+            const dateLabel = isToday(expense.date) 
+                ? "Today" 
+                : isYesterday(expense.date) 
+                    ? "Yesterday" 
+                    : format(expense.date, 'dd MMMM yyyy');
+            
+            if (dateLabel !== lastDateLabel) {
+                rows.push({ type: 'header', label: dateLabel, key: `header-${dateLabel}` });
+                lastDateLabel = dateLabel;
+            }
+            rows.push({ type: 'expense', expense });
+        });
+        return rows;
     }, [expenses]);
 
     const rowVirtualizer = useVirtualizer({
         count: allRows.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => viewMode === 'compact' ? 85 : 115,
-        overscan: 5,
+        estimateSize: (index) => {
+            const row = allRows[index];
+            if (row.type === 'header') return 40;
+            return viewMode === 'compact' ? 85 : 115;
+        },
+        overscan: 10,
     });
     
     return (
@@ -154,6 +177,28 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                 >
                     {rowVirtualizer.getVirtualItems().map(virtualItem => {
                         const row = allRows[virtualItem.index];
+                        
+                        if (row.type === 'header') {
+                            return (
+                                <div
+                                    key={virtualItem.key}
+                                    data-index={virtualItem.index}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        transform: `translateY(${virtualItem.start}px)`,
+                                    }}
+                                    className="py-2 px-1"
+                                >
+                                    <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
+                                        {row.label}
+                                    </h3>
+                                </div>
+                            );
+                        }
+
                         const isFocused = focusedId === row.expense.id;
                         const isSelected = selectedIds.includes(row.expense.id);
                         const isTagsExpanded = expandedTagRows.has(row.expense.id);

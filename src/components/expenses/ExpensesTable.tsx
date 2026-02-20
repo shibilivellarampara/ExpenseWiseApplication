@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash2, X, Loader2, Check } from "lucide-react";
+import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox } from "lucide-react";
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
@@ -276,7 +276,7 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
     return (
         <Card className="rounded-[20px] border-none shadow-sm bg-card">
             <CardContent className="flex flex-col items-center justify-center p-12 text-center text-destructive">
-               <LucideIcons.AlertCircle className="h-12 w-12 mb-4 opacity-50" />
+               <AlertCircle className="h-12 w-12 mb-4 opacity-50" />
                <h3 className="font-bold">Connection Lost</h3>
                <p className="text-sm text-muted-foreground mt-1">We couldn't load your transactions. Please check your network.</p>
             </CardContent>
@@ -287,7 +287,7 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
   if (expenses.length === 0) {
     return (
        <div className="flex flex-col items-center justify-center text-center p-16 border-2 border-dashed rounded-[24px] bg-card/50">
-          <LucideIcons.Inbox className="h-12 w-12 mb-4 text-muted-foreground/30" />
+          <Inbox className="h-12 w-12 mb-4 text-muted-foreground/30" />
           <h3 className="text-lg font-bold text-foreground/80">Clear Skies</h3>
           <p className="text-sm text-muted-foreground mt-1">No transactions found for the selected filters.</p>
        </div>

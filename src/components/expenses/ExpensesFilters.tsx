@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Command, CommandEmpty, CommandGroup, CommandList, CommandInput, CommandItem } from '@/components/ui/command';
 import * as LucideIcons from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 export type DateRange = { from: Date | undefined; to: Date | undefined; };
 
@@ -78,7 +79,6 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }
                     <Command>
                         <CommandInput placeholder={`Search ${title.toLowerCase()}...`} className="h-10 text-xs" />
                         <CommandList className="max-h-[240px]">
-                            <CommandEmpty />
                             <CommandGroup className="p-1">
                                 {items.map(item => (
                                     <CommandItem
@@ -199,7 +199,17 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
             
             {(activeFilterCount > 0) && (
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={clearFilters}
+                            className="h-8 rounded-full px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors shrink-0"
+                        >
+                            Clear All
+                        </Button>
+                        <Separator orientation="vertical" className="h-4 bg-muted-foreground/20" />
+                        
                         {filters.accounts.map(id => {
                             const item = accounts.find(c => c.id === id);
                             return item ? (

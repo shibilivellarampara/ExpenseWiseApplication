@@ -204,7 +204,7 @@ export function SignUpForm() {
                             <FormItem>
                             <FormLabel>Name</FormLabel>
                             <FormControl>
-                                <Input placeholder="shibil muhamed" {...field} />
+                                <Input placeholder="Shibili" {...field} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>

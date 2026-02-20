@@ -79,7 +79,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }
                                 {items.map(item => (
                                     <CommandItem
                                         key={item.id}
-                                        value={item.name.toLowerCase()}
+                                        value={item.name}
                                         onSelect={() => handleMultiSelectChange(field, item.id)}
                                         className={cn(
                                             "flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium cursor-pointer transition-colors",
@@ -128,7 +128,9 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }
     )
 }
 
-export function ExpensesFilters({ filters, onFiltersChange, accounts, categories, tags }: ExpensesFiltersProps) {
+export function ExpensesFilters(props: ExpensesFiltersProps) {
+    const { filters, onFiltersChange, accounts, categories, tags } = props;
+
     const clearFilters = useCallback(() => {
         onFiltersChange({
             dateRange: { from: undefined, to: undefined },
@@ -149,9 +151,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
     
     return (
         <div className="space-y-1.5">
-            {/* Fintech Stripe Container */}
             <div className="flex items-center gap-2 bg-muted/20 -mx-4 px-4 py-3 overflow-x-auto no-scrollbar pr-4">
-                {/* Search Bar */}
                 <div className={cn(
                     "relative group transition-all duration-300 ease-in-out",
                     activeFilterCount > 0 ? "flex-[0.7]" : "flex-[0.75]"
@@ -174,7 +174,6 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                     )}
                 </div>
                 
-                {/* Filter Trigger */}
                 <div className={cn(
                     "transition-all duration-300 ease-in-out",
                     activeFilterCount > 0 ? "flex-[0.2]" : "flex-[0.25]"
@@ -198,12 +197,11 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                                     </button>
                                 )}
                             </div>
-                            <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags }} />
+                            <FiltersContent {...props} />
                         </PopoverContent>
                     </Popover>
                 </div>
 
-                {/* Quick Clear Button */}
                 {activeFilterCount > 0 && (
                     <div className="flex-[0.1] transition-all duration-300 animate-in fade-in slide-in-from-right-2">
                         <Button 

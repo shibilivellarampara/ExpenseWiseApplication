@@ -88,7 +88,6 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
 
         return (
             <div className="flex justify-between items-start">
-                {/* Left side: Outstanding amount */}
                 <div className="space-y-1">
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Outstanding</p>
                     <p className={cn(
@@ -102,7 +101,6 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
                     </p>
                 </div>
                 
-                {/* Right side: IN, OUT, LIMIT stack */}
                 <div className="text-right space-y-1 mt-1">
                     <div className="flex items-center justify-end gap-2">
                         <span className="text-[10px] font-bold text-primary uppercase tracking-widest">IN:</span>

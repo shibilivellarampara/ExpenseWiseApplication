@@ -3,24 +3,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox, Clock, ListChecks, MoreVertical, PlusCircle } from "lucide-react";
+import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox, Clock, ListChecks, MoreVertical } from "lucide-react";
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import { useMemo, useRef, useState } from "react";
 import { cn, formatAmount, generateColorStyle } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { renderIcon } from '@/lib/render-icon';
 import { format, isToday, isYesterday } from 'date-fns';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -106,8 +99,6 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
 
     const allRows = useMemo((): VirtualRowData[] => {
         const rows: VirtualRowData[] = [];
-        
-        // Pre-calculate daily totals
         const dailyTotals: Record<string, number> = {};
         expenses.forEach(expense => {
             const dateLabel = isToday(expense.date) 
@@ -142,7 +133,6 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         return rows;
     }, [expenses]);
 
-    // Find the first transaction to apply special shadow
     const firstTransactionId = useMemo(() => {
         const first = allRows.find(row => row.type === 'expense');
         return (first && 'expense' in first) ? first.expense.id : null;
@@ -153,7 +143,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         getScrollElement: () => parentRef.current,
         estimateSize: (index) => {
             const row = allRows[index];
-            if (row.type === 'header') return 36;
+            if (row && row.type === 'header') return 36;
             return viewMode === 'compact' ? 85 : 115;
         },
         overscan: 10,
@@ -253,10 +243,9 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                     onClick={(e) => handleRowClick(e, row.expense)}
                                     className={cn(
                                         "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative cursor-pointer",
-                                        "shadow-md", // Permanent shadow
+                                        "shadow-md",
                                         isSelected ? "bg-primary/5 ring-1 ring-primary/30" : "hover:shadow-lg",
                                         isFocused && "ring-1 ring-primary/20 bg-primary/[0.02]",
-                                        // Special top-inclined shadow for the first transaction
                                         isFirstTransaction && "shadow-[0_-8px_24px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.08)]"
                                     )}
                                 >
@@ -475,5 +464,5 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={selectedIds => onSelectionChange(selectedIds)} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} />;
+  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={onSelectionChange} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} />;
 }

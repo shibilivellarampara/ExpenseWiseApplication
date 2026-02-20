@@ -79,7 +79,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }
                                 {items.map(item => (
                                     <CommandItem
                                         key={item.id}
-                                        value={item.name}
+                                        value={item.name.toLowerCase()}
                                         onSelect={() => handleMultiSelectChange(field, item.id)}
                                         className={cn(
                                             "flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium cursor-pointer transition-colors",

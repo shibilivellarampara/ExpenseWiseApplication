@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -19,6 +18,18 @@ import { Separator } from "@/components/ui/separator";
 const appVersion = pkg.version;
 
 const changelog = [
+    {
+        version: "1.8.9",
+        date: "Feb 19, 2026",
+        changes: [
+            { type: 'UI/UX', description: "Redesigned Credit Card Summary: Featured outstanding balance on the left with stacked IN:, OUT:, and LIMIT: totals on the right for superior clarity." },
+            { type: 'UI/UX', description: "Standardized Summary Labels: Added explicit colons to financial totals (IN:, OUT:, LIMIT:) for a cleaner dashboard aesthetic." },
+            { type: 'UI/UX', description: "Dynamic Filter Ratios: Implemented a responsive 70/20/10 width ratio for search, filters, and reset actions to optimize mobile screen space." },
+            { type: 'UI/UX', description: "Unified Filter Management: Integrated the 'Clear All' reset action directly into the filter bar for a more efficient workflow." },
+            { type: 'UI/UX', description: "Premium Transaction Elevation: Applied permanent depth shadows to all records with a featured top-incline shadow for the first entry." },
+            { type: 'UI/UX', description: "Metadata Alignment: Harmonized running balance contrast and color with account names and timestamps for a unified user interface." },
+        ]
+    },
     {
         version: "1.8.8",
         date: "Feb 19, 2026",
@@ -749,7 +760,7 @@ export default function AboutPage() {
                                 <Check className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <p className="text-[15px] leading-relaxed text-foreground/80">
-                                <span className="font-bold text-foreground">Redesigned Credit Card Summary:</span> Featured outstanding balance on the left with stacked IN, OUT, and LIMIT totals on the right for superior clarity.
+                                <span className="font-bold text-foreground">Redesigned Credit Card Summary:</span> Featured outstanding balance on the left with stacked IN:, OUT:, and LIMIT: totals on the right for superior clarity.
                             </p>
                         </li>
                         <li className="flex items-start gap-4">
@@ -765,7 +776,7 @@ export default function AboutPage() {
                                 <Check className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <p className="text-[15px] leading-relaxed text-foreground/80">
-                                <span className="font-bold text-foreground">Dynamic Filter Ratios:</span> Implemented a responsive 70/20/10 width ratio for search and filters when active, optimizing mobile real estate.
+                                <span className="font-bold text-foreground">Dynamic Filter Ratios:</span> Implemented a responsive 70/20/10 width ratio for search, filters, and reset actions to optimize mobile screen space.
                             </p>
                         </li>
                         <li className="flex items-start gap-4">
@@ -773,7 +784,7 @@ export default function AboutPage() {
                                 <Check className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <p className="text-[15px] leading-relaxed text-foreground/80">
-                                <span className="font-bold text-foreground">Unified Filter Management:</span> Integrated the "Clear All" reset action directly into the filter unit for a more efficient workflow.
+                                <span className="font-bold text-foreground">Unified Filter Management:</span> Integrated the "Clear All" reset action directly into the filter bar for a more efficient workflow.
                             </p>
                         </li>
                         <li className="flex items-start gap-4">
@@ -781,7 +792,7 @@ export default function AboutPage() {
                                 <Check className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <p className="text-[15px] leading-relaxed text-foreground/80">
-                                <span className="font-bold text-foreground">Premium Transaction Elevation:</span> Applied permanent depth shadows to all records with a featured top-incline shadow for the latest entry.
+                                <span className="font-bold text-foreground">Premium Transaction Elevation:</span> Applied permanent depth shadows to all records with a featured top-incline shadow for the first entry.
                             </p>
                         </li>
                         <li className="flex items-start gap-4">
@@ -789,7 +800,7 @@ export default function AboutPage() {
                                 <Check className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <p className="text-[15px] leading-relaxed text-foreground/80">
-                                <span className="font-bold text-foreground">Metadata Alignment:</span> Harmonized running balance contrast and color with account names and timestamps for a unified UI.
+                                <span className="font-bold text-foreground">Metadata Alignment:</span> Harmonized running balance contrast and color with account names and timestamps for a unified user interface.
                             </p>
                         </li>
                     </ul>

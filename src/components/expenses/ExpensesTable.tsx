@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox } from "lucide-react";
+import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox, Clock } from "lucide-react";
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
@@ -66,6 +66,12 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         }
     };
 
+    const handleItemClick = (e: React.MouseEvent, type: 'category' | 'tag' | 'account', id: string) => {
+        e.stopPropagation();
+        if (selectionMode) return;
+        onBadgeClick?.(type, id);
+    };
+
     const allRows = useMemo(() => {
         const rows: VirtualRow[] = [];
         const groupedExpenses = expenses.reduce((acc, expense) => {
@@ -91,7 +97,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         estimateSize: (index) => {
              const row = allRows[index];
              if (row.type === 'header') return 48;
-             return viewMode === 'compact' ? 64 : 84;
+             return viewMode === 'compact' ? 80 : 110; // Adjusted for extra rows
         },
         overscan: 5,
     });
@@ -186,11 +192,19 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                     <h4 className="font-bold text-sm truncate tracking-tight text-foreground/90">
                                                         {row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}
                                                     </h4>
-                                                    <p className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-0.5 flex items-center gap-1.5">
-                                                        <span>{row.expense.account?.name}</span>
-                                                        <span className="opacity-30">•</span>
-                                                        <span>{row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                    </p>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                        <button 
+                                                            onClick={(e) => row.expense.account && handleItemClick(e, 'account', row.expense.account.id)}
+                                                            className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest hover:text-primary transition-colors"
+                                                        >
+                                                            {row.expense.account?.name}
+                                                        </button>
+                                                        <span className="opacity-30 text-[11px] font-bold text-muted-foreground/60">•</span>
+                                                        <span className="text-[11px] font-bold text-muted-foreground/60 flex items-center gap-1">
+                                                            <Clock className="h-2.5 w-2.5" />
+                                                            {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                                 <div className="text-right flex flex-col items-end">
                                                     <p className={cn(
@@ -207,23 +221,41 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                 </div>
                                             </div>
                                             
-                                            {!selectionMode && (
-                                                <div className="flex flex-wrap items-center gap-1.5 pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                                                {!selectionMode && (
                                                     <AddExpenseDialog expenseToEdit={row.expense} onSaveSuccess={onDataChange}>
-                                                        <button className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
-                                                            <Edit className="h-3 w-3" /> Edit
+                                                        <button className="h-5 px-2 rounded-full border border-primary/20 text-[9px] font-bold text-primary uppercase tracking-widest hover:bg-primary/5 transition-colors flex items-center gap-1 mr-1">
+                                                            <Edit className="h-2.5 w-2.5" /> Edit
                                                         </button>
                                                     </AddExpenseDialog>
-                                                    {row.expense.tags?.slice(0, 2).map(tag => (
-                                                        <Badge key={tag.id} variant="outline" style={generateColorStyle(tag.name)} className="badge-colorful text-[9px] px-1.5 h-4 font-bold uppercase">
-                                                            {tag.name}
-                                                        </Badge>
-                                                    ))}
-                                                    {(row.expense.tags?.length || 0) > 2 && (
-                                                        <span className="text-[9px] font-bold text-muted-foreground">+{row.expense.tags!.length - 2}</span>
-                                                    )}
-                                                </div>
-                                            )}
+                                                )}
+                                                
+                                                {row.expense.category && (
+                                                    <Badge 
+                                                        variant="secondary" 
+                                                        onClick={(e) => handleItemClick(e, 'category', row.expense.category!.id)}
+                                                        className="h-5 px-2 bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer text-[9px] font-bold uppercase tracking-widest border-none"
+                                                    >
+                                                        {row.expense.category.name}
+                                                    </Badge>
+                                                )}
+
+                                                {row.expense.tags?.slice(0, 2).map(tag => (
+                                                    <Badge 
+                                                        key={tag.id} 
+                                                        variant="outline" 
+                                                        onClick={(e) => handleItemClick(e, 'tag', tag.id)}
+                                                        style={generateColorStyle(tag.name)} 
+                                                        className="badge-colorful text-[9px] px-2 h-5 font-bold uppercase cursor-pointer hover:opacity-80 transition-opacity border-none"
+                                                    >
+                                                        {tag.name}
+                                                    </Badge>
+                                                ))}
+                                                
+                                                {(row.expense.tags?.length || 0) > 2 && (
+                                                    <span className="text-[9px] font-bold text-muted-foreground">+{row.expense.tags!.length - 2}</span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 ) : (
@@ -294,5 +326,5 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
     );
   }
 
-  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={onSelectionChange} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} />;
+  return <GroupedExpenseList expenses={expenses} currencySymbol={currencySymbol} onDataChange={onDataChange} viewMode={viewMode} onBadgeClick={onBadgeClick} selectedIds={selectedIds} onSelectionChange={selectedIds => onSelectionChange(selectedIds)} isDeleting={isDeleting} onDeleteSelected={onDeleteSelected} />;
 }

@@ -63,12 +63,15 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
     };
 
     const handleRowClick = (e: React.MouseEvent, expense: EnrichedExpense) => {
+        // Selection mode is active if items are already selected
         if (selectedIds.length > 0) {
             e.stopPropagation();
             e.preventDefault();
             handleSelection(expense.id);
             return;
         }
+        
+        // Rows don't trigger anything by default now, they just clear focus
         if (focusedId) {
             setFocusedId(null);
         }
@@ -254,8 +257,9 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                         Delete
                                                                     </AlertDialogAction>
                                                                 </AlertDialogFooter>
-                                                            </AlertDialog>
-                                                        </div>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </div>
                                                 ) : (
                                                     <>
                                                         <p className={cn('font-bold text-[15px] leading-none', row.expense.type === 'income' ? 'text-primary' : 'text-destructive')}>

@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ListFilter, Search, X, Check, ChevronDown, Pilcrow, RotateCcw } from 'lucide-react';
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { Command, CommandEmpty, CommandGroup, CommandList, CommandInput, CommandItem } from '@/components/ui/command';
+import { Command, CommandGroup, CommandList, CommandInput, CommandItem } from '@/components/ui/command';
 import * as LucideIcons from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -72,10 +73,10 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }
                         <ChevronDown className="h-3 w-3 opacity-50" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[280px] rounded-xl border-none shadow-2xl p-1">
+                <DropdownMenuContent className="w-[280px] rounded-xl border-none shadow-2xl p-1" align="start">
                     <Command shouldFilter={true}>
                         <CommandInput placeholder={`Search ${title.toLowerCase()}...`} className="h-10 text-xs" />
-                        <CommandList className="max-h-[240px]">
+                        <CommandList className="max-h-[240px] no-scrollbar">
                             <CommandGroup className="p-1">
                                 {items.map(item => (
                                     <CommandItem
@@ -130,7 +131,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }
 }
 
 export function ExpensesFilters({ filters, onFiltersChange, accounts, categories, tags }: ExpensesFiltersProps) {
-    const clearFilters = () => {
+    const clearFilters = useCallback(() => {
         onFiltersChange({
             dateRange: { from: undefined, to: undefined },
             type: 'all',
@@ -139,60 +140,58 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
             tags: [],
             searchQuery: '',
         });
-    };
+    }, [onFiltersChange]);
     
-    const activeFilterCount =
+    const activeFilterCount = useMemo(() => 
         (filters.type !== 'all' ? 1 : 0) +
         filters.categories.length +
         filters.accounts.length +
-        filters.tags.length;
+        filters.tags.length,
+    [filters]);
     
     return (
         <div className="space-y-3">
-            <div className="flex items-center gap-2 w-full">
+            {/* Fintech Stripe Container */}
+            <div className="flex items-center gap-2 bg-muted/20 -mx-4 px-4 py-3 mb-2 overflow-x-auto no-scrollbar pr-4">
                 {/* Search Bar */}
                 <div className={cn(
                     "relative group transition-all duration-300 ease-in-out",
                     activeFilterCount > 0 ? "flex-[0.7]" : "flex-[0.75]"
                 )}>
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
                     <Input
                         type="search"
                         placeholder="Search transactions..."
                         value={filters.searchQuery}
                         onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
-                        className="pl-9 pr-9 h-11 rounded-[14px] bg-card border-none shadow-sm focus-visible:ring-1 focus-visible:ring-primary/20 text-sm"
+                        className="pl-9 pr-9 h-10 rounded-full bg-transparent border border-muted-foreground/20 shadow-none focus-visible:ring-0 text-sm"
                     />
                     {filters.searchQuery && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-transparent"
+                        <button
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
                             onClick={() => onFiltersChange({ ...filters, searchQuery: '' })}
                         >
-                            <X className="h-3.5 w-3.5 text-muted-foreground" />
-                        </Button>
+                            <X className="h-4 w-4" />
+                        </button>
                     )}
                 </div>
                 
-                {/* Filter & Quick Reset: Integrated Split Look */}
+                {/* Filter Trigger */}
                 <div className={cn(
-                    "flex h-11 items-center rounded-[14px] border border-muted-foreground/20 bg-card overflow-hidden transition-all duration-300 ease-in-out",
-                    activeFilterCount > 0 ? "flex-[0.3]" : "flex-[0.25]"
+                    "transition-all duration-300 ease-in-out",
+                    activeFilterCount > 0 ? "flex-[0.2]" : "flex-[0.25]"
                 )}>
                     <Popover>
                         <PopoverTrigger asChild>
-                            <button className={cn(
-                                "flex items-center justify-center h-full hover:bg-accent/50 transition-colors relative",
-                                activeFilterCount > 0 ? "flex-[0.66]" : "flex-1"
-                            )}>
-                                <ListFilter className="h-5 w-5" />
+                            <Button variant="outline" size="sm" className="h-10 w-full rounded-full border-muted-foreground/20 bg-transparent hover:bg-card shrink-0 gap-2 relative">
+                                <ListFilter className="h-4 w-4" />
+                                <span className="hidden sm:inline font-bold text-[11px] uppercase tracking-widest">Filter</span>
                                 {activeFilterCount > 0 && 
-                                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] text-primary-foreground font-bold border border-background">{activeFilterCount}</span>
+                                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground font-bold border-2 border-background animate-in zoom-in">{activeFilterCount}</span>
                                 }
-                            </button>
+                            </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-80 p-5 rounded-[24px] border-none shadow-[0_20px_50px_rgba(0,0,0,0.2)] bg-card" align="end">
+                        <PopoverContent className="w-80 p-5 rounded-[24px] border-none shadow-[0_20px_50px_rgba(0,0,0,0.2)] bg-card" align="end" sideOffset={12}>
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="font-bold text-sm tracking-tight">Advanced Filters</h3>
                                 {activeFilterCount > 0 && (
@@ -204,23 +203,25 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                             <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags }} />
                         </PopoverContent>
                     </Popover>
-
-                    {activeFilterCount > 0 && (
-                        <>
-                            <div className="w-px h-6 bg-muted-foreground/20" />
-                            <button 
-                                onClick={clearFilters}
-                                title="Clear All Filters"
-                                className="flex-[0.34] h-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        </>
-                    )}
                 </div>
+
+                {/* Quick Clear Button */}
+                {activeFilterCount > 0 && (
+                    <div className="flex-[0.1] transition-all duration-300 animate-in fade-in slide-in-from-right-2">
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={clearFilters}
+                            title="Clear All Filters"
+                            className="h-10 w-10 rounded-full border-muted-foreground/20 bg-transparent hover:bg-card text-muted-foreground hover:text-destructive transition-all"
+                        >
+                            <RotateCcw className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
             </div>
             
-            {(activeFilterCount > 0) && (
+            {activeFilterCount > 0 && (
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
                     <div className="flex gap-2 items-center">
                         <Button 

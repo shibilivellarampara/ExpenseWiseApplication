@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox, Clock } from "lucide-react";
+import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox, Clock, ListChecks } from "lucide-react";
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
@@ -199,14 +199,16 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                             <Button 
                                                                 variant="outline" 
                                                                 size="icon" 
-                                                                className="h-8 w-8 rounded-full border-primary/20 text-primary hover:bg-primary/5 shadow-none"
+                                                                className={cn(
+                                                                    "h-8 w-8 rounded-full border-primary/20 text-primary hover:bg-primary/5 shadow-none",
+                                                                    isSelected && "bg-primary text-primary-foreground border-none"
+                                                                )}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     handleSelection(row.expense.id);
-                                                                    setFocusedId(null);
                                                                 }}
                                                             >
-                                                                <Check className="h-3.5 w-3.5" />
+                                                                <ListChecks className="h-3.5 w-3.5" />
                                                             </Button>
                                                             {selectedIds.length < 2 && (
                                                                 <AddExpenseDialog expenseToEdit={row.expense} onSaveSuccess={onDataChange}>

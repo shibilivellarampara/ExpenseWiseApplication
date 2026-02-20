@@ -245,8 +245,8 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 <div 
                                     onClick={(e) => handleRowClick(e, row.expense)}
                                     className={cn(
-                                        "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative cursor-pointer",
-                                        isSelected ? "bg-primary/5 ring-1 ring-primary/30" : "shadow-sm hover:shadow-md",
+                                        "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative cursor-pointer shadow-md",
+                                        isSelected ? "bg-primary/5 ring-1 ring-primary/30" : "hover:shadow-lg",
                                         isFocused && "ring-1 ring-primary/20 bg-primary/[0.02]"
                                     )}
                                 >

@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,11 @@ import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { renderIcon } from '@/lib/render-icon';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -247,9 +253,33 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                             ))}
                                             
                                             {(row.expense.tags?.length || 0) > 2 && (
-                                                <Badge variant="outline" className="h-5 px-1.5 text-[9px] font-bold text-muted-foreground border-none bg-muted/30">
-                                                    +{row.expense.tags!.length - 2}
-                                                </Badge>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Badge 
+                                                            variant="outline" 
+                                                            className="h-5 px-1.5 text-[9px] font-bold text-muted-foreground border-none bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            +{row.expense.tags!.length - 2}
+                                                        </Badge>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent 
+                                                        className="w-auto p-2 flex flex-wrap gap-1.5 max-w-[200px]" 
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        {row.expense.tags!.slice(2).map(tag => (
+                                                            <Badge 
+                                                                key={tag.id} 
+                                                                variant="outline" 
+                                                                onClick={(e) => handleBadgeClickInternal(e, 'tag', tag.id)}
+                                                                style={generateColorStyle(tag.name)} 
+                                                                className="badge-colorful text-[9px] px-2 h-5 font-bold uppercase cursor-pointer hover:opacity-80 transition-opacity border-none"
+                                                            >
+                                                                {tag.name}
+                                                            </Badge>
+                                                        ))}
+                                                    </PopoverContent>
+                                                </Popover>
                                             )}
                                         </div>
                                     </div>

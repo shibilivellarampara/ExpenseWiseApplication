@@ -150,8 +150,8 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
     
     return (
         <div className="space-y-3">
-            <div className="flex items-center gap-2">
-                <div className="relative flex-1 group">
+            <div className="flex items-center gap-2 w-full">
+                <div className="relative flex-[0.8] group">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
                     <Input
                         type="search"
@@ -174,7 +174,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                 
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-11 w-11 rounded-[14px] border-muted-foreground/20 hover:bg-card shrink-0 p-0 relative">
+                        <Button variant="outline" size="sm" className="h-11 flex-[0.2] rounded-[14px] border-muted-foreground/20 hover:bg-card shrink-0 p-0 relative">
                             <ListFilter className="h-5 w-5" />
                             {activeFilterCount > 0 && 
                                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground font-bold border-2 border-background">{activeFilterCount}</span>

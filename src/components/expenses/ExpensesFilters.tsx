@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -173,16 +172,16 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                     )}
                 </div>
                 
-                {/* Filter & Clear Actions: 25% width */}
-                <div className="flex-[0.25] flex gap-2">
+                {/* Filter & Quick Reset: 25% width (Integrated Split Look) */}
+                <div className="flex-[0.25] flex h-11 items-center rounded-[14px] border border-muted-foreground/20 bg-card overflow-hidden">
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-11 w-full rounded-[14px] border-muted-foreground/20 hover:bg-card shrink-0 p-0 relative">
+                            <button className="flex-1 flex items-center justify-center h-full hover:bg-accent/50 transition-colors relative">
                                 <ListFilter className="h-5 w-5" />
                                 {activeFilterCount > 0 && 
-                                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground font-bold border-2 border-background">{activeFilterCount}</span>
+                                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] text-primary-foreground font-bold border border-background">{activeFilterCount}</span>
                                 }
-                            </Button>
+                            </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-80 p-5 rounded-[24px] border-none shadow-[0_20px_50px_rgba(0,0,0,0.2)] bg-card" align="end">
                             <div className="flex justify-between items-center mb-6">
@@ -198,14 +197,16 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                     </Popover>
 
                     {activeFilterCount > 0 && (
-                        <Button 
-                            variant="outline" 
-                            size="icon" 
-                            onClick={clearFilters}
-                            className="h-11 w-11 rounded-[14px] border-primary/20 text-primary hover:bg-primary/5 shrink-0"
-                        >
-                            <RotateCcw className="h-4 w-4" />
-                        </Button>
+                        <>
+                            <div className="w-px h-6 bg-muted-foreground/20" />
+                            <button 
+                                onClick={clearFilters}
+                                title="Clear All Filters"
+                                className="w-10 h-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </>
                     )}
                 </div>
             </div>

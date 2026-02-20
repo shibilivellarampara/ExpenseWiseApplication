@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 40 33% 96%;
+    --background: 210 20% 98%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -107,7 +107,7 @@
   }
 
   .fintech {
-    --background: 40 33% 96%;
+    --background: 210 20% 96%;
     --foreground: 220 25% 15%;
     --card: 40 33% 99%;
     --card-foreground: 220 25% 15%;
@@ -121,7 +121,7 @@
     --muted-foreground: 220 15% 45%;
     --accent: 180 45% 90%;
     --accent-foreground: 180 45% 20%;
-    --destructive: 30 90% 60%;
+    --destructive: 350 80% 55%;
     --destructive-foreground: 0 0% 100%;
     --border: 220 15% 90%;
     --input: 220 15% 90%;
@@ -151,7 +151,7 @@
     --muted-foreground: 220 15% 65%;
     --accent: 180 45% 30%;
     --accent-foreground: 180 45% 95%;
-    --destructive: 30 80% 60%;
+    --destructive: 350 70% 60%;
     --destructive-foreground: 30 80% 5%;
     --border: 220 25% 22%;
     --input: 220 25% 22%;
@@ -187,6 +187,15 @@
   }
   input[type=number] {
     -moz-appearance: textfield;
+  }
+  
+  /* Remove global interaction artifacts */
+  *:focus {
+    outline: none !important;
+  }
+  
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent !important;
   }
 }
 

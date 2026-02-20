@@ -7,7 +7,7 @@ import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, commitBa
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
 import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment }from "firebase/firestore";
 import { Plus, Minus, Trash2, X } from "lucide-react";
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, Suspense } from "react";
 import { ExpensesFilters, Filters } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
@@ -16,10 +16,11 @@ import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/PageHeader";
 
 type ProcessedExpense = Omit<Expense, 'date'> & { date: Date };
 
-export default function ExpensesPage() {
+function ExpensesPageContent() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -108,7 +109,6 @@ export default function ExpensesPage() {
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Group ALL fetched transactions per account to calc balances before filtering
         const transactionsByAccount: Record<string, ProcessedExpense[]> = {};
 
         allExpenses.forEach(tx => {
@@ -140,7 +140,6 @@ export default function ExpensesPage() {
             });
         }
 
-        // 2. Apply visibility filters
         let finalFiltered = allWithBalances.filter(expense => {
             if (filters.type !== 'all' && expense.type !== filters.type) return false;
             if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
@@ -155,7 +154,6 @@ export default function ExpensesPage() {
             return true;
         });
         
-        // 3. Enrich and sort for final display
         let enriched = finalFiltered.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
@@ -240,7 +238,9 @@ export default function ExpensesPage() {
     };
 
     return (
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-6 pb-24">
+            <PageHeader title="Transactions" />
+
             <ExpensesSummary 
                 expenses={filteredAndEnrichedExpenses}
                 currency={userProfile?.defaultCurrency} 
@@ -283,5 +283,13 @@ export default function ExpensesPage() {
                 </AddExpenseDialog>
             </div>
         </div>
+    );
+}
+
+export default function ExpensesPage() {
+    return (
+        <Suspense fallback={null}>
+            <ExpensesPageContent />
+        </Suspense>
     );
 }

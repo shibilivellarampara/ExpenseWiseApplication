@@ -58,6 +58,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
 
     const handleIconClick = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
+        e.preventDefault();
         setFocusedId(prev => prev === id ? null : id);
     };
 
@@ -65,14 +66,16 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         // If selection mode is active, toggle selection
         if (selectedIds.length > 0) {
             e.stopPropagation();
+            e.preventDefault();
             handleSelection(expense.id);
         }
-        // Normal row click (handled by AddExpenseDialog trigger)
+        // In normal mode, bubble to AddExpenseDialog trigger
         if (focusedId) setFocusedId(null);
     };
 
     const handleBadgeClickInternal = (e: React.MouseEvent, type: 'category' | 'tag' | 'account', id: string) => {
         e.stopPropagation();
+        e.preventDefault();
         onBadgeClick?.(type, id);
     };
 
@@ -204,6 +207,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                 )}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
+                                                                    e.preventDefault();
                                                                     handleSelection(row.expense.id);
                                                                 }}
                                                             >
@@ -250,7 +254,8 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                             Delete
                                                                         </AlertDialogAction>
                                                                     </AlertDialogFooter>
-                                                                </AlertDialog>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
                                                         </div>
                                                     ) : (
                                                         <>
@@ -296,14 +301,14 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                             <Badge 
                                                                 variant="outline" 
                                                                 className="h-5 px-1.5 text-[9px] font-bold text-muted-foreground border-none bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
-                                                                onClick={(e) => e.stopPropagation()}
+                                                                onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
                                                             >
                                                                 +{row.expense.tags!.length - 2}
                                                             </Badge>
                                                         </PopoverTrigger>
                                                         <PopoverContent 
                                                             className="w-auto p-2 flex flex-wrap gap-1.5 max-w-[200px]" 
-                                                            onClick={(e) => e.stopPropagation()}
+                                                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
                                                         >
                                                             {row.expense.tags!.slice(2).map(tag => (
                                                                 <Badge 

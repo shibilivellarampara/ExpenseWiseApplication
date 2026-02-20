@@ -97,7 +97,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         estimateSize: (index) => {
              const row = allRows[index];
              if (row.type === 'header') return 48;
-             return viewMode === 'compact' ? 80 : 110; // Adjusted for extra rows
+             return viewMode === 'compact' ? 80 : 110; 
         },
         overscan: 5,
     });
@@ -253,7 +253,9 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                 ))}
                                                 
                                                 {(row.expense.tags?.length || 0) > 2 && (
-                                                    <span className="text-[9px] font-bold text-muted-foreground">+{row.expense.tags!.length - 2}</span>
+                                                    <Badge variant="outline" className="h-5 px-1.5 text-[9px] font-bold text-muted-foreground border-none bg-muted/30">
+                                                        +{row.expense.tags!.length - 2}
+                                                    </Badge>
                                                 )}
                                             </div>
                                         </div>

@@ -147,7 +147,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         getScrollElement: () => parentRef.current,
         estimateSize: (index) => {
             const row = allRows[index];
-            if (row.type === 'header') return 40;
+            if (row.type === 'header') return 36;
             return viewMode === 'compact' ? 85 : 115;
         },
         overscan: 10,
@@ -211,7 +211,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                         width: '100%',
                                         transform: `translateY(${virtualItem.start}px)`,
                                     }}
-                                    className="py-2 px-1 flex items-center gap-3"
+                                    className="pt-2 pb-1 px-1 flex items-center gap-3"
                                 >
                                     <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
                                         {row.label}

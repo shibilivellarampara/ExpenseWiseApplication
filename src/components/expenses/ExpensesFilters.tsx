@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
@@ -150,9 +149,9 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
     [filters]);
     
     return (
-        <div className="space-y-3">
+        <div className="space-y-1.5">
             {/* Fintech Stripe Container */}
-            <div className="flex items-center gap-2 bg-muted/20 -mx-4 px-4 py-3 mb-2 overflow-x-auto no-scrollbar pr-4">
+            <div className="flex items-center gap-2 bg-muted/20 -mx-4 px-4 py-3 overflow-x-auto no-scrollbar pr-4">
                 {/* Search Bar */}
                 <div className={cn(
                     "relative group transition-all duration-300 ease-in-out",

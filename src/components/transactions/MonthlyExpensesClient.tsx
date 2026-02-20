@@ -1,4 +1,3 @@
-
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
@@ -92,7 +91,6 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Group ALL fetched transactions per account to calc balances before filtering
         const transactionsByAccount: Record<string, ProcessedExpense[]> = {};
 
         allExpenses.forEach(tx => {
@@ -124,7 +122,6 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             });
         }
 
-        // 2. Apply visibility filters
         let finalFiltered = allWithBalances.filter(expense => {
             if (filters.type !== 'all' && expense.type !== filters.type) return false;
             if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
@@ -139,7 +136,6 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             return true;
         });
         
-        // 3. Enrich and sort
         let enriched = finalFiltered.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
@@ -230,33 +226,35 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                     </Link>
                 </Button>
             </PageHeader>
-            <div className="space-y-4 sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm pt-4">
-                 <ExpensesSummary 
-                    expenses={filteredAndEnrichedExpenses}
-                    currency={userProfile?.defaultCurrency} 
-                    isLoading={isLoading} 
-                />
-                <ExpensesFilters 
-                    filters={filters}
-                    onFiltersChange={handleFiltersChange}
-                    accounts={accounts || []}
-                    categories={categories || []}
-                    tags={tags || []}
-                    disableDateFilter={true}
+            <div className="space-y-2">
+                <div className="space-y-4 sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm pt-4">
+                     <ExpensesSummary 
+                        expenses={filteredAndEnrichedExpenses}
+                        currency={userProfile?.defaultCurrency} 
+                        isLoading={isLoading} 
+                    />
+                    <ExpensesFilters 
+                        filters={filters}
+                        onFiltersChange={handleFiltersChange}
+                        accounts={accounts || []}
+                        categories={categories || []}
+                        tags={tags || []}
+                        disableDateFilter={true}
+                    />
+                </div>
+                
+                <ExpensesTable 
+                    expenses={filteredAndEnrichedExpenses} 
+                    isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
+                    onDataChange={handleDataChange} 
+                    error={expensesError ? 'Error loading transactions' : null}
+                    onBadgeClick={handleBadgeClick}
+                    selectedIds={selectedExpenseIds}
+                    onSelectionChange={setSelectedExpenseIds}
+                    isDeleting={isDeleting}
+                    onDeleteSelected={handleDeleteSelected}
                 />
             </div>
-            
-            <ExpensesTable 
-                expenses={filteredAndEnrichedExpenses} 
-                isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
-                onDataChange={handleDataChange} 
-                error={expensesError ? 'Error loading transactions' : null}
-                onBadgeClick={handleBadgeClick}
-                selectedIds={selectedExpenseIds}
-                onSelectionChange={setSelectedExpenseIds}
-                isDeleting={isDeleting}
-                onDeleteSelected={handleDeleteSelected}
-            />
         </div>
     );
 }

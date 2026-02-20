@@ -238,7 +238,7 @@ function ExpensesPageContent() {
     };
 
     return (
-        <div className="w-full space-y-6 pb-24">
+        <div className="w-full space-y-4 pb-24">
             <PageHeader title="Transactions" />
 
             <ExpensesSummary 
@@ -248,25 +248,27 @@ function ExpensesPageContent() {
                 selectedAccount={selectedAccount} 
             />
 
-            <ExpensesFilters 
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                accounts={accounts || []}
-                categories={categories || []}
-                tags={tags || []}
-            />
-            
-            <ExpensesTable 
-                expenses={filteredAndEnrichedExpenses} 
-                isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
-                onDataChange={handleDataChange} 
-                error={expensesError ? 'Error loading transactions' : null}
-                onBadgeClick={handleBadgeClick}
-                selectedIds={selectedExpenseIds}
-                onSelectionChange={setSelectedExpenseIds}
-                isDeleting={isDeleting}
-                onDeleteSelected={handleDeleteSelected}
-            />
+            <div className="space-y-2">
+                <ExpensesFilters 
+                    filters={filters}
+                    onFiltersChange={handleFiltersChange}
+                    accounts={accounts || []}
+                    categories={categories || []}
+                    tags={tags || []}
+                />
+                
+                <ExpensesTable 
+                    expenses={filteredAndEnrichedExpenses} 
+                    isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
+                    onDataChange={handleDataChange} 
+                    error={expensesError ? 'Error loading transactions' : null}
+                    onBadgeClick={handleBadgeClick}
+                    selectedIds={selectedExpenseIds}
+                    onSelectionChange={setSelectedExpenseIds}
+                    isDeleting={isDeleting}
+                    onDeleteSelected={handleDeleteSelected}
+                />
+            </div>
 
              <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">
                 <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>

@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox, Clock } from "lucide-react";
+import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox, Clock, ChevronDown } from "lucide-react";
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
@@ -46,13 +46,8 @@ type VirtualRow = { type: 'expense'; expense: EnrichedExpense };
 
 function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; }) {
     
-    const [selectionMode, setSelectionMode] = useState(false);
     const [focusedId, setFocusedId] = useState<string | null>(null);
     const parentRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        setSelectionMode(selectedIds.length > 0);
-    }, [selectedIds]);
 
     const handleSelection = (id: string) => {
         const newSelectedIds = selectedIds.includes(id)
@@ -63,28 +58,16 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
 
     const handleIconClick = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (selectionMode) {
-            handleSelection(id);
-        } else {
-            // Edit option (revealing the edit button) comes ONLY when clicking the main icon
-            setFocusedId(prev => prev === id ? null : id);
-        }
+        setFocusedId(prev => prev === id ? null : id);
     };
 
     const handleRowClick = (id: string) => {
-        if (!selectionMode) {
-            // Clicking the row itself now initiates selection mode
-            setSelectionMode(true);
-            onSelectionChange([id]);
-            setFocusedId(null);
-        } else {
-            handleSelection(id);
-        }
+        handleSelection(id);
+        if (focusedId) setFocusedId(null);
     };
 
     const handleBadgeClickInternal = (e: React.MouseEvent, type: 'category' | 'tag' | 'account', id: string) => {
         e.stopPropagation();
-        if (selectionMode) return;
         onBadgeClick?.(type, id);
     };
 
@@ -95,13 +78,13 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
     const rowVirtualizer = useVirtualizer({
         count: allRows.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => viewMode === 'compact' ? 80 : 110,
+        estimateSize: () => viewMode === 'compact' ? 85 : 115,
         overscan: 5,
     });
     
     return (
         <div className="relative">
-            {selectionMode && (
+            {selectedIds.length > 0 && (
                 <div className="sticky top-0 z-30 bg-primary/95 backdrop-blur-md p-3 rounded-2xl border-none shadow-xl flex justify-between items-center mb-4 transition-all animate-in slide-in-from-top-4">
                     <div className="flex items-center gap-3 pl-2 text-primary-foreground">
                         <div className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center">
@@ -130,7 +113,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                          </AlertDialog>
-                        <Button variant="ghost" size="sm" className="h-9 px-4 text-white/80 hover:text-white" onClick={() => { setSelectionMode(false); onSelectionChange([]); }}>Cancel</Button>
+                        <Button variant="ghost" size="sm" className="h-9 px-4 text-white/80 hover:text-white" onClick={() => { onSelectionChange([]); }}>Cancel</Button>
                     </div>
                 </div>
             )}
@@ -145,6 +128,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                     {rowVirtualizer.getVirtualItems().map(virtualItem => {
                         const row = allRows[virtualItem.index];
                         const isFocused = focusedId === row.expense.id;
+                        const isSelected = selectedIds.includes(row.expense.id);
 
                         return (
                             <div
@@ -162,8 +146,8 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                     onClick={() => handleRowClick(row.expense.id)}
                                     className={cn(
                                         "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative cursor-pointer",
-                                        selectedIds.includes(row.expense.id) ? "bg-primary/5 ring-1 ring-primary/30" : "shadow-sm hover:shadow-md",
-                                        isFocused && !selectionMode && "ring-1 ring-primary/20 bg-primary/[0.02]"
+                                        isSelected ? "bg-primary/5 ring-1 ring-primary/30" : "shadow-sm hover:shadow-md",
+                                        isFocused && "ring-1 ring-primary/20 bg-primary/[0.02]"
                                     )}
                                 >
                                     <button
@@ -172,11 +156,10 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                             "flex-shrink-0 rounded-full flex items-center justify-center transition-all",
                                             viewMode === 'compact' ? 'w-10 h-10' : 'w-12 h-12',
                                             row.expense.type === 'income' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
-                                            selectedIds.includes(row.expense.id) ? 'bg-primary text-primary-foreground' : '',
-                                            !selectionMode && "hover:scale-110 active:scale-95"
+                                            isSelected ? 'bg-primary text-primary-foreground' : 'hover:scale-110 active:scale-95'
                                         )}
                                     >
-                                        {selectedIds.includes(row.expense.id) ? (
+                                        {isSelected ? (
                                             <Check className="h-5 w-5" />
                                         ) : (
                                             renderIcon(row.expense.category?.icon, viewMode === 'compact' ? 'h-5 w-5' : 'h-6 w-6')
@@ -203,26 +186,60 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div className="text-right flex flex-col items-end min-w-[80px]">
-                                                {isFocused && !selectionMode ? (
-                                                    <AddExpenseDialog expenseToEdit={row.expense} onSaveSuccess={onDataChange}>
-                                                        <Button 
-                                                            variant="outline" 
-                                                            size="sm" 
-                                                            className="h-8 rounded-full border-primary/30 text-primary hover:bg-primary/5 transition-all animate-in fade-in zoom-in-95"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                        >
-                                                            <Edit className="h-3 w-3 mr-1.5" />
-                                                            Edit
-                                                        </Button>
-                                                    </AddExpenseDialog>
+                                            <div className="text-right flex flex-col items-end min-w-[100px] justify-center h-full">
+                                                {isFocused ? (
+                                                    <div className="flex items-center gap-1.5 animate-in fade-in zoom-in-95">
+                                                        {selectedIds.length < 2 && (
+                                                            <AddExpenseDialog expenseToEdit={row.expense} onSaveSuccess={onDataChange}>
+                                                                <Button 
+                                                                    variant="outline" 
+                                                                    size="icon" 
+                                                                    className="h-8 w-8 rounded-full border-primary/20 text-primary hover:bg-primary/5 shadow-none"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                >
+                                                                    <Edit className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            </AddExpenseDialog>
+                                                        )}
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button 
+                                                                    variant="outline" 
+                                                                    size="icon" 
+                                                                    className="h-8 w-8 rounded-full border-destructive/20 text-destructive hover:bg-destructive/5 shadow-none"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                >
+                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent className="rounded-[24px]">
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>This will remove the record and update your account balance. This action cannot be undone.</AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            onSelectionChange([row.expense.id]);
+                                                                            setTimeout(() => onDeleteSelected(), 50);
+                                                                        }} 
+                                                                        className="bg-destructive hover:bg-destructive/90"
+                                                                    >
+                                                                        Delete
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </div>
                                                 ) : (
                                                     <>
-                                                        <p className={cn('font-bold text-base leading-none', row.expense.type === 'income' ? 'text-primary' : 'text-destructive')}>
+                                                        <p className={cn('font-bold text-[15px] leading-none', row.expense.type === 'income' ? 'text-primary' : 'text-destructive')}>
                                                             {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
                                                         </p>
                                                         {typeof row.expense.runningBalance === 'number' && (
-                                                            <p className="text-[10px] font-bold text-muted-foreground/40 mt-1 uppercase tracking-tighter">
+                                                            <p className="text-[10px] font-bold text-muted-foreground/40 mt-1.5 uppercase tracking-tighter">
                                                                 {currencySymbol}{formatAmount(row.expense.runningBalance)}
                                                             </p>
                                                         )}

@@ -356,7 +356,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                         </p>
                                                         {typeof row.expense.runningBalance === 'number' && (
                                                             <p className="text-[10px] font-bold text-muted-foreground/40 mt-1.5 uppercase tracking-tighter">
-                                                                {currencySymbol}{formatAmount(row.expense.runningBalance)}
+                                                                BAL: {currencySymbol}{formatAmount(row.expense.runningBalance)}
                                                             </p>
                                                         )}
                                                     </>

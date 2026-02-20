@@ -14,11 +14,6 @@ import { Button } from "@/components/ui/button";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { renderIcon } from '@/lib/render-icon';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -60,16 +55,27 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
     const handleIconClick = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         e.preventDefault();
+        
+        // If already in selection mode, icon click toggles selection
+        if (selectedIds.length > 0) {
+            handleSelection(id);
+            return;
+        }
+
+        // Otherwise reveal action menu
         setFocusedId(prev => prev === id ? null : id);
     };
 
     const handleRowClick = (e: React.MouseEvent, expense: EnrichedExpense) => {
+        // If selection mode is active, row click toggles selection
         if (selectedIds.length > 0) {
             e.stopPropagation();
             e.preventDefault();
             handleSelection(expense.id);
             return;
         }
+        
+        // Otherwise row click does nothing (intentional browsing)
         if (focusedId) {
             setFocusedId(null);
         }
@@ -267,7 +273,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                         Delete
                                                                     </AlertDialogAction>
                                                                 </AlertDialogFooter>
-                                                            </AlertDialog>
+                                                            </AlertDialogContent>
                                                         </AlertDialog>
                                                     </div>
                                                 ) : (

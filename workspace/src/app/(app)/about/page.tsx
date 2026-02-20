@@ -1,10 +1,11 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import pkg from '@/../package.json';
 import {
   Accordion,
@@ -13,6 +14,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 const appVersion = pkg.version;
 
@@ -23,6 +25,8 @@ const changelog = [
         changes: [
             { type: 'UI/UX', description: "Implemented 'Liquid Glass' design for bottom navigation and FAB, featuring backdrop-blur-2xl, inner edge highlights, and deep ambient floating shadows." },
             { type: 'UI/UX', description: "Enhanced secondary navigation transitions with liquid-scale animations and refined glassmorphic depth." },
+            { type: 'UI/UX', description: "Optimized shadow layers to use theme-based primary colors instead of hardcoded blue for a truly native feel." },
+            { type: 'UI/UX', description: "Enhanced vertical real estate for transactions by increasing the scrollable list height by 40%." },
             { type: 'UI/UX', description: "Optimized mobile typography for bottom navigation labels with bold uppercase tracking for maximum legibility on glass surfaces." },
         ]
     },
@@ -460,7 +464,7 @@ const changelog = [
         date: "Nov 26, 2025",
         changes: [
             { type: 'Feature', description: "Grouped transactions by person on the Debts & Dues page for a clearer overview." },
-            { type: 'Feature', description: "Added a quick-add button to create new transactions for existing people on the Debts page." },
+            { type: 'Feature', description: "Added a quick-add button to create new transactions for existing people on the split." },
             { type: 'Fix', description: "Corrected the net amount calculation to only include 'pending' transactions." },
             { type: 'Fix', description: "Removed the 'Settle Debt' success notification for a quieter experience." },
             { type: 'Fix', description: "Removed default '0.00' values from amount fields in forms." },
@@ -728,6 +732,74 @@ export default function AboutPage() {
                         </div>
                     ))}
                 </Accordion>
+            </div>
+
+            <div className="mt-16 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <Separator className="bg-primary/10" />
+                <div className="space-y-6">
+                    <div className="flex items-center gap-3">
+                        <Badge className="bg-primary text-primary-foreground hover:bg-primary font-bold px-3 py-1 rounded-full">What's New</Badge>
+                        <h2 className="text-2xl font-bold font-headline tracking-tight">Version 1.8.9</h2>
+                    </div>
+                    <p className="text-[12px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">February 19, 2026</p>
+                    
+                    <ul className="space-y-5">
+                        <li className="flex items-start gap-4">
+                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <Check className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                            <p className="text-[15px] leading-relaxed text-foreground/80">
+                                <span className="font-bold text-foreground">Redesigned Credit Card Summary:</span> Featured outstanding balance on the left with stacked IN, OUT, and LIMIT totals on the right for superior clarity.
+                            </p>
+                        </li>
+                        <li className="flex items-start gap-4">
+                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <Check className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                            <p className="text-[15px] leading-relaxed text-foreground/80">
+                                <span className="font-bold text-foreground">Standardized Summary Labels:</span> Added explicit colons to financial totals (IN:, OUT:, LIMIT:) for a cleaner dashboard aesthetic.
+                            </p>
+                        </li>
+                        <li className="flex items-start gap-4">
+                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <Check className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                            <p className="text-[15px] leading-relaxed text-foreground/80">
+                                <span className="font-bold text-foreground">Dynamic Filter Ratios:</span> Implemented a responsive 70/20/10 width ratio for search and filters when active, optimizing mobile real estate.
+                            </p>
+                        </li>
+                        <li className="flex items-start gap-4">
+                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <Check className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                            <p className="text-[15px] leading-relaxed text-foreground/80">
+                                <span className="font-bold text-foreground">Unified Filter Management:</span> Integrated the "Clear All" reset action directly into the filter unit for a more efficient workflow.
+                            </p>
+                        </li>
+                        <li className="flex items-start gap-4">
+                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <Check className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                            <p className="text-[15px] leading-relaxed text-foreground/80">
+                                <span className="font-bold text-foreground">Premium Transaction Elevation:</span> Applied permanent depth shadows to all records with a featured top-incline shadow for the latest entry.
+                            </p>
+                        </li>
+                        <li className="flex items-start gap-4">
+                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <Check className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                            <p className="text-[15px] leading-relaxed text-foreground/80">
+                                <span className="font-bold text-foreground">Metadata Alignment:</span> Harmonized running balance contrast and color with account names and timestamps for a unified UI.
+                            </p>
+                        </li>
+                    </ul>
+                    
+                    <div className="p-5 rounded-2xl bg-primary/[0.02] border border-primary/10 mt-10">
+                        <p className="text-[14px] leading-relaxed text-foreground/60 italic font-medium">
+                            This update finalizes the premium transaction experience with an optimized summary layout, dynamic filtering ratios, and enhanced visual depth for a truly professional fintech feel.
+                        </p>
+                    </div>
+                </div>
             </div>
             
             <div className="text-center pt-16 mt-8 border-t border-muted/50">

@@ -47,6 +47,7 @@ type VirtualRow = { type: 'expense'; expense: EnrichedExpense };
 function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; }) {
     
     const [focusedId, setFocusedId] = useState<string | null>(null);
+    const [expandedTagRows, setExpandedTagRows] = useState<Set<string>>(new Set());
     const parentRef = useRef<HTMLDivElement>(null);
 
     const handleSelection = (id: string) => {
@@ -78,6 +79,17 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         e.stopPropagation();
         e.preventDefault();
         onBadgeClick?.(type, id);
+    };
+
+    const toggleTagsExpand = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setExpandedTagRows(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
     };
 
     const allRows = useMemo((): VirtualRow[] => {
@@ -138,6 +150,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                         const row = allRows[virtualItem.index];
                         const isFocused = focusedId === row.expense.id;
                         const isSelected = selectedIds.includes(row.expense.id);
+                        const isTagsExpanded = expandedTagRows.has(row.expense.id);
 
                         return (
                             <div
@@ -151,184 +164,180 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                     transform: `translateY(${virtualItem.start}px)`,
                                 }}
                             >
-                                <AddExpenseDialog expenseToEdit={row.expense} onSaveSuccess={onDataChange}>
-                                    <div 
-                                        onClick={(e) => handleRowClick(e, row.expense)}
+                                <div 
+                                    onClick={(e) => handleRowClick(e, row.expense)}
+                                    className={cn(
+                                        "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative cursor-pointer",
+                                        isSelected ? "bg-primary/5 ring-1 ring-primary/30" : "shadow-sm hover:shadow-md",
+                                        isFocused && "ring-1 ring-primary/20 bg-primary/[0.02]"
+                                    )}
+                                >
+                                    <button
+                                        onClick={(e) => handleIconClick(e, row.expense.id)}
                                         className={cn(
-                                            "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative cursor-pointer",
-                                            isSelected ? "bg-primary/5 ring-1 ring-primary/30" : "shadow-sm hover:shadow-md",
-                                            isFocused && "ring-1 ring-primary/20 bg-primary/[0.02]"
+                                            "flex-shrink-0 rounded-full flex items-center justify-center transition-all",
+                                            viewMode === 'compact' ? 'w-10 h-10' : 'w-12 h-12',
+                                            row.expense.type === 'income' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+                                            isSelected ? 'bg-primary text-primary-foreground' : 'hover:scale-110 active:scale-95'
                                         )}
                                     >
-                                        <button
-                                            onClick={(e) => handleIconClick(e, row.expense.id)}
-                                            className={cn(
-                                                "flex-shrink-0 rounded-full flex items-center justify-center transition-all",
-                                                viewMode === 'compact' ? 'w-10 h-10' : 'w-12 h-12',
-                                                row.expense.type === 'income' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
-                                                isSelected ? 'bg-primary text-primary-foreground' : 'hover:scale-110 active:scale-95'
-                                            )}
-                                        >
-                                            {isSelected ? (
-                                                <Check className="h-5 w-5" />
-                                            ) : (
-                                                renderIcon(row.expense.category?.icon, viewMode === 'compact' ? 'h-5 w-5' : 'h-6 w-6')
-                                            )}
-                                        </button>
+                                        {isSelected ? (
+                                            <Check className="h-5 w-5" />
+                                        ) : (
+                                            renderIcon(row.expense.category?.icon, viewMode === 'compact' ? 'h-5 w-5' : 'h-6 w-6')
+                                        )}
+                                    </button>
 
-                                        <div className="flex-grow min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <div className="min-w-0">
-                                                    <h4 className="font-bold text-sm truncate tracking-tight text-foreground/90">
-                                                        {row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}
-                                                    </h4>
-                                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                                        <button 
-                                                            onClick={(e) => row.expense.account && handleBadgeClickInternal(e, 'account', row.expense.account.id)}
-                                                            className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest hover:text-primary transition-colors"
-                                                        >
-                                                            {row.expense.account?.name}
-                                                        </button>
-                                                        <span className="opacity-30 text-[11px] font-bold text-muted-foreground/60">•</span>
-                                                        <span className="text-[11px] font-bold text-muted-foreground/60 flex items-center gap-1">
-                                                            <Clock className="h-2.5 w-2.5" />
-                                                            {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right flex flex-col items-end min-w-[100px] justify-center h-full">
-                                                    {isFocused ? (
-                                                        <div className="flex items-center gap-1.5 animate-in fade-in zoom-in-95">
-                                                            <Button 
-                                                                variant="outline" 
-                                                                size="icon" 
-                                                                className={cn(
-                                                                    "h-8 w-8 rounded-full border-primary/20 text-primary hover:bg-primary/5 shadow-none",
-                                                                    isSelected && "bg-primary text-primary-foreground border-none"
-                                                                )}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    e.preventDefault();
-                                                                    handleSelection(row.expense.id);
-                                                                }}
-                                                            >
-                                                                <ListChecks className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                            {selectedIds.length < 2 && (
-                                                                <AddExpenseDialog expenseToEdit={row.expense} onSaveSuccess={onDataChange}>
-                                                                    <Button 
-                                                                        variant="outline" 
-                                                                        size="icon" 
-                                                                        className="h-8 w-8 rounded-full border-primary/20 text-primary hover:bg-primary/5 shadow-none"
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                    >
-                                                                        <Edit className="h-3.5 w-3.5" />
-                                                                    </Button>
-                                                                </AddExpenseDialog>
-                                                            )}
-                                                            <AlertDialog>
-                                                                <AlertDialogTrigger asChild>
-                                                                    <Button 
-                                                                        variant="outline" 
-                                                                        size="icon" 
-                                                                        className="h-8 w-8 rounded-full border-destructive/20 text-destructive hover:bg-destructive/5 shadow-none"
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                    >
-                                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                                    </Button>
-                                                                </AlertDialogTrigger>
-                                                                <AlertDialogContent className="rounded-[24px]">
-                                                                    <AlertDialogHeader>
-                                                                        <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
-                                                                        <AlertDialogDescription>This will remove the record and update your account balance. This action cannot be undone.</AlertDialogDescription>
-                                                                    </AlertDialogHeader>
-                                                                    <AlertDialogFooter>
-                                                                        <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
-                                                                        <AlertDialogAction 
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                onSelectionChange([row.expense.id]);
-                                                                                setTimeout(() => onDeleteSelected(), 50);
-                                                                            }} 
-                                                                            className="bg-destructive hover:bg-destructive/90"
-                                                                        >
-                                                                            Delete
-                                                                        </AlertDialogAction>
-                                                                    </AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            <p className={cn('font-bold text-[15px] leading-none', row.expense.type === 'income' ? 'text-primary' : 'text-destructive')}>
-                                                                {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
-                                                            </p>
-                                                            {typeof row.expense.runningBalance === 'number' && (
-                                                                <p className="text-[10px] font-bold text-muted-foreground/40 mt-1.5 uppercase tracking-tighter">
-                                                                    {currencySymbol}{formatAmount(row.expense.runningBalance)}
-                                                                </p>
-                                                            )}
-                                                        </>
-                                                    )}
+                                    <div className="flex-grow min-w-0">
+                                        <div className="flex justify-between items-start">
+                                            <div className="min-w-0">
+                                                <h4 className="font-bold text-sm truncate tracking-tight text-foreground/90">
+                                                    {row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}
+                                                </h4>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    <button 
+                                                        onClick={(e) => row.expense.account && handleBadgeClickInternal(e, 'account', row.expense.account.id)}
+                                                        className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest hover:text-primary transition-colors"
+                                                    >
+                                                        {row.expense.account?.name}
+                                                    </button>
+                                                    <span className="opacity-30 text-[11px] font-bold text-muted-foreground/60">•</span>
+                                                    <span className="text-[11px] font-bold text-muted-foreground/60 flex items-center gap-1">
+                                                        <Clock className="h-2.5 w-2.5" />
+                                                        {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
                                                 </div>
                                             </div>
-                                            
-                                            <div className="flex flex-wrap items-center gap-1.5 pt-2">
-                                                {row.expense.category && (
-                                                    <Badge 
-                                                        variant="secondary" 
-                                                        onClick={(e) => handleBadgeClickInternal(e, 'category', row.expense.category!.id)}
-                                                        className="h-5 px-2 bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer text-[9px] font-bold uppercase tracking-widest border-none"
-                                                    >
-                                                        {row.expense.category.name}
-                                                    </Badge>
-                                                )}
-
-                                                {row.expense.tags?.slice(0, 2).map(tag => (
-                                                    <Badge 
-                                                        key={tag.id} 
-                                                        variant="outline" 
-                                                        onClick={(e) => handleBadgeClickInternal(e, 'tag', tag.id)}
-                                                        style={generateColorStyle(tag.name)} 
-                                                        className="badge-colorful text-[9px] px-2 h-5 font-bold uppercase cursor-pointer hover:opacity-80 transition-opacity border-none"
-                                                    >
-                                                        {tag.name}
-                                                    </Badge>
-                                                ))}
-                                                
-                                                {(row.expense.tags?.length || 0) > 2 && (
-                                                    <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <Badge 
-                                                                variant="outline" 
-                                                                className="h-5 px-1.5 text-[9px] font-bold text-muted-foreground border-none bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
-                                                                onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
-                                                            >
-                                                                +{row.expense.tags!.length - 2}
-                                                            </Badge>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent 
-                                                            className="w-auto p-2 flex flex-wrap gap-1.5 max-w-[200px]" 
-                                                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                                            <div className="text-right flex flex-col items-end min-w-[100px] justify-center h-full">
+                                                {isFocused ? (
+                                                    <div className="flex items-center gap-1.5 animate-in fade-in zoom-in-95">
+                                                        <Button 
+                                                            variant="outline" 
+                                                            size="icon" 
+                                                            className={cn(
+                                                                "h-8 w-8 rounded-full border-primary/20 text-primary hover:bg-primary/5 shadow-none",
+                                                                isSelected && "bg-primary text-primary-foreground border-none"
+                                                            )}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                e.preventDefault();
+                                                                handleSelection(row.expense.id);
+                                                            }}
                                                         >
-                                                            {row.expense.tags!.slice(2).map(tag => (
-                                                                <Badge 
-                                                                    key={tag.id} 
+                                                            <ListChecks className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                        {selectedIds.length < 2 && (
+                                                            <AddExpenseDialog expenseToEdit={row.expense} onSaveSuccess={onDataChange}>
+                                                                <Button 
                                                                     variant="outline" 
-                                                                    onClick={(e) => handleBadgeClickInternal(e, 'tag', tag.id)}
-                                                                    style={generateColorStyle(tag.name)} 
-                                                                    className="badge-colorful text-[9px] px-2 h-5 font-bold uppercase cursor-pointer hover:opacity-80 transition-opacity border-none"
+                                                                    size="icon" 
+                                                                    className="h-8 w-8 rounded-full border-primary/20 text-primary hover:bg-primary/5 shadow-none"
+                                                                    onClick={(e) => e.stopPropagation()}
                                                                 >
-                                                                    {tag.name}
-                                                                </Badge>
-                                                            ))}
-                                                        </PopoverContent>
-                                                    </Popover>
+                                                                    <Edit className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            </AddExpenseDialog>
+                                                        )}
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button 
+                                                                    variant="outline" 
+                                                                    size="icon" 
+                                                                    className="h-8 w-8 rounded-full border-destructive/20 text-destructive hover:bg-destructive/5 shadow-none"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                >
+                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent className="rounded-[24px]">
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>This will remove the record and update your account balance. This action cannot be undone.</AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            onSelectionChange([row.expense.id]);
+                                                                            setTimeout(() => onDeleteSelected(), 50);
+                                                                        }} 
+                                                                        className="bg-destructive hover:bg-destructive/90"
+                                                                    >
+                                                                        Delete
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialog>
+                                                        </AlertDialog>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <p className={cn('font-bold text-[15px] leading-none', row.expense.type === 'income' ? 'text-primary' : 'text-destructive')}>
+                                                            {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
+                                                        </p>
+                                                        {typeof row.expense.runningBalance === 'number' && (
+                                                            <p className="text-[10px] font-bold text-muted-foreground/40 mt-1.5 uppercase tracking-tighter">
+                                                                {currencySymbol}{formatAmount(row.expense.runningBalance)}
+                                                            </p>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
+                                        
+                                        <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                                            {row.expense.category && (
+                                                <Badge 
+                                                    variant="secondary" 
+                                                    onClick={(e) => handleBadgeClickInternal(e, 'category', row.expense.category!.id)}
+                                                    className="h-5 px-2 bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer text-[9px] font-bold uppercase tracking-widest border-none"
+                                                >
+                                                    {row.expense.category.name}
+                                                </Badge>
+                                            )}
+
+                                            {(() => {
+                                                const tags = row.expense.tags || [];
+                                                const tagsToShow = isTagsExpanded ? tags : tags.slice(0, 2);
+                                                const hasMore = !isTagsExpanded && tags.length > 2;
+
+                                                return (
+                                                    <>
+                                                        {tagsToShow.map(tag => (
+                                                            <Badge 
+                                                                key={tag.id} 
+                                                                variant="outline" 
+                                                                onClick={(e) => handleBadgeClickInternal(e, 'tag', tag.id)}
+                                                                style={generateColorStyle(tag.name)} 
+                                                                className="badge-colorful text-[9px] px-2 h-5 font-bold uppercase cursor-pointer hover:opacity-80 transition-opacity border-none"
+                                                            >
+                                                                {tag.name}
+                                                            </Badge>
+                                                        ))}
+                                                        {hasMore && (
+                                                            <Badge 
+                                                                variant="outline" 
+                                                                className="h-5 px-1.5 text-[9px] font-bold text-muted-foreground border-none bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                                                                onClick={(e) => toggleTagsExpand(e, row.expense.id)}
+                                                            >
+                                                                +{tags.length - 2}
+                                                            </Badge>
+                                                        )}
+                                                        {isTagsExpanded && tags.length > 2 && (
+                                                            <Badge 
+                                                                variant="outline"
+                                                                className="h-5 px-1.5 text-[9px] font-bold text-muted-foreground border-none bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                                                                onClick={(e) => toggleTagsExpand(e, row.expense.id)}
+                                                            >
+                                                                <X className="h-2 w-2" />
+                                                            </Badge>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
                                     </div>
-                                </AddExpenseDialog>
+                                </div>
                             </div>
                         )
                     })}

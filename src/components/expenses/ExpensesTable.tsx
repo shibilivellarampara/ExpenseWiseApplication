@@ -47,6 +47,7 @@ type VirtualRow = { type: 'expense'; expense: EnrichedExpense };
 function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; }) {
     
     const [focusedId, setFocusedId] = useState<string | null>(null);
+    const [expandedTagRows, setExpandedTagRows] = useState<Set<string>>(new Set());
     const parentRef = useRef<HTMLDivElement>(null);
 
     const handleSelection = (id: string) => {
@@ -63,15 +64,12 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
     };
 
     const handleRowClick = (e: React.MouseEvent, expense: EnrichedExpense) => {
-        // Selection mode is active if items are already selected
         if (selectedIds.length > 0) {
             e.stopPropagation();
             e.preventDefault();
             handleSelection(expense.id);
             return;
         }
-        
-        // Rows don't trigger anything by default now, they just clear focus
         if (focusedId) {
             setFocusedId(null);
         }
@@ -81,6 +79,17 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         e.stopPropagation();
         e.preventDefault();
         onBadgeClick?.(type, id);
+    };
+
+    const toggleTagsExpand = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setExpandedTagRows(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
     };
 
     const allRows = useMemo((): VirtualRow[] => {
@@ -141,6 +150,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                         const row = allRows[virtualItem.index];
                         const isFocused = focusedId === row.expense.id;
                         const isSelected = selectedIds.includes(row.expense.id);
+                        const isTagsExpanded = expandedTagRows.has(row.expense.id);
 
                         return (
                             <div
@@ -157,7 +167,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 <div 
                                     onClick={(e) => handleRowClick(e, row.expense)}
                                     className={cn(
-                                        "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative",
+                                        "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative cursor-pointer",
                                         isSelected ? "bg-primary/5 ring-1 ring-primary/30" : "shadow-sm hover:shadow-md",
                                         isFocused && "ring-1 ring-primary/20 bg-primary/[0.02]"
                                     )}
@@ -257,7 +267,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                         Delete
                                                                     </AlertDialogAction>
                                                                 </AlertDialogFooter>
-                                                            </AlertDialogContent>
+                                                            </AlertDialog>
                                                         </AlertDialog>
                                                     </div>
                                                 ) : (
@@ -286,34 +296,14 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                 </Badge>
                                             )}
 
-                                            {row.expense.tags?.slice(0, 2).map(tag => (
-                                                <Badge 
-                                                    key={tag.id} 
-                                                    variant="outline" 
-                                                    onClick={(e) => handleBadgeClickInternal(e, 'tag', tag.id)}
-                                                    style={generateColorStyle(tag.name)} 
-                                                    className="badge-colorful text-[9px] px-2 h-5 font-bold uppercase cursor-pointer hover:opacity-80 transition-opacity border-none"
-                                                >
-                                                    {tag.name}
-                                                </Badge>
-                                            ))}
-                                            
-                                            {(row.expense.tags?.length || 0) > 2 && (
-                                                <Popover>
-                                                    <PopoverTrigger asChild>
-                                                        <Badge 
-                                                            variant="outline" 
-                                                            className="h-5 px-1.5 text-[9px] font-bold text-muted-foreground border-none bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
-                                                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
-                                                        >
-                                                            +{row.expense.tags!.length - 2}
-                                                        </Badge>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent 
-                                                        className="w-auto p-2 flex flex-wrap gap-1.5 max-w-[200px]" 
-                                                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
-                                                    >
-                                                        {row.expense.tags!.slice(2).map(tag => (
+                                            {(() => {
+                                                const tags = row.expense.tags || [];
+                                                const tagsToShow = isTagsExpanded ? tags : tags.slice(0, 2);
+                                                const hasMore = !isTagsExpanded && tags.length > 2;
+
+                                                return (
+                                                    <>
+                                                        {tagsToShow.map(tag => (
                                                             <Badge 
                                                                 key={tag.id} 
                                                                 variant="outline" 
@@ -324,9 +314,27 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                 {tag.name}
                                                             </Badge>
                                                         ))}
-                                                    </PopoverContent>
-                                                </Popover>
-                                            )}
+                                                        {hasMore && (
+                                                            <Badge 
+                                                                variant="outline" 
+                                                                className="h-5 px-1.5 text-[9px] font-bold text-muted-foreground border-none bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                                                                onClick={(e) => toggleTagsExpand(e, row.expense.id)}
+                                                            >
+                                                                +{tags.length - 2}
+                                                            </Badge>
+                                                        )}
+                                                        {isTagsExpanded && tags.length > 2 && (
+                                                            <Badge 
+                                                                variant="outline"
+                                                                className="h-5 px-1.5 text-[9px] font-bold text-muted-foreground border-none bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                                                                onClick={(e) => toggleTagsExpand(e, row.expense.id)}
+                                                            >
+                                                                <X className="h-2 w-2" />
+                                                            </Badge>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>

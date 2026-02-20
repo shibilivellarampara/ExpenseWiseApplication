@@ -4,8 +4,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ListFilter, Search, X, Check, ChevronDown, Pilcrow } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ListFilter, Search, X, Check, ChevronDown, Pilcrow, RotateCcw } from 'lucide-react';
 import { Account, Category, Tag } from '@/lib/types';
 import {
   DropdownMenu,
@@ -47,7 +46,6 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
 };
 
 function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }: ExpensesFiltersProps) {
-    
     const handleTypeChange = (type: 'all' | 'income' | 'expense') => {
         onFiltersChange({ ...filters, type });
     }
@@ -153,7 +151,8 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
     return (
         <div className="space-y-3">
             <div className="flex items-center gap-2 w-full">
-                <div className="relative flex-[0.8] group">
+                {/* Search Bar: 75% width */}
+                <div className="relative flex-[0.75] group">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
                     <Input
                         type="search"
@@ -174,27 +173,41 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                     )}
                 </div>
                 
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-11 flex-[0.2] rounded-[14px] border-muted-foreground/20 hover:bg-card shrink-0 p-0 relative">
-                            <ListFilter className="h-5 w-5" />
-                            {activeFilterCount > 0 && 
-                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground font-bold border-2 border-background">{activeFilterCount}</span>
-                            }
+                {/* Filter & Clear Actions: 25% width */}
+                <div className="flex-[0.25] flex gap-2">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-11 w-full rounded-[14px] border-muted-foreground/20 hover:bg-card shrink-0 p-0 relative">
+                                <ListFilter className="h-5 w-5" />
+                                {activeFilterCount > 0 && 
+                                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground font-bold border-2 border-background">{activeFilterCount}</span>
+                                }
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-5 rounded-[24px] border-none shadow-[0_20px_50px_rgba(0,0,0,0.2)] bg-card" align="end">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-bold text-sm tracking-tight">Advanced Filters</h3>
+                                {activeFilterCount > 0 && (
+                                    <button onClick={clearFilters} className="text-[10px] font-bold text-primary uppercase tracking-widest hover:opacity-70 transition-opacity">
+                                        Reset All
+                                    </button>
+                                )}
+                            </div>
+                            <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags }} />
+                        </PopoverContent>
+                    </Popover>
+
+                    {activeFilterCount > 0 && (
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={clearFilters}
+                            className="h-11 w-11 rounded-[14px] border-primary/20 text-primary hover:bg-primary/5 shrink-0"
+                        >
+                            <RotateCcw className="h-4 w-4" />
                         </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-5 rounded-[24px] border-none shadow-[0_20px_50px_rgba(0,0,0,0.2)] bg-card" align="end">
-                        <div className="flex justify-between items-center mb-6">
-                             <h3 className="font-bold text-sm tracking-tight">Advanced Filters</h3>
-                             {activeFilterCount > 0 && (
-                                <button onClick={clearFilters} className="text-[10px] font-bold text-primary uppercase tracking-widest hover:opacity-70 transition-opacity">
-                                    Reset All
-                                </button>
-                             )}
-                        </div>
-                        <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags }} />
-                    </PopoverContent>
-                </Popover>
+                    )}
+                </div>
             </div>
             
             {(activeFilterCount > 0) && (

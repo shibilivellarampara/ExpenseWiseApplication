@@ -63,14 +63,15 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
     };
 
     const handleRowClick = (e: React.MouseEvent, expense: EnrichedExpense) => {
-        // If selection mode is active, toggle selection
         if (selectedIds.length > 0) {
             e.stopPropagation();
             e.preventDefault();
             handleSelection(expense.id);
+            return;
         }
-        // In normal mode, bubble to AddExpenseDialog trigger
-        if (focusedId) setFocusedId(null);
+        if (focusedId) {
+            setFocusedId(null);
+        }
     };
 
     const handleBadgeClickInternal = (e: React.MouseEvent, type: 'category' | 'tag' | 'account', id: string) => {
@@ -93,9 +94,9 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
     return (
         <div className="relative">
             {selectedIds.length > 0 && (
-                <div className="sticky top-0 z-30 bg-primary/95 backdrop-blur-md p-3 rounded-2xl border-none shadow-xl flex justify-between items-center mb-4 transition-all animate-in slide-in-from-top-4">
-                    <div className="flex items-center gap-3 pl-2 text-primary-foreground">
-                        <div className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center">
+                <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-md p-3 rounded-2xl border border-border shadow-xl flex justify-between items-center mb-4 transition-all animate-in slide-in-from-top-4">
+                    <div className="flex items-center gap-3 pl-2 text-foreground">
+                        <div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                             <Check className="h-3 w-3" />
                         </div>
                         <span className="font-bold text-sm uppercase tracking-widest">{selectedIds.length} Selected</span>
@@ -103,7 +104,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                     <div className="flex items-center gap-2">
                          <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-9 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white border-none" disabled={selectedIds.length === 0 || isDeleting}>
+                                <Button variant="destructive" size="sm" className="h-9 px-4 rounded-xl" disabled={selectedIds.length === 0 || isDeleting}>
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Delete
                                 </Button>
@@ -121,7 +122,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                          </AlertDialog>
-                        <Button variant="ghost" size="sm" className="h-9 px-4 text-white/80 hover:text-white" onClick={() => { onSelectionChange([]); }}>Cancel</Button>
+                        <Button variant="ghost" size="sm" className="h-9 px-4 text-muted-foreground hover:text-foreground" onClick={() => { onSelectionChange([]); }}>Cancel</Button>
                     </div>
                 </div>
             )}

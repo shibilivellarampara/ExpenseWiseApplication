@@ -87,34 +87,32 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
         const isPositive = outstanding > 0;
 
         return (
-            <div className="space-y-4">
-                <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Outstanding</p>
-                        <p className={cn(
-                            "text-2xl font-bold tracking-tight",
-                            isPositive ? "text-destructive" : "text-primary"
-                        )}>
-                            {currencySymbol}{formatAmount(Math.abs(outstanding))}
-                        </p>
-                    </div>
-                    <div className="text-right">
-                         <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest">{creditCardSummary.utilization.toFixed(1)}% Used</p>
-                    </div>
+            <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Outstanding</p>
+                    <p className={cn(
+                        "text-2xl font-bold tracking-tight",
+                        isPositive ? "text-destructive" : "text-primary"
+                    )}>
+                        {currencySymbol}{formatAmount(Math.abs(outstanding))}
+                    </p>
+                    <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest">
+                        {creditCardSummary.utilization.toFixed(1)}% Used
+                    </p>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-muted/50">
-                    <div className="space-y-0.5">
-                        <p className="text-[9px] font-bold text-primary uppercase tracking-tighter">Total In</p>
-                        <p className="text-xs font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</p>
+                <div className="text-right space-y-1 mt-1">
+                    <div className="flex items-center justify-end gap-2">
+                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest">In</span>
+                        <span className="text-sm sm:text-base font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</span>
                     </div>
-                    <div className="space-y-0.5 text-center">
-                        <p className="text-[9px] font-bold text-destructive uppercase tracking-tighter">Total Out</p>
-                        <p className="text-xs font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</p>
+                    <div className="flex items-center justify-end gap-2">
+                        <span className="text-[10px] font-bold text-destructive uppercase tracking-widest">Out</span>
+                        <span className="text-sm sm:text-base font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</span>
                     </div>
-                    <div className="space-y-0.5 text-right">
-                        <p className="text-[9px] font-bold text-muted-foreground/70 uppercase tracking-tighter">Limit</p>
-                        <p className="text-xs font-bold text-foreground">{currencySymbol}{formatAmount(creditCardSummary.limit || 0)}</p>
+                    <div className="flex items-center justify-end gap-2 mt-1 opacity-70">
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Limit</span>
+                        <span className="text-xs font-bold text-muted-foreground">{currencySymbol}{formatAmount(creditCardSummary.limit || 0)}</span>
                     </div>
                 </div>
             </div>

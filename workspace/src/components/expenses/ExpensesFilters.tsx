@@ -3,8 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, FilterX, ListFilter, Pilcrow, Search, CalendarDays } from 'lucide-react';
-import { Check, X } from 'lucide-react';
+import { ListFilter, Search, X, Calendar, Check, ChevronDown } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, parse, addDays } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Account, Category, Tag } from '@/lib/types';
@@ -21,7 +20,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import * as LucideIcons from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-
 export type DateRange = { from: Date | undefined; to: Date | undefined; };
 
 export type Filters = {
@@ -33,6 +31,7 @@ export type Filters = {
     searchQuery: string;
     billingCycle?: string;
 }
+
 interface ExpensesFiltersProps {
     filters: Filters;
     onFiltersChange: (filters: Filters) => void;
@@ -45,9 +44,8 @@ interface ExpensesFiltersProps {
 const renderIcon = (iconName: string | undefined, className?: string) => {
     if (!iconName) return null;
     const IconComponent = (LucideIcons as any)[iconName];
-    return IconComponent ? <IconComponent className={cn("h-4 w-4 text-muted-foreground", className)} /> : <Pilcrow className={cn("h-4 w-4 text-muted-foreground", className)} />;
+    return IconComponent ? <IconComponent className={cn("h-3.5 w-3.5", className)} /> : <LucideIcons.Pilcrow className={cn("h-3.5 w-3.5", className)} />;
 };
-
 
 function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter, showBillingCycleOptions, selectedAccounts }: ExpensesFiltersProps & { setDateRangePreset: (preset: string) => void, dateRangePreset: string, showBillingCycleOptions: boolean, selectedAccounts: Account[] }) {
     
@@ -77,22 +75,18 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                 break;
             case 'current-cycle':
                 if (currentDay > statementDate) {
-                    // Current cycle started this month
                     from = addDays(new Date(currentYear, currentMonth, statementDate), 1);
                     to = new Date(currentYear, currentMonth + 1, statementDate);
                 } else {
-                    // Current cycle started last month
                     from = addDays(new Date(currentYear, currentMonth - 1, statementDate), 1);
                     to = new Date(currentYear, currentMonth, statementDate);
                 }
                 break;
             case 'last-cycle':
                  if (currentDay > statementDate) {
-                    // Last cycle started last month
                     from = addDays(new Date(currentYear, currentMonth - 1, statementDate), 1);
                     to = new Date(currentYear, currentMonth, statementDate);
                 } else {
-                    // Last cycle started two months ago
                     from = addDays(new Date(currentYear, currentMonth - 2, statementDate), 1);
                     to = new Date(currentYear, currentMonth - 1, statementDate);
                 }
@@ -142,35 +136,36 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
         items: (Category | Account | Tag)[],
         placeholder: string
     ) => (
-        <div>
-            <h4 className="text-sm font-medium mb-2">{title}</h4>
+        <div className="space-y-2">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">{title}</h4>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
+                    <Button variant="outline" className="w-full justify-between h-10 rounded-xl text-xs font-medium">
                         <span>{filters[field].length > 0 ? `${filters[field].length} selected` : placeholder}</span>
-                        <ChevronDown className="h-4 w-4 opacity-50" />
+                        <ChevronDown className="h-3 w-3 opacity-50" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                <DropdownMenuContent className="w-[280px] rounded-xl border-none shadow-2xl p-1">
                     <Command>
-                        <CommandInput placeholder={`Search ${title.toLowerCase()}...`} />
-                        <CommandList>
-                            <CommandEmpty>No results found.</CommandEmpty>
-                            <CommandGroup>
+                        <Input placeholder={`Search ${title.toLowerCase()}...`} className="border-none shadow-none focus-visible:ring-0 h-10 text-xs" />
+                        <CommandList className="max-h-[240px]">
+                            <CommandEmpty className="py-4 text-center text-xs text-muted-foreground">No results found.</CommandEmpty>
+                            <CommandGroup className="p-1">
                                 {items.map(item => (
-                                    <CommandItem
+                                    <div
                                         key={item.id}
-                                        onSelect={() => {
-                                            handleMultiSelectChange(field, item.id);
-                                        }}
-                                        className="flex justify-between cursor-pointer"
+                                        onClick={() => handleMultiSelectChange(field, item.id)}
+                                        className={cn(
+                                            "flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium cursor-pointer transition-colors",
+                                            filters[field].includes(item.id) ? "bg-primary/5 text-primary" : "hover:bg-accent"
+                                        )}
                                     >
                                         <div className="flex items-center gap-2">
                                             {'icon' in item && renderIcon(item.icon)}
                                             {item.name}
                                         </div>
-                                         <Check className={cn("h-4 w-4", filters[field].includes(item.id) ? "opacity-100" : "opacity-0")} />
-                                    </CommandItem>
+                                         <Check className={cn("h-3.5 w-3.5", filters[field].includes(item.id) ? "opacity-100" : "opacity-0")} />
+                                    </div>
                                 ))}
                             </CommandGroup>
                         </CommandList>
@@ -181,103 +176,88 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
     );
 
     return (
-        <div className="grid gap-4">
-            {createMultiSelect('Accounts', 'accounts', accounts, 'Select accounts')}
-            <Separator />
-            {createMultiSelect('Categories', 'categories', categories, 'Select categories')}
-            <Separator />
+        <div className="grid gap-5">
+            {createMultiSelect('Accounts', 'accounts', accounts, 'All Accounts')}
+            {createMultiSelect('Categories', 'categories', categories, 'All Categories')}
+            
             {!disableDateFilter && (
-                <>
-                    <div>
-                        <h4 className="text-sm font-medium mb-2">Date Range</h4>
-                        <Select value={dateRangePreset} onValueChange={handleDateRangePresetChange}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select date range" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Time</SelectItem>
-                                <SelectItem value="this-month">This Month</SelectItem>
-                                <SelectItem value="last-month">Last Month</SelectItem>
-                                <SelectItem value="this-year">This Year</SelectItem>
-                                 {showBillingCycleOptions && <Separator className="my-1" />}
-                                {showBillingCycleOptions && <SelectItem value="current-cycle">Current Billing Cycle</SelectItem>}
-                                {showBillingCycleOptions && <SelectItem value="last-cycle">Last Billing Cycle</SelectItem>}
-                                 <Separator className="my-1" />
-                                <SelectItem value="custom">Custom Range</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        {dateRangePreset === 'custom' && (
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                                <div className="space-y-1">
-                                    <Label htmlFor="from-date" className="text-xs">From</Label>
-                                    <Input
-                                        id="from-date"
-                                        type="date"
-                                        value={formatDateForInput(filters.dateRange?.from)}
-                                        onChange={(e) => handleDateChange(e.target.value ?? undefined, 'from')}
-                                        className="text-sm"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="to-date" className="text-xs">To</Label>
-                                    <Input
-                                        id="to-date"
-                                        type="date"
-                                        value={formatDateForInput(filters.dateRange?.to)}
-                                        onChange={(e) => handleDateChange(e.target.value ?? undefined, 'to')}
-                                        className="text-sm"
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    <Separator />
-                </>
+                <div className="space-y-2">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Date Range</h4>
+                    <Select value={dateRangePreset} onValueChange={handleDateRangePresetChange}>
+                        <SelectTrigger className="h-10 rounded-xl text-xs font-medium">
+                            <SelectValue placeholder="Select period" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                            <SelectItem value="all">All Time</SelectItem>
+                            <SelectItem value="this-month">This Month</SelectItem>
+                            <SelectItem value="last-month">Last Month</SelectItem>
+                            <SelectItem value="this-year">This Year</SelectItem>
+                             {showBillingCycleOptions && <Separator className="my-1" />}
+                            {showBillingCycleOptions && <SelectItem value="current-cycle">Current Billing Cycle</SelectItem>}
+                            {showBillingCycleOptions && <SelectItem value="last-cycle">Last Billing Cycle</SelectItem>}
+                             <Separator className="my-1" />
+                            <SelectItem value="custom">Custom Range</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    {dateRangePreset === 'custom' && (
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                            <Input
+                                type="date"
+                                value={formatDateForInput(filters.dateRange?.from)}
+                                onChange={(e) => handleDateChange(e.target.value ?? undefined, 'from')}
+                                className="text-xs h-10 rounded-xl"
+                            />
+                            <Input
+                                type="date"
+                                value={formatDateForInput(filters.dateRange?.to)}
+                                onChange={(e) => handleDateChange(e.target.value ?? undefined, 'to')}
+                                className="text-xs h-10 rounded-xl"
+                            />
+                        </div>
+                    )}
+                </div>
             )}
-            {createMultiSelect('Tags', 'tags', tags, 'Select tags')}
-            <Separator />
-            <div>
-                <h4 className="text-sm font-medium mb-2">Transaction Type</h4>
-                <Select value={filters.type} onValueChange={handleTypeChange}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Transaction Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="income">Income</SelectItem>
-                        <SelectItem value="expense">Expense</SelectItem>
-                    </SelectContent>
-                </Select>
+
+            {createMultiSelect('Tags', 'tags', tags, 'All Tags')}
+
+            <div className="space-y-2">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Transaction Type</h4>
+                <div className="grid grid-cols-3 gap-1 bg-muted/50 p-1 rounded-xl">
+                    {['all', 'income', 'expense'].map((t) => (
+                        <button
+                            key={t}
+                            onClick={() => handleTypeChange(t as any)}
+                            className={cn(
+                                "py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all",
+                                filters.type === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"
+                            )}
+                        >
+                            {t}
+                        </button>
+                    ))}
+                </div>
             </div>
         </div>
     )
 }
 
 export function ExpensesFilters({ filters, onFiltersChange, accounts, categories, tags, disableDateFilter }: ExpensesFiltersProps) {
-
-    const [popoverOpen, setPopoverOpen] = useState(false);
     const [dateRangePreset, setDateRangePreset] = useState<string>(() => {
         if(disableDateFilter) return '';
-        if(filters.dateRange?.from || filters.dateRange?.to) {
-            return 'custom';
-        }
+        if(filters.dateRange?.from || filters.dateRange?.to) return 'custom';
         return 'all';
     });
     
     const clearFilters = () => {
-        const newFilters: Filters = {
+        onFiltersChange({
             dateRange: disableDateFilter ? filters.dateRange : { from: undefined, to: undefined },
             type: 'all',
             categories: [],
             accounts: [],
             tags: [],
             searchQuery: '',
-            billingCycle: undefined,
-        };
-        onFiltersChange(newFilters);
-        if (!disableDateFilter) {
-            setDateRangePreset('all');
-        }
+        });
+        if (!disableDateFilter) setDateRangePreset('all');
     };
     
     const activeFilterCount =
@@ -285,8 +265,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
         (filters.type !== 'all' ? 1 : 0) +
         filters.categories.length +
         filters.accounts.length +
-        filters.tags.length +
-        (filters.searchQuery ? 1 : 0);
+        filters.tags.length;
         
     const selectedAccounts = useMemo(() => 
         accounts.filter(acc => filters.accounts.includes(acc.id)), 
@@ -294,83 +273,86 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
 
     const showBillingCycleOptions = selectedAccounts.length === 1 && selectedAccounts.every(acc => acc.type === 'credit_card' && acc.cardDetails?.statementDate);
     
-    useEffect(() => {
-        // If billing cycle filter is not applicable anymore, reset it
-        if (!showBillingCycleOptions && (dateRangePreset === 'current-cycle' || dateRangePreset === 'last-cycle')) {
-            setDateRangePreset('all');
-            onFiltersChange({ ...filters, dateRange: { from: undefined, to: undefined } });
-        }
-    }, [showBillingCycleOptions, dateRangePreset, onFiltersChange, filters]);
-
     return (
-        <div className="flex flex-nowrap gap-2 items-center">
-            <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-                <Input
-                    type="search"
-                    placeholder="Search..."
-                    value={filters.searchQuery}
-                    onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
-                    className="pl-8 pr-8 w-full"
-                />
-                 {filters.searchQuery && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground"
-                        onClick={() => onFiltersChange({ ...filters, searchQuery: '' })}
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
-                )}
+        <div className="space-y-3">
+            <div className="flex items-center gap-2">
+                <div className="relative flex-1 group">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                    <Input
+                        type="search"
+                        placeholder="Search transactions..."
+                        value={filters.searchQuery}
+                        onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
+                        className="pl-9 pr-9 h-10 rounded-[14px] bg-card border-none shadow-sm focus-visible:ring-1 focus-visible:ring-primary/20 text-sm"
+                    />
+                    {filters.searchQuery && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-transparent"
+                            onClick={() => onFiltersChange({ ...filters, searchQuery: '' })}
+                        >
+                            <X className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                    )}
+                </div>
+                
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-10 w-10 rounded-[14px] border-muted-foreground/20 hover:bg-card shrink-0 p-0">
+                            <ListFilter className="h-4 w-4" />
+                            {activeFilterCount > 0 && 
+                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground font-bold border-2 border-background">{activeFilterCount}</span>
+                            }
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-5 rounded-[24px] border-none shadow-[0_20px_50px_rgba(0,0,0,0.2)] bg-card" align="end">
+                        <div className="flex justify-between items-center mb-6">
+                             <h3 className="font-bold text-sm tracking-tight">Advanced Filters</h3>
+                             {activeFilterCount > 0 && (
+                                <button onClick={clearFilters} className="text-[10px] font-bold text-primary uppercase tracking-widest hover:opacity-70 transition-opacity">
+                                    Reset All
+                                </button>
+                             )}
+                        </div>
+                        <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter, showBillingCycleOptions, selectedAccounts }} />
+                    </PopoverContent>
+                </Popover>
             </div>
             
-            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                <PopoverTrigger asChild>
-                     <Button variant="outline" className="relative shrink-0">
-                        <ListFilter className="mr-2 h-4 w-4" />
-                        Filters
-                        {activeFilterCount > 0 && 
-                            <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0 rounded-full">{activeFilterCount}</Badge>
-                        }
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-4" align="start">
-                    <div className="flex justify-between items-center mb-4">
-                         <h3 className="font-medium">Filter Transactions</h3>
-                         {activeFilterCount > 0 && (
-                            <Button variant="ghost" size="sm" onClick={clearFilters}>
-                                Clear filters
-                            </Button>
-                         )}
+            {(activeFilterCount > 0 || !disableDateFilter) && (
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+                    {!disableDateFilter && (
+                        <Badge variant={filters.dateRange.from ? "secondary" : "outline"} className="h-8 rounded-full px-3 cursor-default whitespace-nowrap bg-transparent border-muted-foreground/20 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            {filters.dateRange.from ? `${format(filters.dateRange.from, 'MMM d')} - ${format(filters.dateRange.to!, 'MMM d')}` : 'Any Date'}
+                        </Badge>
+                    )}
+
+                    <div className="flex gap-2">
+                        {filters.categories.map(id => {
+                            const item = categories.find(c => c.id === id);
+                            return item ? (
+                                <Badge key={id} variant="secondary" className="h-8 rounded-full pl-3 pr-1 py-0 bg-primary/5 text-primary border-primary/10 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                    {item.name}
+                                    <button onClick={() => onFiltersChange({...filters, categories: filters.categories.filter(c => c !== id)})} className="p-1 hover:bg-primary/10 rounded-full transition-colors">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            ) : null;
+                        })}
+                        {filters.accounts.map(id => {
+                            const item = accounts.find(c => c.id === id);
+                            return item ? (
+                                <Badge key={id} variant="secondary" className="h-8 rounded-full pl-3 pr-1 py-0 bg-primary/5 text-primary border-primary/10 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                    {item.name}
+                                    <button onClick={() => onFiltersChange({...filters, accounts: filters.accounts.filter(c => c !== id)})} className="p-1 hover:bg-primary/10 rounded-full transition-colors">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            ) : null;
+                        })}
                     </div>
-                     <FiltersContent {...{ filters, onFiltersChange, accounts, categories, tags, setDateRangePreset, dateRangePreset, disableDateFilter, showBillingCycleOptions, selectedAccounts }} />
-                </PopoverContent>
-            </Popover>
-            
-            
-            {activeFilterCount > 0 && (
-                <>
-                <Separator orientation="vertical" className="h-6 hidden md:block" />
-                <div className="flex-wrap gap-1 items-center hidden md:flex">
-                    {filters.categories.map(id => {
-                        const item = categories.find(c => c.id === id);
-                        return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, categories: filters.categories.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
-                    })}
-                     {filters.accounts.map(id => {
-                        const item = accounts.find(c => c.id === id);
-                        return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, accounts: filters.accounts.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
-                    })}
-                     {filters.tags.map(id => {
-                        const item = tags.find(c => c.id === id);
-                        return item ? <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => onFiltersChange({...filters, tags: filters.tags.filter(c => c !== id)})}>{item.name} <X className="ml-1 h-3 w-3" /></Badge> : null
-                    })}
                 </div>
-                 <Button variant="outline" onClick={clearFilters} className="text-muted-foreground shrink-0 p-2 h-9 w-9">
-                    <FilterX className="h-4 w-4" />
-                    <span className="sr-only">Clear all filters</span>
-                </Button>
-                </>
             )}
         </div>
     );

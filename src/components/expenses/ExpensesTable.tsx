@@ -61,14 +61,13 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         setFocusedId(prev => prev === id ? null : id);
     };
 
-    const handleRowClick = (e: React.MouseEvent, id: string) => {
+    const handleRowClick = (e: React.MouseEvent, expense: EnrichedExpense) => {
         // If selection mode is active, toggle selection
         if (selectedIds.length > 0) {
             e.stopPropagation();
-            e.preventDefault();
-            handleSelection(id);
+            handleSelection(expense.id);
         }
-        // Always clear focus when interacting with a row
+        // Normal row click (handled by AddExpenseDialog trigger)
         if (focusedId) setFocusedId(null);
     };
 
@@ -150,7 +149,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                             >
                                 <AddExpenseDialog expenseToEdit={row.expense} onSaveSuccess={onDataChange}>
                                     <div 
-                                        onClick={(e) => handleRowClick(e, row.expense.id)}
+                                        onClick={(e) => handleRowClick(e, row.expense)}
                                         className={cn(
                                             "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative cursor-pointer",
                                             isSelected ? "bg-primary/5 ring-1 ring-primary/30" : "shadow-sm hover:shadow-md",

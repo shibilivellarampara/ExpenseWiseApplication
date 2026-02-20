@@ -142,6 +142,12 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         return rows;
     }, [expenses]);
 
+    // Find the first transaction to apply special shadow
+    const firstTransactionId = useMemo(() => {
+        const first = allRows.find(row => row.type === 'expense');
+        return (first && 'expense' in first) ? first.expense.id : null;
+    }, [allRows]);
+
     const rowVirtualizer = useVirtualizer({
         count: allRows.length,
         getScrollElement: () => parentRef.current,
@@ -229,6 +235,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                         const isFocused = focusedId === row.expense.id;
                         const isSelected = selectedIds.includes(row.expense.id);
                         const isTagsExpanded = expandedTagRows.has(row.expense.id);
+                        const isFirstTransaction = row.expense.id === firstTransactionId;
 
                         return (
                             <div
@@ -245,9 +252,12 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 <div 
                                     onClick={(e) => handleRowClick(e, row.expense)}
                                     className={cn(
-                                        "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative cursor-pointer shadow-md",
+                                        "flex items-center gap-4 transition-all duration-200 mb-2 p-4 rounded-[18px] bg-card border border-border/40 group relative cursor-pointer",
+                                        "shadow-md", // Permanent shadow
                                         isSelected ? "bg-primary/5 ring-1 ring-primary/30" : "hover:shadow-lg",
-                                        isFocused && "ring-1 ring-primary/20 bg-primary/[0.02]"
+                                        isFocused && "ring-1 ring-primary/20 bg-primary/[0.02]",
+                                        // Special top-inclined shadow for the first transaction
+                                        isFirstTransaction && "shadow-[0_-8px_24px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.08)]"
                                     )}
                                 >
                                     <button

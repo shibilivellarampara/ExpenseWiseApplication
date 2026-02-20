@@ -229,7 +229,7 @@ export function LoginForm() {
                         <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                                <Input placeholder="name@example.com" {...field} type="email"/>
+                                <Input placeholder="shibilvellarampara@gmail.com" {...field} type="email"/>
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -335,7 +335,7 @@ export function LoginForm() {
                     <Input
                         id="forgot-email"
                         type="email"
-                        placeholder="name@example.com"
+                        placeholder="shibilvellarampara@gmail.com"
                         value={forgotPasswordEmail}
                         onChange={(e) => setForgotPasswordEmail(e.target.value)}
                         autoFocus

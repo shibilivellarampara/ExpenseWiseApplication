@@ -204,7 +204,7 @@ export function SignUpForm() {
                             <FormItem>
                             <FormLabel>Name</FormLabel>
                             <FormControl>
-                                <Input placeholder="John Doe" {...field} />
+                                <Input placeholder="shibil muhamed" {...field} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -218,7 +218,7 @@ export function SignUpForm() {
                                 <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="name@example.com" {...field} />
+                                    <Input placeholder="shibilvellarampara@gmail.com" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>

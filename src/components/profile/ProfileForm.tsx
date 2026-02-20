@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useFirestore, useStorage, useAuth, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
@@ -429,7 +428,7 @@ export function ProfileForm() {
                                     </DialogHeader>
                                     <div className="space-y-4">
                                         <Input 
-                                            placeholder="New email address" 
+                                            placeholder="shibilvellarampara@gmail.com" 
                                             type="email"
                                             value={newEmail} 
                                             onChange={(e) => setNewEmail(e.target.value)}
@@ -571,4 +570,3 @@ export function ProfileForm() {
         </div>
     );
 }
-

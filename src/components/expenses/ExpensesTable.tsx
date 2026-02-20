@@ -7,7 +7,7 @@ import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox, Clock } from "luci
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { cn, formatAmount, generateColorStyle } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
@@ -187,49 +187,68 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                         </button>
 
                                         <div className="flex-grow min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <div className="min-w-0">
-                                                    <h4 className="font-bold text-sm truncate tracking-tight text-foreground/90">
-                                                        {row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}
-                                                    </h4>
-                                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                                        <button 
-                                                            onClick={(e) => row.expense.account && handleItemClick(e, 'account', row.expense.account.id)}
-                                                            className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest hover:text-primary transition-colors"
-                                                        >
-                                                            {row.expense.account?.name}
-                                                        </button>
-                                                        <span className="opacity-30 text-[11px] font-bold text-muted-foreground/60">•</span>
-                                                        <span className="text-[11px] font-bold text-muted-foreground/60 flex items-center gap-1">
-                                                            <Clock className="h-2.5 w-2.5" />
-                                                            {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
+                                            {selectionMode ? (
+                                                <div className="flex justify-between items-start">
+                                                    <div className="min-w-0">
+                                                        <h4 className="font-bold text-sm truncate tracking-tight text-foreground/90">
+                                                            {row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}
+                                                        </h4>
+                                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                                            <span className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest">{row.expense.account?.name}</span>
+                                                            <span className="opacity-30 text-[11px] font-bold text-muted-foreground/60">•</span>
+                                                            <span className="text-[11px] font-bold text-muted-foreground/60 flex items-center gap-1">
+                                                                <Clock className="h-2.5 w-2.5" />
+                                                                {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right flex flex-col items-end">
+                                                        <p className={cn('font-bold text-base leading-none', row.expense.type === 'income' ? 'text-primary' : 'text-destructive')}>
+                                                            {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
+                                                        </p>
+                                                        {typeof row.expense.runningBalance === 'number' && (
+                                                            <p className="text-[10px] font-bold text-muted-foreground/40 mt-1 uppercase tracking-tighter">
+                                                                Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="text-right flex flex-col items-end">
-                                                    <p className={cn(
-                                                        'font-bold text-base leading-none',
-                                                        row.expense.type === 'income' ? 'text-primary' : 'text-destructive'
-                                                    )}>
-                                                        {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
-                                                    </p>
-                                                    {typeof row.expense.runningBalance === 'number' && (
-                                                        <p className="text-[10px] font-bold text-muted-foreground/40 mt-1 uppercase tracking-tighter">
-                                                            Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
+                                            ) : (
+                                                <AddExpenseDialog expenseToEdit={row.expense} onSaveSuccess={onDataChange}>
+                                                    <div className="flex justify-between items-start cursor-pointer group/trigger">
+                                                        <div className="min-w-0">
+                                                            <h4 className="font-bold text-sm truncate tracking-tight text-foreground/90 group-hover/trigger:text-primary transition-colors">
+                                                                {row.expense.description || (row.expense.type === 'income' ? 'Income' : row.expense.category?.name || 'Transaction')}
+                                                            </h4>
+                                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                                <button 
+                                                                    onClick={(e) => row.expense.account && handleItemClick(e, 'account', row.expense.account.id)}
+                                                                    className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest hover:text-primary transition-colors"
+                                                                >
+                                                                    {row.expense.account?.name}
+                                                                </button>
+                                                                <span className="opacity-30 text-[11px] font-bold text-muted-foreground/60">•</span>
+                                                                <span className="text-[11px] font-bold text-muted-foreground/60 flex items-center gap-1">
+                                                                    <Clock className="h-2.5 w-2.5" />
+                                                                    {row.expense.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right flex flex-col items-end">
+                                                            <p className={cn('font-bold text-base leading-none', row.expense.type === 'income' ? 'text-primary' : 'text-destructive')}>
+                                                                {row.expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(row.expense.amount)}
+                                                            </p>
+                                                            {typeof row.expense.runningBalance === 'number' && (
+                                                                <p className="text-[10px] font-bold text-muted-foreground/40 mt-1 uppercase tracking-tighter">
+                                                                    Bal: {currencySymbol}{formatAmount(row.expense.runningBalance)}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </AddExpenseDialog>
+                                            )}
                                             
                                             <div className="flex flex-wrap items-center gap-1.5 pt-2">
-                                                {!selectionMode && (
-                                                    <AddExpenseDialog expenseToEdit={row.expense} onSaveSuccess={onDataChange}>
-                                                        <button className="h-5 px-2 rounded-full border border-primary/20 text-[9px] font-bold text-primary uppercase tracking-widest hover:bg-primary/5 transition-colors flex items-center gap-1 mr-1">
-                                                            <Edit className="h-2.5 w-2.5" /> Edit
-                                                        </button>
-                                                    </AddExpenseDialog>
-                                                )}
-                                                
                                                 {row.expense.category && (
                                                     <Badge 
                                                         variant="secondary" 

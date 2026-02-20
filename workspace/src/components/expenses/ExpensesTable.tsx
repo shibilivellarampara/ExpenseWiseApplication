@@ -138,7 +138,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                     </div>
                 </div>
             )}
-             <div ref={parentRef} style={{ height: `calc(100dvh - 280px)`, overflow: 'auto' }} className="rounded-lg border bg-card">
+             <div ref={parentRef} style={{ height: `calc(100dvh - 220px)`, overflow: 'auto' }} className="rounded-lg border bg-card">
                 <div
                     style={{
                         height: `${rowVirtualizer.getTotalSize()}px`,
@@ -197,7 +197,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                 selectionMode && 'hover:bg-primary/20'
                                             )}
                                         >
-                                            {renderIcon(row.expense.category?.icon, cn(row.expense.type === 'income' ? 'text-green-500' : 'text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
+                                            {renderIcon(row.expense.category?.icon, cn(row.expense.type === 'income' ? 'text-green-600' : 'text-gray-700', viewMode === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4'))}
                                         </button>
                                         <div className="flex-grow space-y-0.5 w-full min-w-0">
                                             <div className="flex justify-between items-start">

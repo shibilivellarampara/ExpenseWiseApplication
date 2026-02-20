@@ -138,7 +138,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                     </div>
                 </div>
             )}
-             <div ref={parentRef} style={{ height: `calc(100dvh - 280px)`, overflow: 'auto' }} className="rounded-lg border bg-card">
+             <div ref={parentRef} style={{ height: `calc(100dvh - 220px)`, overflow: 'auto' }} className="rounded-lg border bg-card">
                 <div
                     style={{
                         height: `${rowVirtualizer.getTotalSize()}px`,

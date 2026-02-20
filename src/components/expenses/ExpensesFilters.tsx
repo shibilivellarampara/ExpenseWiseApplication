@@ -73,14 +73,14 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-[280px] rounded-xl border-none shadow-2xl p-1">
-                    <Command>
+                    <Command shouldFilter={true}>
                         <CommandInput placeholder={`Search ${title.toLowerCase()}...`} className="h-10 text-xs" />
                         <CommandList className="max-h-[240px]">
                             <CommandGroup className="p-1">
                                 {items.map(item => (
                                     <CommandItem
                                         key={item.id}
-                                        value={item.name}
+                                        value={item.name.toLowerCase()}
                                         onSelect={() => handleMultiSelectChange(field, item.id)}
                                         className={cn(
                                             "flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium cursor-pointer transition-colors",
@@ -150,8 +150,11 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
     return (
         <div className="space-y-3">
             <div className="flex items-center gap-2 w-full">
-                {/* Search Bar: 75% width */}
-                <div className="relative flex-[0.75] group">
+                {/* Search Bar */}
+                <div className={cn(
+                    "relative group transition-all duration-300 ease-in-out",
+                    activeFilterCount > 0 ? "flex-[0.7]" : "flex-[0.75]"
+                )}>
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
                     <Input
                         type="search"
@@ -172,11 +175,17 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                     )}
                 </div>
                 
-                {/* Filter & Quick Reset: 25% width (Integrated Split Look) */}
-                <div className="flex-[0.25] flex h-11 items-center rounded-[14px] border border-muted-foreground/20 bg-card overflow-hidden">
+                {/* Filter & Quick Reset: Integrated Split Look */}
+                <div className={cn(
+                    "flex h-11 items-center rounded-[14px] border border-muted-foreground/20 bg-card overflow-hidden transition-all duration-300 ease-in-out",
+                    activeFilterCount > 0 ? "flex-[0.3]" : "flex-[0.25]"
+                )}>
                     <Popover>
                         <PopoverTrigger asChild>
-                            <button className="flex-1 flex items-center justify-center h-full hover:bg-accent/50 transition-colors relative">
+                            <button className={cn(
+                                "flex items-center justify-center h-full hover:bg-accent/50 transition-colors relative",
+                                activeFilterCount > 0 ? "flex-[0.66]" : "flex-1"
+                            )}>
                                 <ListFilter className="h-5 w-5" />
                                 {activeFilterCount > 0 && 
                                     <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] text-primary-foreground font-bold border border-background">{activeFilterCount}</span>
@@ -202,7 +211,7 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                             <button 
                                 onClick={clearFilters}
                                 title="Clear All Filters"
-                                className="w-10 h-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all"
+                                className="flex-[0.34] h-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all"
                             >
                                 <X className="h-4 w-4" />
                             </button>

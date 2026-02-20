@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -211,13 +212,13 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                         width: '100%',
                                         transform: `translateY(${virtualItem.start}px)`,
                                     }}
-                                    className="py-2 px-1 flex items-center justify-between"
+                                    className="py-2 px-1 flex items-center gap-3"
                                 >
                                     <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
                                         {row.label}
                                     </h3>
                                     <Badge variant="secondary" className={cn(
-                                        "h-5 text-[9px] font-bold px-2 rounded-full border-none",
+                                        "h-5 text-[9px] font-bold px-2 rounded-full border-none shrink-0",
                                         row.dailyTotal >= 0 ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
                                     )}>
                                         {row.dailyTotal >= 0 ? '+' : '-'}{currencySymbol}{formatAmount(Math.abs(row.dailyTotal))}

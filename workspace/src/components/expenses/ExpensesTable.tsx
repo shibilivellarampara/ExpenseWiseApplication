@@ -1,9 +1,10 @@
+
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { EnrichedExpense, UserProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox, Clock, ListChecks } from "lucide-react";
+import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox, Clock, ListChecks, MoreVertical, PlusCircle } from "lucide-react";
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
@@ -13,11 +14,14 @@ import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { renderIcon } from '@/lib/render-icon';
+import { format, isToday, isYesterday } from 'date-fns';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,7 +46,9 @@ interface ExpensesTableProps {
   onDeleteSelected: () => void;
 }
 
-type VirtualRow = { type: 'expense'; expense: EnrichedExpense };
+type VirtualRowData = 
+  | { type: 'header'; label: string; key: string; dailyTotal: number }
+  | { type: 'expense'; expense: EnrichedExpense };
 
 function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; }) {
     
@@ -60,6 +66,12 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
     const handleIconClick = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         e.preventDefault();
+        
+        if (selectedIds.length > 0) {
+            handleSelection(id);
+            return;
+        }
+
         setFocusedId(prev => prev === id ? null : id);
     };
 
@@ -70,6 +82,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
             handleSelection(expense.id);
             return;
         }
+        
         if (focusedId) {
             setFocusedId(null);
         }
@@ -92,15 +105,53 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
         });
     };
 
-    const allRows = useMemo((): VirtualRow[] => {
-        return expenses.map(expense => ({ type: 'expense', expense }));
+    const allRows = useMemo((): VirtualRowData[] => {
+        const rows: VirtualRowData[] = [];
+        
+        // Pre-calculate daily totals
+        const dailyTotals: Record<string, number> = {};
+        expenses.forEach(expense => {
+            const dateLabel = isToday(expense.date) 
+                ? "Today" 
+                : isYesterday(expense.date) 
+                    ? "Yesterday" 
+                    : format(expense.date, 'dd MMMM yyyy');
+            
+            const amountChange = expense.type === 'income' ? expense.amount : -expense.amount;
+            dailyTotals[dateLabel] = (dailyTotals[dateLabel] || 0) + amountChange;
+        });
+
+        let lastDateLabel = "";
+        expenses.forEach(expense => {
+            const dateLabel = isToday(expense.date) 
+                ? "Today" 
+                : isYesterday(expense.date) 
+                    ? "Yesterday" 
+                    : format(expense.date, 'dd MMMM yyyy');
+            
+            if (dateLabel !== lastDateLabel) {
+                rows.push({ 
+                    type: 'header', 
+                    label: dateLabel, 
+                    dailyTotal: dailyTotals[dateLabel],
+                    key: `header-${dateLabel}` 
+                });
+                lastDateLabel = dateLabel;
+            }
+            rows.push({ type: 'expense', expense });
+        });
+        return rows;
     }, [expenses]);
 
     const rowVirtualizer = useVirtualizer({
         count: allRows.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => viewMode === 'compact' ? 85 : 115,
-        overscan: 5,
+        estimateSize: (index) => {
+            const row = allRows[index];
+            if (row.type === 'header') return 40;
+            return viewMode === 'compact' ? 85 : 115;
+        },
+        overscan: 10,
     });
     
     return (
@@ -148,6 +199,34 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                 >
                     {rowVirtualizer.getVirtualItems().map(virtualItem => {
                         const row = allRows[virtualItem.index];
+                        
+                        if (row.type === 'header') {
+                            return (
+                                <div
+                                    key={virtualItem.key}
+                                    data-index={virtualItem.index}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        transform: `translateY(${virtualItem.start}px)`,
+                                    }}
+                                    className="py-2 px-1 flex items-center gap-3"
+                                >
+                                    <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
+                                        {row.label}
+                                    </h3>
+                                    <Badge variant="secondary" className={cn(
+                                        "h-5 text-[9px] font-bold px-2 rounded-full border-none shrink-0",
+                                        row.dailyTotal >= 0 ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
+                                    )}>
+                                        {row.dailyTotal >= 0 ? '+' : '-'}{currencySymbol}{formatAmount(Math.abs(row.dailyTotal))}
+                                    </Badge>
+                                </div>
+                            );
+                        }
+
                         const isFocused = focusedId === row.expense.id;
                         const isSelected = selectedIds.includes(row.expense.id);
                         const isTagsExpanded = expandedTagRows.has(row.expense.id);
@@ -267,7 +346,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                         Delete
                                                                     </AlertDialogAction>
                                                                 </AlertDialogFooter>
-                                                            </AlertDialog>
+                                                            </AlertDialogContent>
                                                         </AlertDialog>
                                                     </div>
                                                 ) : (

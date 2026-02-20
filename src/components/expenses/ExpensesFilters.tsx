@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { Command, CommandEmpty, CommandGroup, CommandList } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandList, CommandInput, CommandItem } from '@/components/ui/command';
 import * as LucideIcons from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -75,14 +76,15 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-[280px] rounded-xl border-none shadow-2xl p-1">
                     <Command>
-                        <Input placeholder={`Search ${title.toLowerCase()}...`} className="border-none shadow-none focus-visible:ring-0 h-10 text-xs" />
+                        <CommandInput placeholder={`Search ${title.toLowerCase()}...`} className="h-10 text-xs" />
                         <CommandList className="max-h-[240px]">
-                            <CommandEmpty className="py-4 text-center text-xs text-muted-foreground">No results found.</CommandEmpty>
+                            <CommandEmpty />
                             <CommandGroup className="p-1">
                                 {items.map(item => (
-                                    <div
+                                    <CommandItem
                                         key={item.id}
-                                        onClick={() => handleMultiSelectChange(field, item.id)}
+                                        value={item.name}
+                                        onSelect={() => handleMultiSelectChange(field, item.id)}
                                         className={cn(
                                             "flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium cursor-pointer transition-colors",
                                             filters[field].includes(item.id) ? "bg-primary/5 text-primary" : "hover:bg-accent"
@@ -93,7 +95,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }
                                             {item.name}
                                         </div>
                                          <Check className={cn("h-3.5 w-3.5", filters[field].includes(item.id) ? "opacity-100" : "opacity-0")} />
-                                    </div>
+                                    </CommandItem>
                                 ))}
                             </CommandGroup>
                         </CommandList>

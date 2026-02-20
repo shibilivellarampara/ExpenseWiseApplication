@@ -88,6 +88,7 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
 
         return (
             <div className="flex justify-between items-start">
+                {/* Left side: Outstanding amount */}
                 <div className="space-y-1">
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Outstanding</p>
                     <p className={cn(
@@ -101,17 +102,18 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
                     </p>
                 </div>
                 
+                {/* Right side: IN, OUT, LIMIT stack */}
                 <div className="text-right space-y-1 mt-1">
                     <div className="flex items-center justify-end gap-2">
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest">In:</span>
+                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest">IN:</span>
                         <span className="text-sm sm:text-base font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</span>
                     </div>
                     <div className="flex items-center justify-end gap-2">
-                        <span className="text-[10px] font-bold text-destructive uppercase tracking-widest">Out:</span>
+                        <span className="text-[10px] font-bold text-destructive uppercase tracking-widest">OUT:</span>
                         <span className="text-sm sm:text-base font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</span>
                     </div>
                     <div className="flex items-center justify-end gap-2 mt-1 opacity-70">
-                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Limit:</span>
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">LIMIT:</span>
                         <span className="text-xs font-bold text-muted-foreground">{currencySymbol}{formatAmount(creditCardSummary.limit || 0)}</span>
                     </div>
                 </div>

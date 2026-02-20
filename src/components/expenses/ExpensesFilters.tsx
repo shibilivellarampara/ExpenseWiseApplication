@@ -320,11 +320,11 @@ export function ExpensesFilters({ filters, onFiltersChange, accounts, categories
                 </Popover>
             </div>
             
-            {(activeFilterCount > 0 || !disableDateFilter) && (
+            {(activeFilterCount > 0) && (
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
-                    {!disableDateFilter && (
-                        <Badge variant={filters.dateRange.from ? "secondary" : "outline"} className="h-8 rounded-full px-3 cursor-default whitespace-nowrap bg-transparent border-muted-foreground/20 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                            {filters.dateRange.from ? `${format(filters.dateRange.from, 'MMM d')} - ${format(filters.dateRange.to!, 'MMM d')}` : 'Any Date'}
+                    {!disableDateFilter && filters.dateRange.from && (
+                        <Badge variant="secondary" className="h-8 rounded-full px-3 cursor-default whitespace-nowrap bg-transparent border-muted-foreground/20 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            {format(filters.dateRange.from, 'MMM d')} - {format(filters.dateRange.to!, 'MMM d')}
                         </Badge>
                     )}
 

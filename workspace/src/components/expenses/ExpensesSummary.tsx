@@ -6,7 +6,6 @@ import { Account, EnrichedExpense } from "@/lib/types";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { cn, formatAmount } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
 
 interface ExpensesSummaryProps {
     expenses: EnrichedExpense[];
@@ -15,12 +14,14 @@ interface ExpensesSummaryProps {
     selectedAccount?: Account;
 }
 
+const featuredCardClass = "rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.08),0_-8px_24px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04)] -translate-y-0.5 border-none overflow-hidden bg-card transition-all duration-300 relative z-10";
+
 export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount }: ExpensesSummaryProps) {
     const currencySymbol = getCurrencySymbol(currency);
 
     const summary = useMemo(() => {
         if (!expenses) {
-            return { totalIn: 0, totalOut: 0, netFlow: 0 };
+            return { totalIn: 0, totalOut: 0, netFlow: 0, inPercent: 50 };
         }
 
         const totalIn = expenses
@@ -32,49 +33,50 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
             .reduce((sum, exp) => sum + exp.amount, 0);
 
         const netFlow = totalIn - totalOut;
+        const total = totalIn + totalOut;
+        const inPercent = total > 0 ? (totalIn / total) * 100 : 50;
 
-        return { totalIn, totalOut, netFlow };
+        return { totalIn, totalOut, netFlow, inPercent };
     }, [expenses]);
     
     const creditCardSummary = useMemo(() => {
         if (selectedAccount?.type !== 'credit_card') return null;
 
         const outstanding = (selectedAccount.limit || 0) - selectedAccount.balance;
+        const utilization = selectedAccount.limit ? (outstanding / selectedAccount.limit) * 100 : 0;
+        
         return {
             outstanding: outstanding,
             limit: selectedAccount.limit,
+            utilization: utilization
         }
     }, [selectedAccount]);
 
     if (isLoading) {
-        return (
-            <Card>
-                <CardContent className="p-4">
-                    <div className="flex justify-between items-center">
-                        <div>
-                             <Skeleton className="h-4 w-20 mb-2" />
-                             <Skeleton className="h-6 w-28" />
-                        </div>
-                        <div className="text-right">
-                             <Skeleton className="h-4 w-24 mb-2" />
-                             <Skeleton className="h-4 w-20" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        );
+        return <Skeleton className="h-32 w-full rounded-[20px]" />;
     }
-    
+
     const renderNormalSummary = () => (
-         <div>
-            <p className="text-muted-foreground text-xs">Net Balance</p>
-            <p className={cn(
-                "text-lg font-bold",
-                summary.netFlow >= 0 && "text-green-600",
-                summary.netFlow < 0 && "text-red-500"
-            )}>
-                {currencySymbol}{summary.netFlow.toFixed(2)}
-            </p>
+        <div className="flex justify-between items-start">
+            <div className="space-y-1">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Net Balance</p>
+                <p className={cn(
+                    "text-2xl font-bold tracking-tight",
+                    summary.netFlow >= 0 ? "text-primary" : "text-destructive"
+                )}>
+                    {currencySymbol}{formatAmount(summary.netFlow)}
+                </p>
+            </div>
+            <div className="text-right space-y-1 mt-1">
+                <div className="flex items-center justify-end gap-2">
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">IN</span>
+                    <span className="text-sm sm:text-base font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</span>
+                </div>
+                <div className="flex items-center justify-end gap-2">
+                    <span className="text-[10px] font-bold text-destructive uppercase tracking-widest">OUT</span>
+                    <span className="text-sm sm:text-base font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</span>
+                </div>
+            </div>
         </div>
     );
     
@@ -83,41 +85,31 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
         
         const outstanding = creditCardSummary.outstanding;
         const isPositive = outstanding > 0;
-        const isNegative = outstanding < 0;
 
         return (
-            <div>
-                <p className="text-muted-foreground text-xs">Outstanding Amount</p>
-                <p className={cn(
-                    "text-lg font-bold",
-                    isPositive ? "text-red-500" : "text-green-600"
-                )}>
-                    {isNegative ? '-' : ''}{currencySymbol}{Math.abs(outstanding).toFixed(2)}
-                </p>
+            <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Outstanding</p>
+                    <p className={cn(
+                        "text-2xl font-bold tracking-tight",
+                        isPositive ? "text-destructive" : "text-primary"
+                    )}>
+                        {currencySymbol}{formatAmount(Math.abs(outstanding))}
+                    </p>
+                </div>
+                <div className="text-right space-y-1 mt-1">
+                    <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest">Credit Limit</p>
+                    <p className="text-base sm:text-lg font-bold text-foreground">{currencySymbol}{formatAmount(creditCardSummary.limit || 0)}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground/50 uppercase">{creditCardSummary.utilization.toFixed(1)}% Used</p>
+                </div>
             </div>
         )
     };
 
-
     return (
-        <Card className="bg-card/80 backdrop-blur-sm border-none shadow-sm">
-            <CardContent className="p-4">
-                <div className="flex justify-between items-center text-sm">
-                   {creditCardSummary ? renderCreditCardSummary() : renderNormalSummary()}
-                    <div className="text-right">
-                        <p className="text-green-600 font-medium">
-                           <span className="text-muted-foreground font-normal">IN:</span> {currencySymbol}{summary.totalIn.toFixed(2)}
-                        </p>
-                         <p className="text-red-500 font-medium">
-                           <span className="text-muted-foreground font-normal">OUT:</span> {currencySymbol}{summary.totalOut.toFixed(2)}
-                        </p>
-                         {creditCardSummary?.limit && (
-                            <p className="text-muted-foreground text-[10px] mt-1 uppercase font-bold tracking-widest">
-                                Limit: {currencySymbol}{creditCardSummary.limit.toFixed(2)}
-                            </p>
-                         )}
-                    </div>
-                </div>
+        <Card className={featuredCardClass}>
+            <CardContent className="p-6">
+                {creditCardSummary ? renderCreditCardSummary() : renderNormalSummary()}
             </CardContent>
         </Card>
     );

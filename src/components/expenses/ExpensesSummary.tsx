@@ -53,47 +53,28 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
     }, [selectedAccount]);
 
     if (isLoading) {
-        return <Skeleton className="h-44 w-full rounded-[20px]" />;
+        return <Skeleton className="h-32 w-full rounded-[20px]" />;
     }
 
     const renderNormalSummary = () => (
-        <div className="space-y-6">
-            <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Net Balance</p>
-                    <p className={cn(
-                        "text-3xl font-bold tracking-tight",
-                        summary.netFlow >= 0 ? "text-primary" : "text-destructive"
-                    )}>
-                        {currencySymbol}{formatAmount(summary.netFlow)}
-                    </p>
-                </div>
-                <div className="text-right space-y-1 mt-1">
-                    <div className="flex items-center justify-end gap-2">
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest">IN</span>
-                        <span className="text-lg font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</span>
-                    </div>
-                    <div className="flex items-center justify-end gap-2">
-                        <span className="text-[10px] font-bold text-destructive uppercase tracking-widest">OUT</span>
-                        <span className="text-lg font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</span>
-                    </div>
-                </div>
+        <div className="flex justify-between items-start">
+            <div className="space-y-1">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Net Balance</p>
+                <p className={cn(
+                    "text-2xl font-bold tracking-tight",
+                    summary.netFlow >= 0 ? "text-primary" : "text-destructive"
+                )}>
+                    {currencySymbol}{formatAmount(summary.netFlow)}
+                </p>
             </div>
-
-            <div className="space-y-2">
-                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden flex">
-                    <div 
-                        className="h-full bg-primary transition-all duration-500"
-                        style={{ width: `${summary.inPercent}%` }}
-                    />
-                    <div 
-                        className="h-full bg-destructive transition-all duration-500"
-                        style={{ width: `${100 - summary.inPercent}%` }}
-                    />
+            <div className="text-right space-y-1 mt-1">
+                <div className="flex items-center justify-end gap-2">
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">IN</span>
+                    <span className="text-sm sm:text-base font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</span>
                 </div>
-                <div className="flex justify-between text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest">
-                    <span>Income Distribution</span>
-                    <span>Expense Distribution</span>
+                <div className="flex items-center justify-end gap-2">
+                    <span className="text-[10px] font-bold text-destructive uppercase tracking-widest">OUT</span>
+                    <span className="text-sm sm:text-base font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</span>
                 </div>
             </div>
         </div>
@@ -106,34 +87,20 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
         const isPositive = outstanding > 0;
 
         return (
-            <div className="space-y-6">
-                <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Outstanding Amount</p>
-                        <p className={cn(
-                            "text-3xl font-bold tracking-tight",
-                            isPositive ? "text-destructive" : "text-primary"
-                        )}>
-                            {currencySymbol}{formatAmount(Math.abs(outstanding))}
-                        </p>
-                    </div>
-                    <div className="text-right space-y-1 mt-1">
-                        <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest">Credit Limit</p>
-                        <p className="text-xl font-bold text-foreground">{currencySymbol}{formatAmount(creditCardSummary.limit || 0)}</p>
-                    </div>
+            <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Outstanding</p>
+                    <p className={cn(
+                        "text-2xl font-bold tracking-tight",
+                        isPositive ? "text-destructive" : "text-primary"
+                    )}>
+                        {currencySymbol}{formatAmount(Math.abs(outstanding))}
+                    </p>
                 </div>
-
-                <div className="space-y-2">
-                    <div className="flex justify-between items-end mb-1">
-                        <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest">Utilization</p>
-                        <p className="text-[10px] font-bold text-foreground">{creditCardSummary.utilization.toFixed(1)}%</p>
-                    </div>
-                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                        <div 
-                            className="h-full bg-destructive transition-all duration-500"
-                            style={{ width: `${Math.min(100, creditCardSummary.utilization)}%` }}
-                        />
-                    </div>
+                <div className="text-right space-y-1 mt-1">
+                    <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest">Credit Limit</p>
+                    <p className="text-base sm:text-lg font-bold text-foreground">{currencySymbol}{formatAmount(creditCardSummary.limit || 0)}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground/50 uppercase">{creditCardSummary.utilization.toFixed(1)}% Used</p>
                 </div>
             </div>
         )

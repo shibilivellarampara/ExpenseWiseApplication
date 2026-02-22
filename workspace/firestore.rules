@@ -58,27 +58,22 @@ service cloud.firestore {
 
     // --- Private User Data ---
     match /users/{userId}/{allSubcollections=**} {
-      allow read, write: if isOwner(userId);
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
-    
+
     // --- Global Invites ---
     match /invites/{inviteCode} {
       allow read: if isSignedIn(); 
-      allow create: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create, delete: if isSignedIn();
     }
     
-    // --- Collection Group Rules ---
+    // --- Collection Group Rules (Required for cross-account indexing) ---
     match /expenses/{expenseId} {
-       allow read, write: if isOwner(resource.data.userId);
+       allow read, write: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
     }
     
     match /admin/{docId} {
-        allow read, write: if request.auth.token.isAdmin == true;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+        allow read, write: if isSignedIn() && request.auth.token.isAdmin == true;
     }
   }
 }

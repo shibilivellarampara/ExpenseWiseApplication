@@ -2,13 +2,57 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Helper Functions ---
+    // --- Global Helper Functions ---
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isMember(walletId) {
+      // Direct lookup of membership. 
+      // Rule for this path must have a base case to avoid recursion.
+      return exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+    }
+
+    // --- Family Wallets ---
+    match /familyWallets/{walletId} {
+      
+      // Access to the wallet root is granted if you are a member
+      allow read: if isSignedIn() && isMember(walletId);
+      allow create: if isSignedIn();
+      
+      // Only owners can edit wallet metadata or delete the entire wallet
+      allow update, delete: if isSignedIn() && 
+        get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner';
+
+      match /members/{memberId} {
+        // BASE CASE: Users can always read their own membership.
+        // This is critical to break recursion when exists() is called.
+        allow read: if isSignedIn() && (request.auth.uid == memberId || isMember(walletId));
+        
+        // Members can join themselves, but only owners can manage roles
+        allow write: if isSignedIn() && (request.auth.uid == memberId || get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner');
+      }
+
+      match /transactions/{txId} {
+        allow read: if isSignedIn() && isMember(walletId);
+        allow write: if isSignedIn() && isMember(walletId) && 
+          // Enforce origin metadata integrity
+          (!('origin' in request.resource.data) || request.resource.data.origin in ['manual', 'auto']) &&
+          (
+            // Manual transactions must be authored by the sender
+            (request.resource.data.origin == 'manual' && request.resource.data.authorId == request.auth.uid) ||
+            // Auto transactions must be sourced from the sender's account
+            (request.resource.data.origin == 'auto' && request.resource.data.sourceUserId == request.auth.uid)
+          );
+      }
+
+      match /categories/{catId} {
+        allow read, write: if isSignedIn() && isMember(walletId);
+      }
+
+      match /autoTags/{tagId} {
+        allow read, write: if isSignedIn() && isMember(walletId);
+      }
     }
 
     // --- Private User Data ---
@@ -16,38 +60,6 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
     
-    // --- Family Wallets ---
-    match /familyWallets/{walletId} {
-      // Rule for the wallet document itself
-      allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
-      allow create: if isSignedIn();
-      
-      // Only owners can edit wallet metadata or delete the wallet
-      allow update, delete: if isSignedIn() && get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner';
-
-      match /members/{memberId} {
-        // A user can always read/write their own membership. 
-        // This is the document checked by 'exists' in other rules.
-        allow read: if isSignedIn() && (request.auth.uid == memberId || exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)));
-        allow write: if isSignedIn() && (request.auth.uid == memberId || get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner');
-      }
-
-      match /transactions/{txId} {
-        allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
-        allow write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
-      }
-
-      match /categories/{catId} {
-        allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
-        allow write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
-      }
-
-      match /autoTags/{tagId} {
-        allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
-        allow write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
-      }
-    }
-
     // --- Global Invites ---
     match /invites/{inviteCode} {
       allow read: if isSignedIn(); 
@@ -62,6 +74,10 @@ service cloud.firestore {
     
     match /admin/{docId} {
         allow read, write: if request.auth.token.isAdmin == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
   }
 }

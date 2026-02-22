@@ -12,14 +12,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isFamilyMember(walletId) {
-      return isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
-    }
-
-    function getFamilyRole(walletId) {
-      return get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role;
-    }
-
     // --- Private User Data ---
     match /users/{userId}/{allSubcollections=**} {
       allow read, write: if isOwner(userId);
@@ -27,23 +19,25 @@ service cloud.firestore {
     
     // --- Family Wallets ---
     match /familyWallets/{walletId} {
-      allow read: if isFamilyMember(walletId);
+      // Allow reading wallet metadata if you are a member
+      allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
       allow create: if isSignedIn();
+      
       // Only owners can edit wallet metadata or delete the wallet
-      allow update, delete: if isFamilyMember(walletId) && getFamilyRole(walletId) == 'owner';
+      allow update, delete: if isSignedIn() && get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner';
 
       match /members/{memberId} {
-        // BASE CASE: User can always read their own membership doc
-        // This is critical to break recursion in isFamilyMember() calls
-        allow read: if isSignedIn() && (request.auth.uid == memberId || isFamilyMember(walletId));
+        // Base case: user can read their own membership doc (breaks recursion)
+        // Other members can be read if the user themselves is a member
+        allow read: if isSignedIn() && (request.auth.uid == memberId || exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)));
         
         // Members can join themselves (create), owners can manage roles (update/delete)
-        allow write: if isSignedIn() && (request.auth.uid == memberId || getFamilyRole(walletId) == 'owner');
+        allow write: if isSignedIn() && (request.auth.uid == memberId || get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner');
       }
 
       match /transactions/{txId} {
-        allow read: if isFamilyMember(walletId);
-        allow write: if isFamilyMember(walletId) && 
+        allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+        allow write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)) && 
           // Enforce origin metadata integrity
           (!('origin' in request.resource.data) || request.resource.data.origin in ['manual', 'auto']) &&
           (
@@ -55,13 +49,13 @@ service cloud.firestore {
       }
 
       match /categories/{catId} {
-        allow read: if isFamilyMember(walletId);
-        allow write: if isFamilyMember(walletId);
+        allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+        allow write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
       }
 
       match /autoTags/{tagId} {
-        allow read: if isFamilyMember(walletId);
-        allow write: if isFamilyMember(walletId);
+        allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+        allow write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
       }
     }
 

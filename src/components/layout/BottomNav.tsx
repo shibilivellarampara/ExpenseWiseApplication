@@ -14,6 +14,7 @@ import {
   Briefcase,
   Repeat,
   Settings,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -23,6 +24,7 @@ import { AddExpenseDialog } from '@/components/expenses/AddExpenseDialog';
 import { Button } from '@/components/ui/button';
 
 const secondaryNavItems = [
+    { href: '/family-wallet', icon: Users, label: 'Family'},
     { href: '/debts', icon: HandCoins, label: 'Debts'},
     { href: '/assets', icon: Briefcase, label: 'Assets'},
     { href: '/recurring', icon: Repeat, label: 'Recurring'},

@@ -1,3 +1,4 @@
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { COLORS } from "./colors";
@@ -42,4 +43,16 @@ export const formatAmount = (amount: number): string => {
         return amount.toString();
     }
     return amount.toFixed(2);
+};
+
+/**
+ * Normalizes a tag string for consistent matching across the sync system.
+ * Rules: lowercase, trimmed, collapse internal spaces, remove non-alphanumeric.
+ */
+export const normalizeTag = (input: string): string => {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ') // Collapse multiple spaces to one
+    .replace(/[^\w\s]/gi, ''); // Remove punctuation
 };

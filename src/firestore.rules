@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -11,21 +12,63 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isFamilyMember(walletId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+    }
+
+    function getFamilyRole(walletId) {
+      return get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role;
+    }
+
     // --- Private User Data ---
-    // Users can only access their own user document and all its subcollections.
     match /users/{userId}/{allSubcollections=**} {
       allow read, write: if isOwner(userId);
     }
     
+    // --- Family Wallets ---
+    match /familyWallets/{walletId} {
+      allow read: if isFamilyMember(walletId);
+      allow create: if isSignedIn();
+      // Only owners can edit wallet metadata or delete the wallet
+      allow update, delete: if isFamilyMember(walletId) && getFamilyRole(walletId) == 'owner';
+
+      match /members/{memberId} {
+        allow read: if isFamilyMember(walletId);
+        // Members can join themselves, owners can manage others
+        allow write: if isSignedIn() && (request.auth.uid == memberId || getFamilyRole(walletId) == 'owner');
+      }
+
+      match /transactions/{txId} {
+        allow read: if isFamilyMember(walletId);
+        allow write: if isFamilyMember(walletId) && 
+          // Enforce origin metadata integrity
+          request.resource.data.origin in ['manual', 'auto'] &&
+          (
+            // Manual transactions must be authored by the sender
+            (request.resource.data.origin == 'manual' && request.resource.data.authorId == request.auth.uid) ||
+            // Auto transactions must be sourced from the sender's account
+            (request.resource.data.origin == 'auto' && request.resource.data.sourceUserId == request.auth.uid)
+          );
+      }
+
+      match /autoTags/{tagId} {
+        allow read: if isFamilyMember(walletId);
+        allow write: if isFamilyMember(walletId);
+      }
+    }
+
+    // --- Global Invites ---
+    match /invites/{inviteCode} {
+      allow read: if isSignedIn(); // Anyone signed in can look up a code
+      allow create: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+    
     // --- Collection Group Rules ---
-    // Rule for querying the 'expenses' collection group.
-    // Ensures that users can only query expenses they own.
     match /expenses/{expenseId} {
        allow read, write: if isOwner(resource.data.userId);
     }
     
-    // --- Admin Data ---
-    // Only users with the 'isAdmin' custom claim can access the admin collection.
     match /admin/{docId} {
         allow read, write: if request.auth.token.isAdmin == true;
     }

@@ -13,71 +13,7 @@
         "photoURL": { "type": "string", "description": "URL of the user's profile picture.", "format": "uri" },
         "phoneNumber": { "type": "string", "description": "The user's phone number." },
         "defaultCurrency": { "type": "string", "description": "The user's default currency code (e.g., 'USD', 'INR').", "default": "INR" },
-        "expenseFieldSettings": {
-          "type": "object",
-          "description": "User preferences for which expense fields are mandatory.",
-          "properties": {
-            "isDescriptionRequired": { "type": "boolean", "default": false },
-            "isTagRequired": { "type": "boolean", "default": false },
-            "isCategoryRequired": { "type": "boolean", "default": true },
-            "visibleFields": { 
-              "type": "array", 
-              "items": { "type": "string", "enum": ["description", "accountId", "categoryId", "tagIds"] },
-              "description": "An array of fields that should be visible in the transaction form."
-            },
-            "defaultAccountId": {
-              "type": "string",
-              "description": "The ID of the account to be selected by default in new transactions."
-            }
-          }
-        },
-        "dashboardSettings": {
-          "type": "object",
-          "description": "User preferences for the dashboard.",
-          "properties": {
-            "useCategoryColorsInChart": { "type": "boolean", "default": true },
-            "show5YearView": { "type": "boolean", "default": false },
-            "isAiSuggestionEnabled": { "type": "boolean", "default": true },
-            "transactionViewMode": { "type": "string", "enum": ["normal", "compact"], "default": "normal" },
-            "transactionGrouping": { "type": "string", "enum": ["daily", "monthly"], "default": "daily" }
-          }
-        },
-        "analysisSettings": {
-            "type": "object",
-            "description": "User preferences for the analysis page.",
-            "properties": {
-                "excludedCategoryIds": { 
-                    "type": "array", 
-                    "items": { "type": "string" },
-                    "description": "An array of category IDs to exclude from analysis."
-                },
-                "showAdjustedTotal": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Whether to show the 'Adjusted for Analysis' summary."
-                },
-                "showNormalTotal": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Whether to show the 'Normal Total' summary."
-                },
-                "showSavingsTrendChart": {
-                  "type": "boolean",
-                  "default": true,
-                  "description": "Whether to show the 'Monthly Savings Trend' chart."
-                }
-            }
-        },
-        "isAdmin": {
-          "type": "boolean",
-          "description": "Indicates if the user has administrative privileges.",
-          "default": false
-        },
-        "transactionFieldOrder": {
-            "type": "array",
-            "description": "User's preferred order for transaction fields.",
-            "items": { "type": "string" }
-        }
+        "isAdmin": { "type": "boolean", "default": false }
       },
       "required": ["id", "name", "email"]
     },
@@ -85,145 +21,107 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Expense",
       "type": "object",
-      "description": "Represents a transaction record, which can be an expense or income.",
+      "description": "Represents a personal transaction record.",
       "properties": {
         "id": { "type": "string" },
         "userId": { "type": "string" },
-        "type": { "type": "string", "enum": ["expense", "income"], "description": "Type of the transaction." },
+        "type": { "type": "string", "enum": ["expense", "income"] },
         "amount": { "type": "number" },
         "description": { "type": "string" },
         "date": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "accountId": { "type": "string", "description": "Reference to the Account document ID." },
-        "categoryId": { "type": "string", "description": "Reference to the Category document ID (for expenses)." },
-        "tagIds": { "type": "array", "items": { "type": "string" }, "description": "Reference to the Tag document IDs." }
+        "accountId": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "tagIds": { "type": "array", "items": { "type": "string" } },
+        "syncPreferences": {
+          "type": "object",
+          "description": "Per-wallet sync overrides (e.g., if a mirror was manually deleted).",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "disabled": { "type": "boolean" }
+            }
+          }
+        }
       },
       "required": ["id", "userId", "type", "amount", "date", "accountId"]
     },
-    "RecurringExpense": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "RecurringExpense",
-        "type": "object",
-        "description": "Represents a recurring transaction.",
-        "properties": {
-          "id": { "type": "string" },
-          "userId": { "type": "string" },
-          "name": { "type": "string" },
-          "amount": { "type": "number" },
-          "type": { "type": "string", "enum": ["expense", "income"] },
-          "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly", "yearly"] },
-          "startDate": { "type": "string", "format": "date-time" },
-          "nextDueDate": { "type": "string", "format": "date-time" },
-          "lastCreatedDate": { "type": "string", "format": "date-time" },
-          "categoryId": { "type": "string" },
-          "accountId": { "type": "string" },
-          "tagIds": { "type": "array", "items": { "type": "string" } },
-          "description": { "type": "string" },
-          "status": { "type": "string", "enum": ["active", "paused"] }
-        },
-        "required": ["id", "userId", "name", "amount", "type", "frequency", "startDate", "nextDueDate", "status"]
-    },
-    "Asset": {
+    "FamilyWallet": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Asset",
+      "title": "FamilyWallet",
       "type": "object",
-      "description": "Represents a financial asset held by the user.",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "assetType": { 
-          "type": "string", 
-          "enum": ["savings_cash", "mutual_funds", "stocks_equity", "fixed_income", "retirement", "digital_assets", "gold", "private_equity", "other"]
-        },
-        "name": { "type": "string", "description": "The name or label for the asset." },
-        "investedAmount": { "type": "number", "description": "The total amount invested in the asset." },
-        "currentValue": { "type": "number", "description": "The current market value of the asset." },
-        "quantity": { "type": "number", "description": "The quantity of the asset held (e.g., number of stocks)." },
-        "startDate": { "type": "string", "format": "date-time", "description": "The date the asset was acquired or started." },
-        "notes": { "type": "string", "description": "User's personal notes about the asset." },
-        "lastUpdated": { "type": "string", "format": "date-time", "description": "The timestamp of the last update." }
-      },
-      "required": ["id", "userId", "assetType", "name", "investedAmount", "currentValue", "lastUpdated"]
-    },
-     "CardDetails": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "CardDetails",
-      "type": "object",
-      "description": "Stores non-sensitive details for a credit card.",
-      "properties": {
-        "cardNickname": { "type": "string", "description": "A user-defined nickname for the card." },
-        "last4Digits": { "type": "string", "description": "The last four digits of the card number." },
-        "cardholderName": { "type": "string", "description": "The name of the cardholder as it appears on the card." },
-        "expiryMonth": { "type": "number", "description": "The expiration month of the card (1-12)." },
-        "expiryYear": { "type": "number", "description": "The expiration year of the card (e.g., 2028)." },
-        "network": { "type": "string", "enum": ["visa", "mastercard", "amex", "discover", "rupay", "other"], "description": "The card network." },
-        "statementDate": { "type": "number", "description": "Day of the month for credit card statement generation (1-31)." }
-      }
-    },
-    "Account": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Account",
-      "type": "object",
-      "description": "Represents a user-defined financial account.",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "name": { "type": "string" },
-        "type": { "type": "string", "enum": ["bank", "credit_card", "wallet", "cash"] },
-        "balance": { "type": "number", "description": "Current balance or outstanding amount." },
-        "limit": { "type": "number", "description": "Credit limit for credit cards." },
-        "billingDate": { "type": "number", "description": "Day of the month for credit card billing cycle (1-31)." },
-        "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the account." },
-        "cardDetails": { "$ref": "#/entities/CardDetails" }
-      },
-      "required": ["id", "userId", "name", "type", "balance", "icon", "status"]
-    },
-    "Category": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Category",
-      "type": "object",
-      "description": "Represents a user-defined expense category.",
+      "description": "Represents a shared family ledger.",
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
-        "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "userId": { "type": "string" },
-        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the category." }
+        "description": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "icon", "userId"]
+      "required": ["id", "name", "ownerId", "createdAt"]
     },
-    "Tag": {
+    "FamilyMember": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Tag",
+      "title": "FamilyMember",
       "type": "object",
-      "description": "Represents a user-defined tag for expenses.",
+      "description": "A member within a specific family wallet.",
+      "properties": {
+        "userId": { "type": "string" },
+        "role": { "type": "string", "enum": ["owner", "member"] },
+        "displayName": { "type": "string" },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "role", "joinedAt"]
+    },
+    "FamilyTransaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FamilyTransaction",
+      "type": "object",
+      "description": "A transaction record within a shared family ledger.",
       "properties": {
         "id": { "type": "string" },
-        "name": { "type": "string" },
-        "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "userId": { "type": "string" },
-        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the tag." }
-      },
-      "required": ["name", "icon", "userId"]
-    },
-    "Debt": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Debt",
-      "type": "object",
-      "description": "Represents a debt or a loan between the user and another person.",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "personName": { "type": "string", "description": "The name of the person involved in the transaction." },
+        "walletId": { "type": "string" },
         "amount": { "type": "number" },
-        "type": { "type": "string", "enum": ["lent", "borrowed"], "description": "'lent' if you gave money, 'borrowed' if you received money." },
-        "description": { "type": "string", "description": "A brief description of the debt." },
+        "type": { "type": "string", "enum": ["expense", "income"] },
+        "description": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
         "date": { "type": "string", "format": "date-time" },
-        "status": { "type": "string", "enum": ["pending", "settled"], "default": "pending" },
-        "settledAt": { "type": "string", "format": "date-time", "description": "The date when the debt was settled." }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "origin": { "type": "string", "enum": ["manual", "auto"] },
+        "sourceUserId": { "type": "string" },
+        "sourceTransactionId": { "type": "string" }
       },
-      "required": ["id", "userId", "personName", "amount", "type", "date", "status"]
+      "required": ["id", "walletId", "amount", "type", "authorId", "date", "origin"]
+    },
+    "AutoTag": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AutoTag",
+      "type": "object",
+      "description": "A tag trigger for automatic mirroring to a wallet.",
+      "properties": {
+        "id": { "type": "string" },
+        "tagName": { "type": "string" },
+        "normalizedName": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "tagName", "normalizedName", "createdBy", "createdAt"]
+    },
+    "FamilyInvite": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FamilyInvite",
+      "type": "object",
+      "description": "A global invite code for joining a wallet.",
+      "properties": {
+        "code": { "type": "string" },
+        "walletId": { "type": "string" },
+        "walletName": { "type": "string" },
+        "role": { "type": "string", "enum": ["owner", "member"] },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["code", "walletId", "role", "expiresAt", "createdBy"]
     }
   },
   "auth": {
@@ -236,35 +134,31 @@
     },
     "/users/{userId}/expenses/{expenseId}": {
       "schema": { "$ref": "#/entities/Expense" },
-      "description": "Stores individual expense records for a user."
+      "description": "Personal transactions."
     },
-    "/users/{userId}/recurringExpenses/{recurringExpenseId}": {
-        "schema": { "$ref": "#/entities/RecurringExpense" },
-        "description": "Stores recurring expense configurations for a user."
+    "/users/{userId}/memberships/{walletId}": {
+      "schema": { "type": "object", "properties": { "walletName": { "type": "string" }, "joinedAt": { "type": "string", "format": "date-time" } } },
+      "description": "Discovery index for wallets the user belongs to."
     },
-    "/users/{userId}/accounts/{accountId}": {
-      "schema": { "$ref": "#/entities/Account" },
-      "description": "Stores user's financial accounts."
+    "/familyWallets/{walletId}": {
+      "schema": { "$ref": "#/entities/FamilyWallet" },
+      "description": "Root document for a shared family wallet."
     },
-    "/users/{userId}/categories/{categoryId}": {
-      "schema": { "$ref": "#/entities/Category" },
-      "description": "Stores user-defined expense categories."
+    "/familyWallets/{walletId}/members/{userId}": {
+      "schema": { "$ref": "#/entities/FamilyMember" },
+      "description": "Members of the wallet."
     },
-    "/users/{userId}/tags/{tagId}": {
-      "schema": { "$ref": "#/entities/Tag" },
-      "description": "Stores user-defined expense tags."
+    "/familyWallets/{walletId}/transactions/{txId}": {
+      "schema": { "$ref": "#/entities/FamilyTransaction" },
+      "description": "The shared transaction ledger."
     },
-    "/users/{userId}/debts/{debtId}": {
-        "schema": { "$ref": "#/entities/Debt" },
-        "description": "Stores debt and loan records for a user."
+    "/familyWallets/{walletId}/autoTags/{tagId}": {
+      "schema": { "$ref": "#/entities/AutoTag" },
+      "description": "Tag triggers for mirroring personal expenses."
     },
-    "/users/{userId}/assets/{assetId}": {
-        "schema": { "$ref": "#/entities/Asset" },
-        "description": "Stores user's financial assets."
-    },
-    "/admin/{adminId}": {
-        "schema": { "$ref": "#/entities/UserProfile" },
-        "description": "Admin access control."
+    "/invites/{inviteCode}": {
+      "schema": { "$ref": "#/entities/FamilyInvite" },
+      "description": "Global registry for invite codes."
     }
   }
 }

@@ -1,3 +1,4 @@
+
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -78,9 +79,13 @@ export type Tag = {
   status?: 'active' | 'inactive';
 }
 
+export type ExpenseSyncPreference = {
+  disabled?: boolean;
+};
+
 export type Expense = {
   id: string;
-  userId: string; // The user who created the expense
+  userId: string;
   type: 'expense' | 'income';
   amount: number;
   description?: string;
@@ -90,6 +95,7 @@ export type Expense = {
   categoryId?: string;
   tagIds?: string[];
   runningBalance?: number;
+  syncPreferences?: Record<string, ExpenseSyncPreference>; // walletId -> preference
 };
 
 export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds' | 'date'> & {
@@ -97,9 +103,75 @@ export type EnrichedExpense = Omit<Expense, 'categoryId' | 'accountId' | 'tagIds
   account?: Account;
   tags: Tag[];
   user?: UserProfile;
-  date: Date; // Ensure date is always a Date object
+  date: Date;
 };
 
+// --- Family Wallet Types ---
+
+export type FamilyWallet = {
+  id: string;
+  name: string;
+  description?: string;
+  ownerId: string;
+  createdAt: Timestamp;
+};
+
+export type FamilyMemberRole = 'owner' | 'member';
+
+export type FamilyMember = {
+  userId: string;
+  role: FamilyMemberRole;
+  displayName: string;
+  joinedAt: Timestamp;
+};
+
+export type FamilyTransactionOrigin = 'manual' | 'auto';
+
+export type FamilyTransaction = {
+  id: string;
+  walletId: string;
+  amount: number;
+  type: 'expense' | 'income';
+  description?: string;
+  categoryId: string;
+  authorId: string;
+  authorName: string;
+  date: Timestamp;
+  createdAt: Timestamp;
+  origin: FamilyTransactionOrigin;
+  sourceUserId?: string;
+  sourceTransactionId?: string;
+};
+
+export type EnrichedFamilyTransaction = Omit<FamilyTransaction, 'date' | 'createdAt'> & {
+  date: Date;
+  createdAt: Date;
+  category?: Category;
+  runningBalance?: number;
+};
+
+export type AutoTag = {
+  id: string;
+  tagName: string;
+  normalizedName: string;
+  createdBy: string;
+  createdAt: Timestamp;
+};
+
+export type FamilyInvite = {
+  code: string;
+  walletId: string;
+  walletName: string;
+  role: FamilyMemberRole;
+  expiresAt: Timestamp;
+  createdBy: string;
+};
+
+export type UserMembership = {
+  walletId: string;
+  walletName: string;
+  joinedAt: Timestamp;
+};
 
 export type Debt = {
   id: string;

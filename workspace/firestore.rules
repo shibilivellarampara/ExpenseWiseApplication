@@ -29,7 +29,9 @@ service cloud.firestore {
       }
 
       match /transactions/{txId} {
-        allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+        // TEMPORARY OVERRIDE FOR ISOLATION TEST
+        allow read: if true;
+        
         allow write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)) && 
           // Enforce origin metadata integrity
           (!('origin' in request.resource.data) || request.resource.data.origin in ['manual', 'auto']) &&

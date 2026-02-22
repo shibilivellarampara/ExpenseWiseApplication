@@ -1,5 +1,4 @@
 
-
 {
   "indexes": [
     {
@@ -32,6 +31,14 @@
       "fields": [
         { "fieldPath": "tagIds", "arrayConfig": "CONTAINS" },
         { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "transactions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "date", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
     }
   ],

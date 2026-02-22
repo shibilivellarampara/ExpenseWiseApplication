@@ -34,6 +34,14 @@
     },
     {
       "collectionGroup": "transactions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "date", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "transactions",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         { "fieldPath": "date", "order": "ASCENDING" },

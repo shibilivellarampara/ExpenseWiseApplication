@@ -7,35 +7,34 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isMember(walletId) {
-      return exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
-    }
-
     // --- Family Wallets ---
     match /familyWallets/{walletId} {
       
       // Access to the wallet root
-      allow read: if isSignedIn() && isMember(walletId);
-      allow create: if isSignedIn();
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+      
+      allow create: if request.auth != null;
       
       // Only owners can edit wallet metadata
-      allow update, delete: if isSignedIn() && 
+      allow update, delete: if request.auth != null && 
         get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner';
 
       match /members/{memberId} {
-        // STRICT BASE CASE ONLY - Breaks the recursion
-        allow read: if isSignedIn() && request.auth.uid == memberId;
+        // STRICT BASE CASE ONLY - Allows exists() to resolve without recursion
+        allow read: if request.auth != null && request.auth.uid == memberId;
 
         // Management restricted to owners
-        allow create, update, delete: if isSignedIn() &&
+        allow create, update, delete: if request.auth != null &&
           get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner';
       }
 
       match /transactions/{txId} {
-        // ISOLATION TEST: If this still fails with "method: list", you are hitting a different project.
-        allow read: if true;
+        allow read: if request.auth != null && 
+          exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
         
-        allow write: if isSignedIn() && isMember(walletId) && 
+        allow write: if request.auth != null && 
+          exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)) && 
           (!('origin' in request.resource.data) || request.resource.data.origin in ['manual', 'auto']) &&
           (
             (request.resource.data.origin == 'manual' && request.resource.data.authorId == request.auth.uid) ||
@@ -44,11 +43,13 @@ service cloud.firestore {
       }
 
       match /categories/{catId} {
-        allow read, write: if isSignedIn() && isMember(walletId);
+        allow read, write: if request.auth != null && 
+          exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
       }
 
       match /autoTags/{tagId} {
-        allow read, write: if isSignedIn() && isMember(walletId);
+        allow read, write: if request.auth != null && 
+          exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
       }
     }
 

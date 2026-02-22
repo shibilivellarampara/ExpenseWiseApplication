@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -51,8 +50,8 @@ export default function FamilyWalletDetailPage() {
             
             return {
                 ...tx,
-                date: (tx.date as any).toDate(),
-                createdAt: (tx.createdAt as any).toDate(),
+                date: tx.date ? (tx.date as any).toDate() : new Date(),
+                createdAt: tx.createdAt ? (tx.createdAt as any).toDate() : new Date(),
                 category: catMap.get(tx.categoryId),
                 runningBalance: balance
             };

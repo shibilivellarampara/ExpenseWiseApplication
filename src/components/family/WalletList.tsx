@@ -58,7 +58,9 @@ export function WalletList({ memberships, isLoading }: WalletListProps) {
                                     </h4>
                                     <div className="flex items-center gap-2 mt-0.5 text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest">
                                         <Calendar className="h-3 w-3" />
-                                        <span>Joined {format(membership.joinedAt.toDate(), 'MMM d, yyyy')}</span>
+                                        <span>
+                                            Joined {membership.joinedAt ? format(membership.joinedAt.toDate(), 'MMM d, yyyy') : 'Recently'}
+                                        </span>
                                     </div>
                                 </div>
                                 <ChevronRight className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary transition-colors" />

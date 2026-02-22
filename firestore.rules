@@ -1,8 +1,67 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // --- Private User Data ---
+    match /users/{userId}/{allSubcollections=**} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // --- Family Wallets ---
+    match /familyWallets/{walletId} {
+      // Rule for the wallet document itself
+      allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+      allow create: if isSignedIn();
+      
+      // Only owners can edit wallet metadata or delete the wallet
+      allow update, delete: if isSignedIn() && get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner';
+
+      match /members/{memberId} {
+        // A user can always read/write their own membership. 
+        // This is the document checked by 'exists' in other rules.
+        allow read: if isSignedIn() && (request.auth.uid == memberId || exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)));
+        allow write: if isSignedIn() && (request.auth.uid == memberId || get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner');
+      }
+
+      match /transactions/{txId} {
+        allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+        allow write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+      }
+
+      match /categories/{catId} {
+        allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+        allow write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+      }
+
+      match /autoTags/{tagId} {
+        allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+        allow write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+      }
+    }
+
+    // --- Global Invites ---
+    match /invites/{inviteCode} {
+      allow read: if isSignedIn(); 
+      allow create: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+    
+    // --- Collection Group Rules ---
+    match /expenses/{expenseId} {
+       allow read, write: if isOwner(resource.data.userId);
+    }
+    
+    match /admin/{docId} {
+        allow read, write: if request.auth.token.isAdmin == true;
     }
   }
 }

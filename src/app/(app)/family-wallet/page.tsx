@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from '@/components/PageHeader';
@@ -27,17 +28,19 @@ export default function FamilyWalletPage() {
                 title="Family Wallets" 
                 description="Collaborative shared ledgers for your family and household."
             >
-                <div className="flex gap-2">
+                <div className="flex items-center gap-3">
                     <JoinWalletDialog>
-                        <Button variant="outline" size="sm" className="rounded-xl h-10 border-primary/20 text-primary hover:bg-primary/5">
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Join
+                        <Button variant="outline" size="sm" className="h-10 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-transparent shadow-none shrink-0 hover:bg-card gap-2">
+                            <UserPlus className="h-4 w-4" />
+                            <span className="hidden sm:inline">Join Wallet</span>
+                            <span className="sm:hidden">Join</span>
                         </Button>
                     </JoinWalletDialog>
                     <CreateWalletDialog>
-                        <Button size="sm" className="rounded-xl h-10 shadow-lg shadow-primary/20">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Create New
+                        <Button variant="outline" size="sm" className="h-10 rounded-full px-4 border-muted-foreground/20 text-xs font-medium bg-transparent shadow-none shrink-0 hover:bg-card gap-2">
+                            <PlusCircle className="h-4 w-4" />
+                            <span className="hidden sm:inline">Create New</span>
+                            <span className="sm:hidden">Create</span>
                         </Button>
                     </CreateWalletDialog>
                 </div>

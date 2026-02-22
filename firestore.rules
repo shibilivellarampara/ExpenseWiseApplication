@@ -10,7 +10,7 @@ service cloud.firestore {
 
     function isMember(walletId) {
       // Direct lookup of membership. 
-      // Rule for this path must have a base case to avoid recursion.
+      // This is the source of truth for all wallet access.
       return exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
     }
 
@@ -26,9 +26,12 @@ service cloud.firestore {
         get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner';
 
       match /members/{memberId} {
-        // BASE CASE: Users can always read their own membership.
+        // BASE CASE: Users can always read their own membership doc.
         // This is critical to break recursion when exists() is called.
-        allow read: if isSignedIn() && (request.auth.uid == memberId || isMember(walletId));
+        allow read: if isSignedIn() && request.auth.uid == memberId;
+        
+        // Members can read the list if they are part of the wallet
+        allow read: if isSignedIn() && isMember(walletId);
         
         // Members can join themselves, but only owners can manage roles
         allow write: if isSignedIn() && (request.auth.uid == memberId || get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner');

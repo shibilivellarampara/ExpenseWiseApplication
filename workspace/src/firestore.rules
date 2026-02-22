@@ -3,47 +3,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Helper Functions ---
+    // --- Global Helper Functions ---
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isMember(walletId) {
+      // Direct lookup of membership. 
+      // This is the source of truth for all wallet access.
+      return exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
     }
 
-    function isFamilyMember(walletId) {
-      return isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
-    }
-
-    function getFamilyRole(walletId) {
-      return get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role;
-    }
-
-    // --- Private User Data ---
-    match /users/{userId}/{allSubcollections=**} {
-      allow read, write: if isOwner(userId);
-    }
-    
     // --- Family Wallets ---
     match /familyWallets/{walletId} {
-      allow read: if isFamilyMember(walletId);
+      
+      // Access to the wallet root is granted if you are a member
+      allow read: if isSignedIn() && isMember(walletId);
       allow create: if isSignedIn();
-      // Only owners can edit wallet metadata or delete the wallet
-      allow update, delete: if isFamilyMember(walletId) && getFamilyRole(walletId) == 'owner';
+      
+      // Only owners can edit wallet metadata or delete the entire wallet
+      allow update, delete: if isSignedIn() && 
+        get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner';
 
       match /members/{memberId} {
-        // BASE CASE: User can always read their own membership doc
-        // This is critical to break recursion in isFamilyMember() calls
-        allow read: if isSignedIn() && (request.auth.uid == memberId || isFamilyMember(walletId));
+        // BASE CASE: Users can always read their own membership doc.
+        // This is critical to break recursion when exists() is called.
+        allow read: if isSignedIn() && request.auth.uid == memberId;
         
-        // Members can join themselves (create), owners can manage roles (update/delete)
-        allow write: if isSignedIn() && (request.auth.uid == memberId || getFamilyRole(walletId) == 'owner');
+        // Members can read the list if they are part of the wallet
+        allow read: if isSignedIn() && isMember(walletId);
+        
+        // Members can join themselves, but only owners can manage roles
+        allow write: if isSignedIn() && (request.auth.uid == memberId || get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner');
       }
 
       match /transactions/{txId} {
-        allow read: if isFamilyMember(walletId);
-        allow write: if isFamilyMember(walletId) && 
+        allow read: if isSignedIn() && isMember(walletId);
+        allow write: if isSignedIn() && isMember(walletId) && 
           // Enforce origin metadata integrity
           (!('origin' in request.resource.data) || request.resource.data.origin in ['manual', 'auto']) &&
           (
@@ -55,30 +51,32 @@ service cloud.firestore {
       }
 
       match /categories/{catId} {
-        allow read: if isFamilyMember(walletId);
-        allow write: if isFamilyMember(walletId);
+        allow read, write: if isSignedIn() && isMember(walletId);
       }
 
       match /autoTags/{tagId} {
-        allow read: if isFamilyMember(walletId);
-        allow write: if isFamilyMember(walletId);
+        allow read, write: if isSignedIn() && isMember(walletId);
       }
+    }
+
+    // --- Private User Data ---
+    match /users/{userId}/{allSubcollections=**} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
     // --- Global Invites ---
     match /invites/{inviteCode} {
       allow read: if isSignedIn(); 
-      allow create: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create, delete: if isSignedIn();
     }
     
-    // --- Collection Group Rules ---
+    // --- Collection Group Rules (Required for cross-account indexing) ---
     match /expenses/{expenseId} {
-       allow read, write: if isOwner(resource.data.userId);
+       allow read, write: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
     }
     
     match /admin/{docId} {
-        allow read, write: if request.auth.token.isAdmin == true;
+        allow read, write: if isSignedIn() && request.auth.token.isAdmin == true;
     }
   }
 }

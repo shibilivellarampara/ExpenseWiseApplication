@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -8,47 +7,48 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isMember(walletId) {
+      return exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+    }
+
     // --- Family Wallets ---
     match /familyWallets/{walletId} {
       
-      // Access to the wallet root is granted if you are a member
-      allow read: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+      // Access to the wallet root
+      allow read: if isSignedIn() && isMember(walletId);
       allow create: if isSignedIn();
       
-      // Only owners can edit wallet metadata or delete the entire wallet
+      // Only owners can edit wallet metadata
       allow update, delete: if isSignedIn() && 
         get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner';
 
       match /members/{memberId} {
-        // STRICT BASE CASE ONLY
+        // STRICT BASE CASE ONLY - Breaks the recursion
         allow read: if isSignedIn() && request.auth.uid == memberId;
 
-        // Only wallet owners can manage membership documents
+        // Management restricted to owners
         allow create, update, delete: if isSignedIn() &&
           get(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)).data.role == 'owner';
       }
 
       match /transactions/{txId} {
-        // TEMPORARY OVERRIDE FOR ISOLATION TEST
+        // ISOLATION TEST: If this still fails with "method: list", you are hitting a different project.
         allow read: if true;
         
-        allow write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid)) && 
-          // Enforce origin metadata integrity
+        allow write: if isSignedIn() && isMember(walletId) && 
           (!('origin' in request.resource.data) || request.resource.data.origin in ['manual', 'auto']) &&
           (
-            // Manual transactions must be authored by the sender
             (request.resource.data.origin == 'manual' && request.resource.data.authorId == request.auth.uid) ||
-            // Auto transactions must be sourced from the sender's account
             (request.resource.data.origin == 'auto' && request.resource.data.sourceUserId == request.auth.uid)
           );
       }
 
       match /categories/{catId} {
-        allow read, write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+        allow read, write: if isSignedIn() && isMember(walletId);
       }
 
       match /autoTags/{tagId} {
-        allow read, write: if isSignedIn() && exists(/databases/$(database)/documents/familyWallets/$(walletId)/members/$(request.auth.uid));
+        allow read, write: if isSignedIn() && isMember(walletId);
       }
     }
 

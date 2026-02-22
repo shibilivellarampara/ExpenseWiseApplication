@@ -1,4 +1,3 @@
-
 'use client';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -141,14 +140,6 @@ export type RecurringExpense = {
     status: 'active' | 'paused';
 };
 
-export type EnrichedRecurringExpense = Omit<RecurringExpense, 'startDate' | 'nextDueDate' | 'lastCreatedDate' | 'categoryId' | 'accountId'> & {
-    startDate: Date;
-    nextDueDate: Date;
-    lastCreatedDate?: Date;
-    category?: Category;
-    account?: Account;
-};
-
 export type AssetType = 'savings_cash' | 'mutual_funds' | 'stocks_equity' | 'fixed_income' | 'retirement' | 'digital_assets' | 'gold' | 'private_equity' | 'other';
 
 export type Asset = {
@@ -169,3 +160,19 @@ export type EnrichedAsset = Omit<Asset, 'startDate' | 'lastUpdated'> & {
     startDate?: Date;
     lastUpdated: Date;
 };
+
+export interface TagStat {
+    name: string;
+    amount: number;
+    percentage: number;
+}
+
+export interface CategoryStat {
+    id: string;
+    name: string;
+    icon?: string;
+    amount: number;
+    count: number;
+    percentage: number;
+    tags: TagStat[];
+}

@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -119,7 +118,7 @@ function QuickAddItemDialog({ type, onSave, onOpenChange, children }: QuickAddIt
                 <DialogHeader>
                     <DialogTitle>Add New {type}</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-4 py-4" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
                     <Input
                         placeholder={`${type} Name`}
                         value={name}
@@ -355,7 +354,7 @@ function ExpenseForm({ form, onSubmit, id, accounts, categories, tags, isEditMod
     const activeCategories = useMemo(() => categories?.filter(c => c.status === 'active' || c.status === undefined) || [], [categories]);
     const activeTags = useMemo(() => tags?.filter(t => t.status === 'active' || t.status === undefined) || [], [tags]);
     
-    const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? false;
+    const isAiSuggestionEnabled = userProfile?.dashboardSettings?.isAiSuggestionEnabled ?? true;
 
     const renderIcon = (iconName: string | undefined, className?: string) => {
         const IconComponent = (LucideIcons as any)[iconName || 'Pilcrow'];
@@ -501,7 +500,12 @@ export function AddExpenseDialog({ children, expenseToEdit, initialType, onSaveS
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-md w-[calc(100%-2rem)] flex flex-col max-h-[90vh] rounded-[24px]" onOpenAutoFocus={(e) => e.preventDefault()}>
+            <DialogContent 
+                className="sm:max-w-md w-[calc(100%-2rem)] flex flex-col max-h-[90vh] rounded-[24px]" 
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+            >
                 <DialogHeader><DialogTitle className="font-headline">{isEditMode ? 'Edit Transaction' : 'Add a New Transaction'}</DialogTitle></DialogHeader>
                 <div className="flex-1 overflow-y-auto -mx-6 px-6">
                     <ExpenseForm 

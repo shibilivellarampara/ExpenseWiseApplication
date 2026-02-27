@@ -43,7 +43,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
     return (
         <Dialog open={!!category} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
-                className="sm:max-w-lg w-[95vw] h-[80vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden border-none shadow-2xl"
+                className="sm:max-w-xl w-[95vw] h-[80vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden border-none shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
             >
@@ -86,7 +86,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                                             <span>{format(expense.date, 'MMM d, yyyy')}</span>
                                         </div>
                                     </div>
-                                    <div className="shrink-0 text-right min-w-[90px]">
+                                    <div className="shrink-0 text-right min-w-[100px] ml-2">
                                         <p className={cn(
                                             "text-[15px] font-black tabular-nums whitespace-nowrap",
                                             expense.type === 'income' ? "text-primary" : "text-destructive"

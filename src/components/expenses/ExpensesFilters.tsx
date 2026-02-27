@@ -3,11 +3,12 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ListFilter, Search, X, Check, ChevronDown, Pilcrow, RotateCcw, Calendar as CalendarIcon, Zap } from 'lucide-react';
+import { ListFilter, Search, X, Check, ChevronDown, Pilcrow, RotateCcw, Calendar as CalendarIcon, Zap, Clock } from 'lucide-react';
 import { Account, Category, Tag } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from '@/lib/utils';
@@ -164,18 +165,29 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
             {!disableDateFilter && (
                 <div className="space-y-3">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Date Range</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setQuickRange('this-month')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">This Month</Button>
-                        <Button variant="outline" size="sm" onClick={() => setQuickRange('last-month')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">Last Month</Button>
-                        <Button variant="outline" size="sm" onClick={() => setQuickRange('3-months')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">Last 3 Months</Button>
-                        <Button variant="outline" size="sm" onClick={() => setQuickRange('this-year')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">This Year</Button>
-                        <Button variant="outline" size="sm" onClick={() => setQuickRange('last-year')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">Last Year</Button>
-                        {singleCreditCardSelected && (
-                            <Button variant="outline" size="sm" onClick={() => setQuickRange('billing-cycle')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider border-primary/20 text-primary hover:bg-primary/5">
-                                <Zap className="mr-1 h-3 w-3" /> Bill Cycle
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full justify-between h-10 rounded-xl text-xs font-medium">
+                                <span className="flex items-center gap-2">
+                                    <Clock className="h-3.5 w-3.5 opacity-50" />
+                                    Quick Selection
+                                </span>
+                                <ChevronDown className="h-3 w-3 opacity-50" />
                             </Button>
-                        )}
-                    </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[280px] rounded-xl border-none shadow-2xl p-1" align="start">
+                            <DropdownMenuItem onClick={() => setQuickRange('this-month')} className="rounded-lg text-xs font-medium">This Month</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setQuickRange('last-month')} className="rounded-lg text-xs font-medium">Last Month</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setQuickRange('3-months')} className="rounded-lg text-xs font-medium">Last 3 Months</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setQuickRange('this-year')} className="rounded-lg text-xs font-medium">This Year</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setQuickRange('last-year')} className="rounded-lg text-xs font-medium">Last Year</DropdownMenuItem>
+                            {singleCreditCardSelected && (
+                                <DropdownMenuItem onClick={() => setQuickRange('billing-cycle')} className="rounded-lg text-xs font-medium text-primary">
+                                    <Zap className="mr-2 h-3.5 w-3.5" /> Billing Cycle
+                                </DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="w-full justify-start h-10 rounded-xl text-xs font-medium gap-2">

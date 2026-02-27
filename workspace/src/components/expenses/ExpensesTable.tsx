@@ -447,7 +447,7 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
     return (
         <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full rounded-[18px]" />
+                <Skeleton className="h-20 w-full rounded-[18px]" key={i} />
             ))}
         </div>
     )

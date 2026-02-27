@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ListFilter, Search, X, Check, ChevronDown, Pilcrow, RotateCcw } from 'lucide-react';
+import { ListFilter, Search, X, Check, ChevronDown, Pilcrow, RotateCcw, Calendar as CalendarIcon } from 'lucide-react';
 import { Account, Category, Tag } from '@/lib/types';
 import {
   DropdownMenu,
@@ -15,6 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Command, CommandGroup, CommandList, CommandInput, CommandItem } from '@/components/ui/command';
 import * as LucideIcons from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 
 export type DateRange = { from: Date | undefined; to: Date | undefined; };
 
@@ -43,7 +45,7 @@ const renderIcon = (iconName: string | undefined, className?: string) => {
     return IconComponent ? <IconComponent className={cn("h-3.5 w-3.5", className)} /> : <Pilcrow className={cn("h-3.5 w-3.5", className)} />;
 };
 
-function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }: ExpensesFiltersProps) {
+function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, disableDateFilter }: ExpensesFiltersProps) {
     const handleTypeChange = (type: 'all' | 'income' | 'expense') => {
         onFiltersChange({ ...filters, type });
     }
@@ -56,6 +58,10 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }
         onFiltersChange({ ...filters, [field]: newValues });
     }
     
+    const handleDateRangeChange = (range: { from: Date | undefined; to?: Date | undefined }) => {
+        onFiltersChange({ ...filters, dateRange: { from: range.from, to: range.to } });
+    }
+
     const createMultiSelect = (
         title: string,
         field: 'categories' | 'accounts' | 'tags',
@@ -103,6 +109,41 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags }
 
     return (
         <div className="grid gap-5">
+            {!disableDateFilter && (
+                <div className="space-y-2">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Date Range</h4>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start h-10 rounded-xl text-xs font-medium gap-2">
+                                <CalendarIcon className="h-3.5 w-3.5 opacity-50" />
+                                {filters.dateRange.from ? (
+                                    filters.dateRange.to ? (
+                                        <>
+                                            {format(filters.dateRange.from, "LLL dd")} - {" "}
+                                            {format(filters.dateRange.to, "LLL dd")}
+                                        </>
+                                    ) : (
+                                        format(filters.dateRange.from, "LLL dd")
+                                    )
+                                ) : (
+                                    <span>Pick a date range</span>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-2xl overflow-hidden shadow-2xl border-none" align="start">
+                            <Calendar
+                                initialFocus
+                                mode="range"
+                                defaultMonth={filters.dateRange.from}
+                                selected={{ from: filters.dateRange.from, to: filters.dateRange.to }}
+                                onSelect={(range: any) => handleDateRangeChange(range || { from: undefined, to: undefined })}
+                                numberOfMonths={1}
+                            />
+                        </PopoverContent>
+                    </Popover>
+                </div>
+            )}
+
             {createMultiSelect('Accounts', 'accounts', accounts, 'All Accounts')}
             {createMultiSelect('Categories', 'categories', categories, 'All Categories')}
             {createMultiSelect('Tags', 'tags', tags, 'All Tags')}
@@ -144,6 +185,7 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
     
     const activeFilterCount = useMemo(() => 
         (filters.type !== 'all' ? 1 : 0) +
+        (filters.dateRange.from ? 1 : 0) +
         filters.categories.length +
         filters.accounts.length +
         filters.tags.length,
@@ -220,6 +262,15 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
             {activeFilterCount > 0 && (
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
                     <div className="flex gap-2 items-center">
+                        {filters.dateRange.from && (
+                            <Badge variant="secondary" className="h-8 rounded-full pl-3 pr-1 py-0 bg-primary/5 text-primary border-primary/10 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                {format(filters.dateRange.from, "MMM dd")}
+                                {filters.dateRange.to && ` - ${format(filters.dateRange.to, "MMM dd")}`}
+                                <button onClick={() => onFiltersChange({...filters, dateRange: { from: undefined, to: undefined }})} className="p-1 hover:bg-primary/10 rounded-full transition-colors">
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </Badge>
+                        )}
                         {filters.accounts.map(id => {
                             const item = accounts.find(c => c.id === id);
                             return item ? (

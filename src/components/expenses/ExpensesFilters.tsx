@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ListFilter, Search, X, Check, ChevronDown, Pilcrow, RotateCcw, Calendar as CalendarIcon } from 'lucide-react';
+import { ListFilter, Search, X, Check, ChevronDown, Pilcrow, RotateCcw, Calendar as CalendarIcon, Zap } from 'lucide-react';
 import { Account, Category, Tag } from '@/lib/types';
 import {
   DropdownMenu,
@@ -16,7 +16,7 @@ import { Command, CommandGroup, CommandList, CommandInput, CommandItem } from '@
 import * as LucideIcons from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 export type DateRange = { from: Date | undefined; to: Date | undefined; };
 
@@ -61,6 +61,44 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
     const handleDateRangeChange = (range: { from: Date | undefined; to?: Date | undefined }) => {
         onFiltersChange({ ...filters, dateRange: { from: range.from, to: range.to } });
     }
+
+    const setQuickRange = (range: 'this-month' | 'last-month' | 'billing-cycle') => {
+        const now = new Date();
+        let from: Date, to: Date;
+
+        if (range === 'this-month') {
+            from = startOfMonth(now);
+            to = endOfMonth(now);
+        } else if (range === 'last-month') {
+            const lastMonth = subMonths(now, 1);
+            from = startOfMonth(lastMonth);
+            to = endOfMonth(lastMonth);
+        } else {
+            // Billing Cycle
+            const selectedAcc = accounts.find(a => a.id === filters.accounts[0]);
+            if (!selectedAcc || selectedAcc.type !== 'credit_card' || !selectedAcc.cardDetails?.statementDate) return;
+            
+            const statementDate = selectedAcc.cardDetails.statementDate;
+            const currentDay = now.getDate();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            if (currentDay >= statementDate) {
+                from = new Date(currentYear, currentMonth, statementDate);
+                to = new Date(currentYear, currentMonth + 1, statementDate - 1);
+            } else {
+                from = new Date(currentYear, currentMonth - 1, statementDate);
+                to = new Date(currentYear, currentMonth, statementDate - 1);
+            }
+        }
+        handleDateRangeChange({ from, to });
+    }
+
+    const singleCreditCardSelected = useMemo(() => {
+        if (filters.accounts.length !== 1) return null;
+        const acc = accounts.find(a => a.id === filters.accounts[0]);
+        return (acc?.type === 'credit_card' && acc.cardDetails?.statementDate) ? acc : null;
+    }, [filters.accounts, accounts]);
 
     const createMultiSelect = (
         title: string,
@@ -110,8 +148,17 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
     return (
         <div className="grid gap-5">
             {!disableDateFilter && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Date Range</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setQuickRange('this-month')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">This Month</Button>
+                        <Button variant="outline" size="sm" onClick={() => setQuickRange('last-month')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">Last Month</Button>
+                        {singleCreditCardSelected && (
+                            <Button variant="outline" size="sm" onClick={() => setQuickRange('billing-cycle')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider col-span-2 border-primary/20 text-primary hover:bg-primary/5">
+                                <Zap className="mr-1 h-3 w-3" /> Billing Cycle
+                            </Button>
+                        )}
+                    </div>
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="w-full justify-start h-10 rounded-xl text-xs font-medium gap-2">

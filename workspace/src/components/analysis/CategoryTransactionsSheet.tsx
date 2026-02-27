@@ -43,7 +43,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
     return (
         <Dialog open={!!category} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
-                className="sm:max-w-md w-[95vw] h-[75vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden"
+                className="sm:max-w-lg w-[95vw] h-[80vh] flex flex-col p-0 gap-0 rounded-[24px] overflow-hidden border-none shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
             >
@@ -59,7 +59,7 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                         </div>
                         <div className="text-right shrink-0">
                             <p className={cn(
-                                "text-lg font-black tracking-tight whitespace-nowrap",
+                                "text-lg sm:text-xl font-black tracking-tight whitespace-nowrap",
                                 getAmountColor()
                             )}>
                                 {currencySymbol}{formatAmount(Math.abs(category?.amount || 0))}
@@ -69,15 +69,15 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                 </DialogHeader>
                 
                 <ScrollArea className="flex-1 px-4 py-4 bg-background/50">
-                    <div className="space-y-3 pb-8">
+                    <div className="space-y-3 pb-12">
                         {categoryExpenses.map((expense) => (
                             <div key={expense.id} className="flex flex-col gap-2 p-4 rounded-2xl bg-card border border-border/40 shadow-sm hover:shadow-md transition-all">
-                                <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-center justify-between gap-4">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[15px] font-semibold truncate leading-tight text-foreground/90">
+                                        <p className="text-[14px] sm:text-[15px] font-bold truncate leading-tight text-foreground/90">
                                             {expense.description || category?.name}
                                         </p>
-                                        <div className="flex items-center gap-1.5 mt-1 text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+                                        <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                                             <span className="flex items-center gap-1">
                                                 {renderIcon(expense.account?.icon, "h-2.5 w-2.5 opacity-70")}
                                                 {expense.account?.name}
@@ -86,9 +86,9 @@ export function CategoryTransactionsSheet({ category, expenses, currency, view =
                                             <span>{format(expense.date, 'MMM d, yyyy')}</span>
                                         </div>
                                     </div>
-                                    <div className="shrink-0 text-right min-w-[80px]">
+                                    <div className="shrink-0 text-right min-w-[90px]">
                                         <p className={cn(
-                                            "text-[15px] font-black tabular-nums",
+                                            "text-[15px] font-black tabular-nums whitespace-nowrap",
                                             expense.type === 'income' ? "text-primary" : "text-destructive"
                                         )}>
                                             {expense.type === 'income' ? '+' : '-'}{currencySymbol}{formatAmount(expense.amount)}

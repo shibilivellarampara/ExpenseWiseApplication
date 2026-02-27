@@ -7,7 +7,7 @@ import { Edit, Trash2, X, Loader2, Check, AlertCircle, Inbox, Clock, ListChecks,
 import { useDoc, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { getCurrencySymbol } from "@/lib/currencies";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import { cn, formatAmount, generateColorStyle } from "@/lib/utils";
 import { AddExpenseDialog } from "./AddExpenseDialog";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ type VirtualRowData =
 function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; }) {
     
     const [focusedId, setFocusedId] = useState<string | null>(null);
+    const [editingExpense, setEditingExpense] = useState<EnrichedExpense | null>(null);
     const [expandedTagRows, setExpandedTagRows] = useState<Set<string>>(new Set());
     const parentRef = useRef<HTMLDivElement>(null);
 
@@ -304,16 +305,14 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                             <ListChecks className="h-3.5 w-3.5" />
                                                         </Button>
                                                         {selectedIds.length < 2 && (
-                                                            <AddExpenseDialog expenseToEdit={row.expense} onSaveSuccess={onDataChange}>
-                                                                <Button 
-                                                                    variant="outline" 
-                                                                    size="icon" 
-                                                                    className="h-8 w-8 rounded-full border-primary/20 text-primary hover:bg-primary/5 shadow-none"
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                >
-                                                                    <Edit className="h-3.5 w-3.5" />
-                                                                </Button>
-                                                            </AddExpenseDialog>
+                                                            <Button 
+                                                                variant="outline" 
+                                                                size="icon" 
+                                                                className="h-8 w-8 rounded-full border-primary/20 text-primary hover:bg-primary/5 shadow-none"
+                                                                onClick={(e) => { e.stopPropagation(); setEditingExpense(row.expense); }}
+                                                            >
+                                                                <Edit className="h-3.5 w-3.5" />
+                                                            </Button>
                                                         )}
                                                         <AlertDialog>
                                                             <AlertDialogTrigger asChild>
@@ -420,6 +419,18 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                     })}
                 </div>
             </div>
+            
+            {/* Unified Edit Dialog moved outside virtualized list to ensure it stays open */}
+            {editingExpense && (
+                <AddExpenseDialog 
+                    expenseToEdit={editingExpense} 
+                    onSaveSuccess={() => { onDataChange(); setEditingExpense(null); }}
+                    open={!!editingExpense}
+                    onOpenChange={(open) => !open && setEditingExpense(null)}
+                >
+                    <span className="hidden" />
+                </AddExpenseDialog>
+            )}
         </div>
     );
 }

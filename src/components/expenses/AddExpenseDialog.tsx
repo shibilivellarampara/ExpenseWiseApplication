@@ -255,7 +255,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
     return (
         <Command shouldFilter={false} onKeyDown={handleKeyDown} className={cn('overflow-visible bg-transparent', isSuggesting && 'animate-pulse border-primary/50')}>
              <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-background">
-                 <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-14">
+                 <div className="flex gap-1.5 flex-wrap p-2 items-center min-h-14" onClick={(e) => e.stopPropagation()}>
                     {tags.filter(tag => selectedTagIds.has(tag.id)).map(tag => (
                         <Badge
                             key={tag.id}
@@ -266,7 +266,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                             <button
                                 type="button"
                                 className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                onClick={() => handleUnselect(tag.id)}
+                                onClick={(e) => { e.stopPropagation(); handleUnselect(tag.id); }}
                             >
                                 <X className="h-3 w-3" />
                             </button>
@@ -286,7 +286,7 @@ const TagCombobox = ({ field, tags, onQuickAdd, isRequired, isSuggesting }: { fi
                     />
                 </div>
             </div>
-            <div className="relative mt-2">
+            <div className="relative mt-2" onClick={(e) => e.stopPropagation()}>
                 {open && (
                     <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
                         <CommandList>
@@ -472,7 +472,7 @@ function ExpenseForm({ form, onSubmit, id, accounts, categories, tags, isEditMod
 
     return (
         <Form {...form}>
-            <form id={id} onSubmit={onSubmit} className="space-y-4">
+            <form id={id} onSubmit={onSubmit} className="space-y-4" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
                 <FormField control={form.control} name="type" render={({ field }) => (
                     <FormItem><FormControl>
                         <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-4">
@@ -493,13 +493,16 @@ function ExpenseForm({ form, onSubmit, id, accounts, categories, tags, isEditMod
     );
 }
 
-export function AddExpenseDialog({ children, expenseToEdit, initialType, onSaveSuccess }: { children: React.ReactNode, expenseToEdit?: EnrichedExpense, initialType?: 'income' | 'expense'; onSaveSuccess?: () => void; }) {
-    const [open, setOpen] = useState(false);
-    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, loadingState, isEditMode, formId, accounts, categories, tags } = useExpenseForm({ setOpen, expenseToEdit, initialType, open, onSaveSuccess });
+export function AddExpenseDialog({ children, expenseToEdit, initialType, onSaveSuccess, open: externalOpen, onOpenChange: externalOnOpenChange }: { children: React.ReactNode, expenseToEdit?: EnrichedExpense, initialType?: 'income' | 'expense'; onSaveSuccess?: () => void; open?: boolean; onOpenChange?: (open: boolean) => void; }) {
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
+    const setOpen = externalOnOpenChange !== undefined ? externalOnOpenChange : setInternalOpen;
+
+    const { form, onFinalSubmit, onSaveAndNewSubmit, handleDelete, loadingState, isEditMode, formId, accounts, categories, tags } = useExpenseForm({ setOpen, expenseToEdit, initialType, open: isOpen, onSaveSuccess });
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
+        <Dialog open={isOpen} onOpenChange={setOpen}>
+            {children && <DialogTrigger asChild>{children}</DialogTrigger>}
             <DialogContent 
                 className="sm:max-w-md w-[calc(100%-2rem)] flex flex-col max-h-[90vh] rounded-[24px]" 
                 onOpenAutoFocus={(e) => e.preventDefault()}
@@ -528,7 +531,7 @@ export function AddExpenseDialog({ children, expenseToEdit, initialType, onSaveS
                                         Delete
                                     </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent className="rounded-[24px]">
+                                <AlertDialogContent className="rounded-[24px]" onClick={(e) => e.stopPropagation()}>
                                     <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                                     <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter>
                                 </AlertDialogContent>

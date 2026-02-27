@@ -16,7 +16,7 @@ import { Command, CommandGroup, CommandList, CommandInput, CommandItem } from '@
 import * as LucideIcons from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears } from 'date-fns';
 
 export type DateRange = { from: Date | undefined; to: Date | undefined; };
 
@@ -62,7 +62,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
         onFiltersChange({ ...filters, dateRange: { from: range.from, to: range.to } });
     }
 
-    const setQuickRange = (range: 'this-month' | 'last-month' | 'billing-cycle') => {
+    const setQuickRange = (range: 'this-month' | 'last-month' | 'this-year' | 'last-year' | '3-months' | 'billing-cycle') => {
         const now = new Date();
         let from: Date, to: Date;
 
@@ -73,6 +73,16 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
             const lastMonth = subMonths(now, 1);
             from = startOfMonth(lastMonth);
             to = endOfMonth(lastMonth);
+        } else if (range === 'this-year') {
+            from = startOfYear(now);
+            to = endOfYear(now);
+        } else if (range === 'last-year') {
+            const lastYear = subYears(now, 1);
+            from = startOfYear(lastYear);
+            to = endOfYear(lastYear);
+        } else if (range === '3-months') {
+            from = startOfMonth(subMonths(now, 2));
+            to = endOfMonth(now);
         } else {
             // Billing Cycle
             const selectedAcc = accounts.find(a => a.id === filters.accounts[0]);
@@ -147,15 +157,22 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
 
     return (
         <div className="grid gap-5">
+            {createMultiSelect('Accounts', 'accounts', accounts, 'All Accounts')}
+            {createMultiSelect('Categories', 'categories', categories, 'All Categories')}
+            {createMultiSelect('Tags', 'tags', tags, 'All Tags')}
+
             {!disableDateFilter && (
                 <div className="space-y-3">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Date Range</h4>
                     <div className="grid grid-cols-2 gap-2">
                         <Button variant="outline" size="sm" onClick={() => setQuickRange('this-month')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">This Month</Button>
                         <Button variant="outline" size="sm" onClick={() => setQuickRange('last-month')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">Last Month</Button>
+                        <Button variant="outline" size="sm" onClick={() => setQuickRange('3-months')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">Last 3 Months</Button>
+                        <Button variant="outline" size="sm" onClick={() => setQuickRange('this-year')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">This Year</Button>
+                        <Button variant="outline" size="sm" onClick={() => setQuickRange('last-year')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider">Last Year</Button>
                         {singleCreditCardSelected && (
-                            <Button variant="outline" size="sm" onClick={() => setQuickRange('billing-cycle')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider col-span-2 border-primary/20 text-primary hover:bg-primary/5">
-                                <Zap className="mr-1 h-3 w-3" /> Billing Cycle
+                            <Button variant="outline" size="sm" onClick={() => setQuickRange('billing-cycle')} className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider border-primary/20 text-primary hover:bg-primary/5">
+                                <Zap className="mr-1 h-3 w-3" /> Bill Cycle
                             </Button>
                         )}
                     </div>
@@ -190,10 +207,6 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                     </Popover>
                 </div>
             )}
-
-            {createMultiSelect('Accounts', 'accounts', accounts, 'All Accounts')}
-            {createMultiSelect('Categories', 'categories', categories, 'All Categories')}
-            {createMultiSelect('Tags', 'tags', tags, 'All Tags')}
 
             <div className="space-y-2">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Transaction Type</h4>

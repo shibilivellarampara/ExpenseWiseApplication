@@ -17,8 +17,8 @@
     --secondary-foreground: 0 80% 30%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 0 80% 92%;
-    --accent-foreground: 0 80% 25%;
+    --accent: 210 80% 92%;
+    --accent-foreground: 210 80% 25%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
@@ -54,8 +54,8 @@
     --secondary-foreground: 0 95% 90%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 0 80% 30%;
-    --accent-foreground: 0 95% 95%;
+    --accent: 210 80% 30%;
+    --accent-foreground: 210 95% 95%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
@@ -109,31 +109,31 @@
   .fintech {
     --background: 210 20% 96%;
     --foreground: 220 25% 15%;
-    --card: 40 33% 99%;
+    --card: 210 33% 99%;
     --card-foreground: 220 25% 15%;
-    --popover: 40 33% 99%;
+    --popover: 210 33% 99%;
     --popover-foreground: 220 25% 15%;
     --primary: 210 80% 55%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 80% 96%;
-    --secondary-foreground: 0 80% 30%;
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 15% 45%;
-    --accent: 0 80% 92%;
-    --accent-foreground: 0 80% 25%;
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 210 80% 30%;
+    --muted: 210 15% 94%;
+    --muted-foreground: 210 15% 45%;
+    --accent: 210 80% 92%;
+    --accent-foreground: 210 80% 25%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
+    --border: 210 15% 90%;
+    --input: 210 15% 90%;
     --ring: 210 80% 55%;
     --radius: 0.75rem;
 
-    --sidebar-background: 220 15% 98%;
+    --sidebar-background: 210 15% 98%;
     --sidebar-foreground: 220 25% 15%;
-    --sidebar-muted-foreground: 220 15% 45%;
+    --sidebar-muted-foreground: 210 15% 45%;
     --sidebar-active: 210 80% 55%;
     --sidebar-active-foreground: 0 0% 100%;
-    --sidebar-border: 220 15% 90%;
+    --sidebar-border: 210 15% 90%;
   }
 
   .dark-fintech {
@@ -145,12 +145,12 @@
     --popover-foreground: 220 15% 95%;
     --primary: 210 90% 65%;
     --primary-foreground: 220 25% 10%;
-    --secondary: 0 80% 20%;
-    --secondary-foreground: 0 95% 90%;
+    --secondary: 220 25% 20%;
+    --secondary-foreground: 210 95% 90%;
     --muted: 220 25% 20%;
     --muted-foreground: 220 15% 65%;
-    --accent: 0 80% 30%;
-    --accent-foreground: 0 95% 95%;
+    --accent: 210 80% 30%;
+    --accent-foreground: 210 95% 95%;
     --destructive: 0 70% 60%;
     --destructive-foreground: 0 80% 5%;
     --border: 220 25% 22%;

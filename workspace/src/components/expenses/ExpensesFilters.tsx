@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
@@ -265,8 +264,8 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
     [filters]);
     
     return (
-        <div className="space-y-1.5">
-            <div className="flex items-center gap-2 bg-muted/20 -mx-4 px-4 py-3 overflow-x-auto no-scrollbar pr-4">
+        <div className="space-y-1">
+            <div className="flex items-center gap-2 bg-muted/20 -mx-4 px-4 py-1.5 overflow-x-auto no-scrollbar pr-4">
                 <div className={cn(
                     "relative group transition-all duration-300 ease-in-out",
                     activeFilterCount > 0 ? "flex-[0.7]" : "flex-[0.75]"
@@ -277,7 +276,7 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
                         placeholder="Search transactions..."
                         value={filters.searchQuery}
                         onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
-                        className="pl-9 pr-9 h-10 rounded-full bg-transparent border border-muted-foreground/20 shadow-none focus-visible:ring-0 text-sm"
+                        className="pl-9 pr-9 h-9 rounded-full bg-transparent border border-muted-foreground/20 shadow-none focus-visible:ring-0 text-sm"
                     />
                     {filters.searchQuery && (
                         <button
@@ -295,7 +294,7 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
                 )}>
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-10 w-full rounded-full border-muted-foreground/20 bg-transparent hover:bg-card shrink-0 gap-2 relative">
+                            <Button variant="outline" size="sm" className="h-9 w-full rounded-full border-muted-foreground/20 bg-transparent hover:bg-card shrink-0 gap-2 relative">
                                 <ListFilter className="h-4 w-4" />
                                 <span className="hidden sm:inline font-bold text-[11px] uppercase tracking-widest">Filter</span>
                                 {activeFilterCount > 0 && 
@@ -324,7 +323,7 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
                             size="icon" 
                             onClick={clearFilters}
                             title="Clear All Filters"
-                            className="h-10 w-10 rounded-full border-muted-foreground/20 bg-transparent hover:bg-card text-muted-foreground hover:text-destructive transition-all"
+                            className="h-9 w-9 rounded-full border-muted-foreground/20 bg-transparent hover:bg-card text-muted-foreground hover:text-destructive transition-all"
                         >
                             <RotateCcw className="h-4 w-4" />
                         </Button>
@@ -336,7 +335,7 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
                     <div className="flex gap-2 items-center">
                         {filters.dateRange.from && (
-                            <Badge variant="secondary" className="h-8 rounded-full pl-3 pr-1 py-0 bg-primary/5 text-primary border-primary/10 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                            <Badge variant="secondary" className="h-7 rounded-full pl-3 pr-1 py-0 bg-primary/5 text-primary border-primary/10 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
                                 {format(filters.dateRange.from, "MMM dd")}
                                 {filters.dateRange.to && ` - ${format(filters.dateRange.to, "MMM dd")}`}
                                 <button onClick={() => onFiltersChange({...filters, dateRange: { from: undefined, to: undefined }})} className="p-1 hover:bg-primary/10 rounded-full transition-colors">
@@ -347,7 +346,7 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
                         {filters.accounts.map(id => {
                             const item = accounts.find(c => c.id === id);
                             return item ? (
-                                <Badge key={id} variant="secondary" className="h-8 rounded-full pl-3 pr-1 py-0 bg-primary/5 text-primary border-primary/10 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                <Badge key={id} variant="secondary" className="h-7 rounded-full pl-3 pr-1 py-0 bg-primary/5 text-primary border-primary/10 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
                                     {item.name}
                                     <button onClick={() => onFiltersChange({...filters, accounts: filters.accounts.filter(c => c !== id)})} className="p-1 hover:bg-primary/10 rounded-full transition-colors">
                                         <X className="h-3 w-3" />
@@ -358,7 +357,7 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
                         {filters.categories.map(id => {
                             const item = categories.find(c => c.id === id);
                             return item ? (
-                                <Badge key={id} variant="secondary" className="h-8 rounded-full pl-3 pr-1 py-0 bg-primary/5 text-primary border-primary/10 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                <Badge key={id} variant="secondary" className="h-7 rounded-full pl-3 pr-1 py-0 bg-primary/5 text-primary border-primary/10 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
                                     {item.name}
                                     <button onClick={() => onFiltersChange({...filters, categories: filters.categories.filter(c => c !== id)})} className="p-1 hover:bg-primary/10 rounded-full transition-colors">
                                         <X className="h-3 w-3" />
@@ -369,7 +368,7 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
                         {filters.tags.map(id => {
                             const item = tags.find(t => t.id === id);
                             return item ? (
-                                <Badge key={id} variant="secondary" className="h-8 rounded-full pl-3 pr-1 py-0 bg-primary/5 text-primary border-primary/10 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                <Badge key={id} variant="secondary" className="h-7 rounded-full pl-3 pr-1 py-0 bg-primary/5 text-primary border-primary/10 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
                                     {item.name}
                                     <button onClick={() => onFiltersChange({...filters, tags: filters.tags.filter(t => t !== id)})} className="p-1 hover:bg-primary/10 rounded-full transition-colors">
                                         <X className="h-3 w-3" />

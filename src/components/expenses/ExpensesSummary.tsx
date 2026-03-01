@@ -58,23 +58,23 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
 
     const renderNormalSummary = () => (
         <div className="flex justify-between items-start">
-            <div className="space-y-1">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Net Balance</p>
+            <div className="space-y-0.5">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">Net Balance</p>
                 <p className={cn(
-                    "text-2xl font-bold tracking-tight",
+                    "text-xl sm:text-2xl font-bold tracking-tight",
                     summary.netFlow >= 0 ? "text-primary" : "text-destructive"
                 )}>
                     {currencySymbol}{formatAmount(summary.netFlow)}
                 </p>
             </div>
-            <div className="text-right space-y-1 mt-1">
-                <div className="flex items-center justify-end gap-2">
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">IN:</span>
-                    <span className="text-sm sm:text-base font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</span>
+            <div className="text-right space-y-0.5">
+                <div className="flex items-center justify-end gap-1.5">
+                    <span className="text-[9px] font-bold text-primary uppercase tracking-widest opacity-70">IN:</span>
+                    <span className="text-sm font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</span>
                 </div>
-                <div className="flex items-center justify-end gap-2">
-                    <span className="text-[10px] font-bold text-destructive uppercase tracking-widest">OUT:</span>
-                    <span className="text-sm sm:text-base font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</span>
+                <div className="flex items-center justify-end gap-1.5">
+                    <span className="text-[9px] font-bold text-destructive uppercase tracking-widest opacity-70">OUT:</span>
+                    <span className="text-sm font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</span>
                 </div>
             </div>
         </div>
@@ -88,31 +88,31 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
 
         return (
             <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Outstanding</p>
+                <div className="space-y-0.5">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">Outstanding</p>
                     <p className={cn(
-                        "text-2xl font-bold tracking-tight",
+                        "text-xl sm:text-2xl font-bold tracking-tight",
                         isPositive ? "text-destructive" : "text-primary"
                     )}>
                         {currencySymbol}{formatAmount(Math.abs(outstanding))}
                     </p>
-                    <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest">
+                    <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">
                         {creditCardSummary.utilization.toFixed(1)}% Used
                     </p>
                 </div>
                 
-                <div className="text-right space-y-1 mt-1">
-                    <div className="flex items-center justify-end gap-2">
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest">IN:</span>
-                        <span className="text-sm sm:text-base font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</span>
+                <div className="text-right space-y-0.5">
+                    <div className="flex items-center justify-end gap-1.5">
+                        <span className="text-[9px] font-bold text-primary uppercase tracking-widest opacity-70">IN:</span>
+                        <span className="text-sm font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</span>
                     </div>
-                    <div className="flex items-center justify-end gap-2">
-                        <span className="text-[10px] font-bold text-destructive uppercase tracking-widest">OUT:</span>
-                        <span className="text-sm sm:text-base font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</span>
+                    <div className="flex items-center justify-end gap-1.5">
+                        <span className="text-[9px] font-bold text-destructive uppercase tracking-widest opacity-70">OUT:</span>
+                        <span className="text-sm font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</span>
                     </div>
-                    <div className="flex items-center justify-end gap-2 mt-1 opacity-70">
-                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">LIMIT:</span>
-                        <span className="text-xs font-bold text-muted-foreground">{currencySymbol}{formatAmount(creditCardSummary.limit || 0)}</span>
+                    <div className="flex items-center justify-end gap-1.5 opacity-50">
+                        <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">LIMIT:</span>
+                        <span className="text-[11px] font-bold text-muted-foreground">{currencySymbol}{formatAmount(creditCardSummary.limit || 0)}</span>
                     </div>
                 </div>
             </div>
@@ -121,7 +121,7 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
 
     return (
         <Card className={featuredCardClass}>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
                 {creditCardSummary ? renderCreditCardSummary() : renderNormalSummary()}
             </CardContent>
         </Card>

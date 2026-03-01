@@ -217,7 +217,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
     };
 
     return (
-        <div className="w-full space-y-4 pb-24">
+        <div className="w-full space-y-2 pb-24">
              <PageHeader title={pageTitle} description={`A summary of your transactions for ${pageTitle}.`}>
                 <Button variant="outline" asChild>
                     <Link href="/transactions">
@@ -226,35 +226,33 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                     </Link>
                 </Button>
             </PageHeader>
-            <div className="space-y-2">
-                <div className="space-y-4 sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm pt-4">
-                     <ExpensesSummary 
-                        expenses={filteredAndEnrichedExpenses}
-                        currency={userProfile?.defaultCurrency} 
-                        isLoading={isLoading} 
-                    />
-                    <ExpensesFilters 
-                        filters={filters}
-                        onFiltersChange={handleFiltersChange}
-                        accounts={accounts || []}
-                        categories={categories || []}
-                        tags={tags || []}
-                        disableDateFilter={true}
-                    />
-                </div>
-                
-                <ExpensesTable 
-                    expenses={filteredAndEnrichedExpenses} 
-                    isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
-                    onDataChange={handleDataChange} 
-                    error={expensesError ? 'Error loading transactions' : null}
-                    onBadgeClick={handleBadgeClick}
-                    selectedIds={selectedExpenseIds}
-                    onSelectionChange={setSelectedExpenseIds}
-                    isDeleting={isDeleting}
-                    onDeleteSelected={handleDeleteSelected}
+            <div className="space-y-1.5 sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm pt-4">
+                 <ExpensesSummary 
+                    expenses={filteredAndEnrichedExpenses}
+                    currency={userProfile?.defaultCurrency} 
+                    isLoading={isLoading} 
+                />
+                <ExpensesFilters 
+                    filters={filters}
+                    onFiltersChange={handleFiltersChange}
+                    accounts={accounts || []}
+                    categories={categories || []}
+                    tags={tags || []}
+                    disableDateFilter={true}
                 />
             </div>
+            
+            <ExpensesTable 
+                expenses={filteredAndEnrichedExpenses} 
+                isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
+                onDataChange={handleDataChange} 
+                error={expensesError ? 'Error loading transactions' : null}
+                onBadgeClick={handleBadgeClick}
+                selectedIds={selectedExpenseIds}
+                onSelectionChange={setSelectedExpenseIds}
+                isDeleting={isDeleting}
+                onDeleteSelected={handleDeleteSelected}
+            />
         </div>
     );
 }

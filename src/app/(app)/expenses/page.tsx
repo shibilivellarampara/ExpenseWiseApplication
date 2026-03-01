@@ -237,7 +237,7 @@ function ExpensesPageContent() {
     };
 
     return (
-        <div className="w-full space-y-4 pb-24">
+        <div className="w-full space-y-2 pb-24">
             <PageHeader title="Transactions" />
 
             <ExpensesSummary 
@@ -247,7 +247,7 @@ function ExpensesPageContent() {
                 selectedAccount={selectedAccount} 
             />
 
-            <div className="space-y-2">
+            <div className="space-y-1">
                 <ExpensesFilters 
                     filters={filters}
                     onFiltersChange={handleFiltersChange}

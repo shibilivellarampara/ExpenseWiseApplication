@@ -6,6 +6,7 @@ import { Account, EnrichedExpense } from "@/lib/types";
 import { useMemo } from "react";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { cn, formatAmount } from "@/lib/utils";
+import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface ExpensesSummaryProps {
     expenses: EnrichedExpense[];
@@ -57,24 +58,44 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
     }
 
     const renderNormalSummary = () => (
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-center">
             <div className="space-y-0.5">
                 <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">Net Balance</p>
                 <p className={cn(
-                    "text-2xl sm:text-4xl font-bold tracking-tight",
+                    "text-3xl sm:text-4xl font-bold tracking-tight",
                     summary.netFlow >= 0 ? "text-primary" : "text-destructive"
                 )}>
                     {currencySymbol}{formatAmount(summary.netFlow)}
                 </p>
             </div>
-            <div className="text-right space-y-0.5">
-                <div className="flex items-center justify-end gap-1.5">
-                    <span className="text-[9px] font-bold text-primary uppercase tracking-widest opacity-70">IN:</span>
-                    <span className="text-sm font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</span>
+            
+            <div className="flex items-center gap-3 sm:gap-6">
+                <div className="relative group">
+                    <div className="absolute inset-0 bg-primary/10 blur-xl rounded-full" />
+                    <div className="relative flex flex-col items-end">
+                        <div className="flex items-center gap-1 opacity-70">
+                            <ArrowUpRight className="h-2.5 w-2.5 text-primary" />
+                            <span className="text-[8px] font-bold text-primary uppercase tracking-widest">IN</span>
+                        </div>
+                        <span className="text-xs sm:text-[13px] font-bold text-primary leading-none">
+                            {currencySymbol}{formatAmount(summary.totalIn)}
+                        </span>
+                    </div>
                 </div>
-                <div className="flex items-center justify-end gap-1.5">
-                    <span className="text-[9px] font-bold text-destructive uppercase tracking-widest opacity-70">OUT:</span>
-                    <span className="text-sm font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</span>
+
+                <div className="h-8 w-px bg-border/40" />
+
+                <div className="relative group">
+                    <div className="absolute inset-0 bg-destructive/10 blur-xl rounded-full" />
+                    <div className="relative flex flex-col items-end">
+                        <div className="flex items-center gap-1 opacity-70">
+                            <ArrowDownRight className="h-2.5 w-2.5 text-destructive" />
+                            <span className="text-[8px] font-bold text-destructive uppercase tracking-widest">OUT</span>
+                        </div>
+                        <span className="text-xs sm:text-[13px] font-bold text-destructive leading-none">
+                            {currencySymbol}{formatAmount(summary.totalOut)}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -87,11 +108,11 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
         const isPositive = outstanding > 0;
 
         return (
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-center">
                 <div className="space-y-0.5">
                     <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">Outstanding</p>
                     <p className={cn(
-                        "text-2xl sm:text-4xl font-bold tracking-tight",
+                        "text-3xl sm:text-4xl font-bold tracking-tight",
                         isPositive ? "text-destructive" : "text-primary"
                     )}>
                         {currencySymbol}{formatAmount(Math.abs(outstanding))}
@@ -101,16 +122,38 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
                     </p>
                 </div>
                 
-                <div className="text-right space-y-0.5">
-                    <div className="flex items-center justify-end gap-1.5">
-                        <span className="text-[9px] font-bold text-primary uppercase tracking-widest opacity-70">IN:</span>
-                        <span className="text-sm font-bold text-primary">{currencySymbol}{formatAmount(summary.totalIn)}</span>
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3 sm:gap-6">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-primary/10 blur-xl rounded-full" />
+                            <div className="relative flex flex-col items-end">
+                                <div className="flex items-center gap-1 opacity-70">
+                                    <ArrowUpRight className="h-2.5 w-2.5 text-primary" />
+                                    <span className="text-[8px] font-bold text-primary uppercase tracking-widest">IN</span>
+                                </div>
+                                <span className="text-xs sm:text-[13px] font-bold text-primary leading-none">
+                                    {currencySymbol}{formatAmount(summary.totalIn)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="h-8 w-px bg-border/40" />
+
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-destructive/10 blur-xl rounded-full" />
+                            <div className="relative flex flex-col items-end">
+                                <div className="flex items-center gap-1 opacity-70">
+                                    <ArrowDownRight className="h-2.5 w-2.5 text-destructive" />
+                                    <span className="text-[8px] font-bold text-destructive uppercase tracking-widest">OUT</span>
+                                </div>
+                                <span className="text-xs sm:text-[13px] font-bold text-destructive leading-none">
+                                    {currencySymbol}{formatAmount(summary.totalOut)}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex items-center justify-end gap-1.5">
-                        <span className="text-[9px] font-bold text-destructive uppercase tracking-widest opacity-70">OUT:</span>
-                        <span className="text-sm font-bold text-destructive">{currencySymbol}{formatAmount(summary.totalOut)}</span>
-                    </div>
-                    <div className="flex items-center justify-end gap-1.5 opacity-50">
+                    
+                    <div className="flex items-center justify-end gap-1.5 opacity-50 border-t border-border/30 pt-1">
                         <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">LIMIT:</span>
                         <span className="text-[11px] font-bold text-muted-foreground">{currencySymbol}{formatAmount(creditCardSummary.limit || 0)}</span>
                     </div>

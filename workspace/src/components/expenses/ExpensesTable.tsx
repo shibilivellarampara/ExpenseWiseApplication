@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -288,7 +289,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                             </div>
                                             <div className="text-right flex flex-col items-end min-w-[100px] justify-center h-full">
                                                 {isFocused ? (
-                                                    <div className="flex items-center gap-1.5 animate-in fade-in zoom-in-95">
+                                                    <div className="flex items-center gap-1.5 animate-in fade-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
                                                         <Button 
                                                             variant="outline" 
                                                             size="icon" 
@@ -298,7 +299,6 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                             )}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                e.preventDefault();
                                                                 handleSelection(row.expense.id);
                                                             }}
                                                         >
@@ -325,7 +325,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                     <Trash2 className="h-3.5 w-3.5" />
                                                                 </Button>
                                                             </AlertDialogTrigger>
-                                                            <AlertDialogContent className="rounded-[24px]">
+                                                            <AlertDialogContent className="rounded-[24px]" onClick={(e) => e.stopPropagation()}>
                                                                 <AlertDialogHeader>
                                                                     <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
                                                                     <AlertDialogDescription>This will remove the record and update your account balance. This action cannot be undone.</AlertDialogDescription>
@@ -420,7 +420,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                 </div>
             </div>
             
-            {/* Unified Edit Dialog moved outside virtualized list to ensure it stays open */}
+            {/* Lifted Edit Dialog ensures it doesn't unmount on list updates */}
             {editingExpense && (
                 <AddExpenseDialog 
                     expenseToEdit={editingExpense} 
@@ -447,7 +447,7 @@ export function ExpensesTable({ expenses, isLoading, onDataChange, error, onBadg
     return (
         <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton className="h-20 w-full rounded-[18px]" key={i} />
+                <Skeleton key={i} className="h-20 w-full rounded-[18px]" />
             ))}
         </div>
     )

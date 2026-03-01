@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -19,8 +20,21 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.9.0",
+        date: "Feb 21, 2026",
+        changes: [
+            { type: 'Feature', description: "Consolidated Date Filter: Replaced grid presets with a professional 'Quick Selection' dropdown for a cleaner UI." },
+            { type: 'Feature', description: "Enhanced Date Ranges: Added 'This Year', 'Last Year', and 'Last 3 Months' to filter presets." },
+            { type: 'Feature', description: "Intelligent Billing Cycles: Dynamic filter preset automatically calculates range based on credit card statement dates." },
+            { type: 'UI/UX', description: "Fintech Theme Overhaul: Updated to a bold Blue and Red combination with theme-native selection and tooltip highlights." },
+            { type: 'Fix', description: "Stabilized Transaction Editing: Resolved issue where the edit form would close unexpectedly while typing." },
+            { type: 'UI/UX', description: "Optimized Analysis Popups: Increased detail sheet widths to prevent amount cut-offs on long descriptions." },
+            { type: 'Logic', description: "Refined Filter Hierarchy: Prioritized Accounts, Categories, and Tags at the top of the filter sheet for better workflow." },
+        ]
+    },
+    {
         version: "1.8.9",
-        date: "Feb 20, 2026",
+        date: "Feb 19, 2026",
         changes: [
             { type: 'UI/UX', description: "Redesigned Credit Card Summary: Featured outstanding balance on the left with stacked IN:, OUT:, and LIMIT: totals on the right for superior clarity." },
             { type: 'UI/UX', description: "Standardized Summary Labels: Added explicit colons to financial totals (IN:, OUT:, LIMIT:) for a cleaner dashboard aesthetic." },
@@ -745,9 +759,9 @@ export default function AboutPage() {
                 <div className="space-y-6">
                     <div className="flex items-center gap-3">
                         <Badge className="bg-primary text-primary-foreground hover:bg-primary font-bold px-3 py-1 rounded-full">What's New</Badge>
-                        <h2 className="text-2xl font-bold font-headline tracking-tight">Version 1.8.9</h2>
+                        <h2 className="text-2xl font-bold font-headline tracking-tight">Version 1.9.0</h2>
                     </div>
-                    <p className="text-[12px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">February 20, 2026</p>
+                    <p className="text-[12px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">February 21, 2026</p>
                     
                     <ul className="space-y-5">
                         <li className="flex items-start gap-4">
@@ -755,7 +769,7 @@ export default function AboutPage() {
                                 <Check className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <p className="text-[15px] leading-relaxed text-foreground/80">
-                                <span className="font-bold text-foreground">Redesigned Credit Card Summary:</span> Featured outstanding balance on the left with stacked IN:, OUT:, and LIMIT: totals on the right for superior clarity.
+                                <span className="font-bold text-foreground">Consolidated Date Filter:</span> Replaced the clutter of multiple buttons with a professional "Quick Selection" dropdown, streamlining the interface.
                             </p>
                         </li>
                         <li className="flex items-start gap-4">
@@ -763,7 +777,7 @@ export default function AboutPage() {
                                 <Check className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <p className="text-[15px] leading-relaxed text-foreground/80">
-                                <span className="font-bold text-foreground">Standardized Summary Labels:</span> Added explicit colons to financial totals (IN:, OUT:, LIMIT:) for a cleaner dashboard aesthetic.
+                                <span className="font-bold text-foreground">Intelligent Billing Cycles:</span> Introduced a dynamic filter preset that automatically calculates your date range based on a selected credit card's statement date.
                             </p>
                         </li>
                         <li className="flex items-start gap-4">
@@ -771,7 +785,7 @@ export default function AboutPage() {
                                 <Check className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <p className="text-[15px] leading-relaxed text-foreground/80">
-                                <span className="font-bold text-foreground">Dynamic Filter Ratios:</span> Implemented a responsive 70/20/10 width ratio for search, filters, and reset actions to optimize mobile screen space.
+                                <span className="font-bold text-foreground">Fintech Theme Refresh:</span> Updated to a high-contrast Blue and Red palette with native-style selection colors for a more premium professional feel.
                             </p>
                         </li>
                         <li className="flex items-start gap-4">
@@ -779,30 +793,14 @@ export default function AboutPage() {
                                 <Check className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <p className="text-[15px] leading-relaxed text-foreground/80">
-                                <span className="font-bold text-foreground">Unified Filter Management:</span> Integrated the "Clear All" reset action directly into the filter bar for a more efficient workflow.
-                            </p>
-                        </li>
-                        <li className="flex items-start gap-4">
-                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                                <Check className="h-3.5 w-3.5 text-primary" />
-                            </div>
-                            <p className="text-[15px] leading-relaxed text-foreground/80">
-                                <span className="font-bold text-foreground">Premium Transaction Elevation:</span> Applied permanent depth shadows to all records with a featured top-incline shadow for the first entry.
-                            </p>
-                        </li>
-                        <li className="flex items-start gap-4">
-                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                                <Check className="h-3.5 w-3.5 text-primary" />
-                            </div>
-                            <p className="text-[15px] leading-relaxed text-foreground/80">
-                                <span className="font-bold text-foreground">Metadata Alignment:</span> Harmonized running balance contrast and color with account names and timestamps for a unified user interface.
+                                <span className="font-bold text-foreground">Form Interaction Stability:</span> Resolved technical conflicts that caused the transaction edit form to close prematurely during data entry.
                             </p>
                         </li>
                     </ul>
                     
                     <div className="p-5 rounded-2xl bg-primary/[0.02] border border-primary/10 mt-10">
                         <p className="text-[14px] leading-relaxed text-foreground/60 italic font-medium">
-                            This update finalizes the premium transaction experience with an optimized summary layout, dynamic filtering ratios, and enhanced visual depth for a truly professional fintech feel.
+                            Version 1.9.0 focuses on structural stability and advanced filtering logic, making deep historical analysis easier than ever with the new consolidated dropdown and billing cycle intelligence.
                         </p>
                     </div>
                 </div>

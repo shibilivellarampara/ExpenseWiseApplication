@@ -15,7 +15,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         <div className="flex h-dvh w-full flex-col bg-background">
             <AppHeader />
             <main id="main-content" className="flex-1 overflow-y-auto">
-                <div className={cn("container mx-auto p-4 md:p-6 lg:p-8", isMobile && "pb-24")}>
+                <div className={cn("container mx-auto p-4 md:p-6 lg:p-8", isMobile && "pb-32")}>
                     <Suspense fallback={<PageLoader />}>
                         {children}
                     </Suspense>

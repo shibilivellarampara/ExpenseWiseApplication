@@ -22,6 +22,12 @@ import { doc } from 'firebase/firestore';
 import { AddExpenseDialog } from '@/components/expenses/AddExpenseDialog';
 import { Button } from '@/components/ui/button';
 
+const triggerHaptic = () => {
+  if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+    window.navigator.vibrate(8);
+  }
+};
+
 const secondaryNavItems = [
     { href: '/debts', icon: HandCoins, label: 'Debts'},
     { href: '/assets', icon: Briefcase, label: 'Assets'},
@@ -41,6 +47,7 @@ const NavLink = ({ href, currentPath, children }: { href: string; currentPath: s
     return (
         <Link 
             href={href} 
+            onClick={triggerHaptic}
             className={cn(
                 "flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-all duration-300 ease-in-out pointer-events-auto",
                 isActive ? 'text-primary scale-110' : 'text-muted-foreground/80 hover:text-primary'
@@ -60,6 +67,8 @@ export function BottomNav() {
   const { user } = useUser();
   const firestore = useFirestore();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const navRef = useRef<HTMLDivElement>(null);
 
   const userProfileRef = useMemoFirebase(() => {
@@ -67,6 +76,24 @@ export function BottomNav() {
     return doc(firestore, `users/${user.uid}`);
   }, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+  useEffect(() => {
+    const scrollContainer = document.getElementById('main-content');
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      const currentScrollY = scrollContainer.scrollTop;
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsScrollingDown(true);
+      } else {
+        setIsScrollingDown(false);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const handleDataChange = () => {};
   
@@ -104,7 +131,12 @@ export function BottomNav() {
                 )}
             >
                 {secondaryNavItems.map(({ href, icon: Icon, label }) => (
-                     <Link key={href} href={href} className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-all duration-200 h-full w-16" onClick={() => setIsExpanded(false)}>
+                     <Link 
+                        key={href} 
+                        href={href} 
+                        onClick={() => { triggerHaptic(); setIsExpanded(false); }}
+                        className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-all duration-200 h-full w-16"
+                    >
                         <Icon className="h-5 w-5" />
                         <span className="text-[9px] font-bold uppercase tracking-wider">{label}</span>
                     </Link>
@@ -130,7 +162,7 @@ export function BottomNav() {
                         <span>Accounts</span>
                     </NavLink>
                     <button
-                        onClick={() => setIsExpanded(!isExpanded)}
+                        onClick={() => { triggerHaptic(); setIsExpanded(!isExpanded); }}
                         className={cn(
                         'flex flex-col items-center justify-center gap-1 font-medium w-16 h-full transition-all duration-300 pointer-events-auto focus:outline-none',
                         isExpanded ? 'text-primary scale-110' : 'text-muted-foreground/80 hover:text-primary'
@@ -141,13 +173,20 @@ export function BottomNav() {
                     </button>
                 </div>
             
-                {/* Liquid Action Button (with Depth Glow) */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[75%] h-[72px] w-[72px] flex items-center justify-center z-10 pointer-events-auto">
+                {/* Liquid Action Button (with Scroll-Aware Scaling & Elevation) */}
+                <div className={cn(
+                    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[75%] h-[72px] w-[72px] flex items-center justify-center z-10 pointer-events-auto transition-all duration-500",
+                    isScrollingDown ? "scale-90 opacity-80 -translate-y-[60%]" : "scale-100 opacity-100"
+                )}>
                      {isTransactionsPage ? (
                         <AddExpenseDialog onSaveSuccess={handleDataChange}>
                             <Button
                                 size="icon"
-                                className="h-[72px] w-[72px] rounded-full bg-primary/95 backdrop-blur-xl border-4 border-white/40 dark:border-white/10 shadow-[0_30px_60px_-12px_hsl(var(--primary)/0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] active:scale-90 active:shadow-inner transition-all duration-300 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                onClick={triggerHaptic}
+                                className={cn(
+                                    "h-[72px] w-[72px] rounded-full bg-primary/95 backdrop-blur-xl border-4 border-white/40 dark:border-white/10 shadow-[0_30px_60px_-12px_hsl(var(--primary)/0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] active:scale-90 active:shadow-inner transition-all duration-300 focus-visible:ring-0 focus-visible:ring-offset-0",
+                                    !isScrollingDown && "hover:shadow-[0_40px_80px_-12px_hsl(var(--primary)/0.7)]"
+                                )}
                             >
                                 <Plus className="h-9 w-9 text-primary-foreground drop-shadow-lg" />
                                 <span className="sr-only">Add Transaction</span>
@@ -156,8 +195,11 @@ export function BottomNav() {
                      ) : (
                         <Button
                             size="icon"
-                            onClick={() => router.push(transactionsHref)}
-                            className="h-[72px] w-[72px] rounded-full bg-primary/95 backdrop-blur-xl border-4 border-white/40 dark:border-white/10 shadow-[0_30px_60px_-12px_hsl(var(--primary)/0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] active:scale-90 active:shadow-inner transition-all duration-300 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            onClick={() => { triggerHaptic(); router.push(transactionsHref); }}
+                            className={cn(
+                                "h-[72px] w-[72px] rounded-full bg-primary/95 backdrop-blur-xl border-4 border-white/40 dark:border-white/10 shadow-[0_30px_60px_-12px_hsl(var(--primary)/0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] active:scale-90 active:shadow-inner transition-all duration-300 focus-visible:ring-0 focus-visible:ring-offset-0",
+                                !isScrollingDown && "hover:shadow-[0_40px_80px_-12px_hsl(var(--primary)/0.7)]"
+                            )}
                         >
                             <ArrowRightLeft className="h-8 w-8 text-primary-foreground drop-shadow-lg" />
                             <span className="sr-only">Go to Transactions</span>

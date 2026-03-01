@@ -61,7 +61,7 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
             <div className="space-y-0.5">
                 <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">Net Balance</p>
                 <p className={cn(
-                    "text-xl sm:text-2xl font-bold tracking-tight",
+                    "text-2xl sm:text-4xl font-bold tracking-tight",
                     summary.netFlow >= 0 ? "text-primary" : "text-destructive"
                 )}>
                     {currencySymbol}{formatAmount(summary.netFlow)}
@@ -91,7 +91,7 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
                 <div className="space-y-0.5">
                     <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">Outstanding</p>
                     <p className={cn(
-                        "text-xl sm:text-2xl font-bold tracking-tight",
+                        "text-2xl sm:text-4xl font-bold tracking-tight",
                         isPositive ? "text-destructive" : "text-primary"
                     )}>
                         {currencySymbol}{formatAmount(Math.abs(outstanding))}

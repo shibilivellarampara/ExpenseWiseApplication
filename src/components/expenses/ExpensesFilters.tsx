@@ -118,12 +118,12 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
         placeholder: string
     ) => (
         <div className="space-y-2">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">{title}</h4>
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">{title}</h4>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between h-10 rounded-xl text-xs font-medium">
+                    <Button variant="outline" className="w-full justify-between h-10 rounded-xl text-xs font-medium border-muted-foreground/15">
                         <span>{filters[field].length > 0 ? `${filters[field].length} selected` : placeholder}</span>
-                        <ChevronDown className="h-3 w-3 opacity-50" />
+                        <ChevronDown className="h-3 w-3 opacity-30" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-[280px] rounded-xl border-none shadow-2xl p-1" align="start">
@@ -142,7 +142,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                                         )}
                                     >
                                         <div className="flex items-center gap-2">
-                                            {'icon' in item && renderIcon(item.icon)}
+                                            {'icon' in item && renderIcon(item.icon, "text-muted-foreground/40")}
                                             {item.name}
                                         </div>
                                          <Check className={cn("h-3.5 w-3.5", filters[field].includes(item.id) ? "opacity-100" : "opacity-0")} />
@@ -164,15 +164,15 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
 
             {!disableDateFilter && (
                 <div className="space-y-3">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Date Range</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">{Date Range}</h4>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full justify-between h-10 rounded-xl text-xs font-medium">
+                            <Button variant="outline" className="w-full justify-between h-10 rounded-xl text-xs font-medium border-muted-foreground/15">
                                 <span className="flex items-center gap-2">
-                                    <Clock className="h-3.5 w-3.5 opacity-50" />
+                                    <Clock className="h-3.5 w-3.5 text-muted-foreground/40" />
                                     Quick Selection
                                 </span>
-                                <ChevronDown className="h-3 w-3 opacity-50" />
+                                <ChevronDown className="h-3 w-3 opacity-30" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[280px] rounded-xl border-none shadow-2xl p-1" align="start">
@@ -183,15 +183,15 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                             <DropdownMenuItem onClick={() => setQuickRange('last-year')} className="rounded-lg text-xs font-medium">Last Year</DropdownMenuItem>
                             {singleCreditCardSelected && (
                                 <DropdownMenuItem onClick={() => setQuickRange('billing-cycle')} className="rounded-lg text-xs font-medium text-primary">
-                                    <Zap className="mr-2 h-3.5 w-3.5" /> Billing Cycle
+                                    <Zap className="mr-2 h-3.5 w-3.5 text-primary/60" /> Billing Cycle
                                 </DropdownMenuItem>
                             )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start h-10 rounded-xl text-xs font-medium gap-2">
-                                <CalendarIcon className="h-3.5 w-3.5 opacity-50" />
+                            <Button variant="outline" className="w-full justify-start h-10 rounded-xl text-xs font-medium gap-2 border-muted-foreground/15">
+                                <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground/40" />
                                 {filters.dateRange.from ? (
                                     filters.dateRange.to ? (
                                         <>
@@ -221,7 +221,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
             )}
 
             <div className="space-y-2">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Transaction Type</h4>
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">{Transaction Type}</h4>
                 <div className="grid grid-cols-3 gap-1 bg-muted/50 p-1 rounded-xl">
                     {['all', 'income', 'expense'].map((t) => (
                         <button
@@ -229,7 +229,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
                             onClick={() => handleTypeChange(t as any)}
                             className={cn(
                                 "py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all",
-                                filters.type === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"
+                                filters.type === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground/40 hover:text-foreground"
                             )}
                         >
                             {t}
@@ -270,17 +270,17 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
                     "relative group transition-all duration-300 ease-in-out",
                     activeFilterCount > 0 ? "flex-[0.7]" : "flex-[0.75]"
                 )}>
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
                     <Input
                         type="search"
                         placeholder="Search transactions..."
                         value={filters.searchQuery}
                         onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
-                        className="pl-9 pr-9 h-9 rounded-full bg-transparent border border-muted-foreground/20 shadow-none focus-visible:ring-0 text-sm"
+                        className="pl-9 pr-9 h-9 rounded-full bg-transparent border border-muted-foreground/15 shadow-none focus-visible:ring-0 text-sm"
                     />
                     {filters.searchQuery && (
                         <button
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-foreground transition-colors"
                             onClick={() => onFiltersChange({ ...filters, searchQuery: '' })}
                         >
                             <X className="h-4 w-4" />
@@ -294,9 +294,9 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
                 )}>
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 w-full rounded-full border-muted-foreground/20 bg-transparent hover:bg-card shrink-0 gap-2 relative">
-                                <ListFilter className="h-4 w-4" />
-                                <span className="hidden sm:inline font-bold text-[11px] uppercase tracking-widest">Filter</span>
+                            <Button variant="outline" size="sm" className="h-9 w-full rounded-full border-muted-foreground/15 bg-transparent hover:bg-card shrink-0 gap-2 relative">
+                                <ListFilter className="h-4 w-4 text-muted-foreground/60" />
+                                <span className="hidden sm:inline font-bold text-[11px] uppercase tracking-widest text-muted-foreground/60">Filter</span>
                                 {activeFilterCount > 0 && 
                                     <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground font-bold border-2 border-background animate-in zoom-in">{activeFilterCount}</span>
                                 }
@@ -323,7 +323,7 @@ export function ExpensesFilters(props: ExpensesFiltersProps) {
                             size="icon" 
                             onClick={clearFilters}
                             title="Clear All Filters"
-                            className="h-9 w-9 rounded-full border-muted-foreground/20 bg-transparent hover:bg-card text-muted-foreground hover:text-destructive transition-all"
+                            className="h-9 w-9 rounded-full border-muted-foreground/15 bg-transparent hover:bg-card text-muted-foreground/40 hover:text-destructive transition-all"
                         >
                             <RotateCcw className="h-4 w-4" />
                         </Button>

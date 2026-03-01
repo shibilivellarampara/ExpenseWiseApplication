@@ -121,7 +121,7 @@ export function ExpensesSummary({ isLoading, currency, expenses, selectedAccount
 
     return (
         <Card className={featuredCardClass}>
-            <CardContent className="p-4">
+            <CardContent className="p-6">
                 {creditCardSummary ? renderCreditCardSummary() : renderNormalSummary()}
             </CardContent>
         </Card>

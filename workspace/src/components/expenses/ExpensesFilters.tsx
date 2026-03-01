@@ -164,7 +164,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
 
             {!disableDateFilter && (
                 <div className="space-y-3">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">{Date Range}</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Date Range</h4>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="w-full justify-between h-10 rounded-xl text-xs font-medium border-muted-foreground/15">
@@ -221,7 +221,7 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
             )}
 
             <div className="space-y-2">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">{Transaction Type}</h4>
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Transaction Type</h4>
                 <div className="grid grid-cols-3 gap-1 bg-muted/50 p-1 rounded-xl">
                     {['all', 'income', 'expense'].map((t) => (
                         <button

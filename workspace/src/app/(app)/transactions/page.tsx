@@ -52,7 +52,6 @@ export default function TransactionsByMonthPage() {
     return (
         <div className="w-full space-y-8">
             <PageHeader
-                title="Transactions by Month"
                 description="Select a month to view all its transactions."
             />
 

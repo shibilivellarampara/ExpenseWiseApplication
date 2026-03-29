@@ -255,10 +255,6 @@ function AnalysisPageContent() {
     return (
         <div className="w-full space-y-6 pb-32">
             <Suspense fallback={null}>
-                <PageHeader
-                    title="Analysis"
-                />
-
                 <AnalysisSummary 
                     expenses={filteredExpenses}
                     isLoading={isLoading}

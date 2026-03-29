@@ -91,7 +91,6 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        // 1. Group ALL fetched transactions per account to calc balances before filtering
         const transactionsByAccount: Record<string, ProcessedExpense[]> = {};
 
         allExpenses.forEach(tx => {
@@ -123,7 +122,6 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             });
         }
 
-        // 2. Apply visibility filters
         let finalFiltered = allWithBalances.filter(expense => {
             if (filters.type !== 'all' && expense.type !== filters.type) return false;
             if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
@@ -138,7 +136,6 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             return true;
         });
         
-        // 3. Enrich and sort
         let enriched = finalFiltered.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
@@ -222,7 +219,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
 
     return (
         <div className="w-full space-y-4 pb-24">
-             <PageHeader title={pageTitle} description={`A summary of your transactions for ${pageTitle}.`}>
+             <PageHeader description={`A summary of your transactions for ${pageTitle}.`}>
                 <Button variant="outline" asChild>
                     <Link href="/transactions">
                         <ArrowLeft className="mr-2 h-4 w-4" />

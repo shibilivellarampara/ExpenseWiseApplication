@@ -33,7 +33,6 @@ export default function RecurringPage() {
     return (
         <div className="w-full space-y-6 pb-32">
             <PageHeader 
-                title="Recurring" 
                 description="Manage your subscriptions and recurring bills."
             >
                 <AddRecurringDialog>

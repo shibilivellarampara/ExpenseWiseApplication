@@ -1,19 +1,25 @@
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
 import { ProfileForm } from "@/components/profile/ProfileForm";
-import { CategorySettings } from "@/components/profile/CategorySettings";
-import { TagSettings } from "@/components/profile/TagSettings";
-import { DashboardSettings } from "@/components/profile/DashboardSettings";
-import { DataManagementSettings } from "@/components/profile/DataManagementSettings";
-import { TransactionFieldOrderSettings } from "@/components/profile/TransactionFieldOrderSettings";
-import { AnalysisSettings } from "@/components/profile/AnalysisSettings";
-import { Card, CardHeader, CardContent, CardDescription } from "@/components/ui/card";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronRight, List, BarChart2, Tags, Database, User, Info, FileUp, LayoutDashboard, Shapes } from "lucide-react";
+import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
+
+
+const settingsLinks = [
+    { href: '/profile/details', icon: User, title: 'Profile & Security', description: 'Update your personal information and password.' },
+    { href: '/profile/form', icon: List, title: 'Transaction Settings', description: 'Customize transaction form and list appearance.' },
+    { href: '/profile/categories', icon: Shapes, title: 'Categories', description: 'Manage your expense categories.' },
+    { href: '/profile/tags', icon: Tags, title: 'Tags', description: 'Manage your expense tags/labels.' },
+    { href: '/profile/dashboard', icon: LayoutDashboard, title: 'Dashboard Settings', description: 'Customize your dashboard appearance.' },
+    { href: '/profile/analysis', icon: BarChart2, title: 'Analysis Settings', description: 'Customize which categories to exclude.' },
+    { href: '/data', icon: FileUp, title: 'Import & Export', description: 'Backup, restore, or import data.' },
+    { href: '/profile/data', icon: Database, title: 'Data Management', description: 'Reset or delete your account data.' },
+    { href: '/about', icon: Info, title: 'About', description: 'View application details and version history.' },
+]
+
 
 export default function ProfilePage() {
     return (
@@ -22,54 +28,27 @@ export default function ProfilePage() {
                 title="Settings"
                 description="Manage your account settings and preferences."
             />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                <div className="lg:col-span-1 space-y-6">
-                    <ProfileForm />
-                </div>
-
-                <div className="lg:col-span-2 space-y-6">
-                     <Card>
-                        <Collapsible defaultOpen={false}>
-                            <CollapsibleTrigger asChild>
-                                <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
-                                    <div>
-                                        <h3 className="text-base font-semibold font-headline">Form Customization</h3>
-                                        <CardDescription className="text-sm">Customize transaction form fields.</CardDescription>
+             <Card>
+                <CardContent className="p-0">
+                    <div className="space-y-0">
+                        {settingsLinks.map((link, index) => (
+                            <Link key={link.href} href={link.href} className="block">
+                                <div className="p-4 flex items-center gap-4 hover:bg-accent transition-colors">
+                                    <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-muted flex-shrink-0">
+                                        <link.icon className="h-5 w-5 text-muted-foreground" />
                                     </div>
-                                    <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
-                                </CardHeader>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                                <CardContent className="p-4 pt-0">
-                                    <TransactionFieldOrderSettings />
-                                </CardContent>
-                            </CollapsibleContent>
-                        </Collapsible>
-                    </Card>
-                    <Card>
-                        <Collapsible>
-                            <CollapsibleTrigger asChild>
-                                <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
-                                    <div>
-                                        <h3 className="text-base font-semibold font-headline">Dashboard Settings</h3>
-                                        <CardDescription className="text-sm">Customize your dashboard appearance.</CardDescription>
+                                    <div className="flex-grow">
+                                        <h3 className="font-semibold">{link.title}</h3>
+                                        <p className="text-sm text-muted-foreground">{link.description}</p>
                                     </div>
-                                     <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
-                                </CardHeader>
-                            </CollapsibleTrigger>
-                             <CollapsibleContent>
-                                <CardContent className="p-4 pt-0">
-                                    <DashboardSettings />
-                                </CardContent>
-                            </CollapsibleContent>
-                        </Collapsible>
-                    </Card>
-                    <AnalysisSettings />
-                    <CategorySettings />
-                    <TagSettings />
-                </div>
-            </div>
-            <DataManagementSettings />
+                                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                </div>
+                                {index < settingsLinks.length - 1 && <Separator />}
+                            </Link>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

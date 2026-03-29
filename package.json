@@ -1,6 +1,7 @@
+
 {
   "name": "nextn",
-  "version": "1.6.0",
+  "version": "1.9.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 9002",
@@ -45,7 +46,7 @@
     "genkit": "^1.20.0",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.475.0",
-    "next": "15.5.7",
+    "next": "15.5.9",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
@@ -62,6 +63,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@types/google.accounts": "^0.0.14",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

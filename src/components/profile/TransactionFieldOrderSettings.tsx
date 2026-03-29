@@ -8,13 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "../ui/button";
-import { Switch } from "../ui/switch";
-import { Label } from "../ui/label";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import * as LucideIcons from 'lucide-react';
 import { useDebounce } from 'use-debounce';
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Separator } from "../ui/separator";
 
 
@@ -160,147 +161,174 @@ export function TransactionFieldOrderSettings() {
             </div>
         );
     }
+    
+    const transactionGrouping = dashboardSettings?.transactionGrouping || 'daily';
 
     return (
          <div className="space-y-6">
-             <div className="space-y-4">
-                <h4 className="font-semibold text-foreground">Transaction List</h4>
-                 <div className="rounded-lg border p-3 shadow-sm space-y-2">
-                    <Label>Default View</Label>
-                    <RadioGroup
-                        value={dashboardSettings?.transactionGrouping || 'daily'}
-                        onValueChange={(value) => handleDashboardSettingChange('transactionGrouping', value)}
-                        className="flex space-x-4"
-                    >
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="daily" id="daily-view" />
-                            <Label htmlFor="daily-view" className="font-normal">Group by Day</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="monthly" id="monthly-view" />
-                            <Label htmlFor="monthly-view" className="font-normal">Group by Month</Label>
-                        </div>
-                    </RadioGroup>
-                    <p className="text-[0.8rem] text-muted-foreground">
-                        How to group transactions on the main page.
-                    </p>
-                </div>
-                <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                        <Label>Compact View</Label>
-                        <p className="text-[0.8rem] text-muted-foreground">
-                            Display more transactions on the screen.
-                        </p>
-                    </div>
-                    <Switch
-                        checked={dashboardSettings?.transactionViewMode === 'compact'}
-                        onCheckedChange={(value) => handleDashboardSettingChange('transactionViewMode', value ? 'compact' : 'normal')}
-                    />
-                </div>
-            </div>
-
-            <Separator />
-
-             <div className="space-y-4">
-                <h4 className="font-semibold text-foreground">Transaction Form</h4>
-                 <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                        <Label>Enable AI Suggestions</Label>
-                        <p className="text-[0.8rem] text-muted-foreground">
-                            Get automatic suggestions as you type.
-                        </p>
-                    </div>
-                    <Switch
-                        checked={dashboardSettings?.isAiSuggestionEnabled ?? true}
-                        onCheckedChange={(value) => handleDashboardSettingChange('isAiSuggestionEnabled', value)}
-                    />
-                </div>
-                 <div className="space-y-2">
-                    <Label>Field Visibility & Order</Label>
-                    {orderedFields.map((field, index) => {
-                        const isToggleable = field !== 'accountId';
-                        let requiredKey: keyof typeof requiredFields | null = null;
-                        if (field === 'description') requiredKey = 'isDescriptionRequired';
-                        if (field === 'categoryId') requiredKey = 'isCategoryRequired';
-                        if (field === 'tagIds') requiredKey = 'isTagRequired';
-
-                        return (
-                            <div
-                                key={field}
-                                className="flex items-center gap-2 p-2 rounded-md border bg-background flex-wrap"
-                            >
-                                <span className="flex-1 font-medium min-w-[80px]">{fieldLabels[field]}</span>
-                                
-                                {field === 'accountId' ? (
-                                    <div className="flex-1 min-w-[150px]">
-                                        <Select value={defaultAccountId || 'none'} onValueChange={(value) => setDefaultAccountId(value === 'none' ? undefined : value)}>
-                                            <SelectTrigger className="h-8 text-xs">
-                                                <SelectValue placeholder="Set default..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">No Default</SelectItem>
-                                                {accounts?.map(account => (
-                                                    <SelectItem key={account.id} value={account.id}>
-                                                        <div className="flex items-center gap-2">
-                                                            {renderIcon(account.icon)}
-                                                            {account.name}
-                                                        </div>
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {isToggleable && (
-                                            <div className="flex items-center gap-1">
-                                                <Switch
-                                                    id={`visible-${field}`}
-                                                    checked={visibleFields.includes(field)}
-                                                    onCheckedChange={(checked) => handleVisibilityChange(field, checked)}
-                                                />
-                                                <Label htmlFor={`visible-${field}`} className="text-xs text-muted-foreground">Show</Label>
-                                            </div>
-                                        )}
-                                        
-                                        {requiredKey && (
-                                            <div className="flex items-center gap-1">
-                                                <Switch
-                                                    id={`required-${field}`}
-                                                    checked={requiredFields[requiredKey]}
-                                                    onCheckedChange={(value) => handleRequiredChange(requiredKey!, value)}
-                                                />
-                                                <Label htmlFor={`required-${field}`} className="text-xs text-muted-foreground">Required</Label>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-
-                                <div className="flex items-center gap-1 ml-auto">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-7 w-7"
-                                        onClick={() => handleMoveField(index, 'up')}
-                                        disabled={index === 0}
-                                    >
-                                        <ArrowUp className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-7 w-7"
-                                        onClick={() => handleMoveField(index, 'down')}
-                                        disabled={index === orderedFields.length - 1}
-                                    >
-                                        <ArrowDown className="h-4 w-4" />
-                                    </Button>
-                                </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base font-semibold">Transaction List</CardTitle>
+                    <CardDescription>Customize how your list of transactions appears.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="rounded-lg border p-3 shadow-sm space-y-2">
+                        <Label>Default View</Label>
+                         <RadioGroup
+                            value={transactionGrouping}
+                            onValueChange={(value) => handleDashboardSettingChange('transactionGrouping', value)}
+                            className="flex space-x-4"
+                        >
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="daily" id="daily-view" />
+                                <Label htmlFor="daily-view" className="font-normal">Group by Day</Label>
                             </div>
-                        )
-                    })}
-                </div>
-            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="monthly" id="monthly-view" />
+                                <Label htmlFor="monthly-view" className="font-normal">Group by Month</Label>
+                            </div>
+                        </RadioGroup>
+                         <p className="text-[0.8rem] text-muted-foreground pt-1">
+                            How to group transactions on the main page.
+                        </p>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                            <Label>Compact View</Label>
+                            <p className="text-[0.8rem] text-muted-foreground">
+                                Display more transactions on the screen with a denser layout.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={dashboardSettings?.transactionViewMode === 'compact'}
+                            onCheckedChange={(value) => handleDashboardSettingChange('transactionViewMode', value ? 'compact' : 'normal')}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base font-semibold">AI Features</CardTitle>
+                    <CardDescription>Enhance your experience with intelligent suggestions.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                            <Label>Enable AI Suggestions</Label>
+                            <p className="text-[0.8rem] text-muted-foreground">
+                                Get automatic suggestions for category, tags, and description as you type.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={dashboardSettings?.isAiSuggestionEnabled ?? true}
+                            onCheckedChange={(value) => handleDashboardSettingChange('isAiSuggestionEnabled', value)}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base font-semibold">Form Customization</CardTitle>
+                    <CardDescription>Customize the fields and behavior of the transaction entry form.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="rounded-lg border p-4 space-y-4">
+                        <div>
+                             <h4 className="font-semibold text-sm mb-1">Field Visibility & Order</h4>
+                             <p className="text-sm text-muted-foreground">
+                                Drag and drop to reorder fields. Use toggles to show/hide or make fields required.
+                            </p>
+                        </div>
+                        <div className="space-y-2">
+                            {orderedFields.map((field, index) => {
+                                const isToggleable = field !== 'accountId';
+                                let requiredKey: keyof typeof requiredFields | null = null;
+                                if (field === 'description') requiredKey = 'isDescriptionRequired';
+                                if (field === 'categoryId') requiredKey = 'isCategoryRequired';
+                                if (field === 'tagIds') requiredKey = 'isTagRequired';
+
+                                return (
+                                    <div
+                                        key={field}
+                                        className="flex items-center gap-2 p-2 rounded-md bg-background flex-wrap"
+                                    >
+                                        <span className="flex-1 font-medium min-w-[80px]">{fieldLabels[field]}</span>
+                                        
+                                        {isToggleable && (
+                                            <>
+                                                <div className="flex items-center gap-1">
+                                                    <Switch
+                                                        id={`visible-${field}`}
+                                                        checked={visibleFields.includes(field)}
+                                                        onCheckedChange={(checked) => handleVisibilityChange(field, checked)}
+                                                    />
+                                                    <Label htmlFor={`visible-${field}`} className="text-xs text-muted-foreground">Show</Label>
+                                                </div>
+                                                
+                                                {requiredKey && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Switch
+                                                            id={`required-${field}`}
+                                                            checked={requiredFields[requiredKey]}
+                                                            onCheckedChange={(value) => handleRequiredChange(requiredKey!, value)}
+                                                        />
+                                                        <Label htmlFor={`required-${field}`} className="text-xs text-muted-foreground">Required</Label>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+
+                                        <div className="flex items-center gap-1 ml-auto">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                onClick={() => handleMoveField(index, 'up')}
+                                                disabled={index === 0}
+                                            >
+                                                <ArrowUp className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                onClick={() => handleMoveField(index, 'down')}
+                                                disabled={index === orderedFields.length - 1}
+                                            >
+                                                <ArrowDown className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                     <div className="rounded-lg border p-4 space-y-2">
+                        <h4 className="font-semibold text-sm">Default Account</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Automatically select an account when creating a new transaction.
+                        </p>
+                        <Select value={defaultAccountId || 'none'} onValueChange={(value) => setDefaultAccountId(value === 'none' ? undefined : value)}>
+                            <SelectTrigger className="text-sm">
+                                <SelectValue placeholder="Set default account..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">No Default</SelectItem>
+                                {accounts?.map(account => (
+                                    <SelectItem key={account.id} value={account.id}>
+                                        <div className="flex items-center gap-2">
+                                            {renderIcon(account.icon)}
+                                            {account.name}
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

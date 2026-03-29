@@ -1,44 +1,54 @@
-
 'use client';
 
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTable } from "@/components/expenses/ExpensesTable";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
+import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, commitBatchNonBlocking } from "@/firebase";
 import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
-import { collection, orderBy, query, doc, where, Timestamp }from "firebase/firestore";
-import { Plus, Minus, ArrowUp, ArrowDown } from "lucide-react";
-import { useMemo, useState, useCallback, useEffect, useRef } from "react";
-import { ExpensesFilters, DateRange, Filters } from "@/components/expenses/ExpensesFilters";
+import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment } from "firebase/firestore";
+import { Plus } from "lucide-react";
+import { useMemo, useState, useCallback, useEffect, Suspense } from "react";
+import { ExpensesFilters, Filters } from "@/components/expenses/ExpensesFilters";
 import { endOfDay, startOfDay } from 'date-fns';
 import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
 import { useDebounce } from "use-debounce";
-import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/PageHeader";
 
-export default function ExpensesPage() {
+type ProcessedExpense = Omit<Expense, 'date'> & { date: Date };
+
+function ExpensesPageContent() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const mainContentRef = useRef<HTMLElement | null>(null);
-    const [isScrolled, setIsScrolled] = useState(false);
-    const [showScrollTop, setShowScrollTop] = useState(false);
-    const [showScrollBottom, setShowScrollBottom] = useState(false);
+    const { toast } = useToast();
+    const isMobile = useMediaQuery("(max-width: 768px)");
+    const [selectedExpenseIds, setSelectedExpenseIds] = useState<string[]>([]);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const searchParams = useSearchParams();
 
-    const [filters, setFilters] = useState<Filters>(() => {
-        const accountId = searchParams.get('accounts');
-        const type = searchParams.get('type') as 'all' | 'income' | 'expense' | null;
-
-        return {
-            dateRange: { from: undefined, to: undefined },
-            type: type || 'all',
-            categories: [],
-            accounts: accountId ? [accountId] : [],
-            tags: [],
-            searchQuery: '',
-        };
+    const [filters, setFilters] = useState<Filters>({
+        dateRange: { from: undefined, to: undefined },
+        type: 'all',
+        categories: [],
+        accounts: [],
+        tags: [],
+        searchQuery: '',
     });
+    
+    useEffect(() => {
+        const accountId = searchParams.get('accounts');
+        const type = searchParams.get('type');
+
+        setFilters(prev => ({
+            ...prev,
+            accounts: accountId ? [accountId] : [],
+            type: (type === 'income' || type === 'expense') ? type : 'all',
+        }));
+    }, [searchParams]);
+
     
     const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
 
@@ -57,7 +67,6 @@ export default function ExpensesPage() {
         return q;
     }, [user, firestore, filters.dateRange]);
     
-    // Queries for filter dropdowns
     const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [firestore, user]);
     const accountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [firestore, user]);
     const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [firestore, user]);
@@ -70,8 +79,14 @@ export default function ExpensesPage() {
     const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
     const handleDataChange = useCallback(() => {
-        // This is a placeholder for the ExpensesTable. Data is re-fetched automatically by useCollection.
+        setSelectedExpenseIds([]);
     }, []);
+
+    useEffect(() => {
+        if(expensesLoading) {
+            setSelectedExpenseIds([]);
+        }
+    }, [expensesLoading])
 
     const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
 
@@ -79,69 +94,69 @@ export default function ExpensesPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
     
+    const selectedAccount = useMemo(() => {
+        if (filters.accounts.length === 1 && accounts) {
+            return accounts.find(acc => acc.id === filters.accounts[0]);
+        }
+        return undefined;
+    }, [filters.accounts, accounts]);
+
     const filteredAndEnrichedExpenses = useMemo(() => {
         if (!allExpenses || !accounts) return [];
 
-        let clientFiltered = allExpenses
-            .map(expense => ({
-                ...expense,
-                date: (expense.date as Timestamp).toDate(),
-            }))
-            .filter(expense => {
-                if (filters.type !== 'all' && expense.type !== filters.type) return false;
-                if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId)) return false;
-                if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) return false;
-                if (filters.tags.length > 0 && !filters.tags.some(tagId => expense.tagIds?.includes(tagId))) return false;
-                if (debouncedSearchQuery) {
-                    const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
-                    const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
-                    const amountMatch = String(expense.amount).includes(lowerCaseQuery);
-                    return descriptionMatch || amountMatch;
-                }
-                return true;
-            });
-            
-        // Running balance calculation
-        const getAmountChange = (tx: Expense, accType: Account['type']) => {
-            if (accType === 'credit_card') {
-               return tx.type === 'income' ? tx.amount : -tx.amount;
-            }
+        const getAmountChange = (tx: { type: string; amount: number }) => {
             return tx.type === 'income' ? tx.amount : -tx.amount;
         };
         
-        const transactionsByAccount = clientFiltered.reduce((acc, tx) => {
-            if (!acc[tx.accountId]) {
-                acc[tx.accountId] = [];
-            }
-            acc[tx.accountId].push(tx as (Expense & { date: Date}));
-            return acc;
-        }, {} as Record<string, (Expense & {date: Date})[]>);
+        const transactionsByAccount: Record<string, ProcessedExpense[]> = {};
 
-        let finalWithBalance: (Expense & {date: Date})[] = [];
+        allExpenses.forEach(tx => {
+            if (tx.accountId) {
+                if (!transactionsByAccount[tx.accountId]) {
+                    transactionsByAccount[tx.accountId] = [];
+                }
+                const processed: ProcessedExpense = {
+                    ...tx,
+                    date: (tx.date as any).toDate()
+                };
+                transactionsByAccount[tx.accountId].push(processed);
+            }
+        });
+
+        const allWithBalances: (ProcessedExpense & { runningBalance?: number })[] = [];
 
         for (const accountId in transactionsByAccount) {
             const accountTransactions = transactionsByAccount[accountId];
-            const account = accountMap.get(accountId);
-
-            if (account) {
-                accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
-                
-                let startingBalance = 0;
-
-                accountTransactions.forEach(tx => {
-                    const amountChange = getAmountChange(tx, account.type);
-                    startingBalance += amountChange;
-                    tx.runningBalance = startingBalance;
+            accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
+            
+            let running = 0;
+            accountTransactions.forEach(tx => {
+                running += getAmountChange(tx);
+                allWithBalances.push({
+                    ...tx,
+                    runningBalance: running
                 });
-                
-                finalWithBalance.push(...accountTransactions);
-            }
+            });
         }
+
+        let finalFiltered = allWithBalances.filter(expense => {
+            if (filters.type !== 'all' && expense.type !== filters.type) return false;
+            if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
+            if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) return false;
+            if (filters.tags.length > 0 && !filters.tags.some(tagId => expense.tagIds?.includes(tagId))) return false;
+            if (debouncedSearchQuery) {
+                const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
+                const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
+                const amountMatch = String(expense.amount).includes(lowerCaseQuery);
+                return descriptionMatch || amountMatch;
+            }
+            return true;
+        });
         
-        let enriched = finalWithBalance.map((expense): EnrichedExpense => ({
+        let enriched = finalFiltered.map((expense): EnrichedExpense => ({
             ...expense,
             category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
-            account: accountMap.get(expense.accountId),
+            account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
             tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
         }));
 
@@ -149,31 +164,6 @@ export default function ExpensesPage() {
 
     }, [allExpenses, filters, debouncedSearchQuery, categoryMap, accountMap, tagMap, accounts]);
     
-     useEffect(() => {
-        const mainElement = document.getElementById('main-content');
-        mainContentRef.current = mainElement;
-
-        const handleScroll = () => {
-            if (mainContentRef.current) {
-                const { scrollTop, scrollHeight, clientHeight } = mainContentRef.current;
-                setIsScrolled(scrollTop > 1);
-                setShowScrollTop(scrollTop > 200);
-                setShowScrollBottom(scrollHeight - scrollTop - clientHeight > 200);
-            }
-        };
-
-        if (mainContentRef.current) {
-            mainContentRef.current.addEventListener('scroll', handleScroll);
-            handleScroll(); // Initial check
-        }
-
-        return () => {
-            if (mainContentRef.current) {
-                mainContentRef.current.removeEventListener('scroll', handleScroll);
-            }
-        };
-    }, [filteredAndEnrichedExpenses]);
-
     const handleFiltersChange = (newFilters: Filters) => {
         setFilters(newFilters);
     };
@@ -203,85 +193,83 @@ export default function ExpensesPage() {
         }
     };
     
-    const scrollToTop = () => {
-        mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    const handleDeleteSelected = async () => {
+        if (!user || !firestore || selectedExpenseIds.length === 0) return;
 
-    const scrollToBottom = () => {
-        mainContentRef.current?.scrollTo({ top: mainContentRef.current.scrollHeight, behavior: 'smooth' });
-    };
+        setIsDeleting(true);
+        try {
+            const batch = writeBatch(firestore);
+            const accountBalanceUpdates = new Map<string, number>();
 
+            selectedExpenseIds.forEach(id => {
+                const expense = filteredAndEnrichedExpenses.find(e => e.id === id);
+                if (expense) {
+                    const expenseRef = doc(firestore, `users/${user.uid}/expenses`, id);
+                    batch.delete(expenseRef);
+
+                    if (expense.account) {
+                        const amountChange = expense.type === 'income' ? -expense.amount : expense.amount;
+                        accountBalanceUpdates.set(
+                            expense.account.id,
+                            (accountBalanceUpdates.get(expense.account.id) || 0) + amountChange
+                        );
+                    }
+                }
+            });
+
+            accountBalanceUpdates.forEach((amountChange, accountId) => {
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
+                batch.update(accountRef, { balance: increment(amountChange) });
+            });
+
+            await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);
+            toast({
+                title: `${selectedExpenseIds.length} Transaction(s) Deleted`,
+                description: "The selected transactions have been removed.",
+            });
+            setSelectedExpenseIds([]);
+
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Delete Failed', description: error.message });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     return (
-        <div className="w-full space-y-4 pb-24">
-            <div className={cn(
-                "sticky top-0 z-20 bg-background/95 backdrop-blur-sm -mx-4 -mt-4 px-4 pt-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8",
-                 isScrolled && "pb-3 shadow-sm rounded-b-lg"
-            )}>
-                <div className="space-y-4">
-                    <ExpensesSummary 
-                        expenses={filteredAndEnrichedExpenses}
-                        currency={userProfile?.defaultCurrency} 
-                        isLoading={isLoading} 
-                    />
-                    <ExpensesFilters 
-                        filters={filters}
-                        onFiltersChange={handleFiltersChange}
-                        accounts={accounts || []}
-                        categories={categories || []}
-                        tags={tags || []}
-                    />
-                </div>
-            </div>
-            
-            <ExpensesTable 
-                expenses={filteredAndEnrichedExpenses} 
-                isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
-                onDataChange={handleDataChange} 
-                error={expensesError ? 'Error loading transactions' : null}
-                onBadgeClick={handleBadgeClick}
+        <div className="w-full space-y-2 pb-24">
+            <PageHeader title="Transactions" />
+
+            <ExpensesSummary 
+                expenses={filteredAndEnrichedExpenses}
+                currency={userProfile?.defaultCurrency} 
+                isLoading={isLoading}
+                selectedAccount={selectedAccount} 
             />
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 z-10 md:hidden">
-                <div className="container mx-auto flex flex-col items-center gap-3">
-                    <div className="flex gap-3">
-                        {showScrollTop && (
-                            <Button onClick={scrollToTop} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
-                                <ArrowUp className="h-6 w-6" />
-                                <span className="sr-only">Scroll to top</span>
-                            </Button>
-                        )}
-                        {showScrollBottom && (
-                            <Button onClick={scrollToBottom} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
-                                <ArrowDown className="h-6 w-6" />
-                                <span className="sr-only">Scroll to bottom</span>
-                            </Button>
-                        )}
-                    </div>
-                     <div className="flex justify-around gap-2 w-full">
-                        <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
-                            <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg text-base font-semibold py-6">
-                                <Plus className="mr-2 h-5 w-5" />
-                                CASH IN
-                            </Button>
-                        </AddExpenseDialog>
-                        <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
-                            <Button className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg text-base font-semibold py-6">
-                                <Minus className="mr-2 h-5 w-5" />
-                                CASH OUT
-                            </Button>
-                        </AddExpenseDialog>
-                    </div>
-                </div>
+            <div className="space-y-1">
+                <ExpensesFilters 
+                    filters={filters}
+                    onFiltersChange={handleFiltersChange}
+                    accounts={accounts || []}
+                    categories={categories || []}
+                    tags={tags || []}
+                />
+                
+                <ExpensesTable 
+                    expenses={filteredAndEnrichedExpenses} 
+                    isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
+                    onDataChange={handleDataChange} 
+                    error={expensesError ? 'Error loading transactions' : null}
+                    onBadgeClick={handleBadgeClick}
+                    selectedIds={selectedExpenseIds}
+                    onSelectionChange={setSelectedExpenseIds}
+                    isDeleting={isDeleting}
+                    onDeleteSelected={handleDeleteSelected}
+                />
             </div>
 
              <div className="fixed bottom-6 right-6 z-10 hidden md:flex md:flex-col md:gap-3">
-                 {showScrollTop && (
-                    <Button onClick={scrollToTop} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
-                        <ArrowUp className="h-6 w-6" />
-                        <span className="sr-only">Scroll to top</span>
-                    </Button>
-                )}
                 <AddExpenseDialog initialType="income" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
                         <Plus className="h-6 w-6" />
@@ -290,19 +278,19 @@ export default function ExpensesPage() {
                 </AddExpenseDialog>
                 <AddExpenseDialog initialType="expense" onSaveSuccess={handleDataChange}>
                      <Button size="icon" className="h-14 w-14 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg">
-                        <Minus className="h-6 w-6" />
+                        <Plus className="h-6 w-6" />
                         <span className="sr-only">Add Expense</span>
                     </Button>
                 </AddExpenseDialog>
-                 {showScrollBottom && (
-                    <Button onClick={scrollToBottom} size="icon" variant="outline" className="h-12 w-12 rounded-full shadow-lg">
-                        <ArrowDown className="h-6 w-6" />
-                        <span className="sr-only">Scroll to bottom</span>
-                    </Button>
-                )}
             </div>
         </div>
     );
+}
 
-    
+export default function ExpensesPage() {
+    return (
+        <Suspense fallback={null}>
+            <ExpensesPageContent />
+        </Suspense>
+    );
 }

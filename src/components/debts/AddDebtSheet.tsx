@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -11,33 +9,21 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { Input, InputProps } from '../ui/input';
-import { Textarea } from '../ui/textarea';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input, InputProps } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useFirestore, useUser, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { Label } from '../ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { DateTimePicker } from '../DateTimePicker';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { DateTimePicker } from '@/components/DateTimePicker';
 import React from 'react';
 
 const debtSchema = z.object({
@@ -51,7 +37,7 @@ const debtSchema = z.object({
 type DebtFormData = z.infer<typeof debtSchema>;
 
 interface AddDebtDialogProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     personName?: string;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -105,19 +91,17 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                             className="grid grid-cols-2 gap-4"
                             >
                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'lent' ? "border-green-600 text-green-600" : "border-muted")}>
+                                    <Label className={cn("flex flex-col items-center justify-center rounded-xl border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-sm cursor-pointer transition-all", field.value === 'lent' ? "border-destructive text-destructive bg-destructive/5" : "border-muted")}>
                                         <RadioGroupItem value="lent" className="sr-only" />
-                                        <ArrowRight className="h-5 w-5 mb-1" />
-                                        <span>Money Out</span>
-                                        <span className="text-xs font-normal text-muted-foreground">(You are giving money)</span>
+                                        <ArrowLeft className="h-5 w-5 mb-1" />
+                                        <span className="font-bold">You Gave</span>
                                     </Label>
                                 </FormItem>
                                 <FormItem>
-                                    <Label className={cn("flex flex-col items-center justify-between rounded-md border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-base", field.value === 'borrowed' ? "border-destructive text-destructive" : "border-muted")}>
+                                    <Label className={cn("flex flex-col items-center justify-center rounded-xl border-2 bg-popover p-4 hover:bg-accent hover:text-accent-foreground text-sm cursor-pointer transition-all", field.value === 'borrowed' ? "border-primary text-primary bg-primary/5" : "border-muted")}>
                                         <RadioGroupItem value="borrowed" className="sr-only" />
-                                        <ArrowLeft className="h-5 w-5 mb-1" />
-                                        <span>Money In</span>
-                                            <span className="text-xs font-normal text-muted-foreground">(You are receiving money)</span>
+                                        <ArrowRight className="h-5 w-5 mb-1" />
+                                        <span className="font-bold">You Got</span>
                                     </Label>
                                 </FormItem>
                             </RadioGroup>
@@ -130,7 +114,8 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                        <FormItem className="flex flex-col">
+                        <FormItem>
+                            <Label className="text-xs text-muted-foreground px-1 mb-1 block uppercase font-bold tracking-widest">Transaction Date</Label>
                             <DateTimePicker field={field} />
                             <FormMessage />
                         </FormItem>
@@ -166,8 +151,9 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                                 {...field}
                                 value={field.value ?? ''}
                                 className={cn(
-                                    transactionType === 'lent' && 'text-green-600',
-                                    transactionType === 'borrowed' && 'text-red-500'
+                                    'font-bold text-lg',
+                                    transactionType === 'lent' && 'text-destructive',
+                                    transactionType === 'borrowed' && 'text-primary'
                                 )}
                             />
                             <FormMessage />
@@ -180,7 +166,7 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                     render={({ field }) => (
                         <FormItem>
                            <FloatingLabelInput
-                                label="Description"
+                                label="Remark (Optional)"
                                 id="description"
                                 {...field}
                                 value={field.value || ''}
@@ -189,17 +175,9 @@ function DebtForm({ form, onSubmit, isLoading, personName }: { form: any, onSubm
                         </FormItem>
                     )}
                 />
-                 <DrawerFooter className="pt-4 px-0 flex-row justify-end gap-2 sm:hidden">
-                    <DrawerClose asChild>
-                        <Button type="button" variant="outline">Cancel</Button>
-                    </DrawerClose>
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
-                    </Button>
-                </DrawerFooter>
-                 <DialogFooter className="pt-4 hidden sm:flex">
-                    <Button type="button" variant="outline" onClick={() => form.handleCancel()}>Cancel</Button>
-                    <Button type="submit" disabled={isLoading}>
+                <DialogFooter className="pt-4 flex flex-row justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => form.handleCancel()} className="flex-1 rounded-xl">Cancel</Button>
+                    <Button type="submit" disabled={isLoading} className="flex-1 rounded-xl">
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Record"}
                     </Button>
                 </DialogFooter>
@@ -213,12 +191,9 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useUser();
     const firestore = useFirestore();
-    const isDesktop = useMediaQuery("(min-width: 768px)");
     
-    // Internal state for uncontrolled component
     const [internalOpen, setInternalOpen] = useState(false);
 
-    // Determine if the component is controlled or uncontrolled
     const isControlled = externalOpen !== undefined && externalOnOpenChange !== undefined;
     const open = isControlled ? externalOpen : internalOpen;
     const onOpenChange = isControlled ? externalOnOpenChange : setInternalOpen;
@@ -266,51 +241,34 @@ export function AddDebtDialog({ children, personName, open: externalOpen, onOpen
                 createdAt: serverTimestamp(),
             });
             
-            toast({
-                title: 'Record Added!',
-                description: 'Your debt/due has been recorded.',
-            });
+            toast({ title: 'Record Saved' });
             onOpenChange(false);
 
         } catch (error: any) {
-             toast({ variant: 'destructive', title: 'Error', description: error.message });
+             toast({ variant: 'destructive', title: 'Could Not Save Record' });
         } finally {
             setIsLoading(false);
         }
     }
     
-    if (isDesktop) {
-        return (
-            <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogTrigger asChild>{children}</DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt or Due'}</DialogTitle>
-                        <DialogDescription>
-                            Track money you've lent to others or borrowed from them.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} personName={personName} />
-                </DialogContent>
-            </Dialog>
-        );
-    }
-    
     return (
-        <Drawer open={open} onOpenChange={onOpenChange}>
-            <DrawerTrigger asChild>{children}</DrawerTrigger>
-            <DrawerContent>
-                 <DrawerHeader className="text-left">
-                    <DrawerTitle className="font-headline">Add {personName ? `for ${personName}` : 'Debt or Due'}</DrawerTitle>
-                    <DrawerDescription>
-                        Track money you've lent to others or borrowed from them.
-                    </DrawerDescription>
-                </DrawerHeader>
-                 <div className="px-4">
-                    <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} personName={personName}/>
-                </div>
-            </DrawerContent>
-        </Drawer>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            {children && <DialogTrigger asChild>{children}</DialogTrigger>}
+            <DialogContent 
+                className="sm:max-w-md rounded-[24px]"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onInteractOutside={(e) => {
+                    e.preventDefault();
+                }}
+            >
+                <DialogHeader>
+                    <DialogTitle className="font-headline">Add Debt Record</DialogTitle>
+                    <DialogDescription>
+                        Track money movements between you and others.
+                    </DialogDescription>
+                </DialogHeader>
+                <DebtForm form={form} onSubmit={onSubmit} isLoading={isLoading} personName={personName} />
+            </DialogContent>
+        </Dialog>
     );
 }
-

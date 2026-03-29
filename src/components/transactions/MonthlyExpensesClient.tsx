@@ -1,0 +1,258 @@
+'use client';
+
+import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
+import { ExpensesTable } from "@/components/expenses/ExpensesTable";
+import { Button } from "@/components/ui/button";
+import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc, commitBatchNonBlocking } from "@/firebase";
+import { Expense, EnrichedExpense, Category, Account, Tag, UserProfile } from "@/lib/types";
+import { collection, orderBy, query, doc, where, Timestamp, writeBatch, increment }from "firebase/firestore";
+import { Plus, Minus, ArrowLeft } from "lucide-react";
+import { useMemo, useState, useCallback } from "react";
+import { ExpensesFilters, Filters } from "@/components/expenses/ExpensesFilters";
+import { endOfMonth, startOfMonth, parse, format } from 'date-fns';
+import { ExpensesSummary } from "@/components/expenses/ExpensesSummary";
+import { useDebounce } from "use-debounce";
+import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/PageHeader";
+import Link from "next/link";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { useToast } from "@/hooks/use-toast";
+
+interface MonthlyExpensesClientProps {
+    year: string;
+    month: string;
+}
+
+type ProcessedExpense = Omit<Expense, 'date'> & { date: Date };
+
+export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProps) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const isMobile = useMediaQuery("(max-width: 768px)");
+    const { toast } = useToast();
+    const [selectedExpenseIds, setSelectedExpenseIds] = useState<string[]>([]);
+    const [isDeleting, setIsDeleting] = useState(false);
+    
+    const pageDate = useMemo(() => {
+        if (typeof year === 'string' && typeof month === 'string') {
+            return parse(`${year}-${month}-01`, 'yyyy-MM-dd', new Date());
+        }
+        return new Date();
+    }, [year, month]);
+
+    const pageTitle = format(pageDate, 'MMMM yyyy');
+
+    const [filters, setFilters] = useState<Filters>({
+        dateRange: { from: startOfMonth(pageDate), to: endOfMonth(pageDate) },
+        type: 'all',
+        categories: [],
+        accounts: [],
+        tags: [],
+        searchQuery: '',
+    });
+    
+    const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
+
+    const expensesQuery = useMemoFirebase(() => {
+        if (!user || !filters.dateRange.from || !filters.dateRange.to) return null;
+        return query(
+            collection(firestore, `users/${user.uid}/expenses`),
+            where('date', '>=', Timestamp.fromDate(filters.dateRange.from)),
+            where('date', '<=', Timestamp.fromDate(filters.dateRange.to)),
+            orderBy('date', 'desc')
+        );
+    }, [user, firestore, filters.dateRange]);
+    
+    const categoriesQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/categories`), orderBy('name', 'asc')) : null, [firestore, user]);
+    const accountsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/accounts`), orderBy('name', 'asc')) : null, [firestore, user]);
+    const tagsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/tags`), orderBy('name', 'asc')) : null, [firestore, user]);
+    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+
+    const { data: allExpenses, isLoading: expensesLoading, error: expensesError, } = useCollection<Expense>(expensesQuery);
+    const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesQuery);
+    const { data: accounts, isLoading: accountsLoading } = useCollection<Account>(accountsQuery);
+    const { data: tags, isLoading: tagsLoading } = useCollection<Tag>(tagsQuery);
+    const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
+
+    const handleDataChange = useCallback(() => {
+        setSelectedExpenseIds([]);
+    }, []);
+
+    const isLoading = expensesLoading || categoriesLoading || accountsLoading || tagsLoading || profileLoading;
+
+    const categoryMap = useMemo(() => new Map(categories?.map(c => [c.id, c])), [categories]);
+    const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
+    const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
+    
+    const filteredAndEnrichedExpenses = useMemo(() => {
+        if (!allExpenses || !accounts) return [];
+
+        const getAmountChange = (tx: { type: string; amount: number }) => {
+            return tx.type === 'income' ? tx.amount : -tx.amount;
+        };
+        
+        const transactionsByAccount: Record<string, ProcessedExpense[]> = {};
+
+        allExpenses.forEach(tx => {
+            if (tx.accountId) {
+                if (!transactionsByAccount[tx.accountId]) {
+                    transactionsByAccount[tx.accountId] = [];
+                }
+                const processed: ProcessedExpense = {
+                    ...tx,
+                    date: (tx.date as any).toDate()
+                };
+                transactionsByAccount[tx.accountId].push(processed);
+            }
+        });
+
+        const allWithBalances: (ProcessedExpense & { runningBalance?: number })[] = [];
+
+        for (const accountId in transactionsByAccount) {
+            const accountTransactions = transactionsByAccount[accountId];
+            accountTransactions.sort((a, b) => a.date.getTime() - b.date.getTime());
+            
+            let running = 0;
+            accountTransactions.forEach(tx => {
+                running += getAmountChange(tx);
+                allWithBalances.push({
+                    ...tx,
+                    runningBalance: running
+                });
+            });
+        }
+
+        let finalFiltered = allWithBalances.filter(expense => {
+            if (filters.type !== 'all' && expense.type !== filters.type) return false;
+            if (filters.accounts.length > 0 && !filters.accounts.includes(expense.accountId || '')) return false;
+            if (filters.categories.length > 0 && !filters.categories.includes(expense.categoryId || '')) return false;
+            if (filters.tags.length > 0 && !filters.tags.some(tagId => expense.tagIds?.includes(tagId))) return false;
+            if (debouncedSearchQuery) {
+                const lowerCaseQuery = debouncedSearchQuery.toLowerCase();
+                const descriptionMatch = expense.description?.toLowerCase().includes(lowerCaseQuery);
+                const amountMatch = String(expense.amount).includes(lowerCaseQuery);
+                return descriptionMatch || amountMatch;
+            }
+            return true;
+        });
+        
+        let enriched = finalFiltered.map((expense): EnrichedExpense => ({
+            ...expense,
+            category: expense.categoryId ? categoryMap.get(expense.categoryId) : undefined,
+            account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
+            tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
+        }));
+
+        return enriched.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    }, [allExpenses, filters, debouncedSearchQuery, categoryMap, accountMap, tagMap, accounts]);
+    
+    const handleFiltersChange = (newFilters: Filters) => {
+        setFilters({ ...newFilters, dateRange: filters.dateRange });
+    };
+
+     const handleBadgeClick = (type: 'category' | 'tag' | 'account', id: string) => {
+        if (type === 'category') {
+            setFilters(prev => ({
+                ...prev,
+                categories: [id],
+                accounts: [],
+            }));
+        } else if (type === 'tag'){
+            setFilters(prev => ({
+                ...prev,
+                tags: [id],
+                categories: [],
+                accounts: [],
+            }));
+        } else { // account
+             setFilters(prev => ({
+                ...prev,
+                accounts: [id],
+                categories: [],
+                tags: [],
+            }));
+        }
+    };
+    
+    const handleDeleteSelected = async () => {
+        if (!user || !firestore || selectedExpenseIds.length === 0) return;
+
+        setIsDeleting(true);
+        try {
+            const batch = writeBatch(firestore);
+            const accountBalanceUpdates = new Map<string, number>();
+
+            selectedExpenseIds.forEach(id => {
+                const expense = filteredAndEnrichedExpenses.find(e => e.id === id);
+                if (expense && expense.account) {
+                    const expenseRef = doc(firestore, `users/${user.uid}/expenses`, id);
+                    batch.delete(expenseRef);
+
+                    const amountChange = expense.type === 'income' ? -expense.amount : expense.amount;
+                    accountBalanceUpdates.set(
+                        expense.account.id,
+                        (accountBalanceUpdates.get(expense.account.id) || 0) + amountChange
+                    );
+                }
+            });
+
+            accountBalanceUpdates.forEach((changeVal, accountId) => {
+                const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
+                batch.update(accountRef, { balance: increment(changeVal) });
+            });
+
+            await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);
+            toast({
+                title: `${selectedExpenseIds.length} Transaction(s) Deleted`,
+                description: "The selected transactions have been removed.",
+            });
+            setSelectedExpenseIds([]);
+
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Delete Failed', description: error.message });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    return (
+        <div className="w-full space-y-2 pb-24">
+             <PageHeader title={pageTitle} description={`A summary of your transactions for ${pageTitle}.`}>
+                <Button variant="outline" asChild>
+                    <Link href="/transactions">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Months
+                    </Link>
+                </Button>
+            </PageHeader>
+            <div className="space-y-1.5 sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm pt-4">
+                 <ExpensesSummary 
+                    expenses={filteredAndEnrichedExpenses}
+                    currency={userProfile?.defaultCurrency} 
+                    isLoading={isLoading} 
+                />
+                <ExpensesFilters 
+                    filters={filters}
+                    onFiltersChange={handleFiltersChange}
+                    accounts={accounts || []}
+                    categories={categories || []}
+                    tags={tags || []}
+                    disableDateFilter={true}
+                />
+            </div>
+            
+            <ExpensesTable 
+                expenses={filteredAndEnrichedExpenses} 
+                isLoading={isLoading && filteredAndEnrichedExpenses.length === 0} 
+                onDataChange={handleDataChange} 
+                error={expensesError ? 'Error loading transactions' : null}
+                onBadgeClick={handleBadgeClick}
+                selectedIds={selectedExpenseIds}
+                onSelectionChange={setSelectedExpenseIds}
+                isDeleting={isDeleting}
+                onDeleteSelected={handleDeleteSelected}
+            />
+        </div>
+    );
+}

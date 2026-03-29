@@ -1,5 +1,4 @@
 
-
 {
   "entities": {
     "UserProfile": {
@@ -61,13 +60,13 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Whether to show the 'Normal Total' summary."
+                },
+                "showSavingsTrendChart": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to show the 'Monthly Savings Trend' chart."
                 }
             }
-        },
-        "sharedExpenseIds": {
-          "type": "array",
-          "description": "A list of IDs of the shared expenses this user is a member of.",
-          "items": { "type": "string" }
         },
         "isAdmin": {
           "type": "boolean",
@@ -97,10 +96,54 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "accountId": { "type": "string", "description": "Reference to the Account document ID." },
         "categoryId": { "type": "string", "description": "Reference to the Category document ID (for expenses)." },
-        "tagIds": { "type": "array", "items": { "type": "string" }, "description": "Reference to the Tag document IDs." },
-        "sharedExpenseId": { "type": "string", "description": "Reference to the SharedExpense this transaction belongs to." }
+        "tagIds": { "type": "array", "items": { "type": "string" }, "description": "Reference to the Tag document IDs." }
       },
       "required": ["id", "userId", "type", "amount", "date", "accountId"]
+    },
+    "RecurringExpense": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "RecurringExpense",
+        "type": "object",
+        "description": "Represents a recurring transaction.",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "amount": { "type": "number" },
+          "type": { "type": "string", "enum": ["expense", "income"] },
+          "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly", "yearly"] },
+          "startDate": { "type": "string", "format": "date-time" },
+          "nextDueDate": { "type": "string", "format": "date-time" },
+          "lastCreatedDate": { "type": "string", "format": "date-time" },
+          "categoryId": { "type": "string" },
+          "accountId": { "type": "string" },
+          "tagIds": { "type": "array", "items": { "type": "string" } },
+          "description": { "type": "string" },
+          "status": { "type": "string", "enum": ["active", "paused"] }
+        },
+        "required": ["id", "userId", "name", "amount", "type", "frequency", "startDate", "nextDueDate", "status"]
+    },
+    "Asset": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Asset",
+      "type": "object",
+      "description": "Represents a financial asset held by the user.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "assetType": { 
+          "type": "string", 
+          "enum": ["savings_cash", "mutual_funds", "stocks_equity", "fixed_income", "retirement", "digital_assets", "gold", "private_equity", "other"]
+        },
+        "name": { "type": "string", "description": "The name or label for the asset." },
+        "investedAmount": { "type": "number", "description": "The total amount invested in the asset." },
+        "currentValue": { "type": "number", "description": "The current market value of the asset." },
+        "quantity": { "type": "number", "description": "The quantity of the asset held (e.g., number of stocks)." },
+        "startDate": { "type": "string", "format": "date-time", "description": "The date the asset was acquired or started." },
+        "notes": { "type": "string", "description": "User's personal notes about the asset." },
+        "lastUpdated": { "type": "string", "format": "date-time", "description": "The timestamp of the last update." }
+      },
+      "required": ["id", "userId", "assetType", "name", "investedAmount", "currentValue", "lastUpdated"]
     },
      "CardDetails": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -113,7 +156,8 @@
         "cardholderName": { "type": "string", "description": "The name of the cardholder as it appears on the card." },
         "expiryMonth": { "type": "number", "description": "The expiration month of the card (1-12)." },
         "expiryYear": { "type": "number", "description": "The expiration year of the card (e.g., 2028)." },
-        "network": { "type": "string", "enum": ["visa", "mastercard", "amex", "discover", "rupay", "other"], "description": "The card network." }
+        "network": { "type": "string", "enum": ["visa", "mastercard", "amex", "discover", "rupay", "other"], "description": "The card network." },
+        "statementDate": { "type": "number", "description": "Day of the month for credit card statement generation (1-31)." }
       }
     },
     "Account": {
@@ -163,49 +207,6 @@
       },
       "required": ["name", "icon", "userId"]
     },
-    "SharedExpense": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "SharedExpense",
-      "type": "object",
-      "description": "Represents a shared expense space where multiple users can add transactions.",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "ownerId": { "type": "string" },
-        "memberIds": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "joinId": { "type": "string", "description": "6-character unique code for joining." },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "name", "ownerId", "memberIds", "joinId"]
-    },
-    "Contribution": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Contribution",
-      "type": "object",
-      "description": "Represents a contribution record for shared expenses.",
-      "properties": {
-        "id": { "type": "string" },
-        "totalAmount": { "type": "number" },
-        "description": { "type": "string" },
-        "userId": { "type": "string" },
-        "date": { "type": "string", "format": "date-time" },
-        "paidById": { "type": "string" },
-        "contributorShares": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "userId": { "type": "string" },
-              "share": { "type": "number" }
-            }
-          }
-        }
-      },
-      "required": ["id", "totalAmount", "description", "userId", "date", "paidById"]
-    },
     "Debt": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Debt",
@@ -226,7 +227,7 @@
     }
   },
   "auth": {
-    "providers": ["password", "anonymous", "phone", "google.com"]
+    "providers": ["password", "anonymous", "phone"]
   },
   "firestore": {
     "/users/{userId}": {
@@ -236,6 +237,10 @@
     "/users/{userId}/expenses/{expenseId}": {
       "schema": { "$ref": "#/entities/Expense" },
       "description": "Stores individual expense records for a user."
+    },
+    "/users/{userId}/recurringExpenses/{recurringExpenseId}": {
+        "schema": { "$ref": "#/entities/RecurringExpense" },
+        "description": "Stores recurring expense configurations for a user."
     },
     "/users/{userId}/accounts/{accountId}": {
       "schema": { "$ref": "#/entities/Account" },
@@ -249,25 +254,17 @@
       "schema": { "$ref": "#/entities/Tag" },
       "description": "Stores user-defined expense tags."
     },
-    "/shared_expenses/{sharedExpenseId}": {
-      "schema": { "$ref": "#/entities/SharedExpense" },
-      "description": "Stores shared expense spaces, accessible by multiple users."
+    "/users/{userId}/debts/{debtId}": {
+        "schema": { "$ref": "#/entities/Debt" },
+        "description": "Stores debt and loan records for a user."
     },
-    "/shared_expenses/{sharedExpenseId}/expenses/{expenseId}": {
-      "schema": { "$ref": "#/entities/Expense"},
-      "description": "Stores expense records for a specific shared space."
-    },
-    "/users/{userId}/contributions/{contributionId}": {
-        "schema": { "$ref": "#/entities/Contribution" },
-        "description": "Stores contribution records for shared expenses."
+    "/users/{userId}/assets/{assetId}": {
+        "schema": { "$ref": "#/entities/Asset" },
+        "description": "Stores user's financial assets."
     },
     "/admin/{adminId}": {
         "schema": { "$ref": "#/entities/UserProfile" },
         "description": "Admin access control."
-    },
-    "/users/{userId}/debts/{debtId}": {
-        "schema": { "$ref": "#/entities/Debt" },
-        "description": "Stores debt and loan records for a user."
     }
   }
 }

@@ -8,10 +8,11 @@ import { EnrichedExpense } from '@/lib/types';
 import { format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, getYear, subMonths, subYears, eachYearOfInterval } from 'date-fns';
 import { BarChart as BarChartIcon } from 'lucide-react';
 import { getCurrencySymbol } from '@/lib/currencies';
+import { formatAmount } from '@/lib/utils';
 
 interface SpendingTrendChartProps {
   expenses: EnrichedExpense[];
-  timeRange: 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'custom';
+  timeRange: 'week' | 'month' | 'last-month' | '3-months' | '6-months' | 'year' | 'last-year' | 'all' | 'specific-month' | 'custom';
   currency?: string;
 }
 
@@ -27,7 +28,7 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
 
         // 1. Determine date range
         let start: Date, end: Date;
-        if(timeRange === 'all' || timeRange === 'custom') {
+        if(timeRange === 'all' || timeRange === 'custom' || timeRange === 'specific-month') {
             start = expenses.length > 0 ? expenses[expenses.length - 1].date : now;
             end = expenses.length > 0 ? expenses[0].date : now;
         } else {
@@ -135,7 +136,7 @@ export function SpendingTrendChart({ expenses, timeRange, currency }: SpendingTr
     }
 
     const formatCurrency = (value: number) => {
-        return `${currencySymbol}${value.toFixed(2)}`;
+        return `${currencySymbol}${formatAmount(value)}`;
     }
 
     return (

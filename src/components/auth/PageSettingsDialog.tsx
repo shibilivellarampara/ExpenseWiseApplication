@@ -21,12 +21,12 @@ export function PageSettingsDialog({ children, title, description, SettingsCompo
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className="py-4">
+        <div className="py-4 flex-1 overflow-y-auto">
           <SettingsComponent />
         </div>
       </DialogContent>

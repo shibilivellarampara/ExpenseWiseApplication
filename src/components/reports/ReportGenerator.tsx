@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from 'react';
@@ -7,14 +6,16 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Account } from '@/lib/types';
-import { FileDown, Loader2, Share2, ClipboardCopy } from 'lucide-react';
+import { FileDown, Loader2, Share2, ClipboardCopy, UploadCloud } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Progress } from '../ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import { uploadToGoogleDrive } from '@/ai/flows/upload-to-google-drive';
+import * as XLSX from 'xlsx';
 
 interface ReportGeneratorProps {
     accounts: Account[];
-    onAction: (accountId: string, format: 'excel' | 'share', template: string) => void;
+    onAction: (accountId: string, format: 'excel' | 'share' | 'gdrive', template: string) => Promise<any>;
     isLoading: boolean;
     progress: number;
 }
@@ -22,39 +23,9 @@ interface ReportGeneratorProps {
 export function ReportGenerator({ accounts, onAction, isLoading, progress }: ReportGeneratorProps) {
     const [selectedAccount, setSelectedAccount] = useState<string>('all');
     const [selectedTemplate, setSelectedTemplate] = useState<string>('enhanced');
-    const [shareText, setShareText] = useState<string | null>(null);
     const { toast } = useToast();
+    const [isUploading, setIsUploading] = useState(false);
 
-    const handleShare = async () => {
-        if (!shareText) return;
-        try {
-            if (navigator.share) {
-                await navigator.share({
-                    title: 'ExpenseWise Report',
-                    text: shareText,
-                });
-                toast({ title: "Shared Successfully" });
-            } else {
-                toast({ variant: 'destructive', title: "Share Not Supported", description: "Your browser does not support this feature." });
-            }
-        } catch (error: any) {
-            if (error.name !== 'AbortError') {
-                toast({ variant: 'destructive', title: "Error Sharing", description: error.message });
-            }
-        } finally {
-            setShareText(null); // Clear after sharing attempt
-        }
-    };
-    
-    const copyToClipboard = () => {
-        if (!shareText) return;
-        navigator.clipboard.writeText(shareText);
-        toast({ title: "Copied!", description: "Report data copied to clipboard." });
-    }
-
-    const handleGenerateForShare = () => {
-        onAction(selectedAccount, 'share', selectedTemplate);
-    }
     
     return (
         <Card className="max-w-2xl mx-auto">
@@ -65,7 +36,7 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
             <CardContent className="grid gap-6">
                  <div className="space-y-2">
                     <Label htmlFor="report-template">Report Template</Label>
-                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate} disabled={isLoading}>
+                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate} disabled={isLoading || isUploading}>
                         <SelectTrigger id="report-template">
                             <SelectValue placeholder="Select a template" />
                         </SelectTrigger>
@@ -77,7 +48,7 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="report-account">Account</Label>
-                    <Select value={selectedAccount} onValueChange={setSelectedAccount} disabled={isLoading}>
+                    <Select value={selectedAccount} onValueChange={setSelectedAccount} disabled={isLoading || isUploading}>
                         <SelectTrigger id="report-account">
                             <SelectValue placeholder="Select an account" />
                         </SelectTrigger>
@@ -91,14 +62,16 @@ export function ReportGenerator({ accounts, onAction, isLoading, progress }: Rep
                 </div>
             </CardContent>
             <CardFooter className="flex-col items-start gap-4">
-                 {isLoading && (
+                 {(isLoading || isUploading) && (
                     <div className="w-full space-y-2">
-                        <Progress value={progress} />
-                        <p className="text-sm text-muted-foreground text-center">Generating your report...</p>
+                        <Progress value={isLoading ? progress : undefined} className={isUploading ? "animate-pulse" : ""} />
+                        <p className="text-sm text-muted-foreground text-center">
+                            {isLoading ? 'Generating your report...' : 'Uploading to Google Drive...'}
+                        </p>
                     </div>
                 )}
                 <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => onAction(selectedAccount, 'excel', selectedTemplate)} disabled={isLoading}>
+                    <Button onClick={() => onAction(selectedAccount, 'excel', selectedTemplate)} disabled={isLoading || isUploading}>
                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
                         Download Excel
                     </Button>

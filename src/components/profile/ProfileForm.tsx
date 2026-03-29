@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useFirestore, useStorage, useAuth, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
@@ -12,19 +11,18 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Loader2, Upload, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { updateProfile, RecaptchaVerifier, updatePhoneNumber, PhoneAuthProvider, updateEmail, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
+import { updateProfile, RecaptchaVerifier, updatePhoneNumber, PhoneAuthProvider, updateEmail, EmailAuthProvider, reauthenticateWithCredential, updatePassword, linkWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { doc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Separator } from "../ui/separator";
+import { Separator } from "@/components/ui/separator";
 import { UserProfile } from "@/lib/types";
 import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AvatarList } from "./Avatars";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import React from "react";
 
 const currencies = ["USD", "EUR", "JPY", "GBP", "INR"];
@@ -40,7 +38,6 @@ export function ProfileForm() {
     const firestore = useFirestore();
     const storage = useStorage();
     const auth = useAuth();
-    const [isOpen, setIsOpen] = useState(false);
 
     const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
@@ -137,7 +134,7 @@ export function ProfileForm() {
                     finalPhotoURL = await getDownloadURL(uploadResult.ref);
                     setNewAvatarFile(null); 
                 } catch (error: any) {
-                    toast({ variant: "destructive", title: "Upload Failed", description: error.message });
+                    toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload your new profile picture. Please try again." });
                     setIsLoading(false);
                     setIsUploading(false);
                     return;
@@ -172,7 +169,7 @@ export function ProfileForm() {
             
             toast({ title: "Profile Updated", description: "Your changes have been saved." });
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Error updating profile", description: error.message });
+            toast({ variant: "destructive", title: "Error Updating Profile", description: "Could not save your profile changes. Please try again." });
         } finally {
             setIsLoading(false);
         }
@@ -195,7 +192,7 @@ export function ProfileForm() {
             setShowOtpDialog(true);
             toast({ title: "Verification code sent!" });
         } catch (error: any) {
-             toast({ variant: "destructive", title: "Failed to send code", description: error.message });
+             toast({ variant: "destructive", title: "Failed to Send Code", description: "Could not send verification code. Please check the phone number." });
         } finally {
             setIsLoading(false);
         }
@@ -217,7 +214,7 @@ export function ProfileForm() {
             setOtp('');
 
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Phone Update Failed", description: error.message });
+            toast({ variant: "destructive", title: "Phone Update Failed", description: "The verification code was incorrect. Please try again." });
         } finally {
             setIsLoading(false);
         }
@@ -250,7 +247,7 @@ export function ProfileForm() {
             setCurrentPasswordForEmail('');
 
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Email Update Failed", description: error.message });
+            toast({ variant: "destructive", title: "Email Update Failed", description: "The password you entered was incorrect or the email is invalid. Please try again." });
         } finally {
             setIsLoading(false);
         }
@@ -282,122 +279,143 @@ export function ProfileForm() {
             setNewPassword('');
             setConfirmPassword('');
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Update Failed", description: error.message });
+            toast({ variant: "destructive", title: "Update Failed", description: "The current password you entered was incorrect. Please try again." });
         } finally {
             setIsLoading(false);
         }
     }
-
-
+    
     const currentPhoto = tempDisplayPhotoUrl ?? userProfile?.photoURL;
     
     const displayCurrency = selectedCurrency || userProfile?.defaultCurrency;
 
     if (isProfileLoading) {
         return (
-            <Card>
-                <CardHeader>
-                  <h3 className="text-base font-semibold font-headline">Profile Details</h3>
-                </CardHeader>
-                <CardContent className="space-y-4 flex items-center justify-center py-10">
-                    <Loader2 className="mx-auto animate-spin" />
-                </CardContent>
-            </Card>
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base font-semibold">Profile Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 flex items-center justify-center py-10">
+                        <Loader2 className="mx-auto animate-spin" />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base font-semibold">Security</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 flex items-center justify-center py-10">
+                        <Loader2 className="mx-auto animate-spin" />
+                    </CardContent>
+                </Card>
+            </div>
         )
     }
 
     return (
-        <Card className="h-fit">
-            <Collapsible defaultOpen={false}>
-             <form onSubmit={handleProfileSubmit}>
-                <CollapsibleTrigger asChild>
-                    <CardHeader className="flex flex-row items-center justify-between cursor-pointer p-4">
-                        <div>
-                            <h3 className="text-base font-semibold font-headline">Profile & Security</h3>
-                            <CardDescription className="text-sm">Update your personal information and password.</CardDescription>
-                        </div>
-                        <ChevronDown className="h-5 w-5 transition-transform [&[data-state=open]]:-rotate-180" />
+        <div className="space-y-6">
+            <form onSubmit={handleProfileSubmit}>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base font-semibold">Profile Details</CardTitle>
+                        <CardDescription className="text-sm">Update your personal information.</CardDescription>
                     </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
+                    <CardContent className="p-4 pt-0 space-y-4">
+                       <div className="flex flex-col sm:flex-row items-center gap-6">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <button type="button" className="relative h-24 w-24 rounded-full flex-shrink-0">
+                                        <Avatar className="h-24 w-24">
+                                            <AvatarImage src={currentPhoto ?? undefined} alt={nameInput || 'User'} />
+                                            <AvatarFallback>{getInitials(nameInput)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs font-semibold rounded-full opacity-0 hover:opacity-100 transition-opacity">
+                                            Change
+                                        </div>
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80">
+                                     <div className="space-y-4">
+                                        <div className="space-y-1">
+                                            <h4 className="font-medium leading-none">Change Avatar</h4>
+                                            <p className="text-sm text-muted-foreground">
+                                                Upload a custom photo or select a pre-designed avatar.
+                                            </p>
+                                        </div>
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={isLoading}
+                                        >
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            Upload from Gallery
+                                        </Button>
+                                        <Input 
+                                            type="file" 
+                                            ref={fileInputRef} 
+                                            onChange={handleFileChange}
+                                            className="hidden" 
+                                            accept="image/*"
+                                        />
+                                        <Separator />
+                                        <div className="flex justify-center gap-4">
+                                            {AvatarList.map((AvatarItem, index) => (
+                                                <button
+                                                    key={index}
+                                                    type="button"
+                                                    onClick={() => handleAvatarSelect(AvatarItem.svgString)}
+                                                    className={cn(
+                                                        "rounded-full p-1 ring-2 ring-transparent hover:ring-primary focus:ring-primary focus:outline-none transition-all",
+                                                        currentPhoto === `data:image/svg+xml;base64,${btoa(AvatarItem.svgString)}` && "ring-primary ring-offset-2"
+                                                    )}
+                                                >
+                                                <div className="w-16 h-16 rounded-full overflow-hidden">
+                                                        <AvatarItem.component />
+                                                </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                             <div className="w-full space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="name">Name</Label>
+                                    <Input id="name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} disabled={isLoading} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="defaultCurrency">Default Currency</Label>
+                                    <Select onValueChange={setSelectedCurrency} value={displayCurrency} disabled={isLoading}>
+                                        <SelectTrigger id="defaultCurrency">
+                                            <SelectValue placeholder="Select a currency" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="border-t p-4 flex justify-end">
+                        <Button type="submit" disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isUploading ? 'Uploading...' : 'Save Changes'}
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </form>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base font-semibold">Security</CardTitle>
+                    <CardDescription className="text-sm">Manage your security settings.</CardDescription>
+                </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-4">
                     <div className="space-y-2">
-                        <Label>Profile Picture</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <button type="button" className="relative h-24 w-24 rounded-full">
-                                    <Avatar className="h-24 w-24">
-                                        <AvatarImage src={currentPhoto ?? undefined} alt={nameInput || 'User'} />
-                                        <AvatarFallback>{getInitials(nameInput)}</AvatarFallback>
-                                    </Avatar>
-                                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs font-semibold rounded-full opacity-0 hover:opacity-100 transition-opacity">
-                                        Change
-                                    </div>
-                                </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80">
-                                <div className="grid gap-4">
-                                    <h4 className="font-medium leading-none">Change Avatar</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                        Upload a custom photo or select a pre-designed avatar.
-                                    </p>
-                                    <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        onClick={() => fileInputRef.current?.click()}
-                                        disabled={isLoading}
-                                    >
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Upload from Gallery
-                                    </Button>
-                                    <Input 
-                                        type="file" 
-                                        ref={fileInputRef} 
-                                        onChange={handleFileChange}
-                                        className="hidden" 
-                                        accept="image/*"
-                                    />
-                                    <Separator />
-                                    <div className="flex justify-center gap-4">
-                                        {AvatarList.map((AvatarItem, index) => (
-                                            <button
-                                                key={index}
-                                                type="button"
-                                                onClick={() => handleAvatarSelect(AvatarItem.svgString)}
-                                                className={cn(
-                                                    "rounded-full p-1 ring-2 ring-transparent hover:ring-primary focus:ring-primary focus:outline-none transition-all",
-                                                    currentPhoto === `data:image/svg+xml;base64,${btoa(AvatarItem.svgString)}` && "ring-primary ring-offset-2"
-                                                )}
-                                            >
-                                               <div className="w-16 h-16 rounded-full overflow-hidden">
-                                                    <AvatarItem.component />
-                                               </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
-                        <Input id="name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} disabled={isLoading} />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="defaultCurrency">Default Currency</Label>
-                        <Select onValueChange={setSelectedCurrency} value={displayCurrency} disabled={isLoading}>
-                            <SelectTrigger id="defaultCurrency">
-                                <SelectValue placeholder="Select a currency" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
-                         <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2">
                             <Input id="email" type="email" value={userProfile?.email || user?.email || ''} disabled />
                             <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
                                 <DialogTrigger asChild>
@@ -410,7 +428,7 @@ export function ProfileForm() {
                                     </DialogHeader>
                                     <div className="space-y-4">
                                         <Input 
-                                            placeholder="New email address" 
+                                            placeholder="shibilvellarampara@gmail.com" 
                                             type="email"
                                             value={newEmail} 
                                             onChange={(e) => setNewEmail(e.target.value)}
@@ -445,7 +463,7 @@ export function ProfileForm() {
                                         <DialogTitle>Update Phone Number</DialogTitle>
                                         <DialogDescription>Enter your new phone number with country code. A verification code will be sent.</DialogDescription>
                                     </DialogHeader>
-                                     <PhoneInput
+                                        <PhoneInput
                                         international
                                         withCountryCallingCode
                                         countryCallingCodeEditable={false}
@@ -466,7 +484,8 @@ export function ProfileForm() {
                             </Dialog>
                         </div>
                     </div>
-                     <div className="space-y-2">
+
+                    <div className="space-y-2">
                         <Label>Password</Label>
                         <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
                             <DialogTrigger asChild>
@@ -519,15 +538,9 @@ export function ProfileForm() {
                         </Dialog>
                     </div>
                 </CardContent>
-                <CardFooter className="border-t p-4 flex justify-end">
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {isUploading ? 'Uploading...' : 'Save Changes'}
-                    </Button>
-                </CardFooter>
-                </CollapsibleContent>
-            </form>
-             <Dialog open={showOtpDialog} onOpenChange={setShowOtpDialog}>
+            </Card>
+
+            <Dialog open={showOtpDialog} onOpenChange={setShowOtpDialog}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Enter Verification Code</DialogTitle>
@@ -554,7 +567,6 @@ export function ProfileForm() {
                 </DialogContent>
             </Dialog>
             <div ref={recaptchaContainerRef}></div>
-            </Collapsible>
-        </Card>
+        </div>
     );
 }

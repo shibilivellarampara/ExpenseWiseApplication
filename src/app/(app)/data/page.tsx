@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { PageHeader } from "@/components/PageHeader";
@@ -11,7 +10,12 @@ import { useMemo, useState } from "react";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { ExcelImporter } from "@/components/import/ExcelImporter";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BackupAndRestore } from "@/components/import/BackupAndRestore";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 async function fetchAllTransactions(firestore: any, userId: string, accountId?: string): Promise<Expense[]> {
     let expensesQuery;
@@ -50,7 +54,7 @@ export default function DataPage() {
     const accountMap = useMemo(() => new Map(accounts?.map(a => [a.id, a])), [accounts]);
     const tagMap = useMemo(() => new Map(tags?.map(t => [t.id, t])), [tags]);
 
-    const handleReportAction = async (accountId: string, format: 'excel' | 'share', template: string) => {
+    const handleReportAction = async (accountId: string, format: 'excel' | 'share' | 'gdrive', template: string) => {
         if (!user || !firestore) return;
         setIsLoading(true);
         setProgress(0);
@@ -74,7 +78,7 @@ export default function DataPage() {
                 ...expense,
                 date: expense.date.toDate(),
                 category: categoryMap.get(expense.categoryId || ''),
-                account: accountMap.get(expense.accountId),
+                account: expense.accountId ? accountMap.get(expense.accountId) : undefined,
                 tags: expense.tagIds?.map(tagId => tagMap.get(tagId)).filter(Boolean) as Tag[] || [],
             })).sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -116,10 +120,7 @@ export default function DataPage() {
                 XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
                 XLSX.writeFile(workbook, `ExpenseWise_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
             } else if (format === 'share') {
-                const headers = Object.keys(dataToExport[0]).join('\t');
-                const rows = dataToExport.map(row => Object.values(row).join('\t')).join('\n');
-                const shareText = `${headers}\n${rows}`;
-                
+                const shareText = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(dataToExport));
                 try {
                     if (navigator.share) {
                         await navigator.share({
@@ -138,12 +139,14 @@ export default function DataPage() {
                         toast({ variant: 'destructive', title: "Error Sharing", description: shareError.message });
                     }
                 }
+            } else if (format === 'gdrive') {
+                return dataToExport;
             }
             
             setProgress(100);
 
         } catch (error: any) {
-            toast({ variant: 'destructive', title: "Error Generating Report", description: error.message });
+            toast({ variant: 'destructive', title: "Error Generating Report", description: "There was an unexpected error. Please try again." });
         } finally {
             setTimeout(() => {
                 setIsLoading(false);
@@ -156,25 +159,43 @@ export default function DataPage() {
         <div className="w-full space-y-8">
             <PageHeader
                 title="Import & Export"
-                description="Manage your expense data by importing or exporting."
-            />
-            <Tabs defaultValue="import" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="import">Import</TabsTrigger>
-                    <TabsTrigger value="export">Export</TabsTrigger>
-                </TabsList>
-                <TabsContent value="import" className="mt-6">
-                    <ExcelImporter />
-                </TabsContent>
-                <TabsContent value="export" className="mt-6">
-                    <ReportGenerator 
-                        accounts={accounts || []} 
-                        onAction={handleReportAction}
-                        isLoading={isLoading}
-                        progress={progress}
-                    />
-                </TabsContent>
-            </Tabs>
+                description="Manage your expense data by importing, exporting, or creating backups."
+            >
+                <Button variant="outline" asChild>
+                    <Link href="/profile">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Settings
+                    </Link>
+                </Button>
+            </PageHeader>
+            <div className="space-y-8">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Import from Excel</CardTitle>
+                        <CardDescription>Upload an Excel file to add multiple transactions at once.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ExcelImporter />
+                    </CardContent>
+                </Card>
+                
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Export to Excel</CardTitle>
+                        <CardDescription>Download your transaction history as an Excel spreadsheet.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ReportGenerator 
+                            accounts={accounts || []} 
+                            onAction={handleReportAction}
+                            isLoading={isLoading}
+                            progress={progress}
+                        />
+                    </CardContent>
+                </Card>
+
+                <BackupAndRestore />
+            </div>
         </div>
     );
 }

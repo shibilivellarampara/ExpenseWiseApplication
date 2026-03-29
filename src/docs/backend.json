@@ -1,5 +1,4 @@
 
-
 {
   "entities": {
     "UserProfile": {
@@ -61,43 +60,8 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Whether to show the 'Normal Total' summary."
-                },
-                 "showCategoryTable": {
-                  "type": "boolean",
-                  "default": true,
-                  "description": "Whether to show the 'Spending by Category' table."
-                },
-                "showTrendChart": {
-                  "type": "boolean",
-                  "default": true,
-                  "description": "Whether to show the 'Income vs. Expense Trend' chart."
-                },
-                "showCategoryBarChart": {
-                  "type": "boolean",
-                  "default": true,
-                  "description": "Whether to show the 'Top Spending Categories' bar chart."
-                },
-                "showTagPieChart": {
-                  "type": "boolean",
-                  "default": true,
-                  "description": "Whether to show the 'Spending by Tag' pie chart."
-                },
-                "showIncomePieChart": {
-                  "type": "boolean",
-                  "default": true,
-                  "description": "Whether to show the 'Income Sources' pie chart."
-                },
-                "showAiInsights": {
-                  "type": "boolean",
-                  "default": true,
-                  "description": "Whether to show the 'AI-Powered Insights' card."
                 }
             }
-        },
-        "sharedExpenseIds": {
-          "type": "array",
-          "description": "A list of IDs of the shared expenses this user is a member of.",
-          "items": { "type": "string" }
         },
         "isAdmin": {
           "type": "boolean",
@@ -127,8 +91,7 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "accountId": { "type": "string", "description": "Reference to the Account document ID." },
         "categoryId": { "type": "string", "description": "Reference to the Category document ID (for expenses)." },
-        "tagIds": { "type": "array", "items": { "type": "string" }, "description": "Reference to the Tag document IDs." },
-        "sharedExpenseId": { "type": "string", "description": "Reference to the SharedExpense this transaction belongs to." }
+        "tagIds": { "type": "array", "items": { "type": "string" }, "description": "Reference to the Tag document IDs." }
       },
       "required": ["id", "userId", "type", "amount", "date", "accountId"]
     },
@@ -174,7 +137,8 @@
         "id": { "type": "string" },
         "name": { "type": "string" },
         "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "userId": { "type": "string" }
+        "userId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the category." }
       },
       "required": ["name", "icon", "userId"]
     },
@@ -187,52 +151,10 @@
         "id": { "type": "string" },
         "name": { "type": "string" },
         "icon": { "type": "string", "description": "Name of the lucide-react icon." },
-        "userId": { "type": "string" }
+        "userId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"], "default": "active", "description": "The status of the tag." }
       },
       "required": ["name", "icon", "userId"]
-    },
-    "SharedExpense": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "SharedExpense",
-      "type": "object",
-      "description": "Represents a shared expense space where multiple users can add transactions.",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "ownerId": { "type": "string" },
-        "memberIds": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "joinId": { "type": "string", "description": "6-character unique code for joining." },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "name", "ownerId", "memberIds", "joinId"]
-    },
-    "Contribution": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Contribution",
-      "type": "object",
-      "description": "Represents a contribution record for shared expenses.",
-      "properties": {
-        "id": { "type": "string" },
-        "totalAmount": { "type": "number" },
-        "description": { "type": "string" },
-        "userId": { "type": "string" },
-        "date": { "type": "string", "format": "date-time" },
-        "paidById": { "type": "string" },
-        "contributorShares": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "userId": { "type": "string" },
-              "share": { "type": "number" }
-            }
-          }
-        }
-      },
-      "required": ["id", "totalAmount", "description", "userId", "date", "paidById"]
     },
     "Debt": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -254,7 +176,7 @@
     }
   },
   "auth": {
-    "providers": ["password", "anonymous", "phone", "google.com"]
+    "providers": ["password", "anonymous", "phone"]
   },
   "firestore": {
     "/users/{userId}": {
@@ -277,27 +199,13 @@
       "schema": { "$ref": "#/entities/Tag" },
       "description": "Stores user-defined expense tags."
     },
-    "/shared_expenses/{sharedExpenseId}": {
-      "schema": { "$ref": "#/entities/SharedExpense" },
-      "description": "Stores shared expense spaces, accessible by multiple users."
-    },
-    "/shared_expenses/{sharedExpenseId}/expenses/{expenseId}": {
-      "schema": { "$ref": "#/entities/Expense"},
-      "description": "Stores expense records for a specific shared space."
-    },
-    "/users/{userId}/contributions/{contributionId}": {
-        "schema": { "$ref": "#/entities/Contribution" },
-        "description": "Stores contribution records for shared expenses."
+    "/users/{userId}/debts/{debtId}": {
+        "schema": { "$ref": "#/entities/Debt" },
+        "description": "Stores debt and loan records for a user."
     },
     "/admin/{adminId}": {
         "schema": { "$ref": "#/entities/UserProfile" },
         "description": "Admin access control."
-    },
-    "/users/{userId}/debts/{debtId}": {
-        "schema": { "$ref": "#/entities/Debt" },
-        "description": "Stores debt and loan records for a user."
     }
   }
 }
-
-    

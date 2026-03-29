@@ -1,8 +1,9 @@
+
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
+import { getAuth, Auth, browserLocalPersistence, setPersistence } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { DependencyList, useMemo } from 'react';
@@ -13,18 +14,17 @@ export function initializeFirebase() {
     return { firebaseApp: null, auth: null, firestore: null, storage: null };
   }
 
+  let firebaseApp: FirebaseApp;
   if (getApps().length) {
-    const app = getApp();
-    return {
-      firebaseApp: app,
-      auth: getAuth(app),
-      firestore: getFirestore(app),
-      storage: getStorage(app),
-    };
+    firebaseApp = getApp();
+  } else {
+    firebaseApp = initializeApp(firebaseConfig);
   }
 
-  const firebaseApp = initializeApp(firebaseConfig);
   const auth = getAuth(firebaseApp);
+  // Set persistence here
+  setPersistence(auth, browserLocalPersistence);
+
   const firestore = getFirestore(firebaseApp);
   const storage = getStorage(firebaseApp);
 
@@ -51,3 +51,4 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
 
   return memoized;
 }
+

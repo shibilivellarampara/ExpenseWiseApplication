@@ -85,7 +85,6 @@ function FiltersContent({ filters, onFiltersChange, accounts, categories, tags, 
             from = startOfMonth(subMonths(now, 2));
             to = endOfMonth(now);
         } else {
-            // Billing Cycle
             const selectedAcc = accounts.find(a => a.id === filters.accounts[0]);
             if (!selectedAcc || selectedAcc.type !== 'credit_card' || !selectedAcc.cardDetails?.statementDate) return;
             

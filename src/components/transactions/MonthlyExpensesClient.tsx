@@ -156,6 +156,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
             setFilters(prev => ({
                 ...prev,
                 categories: [id],
+                tags: prev.tags,
                 accounts: [],
             }));
         } else if (type === 'tag'){
@@ -217,8 +218,8 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
     };
 
     return (
-        <div className="w-full space-y-2 pb-24">
-             <PageHeader title={pageTitle} description={`A summary of your transactions for ${pageTitle}.`}>
+        <div className="w-full space-y-4 pb-24">
+             <PageHeader description={`A summary of your transactions for ${pageTitle}.`}>
                 <Button variant="outline" asChild>
                     <Link href="/transactions">
                         <ArrowLeft className="mr-2 h-4 w-4" />
@@ -226,7 +227,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
                     </Link>
                 </Button>
             </PageHeader>
-            <div className="space-y-1.5 sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm pt-4">
+            <div className="space-y-4 sticky -top-4 md:-top-6 lg:-top-8 z-20 bg-background/95 backdrop-blur-sm pt-4">
                  <ExpensesSummary 
                     expenses={filteredAndEnrichedExpenses}
                     currency={userProfile?.defaultCurrency} 

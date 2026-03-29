@@ -6,9 +6,7 @@ import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebas
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Bell, Circle, CheckCheck, RefreshCw } from 'lucide-react';
-import { Logo } from '@/components/Logo';
-import pkg from '../../../package.json';
+import { Bell, Circle, RefreshCw } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Badge } from '@/components/ui/badge';
 import React, { useState, useEffect } from 'react';
@@ -16,16 +14,8 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Account } from '@/lib/types';
 import { collection, query, where } from 'firebase/firestore';
-import {
-  LayoutDashboard,
-  Wallet,
-  FileUp,
-  Settings,
-  ArrowRightLeft,
-  Info,
-  BarChartHorizontal,
-  HandCoins,
-} from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 const getPageTitle = (path: string): string => {
     if (path.startsWith('/admin/users')) return 'User Management';
@@ -41,6 +31,8 @@ const getPageTitle = (path: string): string => {
       { href: '/dashboard', label: 'Dashboard' },
       { href: '/transactions', label: 'Transactions' },
       { href: '/expenses', label: 'Transactions' },
+      { href: '/recurring', label: 'Recurring' },
+      { href: '/assets', label: 'Assets' },
     ];
     
     const item = navItems.find(item => path.startsWith(item.href));
@@ -94,7 +86,7 @@ function Notifications() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full hover:bg-muted">
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full hover:bg-muted focus-visible:ring-0 focus-visible:ring-offset-0 opacity-70 hover:opacity-100 transition-opacity">
                     <Bell className="h-[1.1rem] w-[1.1rem] text-muted-foreground" />
                     {unreadCount > 0 && (
                         <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
@@ -131,7 +123,7 @@ function DevReloadButton() {
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => window.location.reload()}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0 opacity-70 hover:opacity-100 transition-opacity" onClick={() => window.location.reload()}>
                         <RefreshCw className="h-[1.1rem] w-[1.1rem] text-muted-foreground" />
                     </Button>
                 </TooltipTrigger>
@@ -149,17 +141,21 @@ export function AppHeader() {
   const pageTitle = getPageTitle(pathname);
     
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border/40 bg-card/90 backdrop-blur-md px-4 md:px-6 shadow-sm">
-        <div className="md:hidden">
-            <Logo />
-        </div>
-        <div className="hidden md:block flex-1">
-             <h1 className="text-[15px] font-bold tracking-tight">{pageTitle}</h1>
+    <header className="sticky top-0 z-30 flex h-16 items-center border-b border-border/10 bg-background/95 backdrop-blur-md px-4 md:px-6 pt-[env(safe-area-inset-top)] animate-in fade-in duration-500">
+        <div className="flex-1 flex items-center gap-2.5">
+             <Link href="/dashboard" className="flex items-center">
+                <Image 
+                    src="/logo.png" 
+                    alt="Logo" 
+                    width={24} 
+                    height={24} 
+                    className="h-6 w-6 object-contain" 
+                />
+             </Link>
+             <h1 className="text-lg font-bold tracking-tight text-foreground">{pageTitle}</h1>
         </div>
         
-        <div className="flex-1 md:hidden" />
-        
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
             {isUserLoading ? (
                 <Skeleton className="h-8 w-8 rounded-full" />
             ) : (

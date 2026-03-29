@@ -19,7 +19,7 @@ import {
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, Settings, Moon, Sun, MessageSquare, Cog, Bot } from 'lucide-react';
+import { LogOut, Settings, Moon, Sun, MessageSquare, Cog, GlassWater } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { PageSettingsDialog } from "./PageSettingsDialog";
@@ -122,9 +122,9 @@ export function UserNav() {
                   <MessageSquare className="mr-2 h-4 w-4 text-muted-foreground" />
                   <span>Chat</span>
                 </DropdownMenuItem>
-                 <DropdownMenuItem onClick={() => setTheme("fintech")} className="rounded-lg p-2 cursor-pointer">
-                  <Bot className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>Fintech</span>
+                 <DropdownMenuItem onClick={() => setTheme("glass")}>
+                  <GlassWater className="mr-2 h-4 w-4" />
+                  <span>Liquid Glass</span>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>

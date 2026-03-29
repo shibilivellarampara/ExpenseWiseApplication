@@ -238,8 +238,6 @@ function ExpensesPageContent() {
 
     return (
         <div className="w-full space-y-4 pb-24">
-            <PageHeader title="Transactions" />
-
             <ExpensesSummary 
                 expenses={filteredAndEnrichedExpenses}
                 currency={userProfile?.defaultCurrency} 

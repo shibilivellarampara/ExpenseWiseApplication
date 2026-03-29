@@ -83,10 +83,6 @@ export default function AssetsPage() {
 
     return (
         <div className="w-full space-y-6 pb-32">
-            <div className="space-y-1">
-                <h1 className="text-3xl font-bold font-headline text-foreground">Assets</h1>
-            </div>
-
             <AssetsSummary 
                 totalNetAssets={totalNetAssets}
                 totalInvested={totalInvested}

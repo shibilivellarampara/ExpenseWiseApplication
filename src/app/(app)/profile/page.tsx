@@ -24,10 +24,6 @@ const settingsLinks = [
 export default function ProfilePage() {
     return (
         <div className="w-full space-y-8">
-            <PageHeader
-                title="Settings"
-                description="Manage your account settings and preferences."
-            />
              <Card>
                 <CardContent className="p-0">
                     <div className="space-y-0">

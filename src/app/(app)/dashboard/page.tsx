@@ -267,8 +267,6 @@ export default function DashboardPage() {
 
     return (
         <div className="w-full space-y-8">
-            <PageHeader title="Welcome Back!" description="Here's a summary of your financial activity." />
-      
             <NewUserCheck />
             
             {accounts && accounts.length > 0 && (

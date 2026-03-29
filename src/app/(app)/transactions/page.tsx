@@ -51,11 +51,6 @@ export default function TransactionsByMonthPage() {
     
     return (
         <div className="w-full space-y-8">
-            <PageHeader
-                title="Transactions by Month"
-                description="Select a month to view all its transactions."
-            />
-
             {isLoading ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, i) => (

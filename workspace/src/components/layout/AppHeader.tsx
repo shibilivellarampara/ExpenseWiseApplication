@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Bell, Circle, RefreshCw } from 'lucide-react';
-import { Logo } from '@/components/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Badge } from '@/components/ui/badge';
 import React, { useState, useEffect } from 'react';
@@ -15,6 +14,8 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Account } from '@/lib/types';
 import { collection, query, where } from 'firebase/firestore';
+import Image from 'next/image';
+import Link from 'next/link';
 
 const getPageTitle = (path: string): string => {
     if (path.startsWith('/admin/users')) return 'User Management';
@@ -141,7 +142,16 @@ export function AppHeader() {
     
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center border-b border-border/10 bg-background/95 backdrop-blur-md px-4 md:px-6 pt-[env(safe-area-inset-top)] animate-in fade-in duration-500">
-        <div className="flex-1">
+        <div className="flex-1 flex items-center gap-2.5">
+             <Link href="/dashboard" className="flex items-center">
+                <Image 
+                    src="/logo.png" 
+                    alt="Logo" 
+                    width={24} 
+                    height={24} 
+                    className="h-6 w-6 object-contain" 
+                />
+             </Link>
              <h1 className="text-lg font-bold tracking-tight text-foreground">{pageTitle}</h1>
         </div>
         

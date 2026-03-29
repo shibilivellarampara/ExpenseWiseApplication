@@ -123,11 +123,10 @@ export function BottomNav() {
     >
         <div className="relative mx-auto w-full px-4">
             
-            {/* Secondary Navigation Row (Liquid Glass) */}
             <div
                 className={cn(
                     "flex justify-around items-center bg-white/15 dark:bg-black/30 backdrop-blur-2xl border border-white/30 dark:border-white/10 rounded-full h-16 transition-all duration-500 ease-in-out py-1 mb-4 pointer-events-auto",
-                    isExpanded ? "opacity-100 translate-y-0 scale-100 shadow-[0_30px_60px_-12px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.25)]" : "opacity-0 translate-y-10 scale-95 pointer-events-none shadow-none"
+                    isExpanded ? "opacity-100 translate-y-0 scale-100 shadow-[0_30px_60px_-12px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.2)]" : "opacity-0 translate-y-10 scale-95 pointer-events-none shadow-none"
                 )}
             >
                 {secondaryNavItems.map(({ href, icon: Icon, label }) => (
@@ -143,7 +142,6 @@ export function BottomNav() {
                 ))}
             </div>
 
-            {/* Primary Navigation Container (Liquid Glass with Deep Depth Shadow) */}
              <div className="relative h-16 pointer-events-auto">
                 <div className="absolute inset-0 bg-white/15 dark:bg-black/30 backdrop-blur-2xl rounded-full shadow-[0_30px_60px_-12px_rgba(0,0,0,0.3),inset_0_1px_0_0_rgba(255,255,255,0.25)] border border-white/40 dark:border-white/10 flex items-center justify-around px-4">
                     <NavLink href="/dashboard" currentPath={pathname}>
@@ -173,7 +171,6 @@ export function BottomNav() {
                     </button>
                 </div>
             
-                {/* Liquid Action Button (with Scroll-Aware Scaling & Elevation) */}
                 <div className={cn(
                     "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[75%] h-[72px] w-[72px] flex items-center justify-center z-10 pointer-events-auto transition-all duration-500",
                     isScrollingDown ? "scale-90 opacity-80 -translate-y-[60%]" : "scale-100 opacity-100"

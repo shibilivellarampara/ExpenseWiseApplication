@@ -20,6 +20,19 @@ const appVersion = pkg.version;
 
 const changelog = [
     {
+        version: "1.10.0",
+        date: "Sep 19, 2026",
+        changes: [
+            { type: 'Security', description: "Hardened Firestore rules so every read/write is scoped to the signed-in owner, closing a gap that let any user grant themselves admin access." },
+            { type: 'DevEx', description: "Upgraded to Next.js 16 and React 19, and resolved several dependency security advisories." },
+            { type: 'Fix', description: "Recurring transactions now actually get created on their due dates instead of just tracking a schedule." },
+            { type: 'Fix', description: "Backup restore no longer risks data loss on a failed run, and large batch operations (restore, bulk delete, account reset) are now chunked to stay under Firestore's limits." },
+            { type: 'Fix', description: "Fixed the single-transaction delete button, credit card payment amount capping, and cleanup of transactions referencing a deleted category." },
+            { type: 'Fix', description: "Fixed a timing issue that could incorrectly bounce a legitimate admin out of the admin panel on cold load." },
+            { type: 'DevEx', description: "Removed unused legacy code (a duplicated dev copy of the app, and a half-removed Google Drive upload feature)." },
+        ]
+    },
+    {
         version: "1.9.0",
         date: "Feb 21, 2026",
         changes: [

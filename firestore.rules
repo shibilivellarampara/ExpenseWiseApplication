@@ -28,5 +28,44 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
     }
+
+    // --- Shared Expense Spaces ---
+    // A space's Firestore document ID IS its join code. Looking a space up by
+    // code is therefore a get()-by-ID, never a where()+list query — this is the
+    // fix for the join/list circularity bug that killed two prior attempts at
+    // this feature (see git history: e601f255, 80a8d0ef, 8b4d1dbb, 83bcbda1, 33299a02).
+    function isSharedMember(spaceId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/sharedSpaces/$(spaceId)/members/$(request.auth.uid));
+    }
+
+    function isSpaceOwner(spaceId) {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/sharedSpaces/$(spaceId)).data.ownerId == request.auth.uid;
+    }
+
+    match /sharedSpaces/{spaceId} {
+      // Any signed-in user may look up a space by its join code — a get()-by-ID
+      // only. `list` is fully closed, so codes can never be enumerated.
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isSharedMember(spaceId) && resource.data.ownerId == request.auth.uid;
+      allow delete: if resource.data.ownerId == request.auth.uid;
+
+      match /members/{userId} {
+        // isSharedMember lets existing members read each other's membership doc
+        // (member list, "paid by" lookups). isOwner(userId) is what makes the
+        // collection-group "list my spaces" query work — and is also what lets a
+        // brand-new joiner read/write their OWN not-yet-created membership doc.
+        allow read: if isSharedMember(spaceId) || isOwner(userId);
+        allow create, update: if isOwner(userId);
+        allow delete: if isOwner(userId) || isSpaceOwner(spaceId);
+      }
+
+      match /expenses/{expenseId} {
+        allow read, write: if isSharedMember(spaceId);
+      }
+    }
   }
 }

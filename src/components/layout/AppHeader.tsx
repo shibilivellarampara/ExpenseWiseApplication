@@ -33,6 +33,7 @@ const getPageTitle = (path: string): string => {
       { href: '/expenses', label: 'Transactions' },
       { href: '/recurring', label: 'Recurring' },
       { href: '/assets', label: 'Assets' },
+      { href: '/shared', label: 'Shared Spaces' },
     ];
     
     const item = navItems.find(item => path.startsWith(item.href));

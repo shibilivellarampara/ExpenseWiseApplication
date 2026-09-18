@@ -10,12 +10,11 @@ import { FileDown, Loader2, Share2, ClipboardCopy, UploadCloud } from 'lucide-re
 import { Label } from '../ui/label';
 import { Progress } from '../ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { uploadToGoogleDrive } from '@/ai/flows/upload-to-google-drive';
 import * as XLSX from 'xlsx';
 
 interface ReportGeneratorProps {
     accounts: Account[];
-    onAction: (accountId: string, format: 'excel' | 'share' | 'gdrive', template: string) => Promise<any>;
+    onAction: (accountId: string, format: 'excel' | 'share', template: string) => Promise<any>;
     isLoading: boolean;
     progress: number;
 }

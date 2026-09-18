@@ -166,7 +166,6 @@ export type SharedSpace = {
   id: string; // == the join code itself (7-digit numeric string), Firestore doc ID
   name: string;
   ownerId: string;
-  memberCount: number;
   createdAt: Timestamp;
 };
 

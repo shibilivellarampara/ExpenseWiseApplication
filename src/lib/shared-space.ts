@@ -37,7 +37,6 @@ export async function createSharedSpace(
         tx.set(spaceRef, {
           name,
           ownerId: uid,
-          memberCount: 1,
           createdAt: serverTimestamp(),
         });
         tx.set(memberRef, {

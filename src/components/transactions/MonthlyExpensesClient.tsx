@@ -176,15 +176,16 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
         }
     };
     
-    const handleDeleteSelected = async () => {
-        if (!user || !firestore || selectedExpenseIds.length === 0) return;
+    const handleDeleteSelected = async (ids?: string[]) => {
+        const idsToDelete = ids ?? selectedExpenseIds;
+        if (!user || !firestore || idsToDelete.length === 0) return;
 
         setIsDeleting(true);
         try {
             const batch = writeBatch(firestore);
             const accountBalanceUpdates = new Map<string, number>();
 
-            selectedExpenseIds.forEach(id => {
+            idsToDelete.forEach(id => {
                 const expense = filteredAndEnrichedExpenses.find(e => e.id === id);
                 if (expense && expense.account) {
                     const expenseRef = doc(firestore, `users/${user.uid}/expenses`, id);
@@ -205,7 +206,7 @@ export function MonthlyExpensesClient({ year, month }: MonthlyExpensesClientProp
 
             await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);
             toast({
-                title: `${selectedExpenseIds.length} Transaction(s) Deleted`,
+                title: `${idsToDelete.length} Transaction(s) Deleted`,
                 description: "The selected transactions have been removed.",
             });
             setSelectedExpenseIds([]);

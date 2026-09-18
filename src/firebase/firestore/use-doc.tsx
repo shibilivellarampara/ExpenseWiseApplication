@@ -44,20 +44,22 @@ export function useDoc<T = any>(
   type StateDataType = WithId<T> | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+  // Tracks the ref for which we've last received a snapshot (or error), so isLoading
+  // can be derived synchronously during render instead of lagging a render behind via
+  // an effect-driven flag — otherwise callers see isLoading=false for one render right
+  // after memoizedDocRef first becomes non-null, before data has actually loaded.
+  const [settledForRef, setSettledForRef] = useState<DocumentReference<DocumentData> | null>(null);
 
   useEffect(() => {
     if (!memoizedDocRef) {
       setData(null);
-      setIsLoading(false);
       setError(null);
+      setSettledForRef(null);
       return;
     }
 
-    setIsLoading(true);
     setError(null);
-    // Optional: setData(null); // Clear previous data instantly
 
     const unsubscribe = onSnapshot(
       memoizedDocRef,
@@ -69,7 +71,7 @@ export function useDoc<T = any>(
           setData(null);
         }
         setError(null); // Clear any previous error on successful snapshot (even if doc doesn't exist)
-        setIsLoading(false);
+        setSettledForRef(memoizedDocRef);
       },
       (error: FirestoreError) => {
         const contextualError = new FirestorePermissionError({
@@ -79,7 +81,7 @@ export function useDoc<T = any>(
 
         setError(contextualError)
         setData(null)
-        setIsLoading(false)
+        setSettledForRef(memoizedDocRef);
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
@@ -88,6 +90,8 @@ export function useDoc<T = any>(
 
     return () => unsubscribe();
   }, [memoizedDocRef]); // Re-run if the memoizedDocRef changes.
+
+  const isLoading = !!memoizedDocRef && settledForRef !== memoizedDocRef;
 
   return { data, isLoading, error };
 }

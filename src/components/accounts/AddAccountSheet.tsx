@@ -58,11 +58,11 @@ const accountSchemaBase = z.object({
 });
 
 const accountSchema = accountSchemaBase.refine(data => {
-    if (data.type !== 'credit_card') return true;
-    return true;
+    if (data.type !== 'credit_card' || !data.limit) return true;
+    return data.balance <= data.limit;
 }, {
-    message: "Check limit settings.",
-    path: ["limit"],
+    message: "Outstanding amount cannot exceed the credit limit.",
+    path: ["balance"],
 });
 
 type AccountFormData = z.infer<typeof accountSchema>;

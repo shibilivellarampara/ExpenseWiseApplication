@@ -383,9 +383,16 @@ function ExpenseForm({ form, onSubmit, id, accounts, categories, tags, isEditMod
                     selectedTagNames: selectedTags.map(t => t.name),
                 });
                 
-                if (suggestions.categoryId && !form.getFieldState('categoryId').isDirty) form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
-                if (suggestions.accountId && !form.getFieldState('accountId').isDirty) form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
-                if (suggestions.tagIds && !form.getFieldState('tagIds').isDirty) form.setValue('tagIds', suggestions.tagIds, { shouldValidate: true });
+                if (suggestions.categoryId && activeCategories.some(c => c.id === suggestions.categoryId) && !form.getFieldState('categoryId').isDirty) {
+                    form.setValue('categoryId', suggestions.categoryId, { shouldValidate: true });
+                }
+                if (suggestions.accountId && activeAccounts.some(a => a.id === suggestions.accountId) && !form.getFieldState('accountId').isDirty) {
+                    form.setValue('accountId', suggestions.accountId, { shouldValidate: true });
+                }
+                if (suggestions.tagIds && !form.getFieldState('tagIds').isDirty) {
+                    const validTagIds = suggestions.tagIds.filter(id => activeTags.some(t => t.id === id));
+                    if (validTagIds.length > 0) form.setValue('tagIds', validTagIds, { shouldValidate: true });
+                }
                 
                 if (suggestions.description && suggestions.description !== debouncedDescription && !form.getFieldState('description').isDirty) {
                     form.setValue('description', suggestions.description, { shouldValidate: true });
@@ -644,10 +651,14 @@ function useExpenseForm({ setOpen, expenseToEdit, initialType, open, onSaveSucce
             const batch = writeBatch(firestore);
             const amountReversal = expenseToEdit.type === 'income' ? -expenseToEdit.amount : expenseToEdit.amount;
             batch.delete(doc(firestore, `users/${user.uid}/expenses`, expenseToEdit.id));
-            batch.update(doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account!.id), { balance: increment(amountReversal) });
+            if (expenseToEdit.account?.id) {
+                batch.update(doc(firestore, `users/${user.uid}/accounts`, expenseToEdit.account.id), { balance: increment(amountReversal) });
+            }
             await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);
             setOpen(false);
             onSaveSuccess?.();
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Error Deleting Transaction' });
         } finally { setLoadingState('idle'); }
     }
 

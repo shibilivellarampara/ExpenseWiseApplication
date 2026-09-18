@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,15 @@ export function MergeItemsDialog({ open, onOpenChange, children, items, itemType
     const [newIcon, setNewIcon] = useState(itemType === 'Category' ? 'Shapes' : 'Tag');
     const [newAccountType, setNewAccountType] = useState<Account['type']>('bank');
 
+    useEffect(() => {
+        if (open) {
+            setMergeOption('existing');
+            setTargetId(items[0]?.id || '');
+            setNewName('');
+            setNewIcon(itemType === 'Category' ? 'Shapes' : 'Tag');
+            setNewAccountType('bank');
+        }
+    }, [open]);
 
     const renderIcon = (iconName: string) => {
         const IconComponent = (LucideIcons as any)[iconName];

@@ -18,7 +18,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase, errorEmitter, FirestorePermissionError, commitBatchNonBlocking } from "@/firebase";
 import { Account } from "@/lib/types";
-import { collection, doc, writeBatch, getDocs, query, where, deleteDoc } from "firebase/firestore";
+import { collection, doc, writeBatch, getDocs, query, where, deleteDoc, DocumentReference, Firestore } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertTriangle, Trash2 } from "lucide-react";
@@ -30,6 +30,16 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 
 type DeletableCollection = 'expenses' | 'accounts' | 'categories' | 'tags' | 'debts' | 'assets' | 'recurringExpenses';
+
+// A single writeBatch supports at most 500 mutations, which any user with a real amount
+// of data (expenses, accounts, etc. combined) can exceed. Chunk deletes into multiple batches.
+async function commitDeletesInChunks(firestore: Firestore, refs: DocumentReference[], contextPath: string) {
+    for (let i = 0; i < refs.length; i += 450) {
+        const batch = writeBatch(firestore);
+        refs.slice(i, i + 450).forEach(ref => batch.delete(ref));
+        await commitBatchNonBlocking(batch, contextPath);
+    }
+}
 
 const collectionLabels: Record<DeletableCollection, string> = {
     expenses: 'Transactions',
@@ -105,11 +115,10 @@ export function DataManagementSettings() {
         setIsResetting(true);
         setResetProgress(0);
         try {
-            const batch = writeBatch(firestore);
             const snapshots = await Promise.all(collectionsToReset.map(c => getDocs(collection(firestore, `users/${user.uid}/${c}`))));
-            snapshots.forEach(snapshot => snapshot.docs.forEach(doc => batch.delete(doc.ref)));
+            const refs = snapshots.flatMap(snapshot => snapshot.docs.map(d => d.ref));
 
-            await commitBatchNonBlocking(batch, `users/${user.uid}`);
+            await commitDeletesInChunks(firestore, refs, `users/${user.uid}`);
             setResetProgress(100);
 
             toast({ title: 'Data Cleared', description: 'Selected data has been deleted.' });
@@ -128,8 +137,8 @@ export function DataManagementSettings() {
         setIsClearingAccount(true);
         
         try {
-            const batch = writeBatch(firestore);
             let q, actionText = '';
+            const refsToDelete: DocumentReference[] = [];
 
             const expensesCol = collection(firestore, `users/${user.uid}/expenses`);
 
@@ -140,17 +149,16 @@ export function DataManagementSettings() {
                 const accountToClear = accounts?.find(a => a.id === selectedAccountToClear);
                 if (!accountToClear) throw new Error('Selected account not found.');
                 q = query(expensesCol, where('accountId', '==', selectedAccountToClear));
-                
-                const accountRef = doc(firestore, `users/${user.uid}/accounts`, selectedAccountToClear);
-                batch.delete(accountRef);
+
+                refsToDelete.push(doc(firestore, `users/${user.uid}/accounts`, selectedAccountToClear));
                 actionText = `Account "${accountToClear.name}" and its transactions have been deleted.`;
             }
 
             const expensesSnapshot = await getDocs(q);
-            expensesSnapshot.forEach(expenseDoc => batch.delete(expenseDoc.ref));
-            
-            await commitBatchNonBlocking(batch, `users/${user.uid}`);
-            
+            expensesSnapshot.forEach(expenseDoc => refsToDelete.push(expenseDoc.ref));
+
+            await commitDeletesInChunks(firestore, refsToDelete, `users/${user.uid}`);
+
             toast({ title: 'Data Cleared', description: actionText });
             setSelectedAccountToClear(null);
             setTransactionCount(null);
@@ -170,18 +178,11 @@ export function DataManagementSettings() {
         const collectionsToDelete: DeletableCollection[] = ['expenses', 'accounts', 'categories', 'tags', 'debts', 'assets', 'recurringExpenses'];
         
         try {
-            const batch = writeBatch(firestore);
-            
-            for (const collectionName of collectionsToDelete) {
-                 const colRef = collection(firestore, `users/${user.uid}/${collectionName}`);
-                 const snapshot = await getDocs(colRef);
-                 snapshot.docs.forEach(d => batch.delete(d.ref));
-            }
-            
-            const userProfileRef = doc(firestore, `users/${user.uid}`);
-            batch.delete(userProfileRef);
+            const snapshots = await Promise.all(collectionsToDelete.map(c => getDocs(collection(firestore, `users/${user.uid}/${c}`))));
+            const refs = snapshots.flatMap(snapshot => snapshot.docs.map(d => d.ref));
+            refs.push(doc(firestore, `users/${user.uid}`));
 
-            await commitBatchNonBlocking(batch, `/users/${user.uid}`);
+            await commitDeletesInChunks(firestore, refs, `/users/${user.uid}`);
             setResetProgress(100);
             
             await deleteUser(auth.currentUser);

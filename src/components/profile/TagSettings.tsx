@@ -8,7 +8,10 @@ import { collection, doc, writeBatch, query, getDocs, where, arrayRemove } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, Merge, Archive, Eye, EyeOff, RotateCw, Search } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Edit, Check, X, Pilcrow, Merge, Archive, Eye, EyeOff, RotateCw, Search, Link2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { LinkTagToSharedSpaceDialog } from '@/components/profile/LinkTagToSharedSpaceDialog';
+import { useMySharedSpaces } from '@/hooks/use-my-shared-spaces';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { availableIcons } from '@/lib/defaults';
@@ -32,6 +35,8 @@ export function TagSettings() {
     , [firestore, user]);
 
     const { data: items, isLoading } = useCollection<Tag>(queryHook);
+    const { spaces: mySharedSpaces } = useMySharedSpaces(firestore, user?.uid);
+    const linkedSpaceName = (spaceId?: string) => mySharedSpaces.find(s => s.id === spaceId)?.name;
 
     const [newItemName, setNewItemName] = useState('');
     const [newItemIcon, setNewItemIcon] = useState('Tag');
@@ -380,7 +385,17 @@ export function TagSettings() {
                                             <>
                                                 <div className="flex items-center flex-1 gap-2">
                                                     <span className="text-[15px]">{item.name}</span>
+                                                    {item.linkedSharedSpaceId && (
+                                                        <Badge variant="outline" className="text-[9px] font-bold uppercase gap-1">
+                                                            <Link2 className="h-2.5 w-2.5" /> {linkedSpaceName(item.linkedSharedSpaceId) || 'Linked'}
+                                                        </Badge>
+                                                    )}
                                                 </div>
+                                                <LinkTagToSharedSpaceDialog tag={item}>
+                                                    <Button variant="ghost" size="icon" type="button">
+                                                        <Link2 className="h-4 w-4" />
+                                                    </Button>
+                                                </LinkTagToSharedSpaceDialog>
                                                 <Button variant="ghost" size="icon" type="button" onClick={() => setEditingItem(item)}>
                                                     <Edit className="h-4 w-4" />
                                                 </Button>

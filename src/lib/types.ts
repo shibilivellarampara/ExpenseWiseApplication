@@ -77,6 +77,7 @@ export type Tag = {
   icon: string; // lucide-react icon name
   userId: string;
   status?: 'active' | 'inactive';
+  linkedSharedSpaceId?: string;
 }
 
 export type Expense = {
@@ -180,6 +181,20 @@ export type SharedSpaceMember = {
   joinedAt: Timestamp;
 };
 
+export type SharedCategory = {
+  id: string;
+  spaceId: string;
+  name: string;
+  icon: string;
+};
+
+export type SharedTag = {
+  id: string;
+  spaceId: string;
+  name: string;
+  icon: string;
+};
+
 export type SharedExpense = {
   id: string;
   spaceId: string;
@@ -187,13 +202,18 @@ export type SharedExpense = {
   createdByUid: string;
   amount: number;
   description?: string;
+  categoryId?: string;
+  tagIds?: string[];
   date: Timestamp;
   createdAt: Timestamp;
+  mirroredFromPersonal?: boolean;
 };
 
-export type EnrichedSharedExpense = Omit<SharedExpense, 'date' | 'paidByUid'> & {
+export type EnrichedSharedExpense = Omit<SharedExpense, 'date' | 'paidByUid' | 'categoryId' | 'tagIds'> & {
   date: Date;
   paidBy?: SharedSpaceMember;
+  category?: SharedCategory;
+  tags: SharedTag[];
 };
 
 export interface TagStat {

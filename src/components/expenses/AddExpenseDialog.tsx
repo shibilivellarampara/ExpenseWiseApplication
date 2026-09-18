@@ -34,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useDoc, useFirestore, useUser, useCollection, useMemoFirebase, setDocumentNonBlocking, commitBatchNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp, writeBatch, increment, query, orderBy, Timestamp } from 'firebase/firestore';
 import { UserProfile, Category, Tag, Account, EnrichedExpense } from '@/lib/types';
+import { getLinkedSpaceIds, addExpenseMirrorToBatch } from '@/lib/shared-space';
 import * as LucideIcons from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -629,6 +630,22 @@ function useExpenseForm({ setOpen, expenseToEdit, initialType, open, onSaveSucce
                 batch.update(expenseRef, finalData);
             } else {
                 batch.set(expenseRef, finalData);
+            }
+
+            // If this new expense carries a tag linked to a shared space, mirror it
+            // in as part of the same atomic batch. Create-only, one-way, point-in-time
+            // — edits/deletes here don't propagate (see LinkTagToSharedSpaceDialog).
+            if (!isEditMode && values.type === 'expense') {
+                const linkedSpaceIds = getLinkedSpaceIds(values.tagIds, tags || []);
+                linkedSpaceIds.forEach((spaceId) => {
+                    addExpenseMirrorToBatch(batch, firestore, spaceId, {
+                        id: expenseRef.id,
+                        userId: user.uid,
+                        amount: values.amount,
+                        description: values.description,
+                        date: values.date,
+                    });
+                });
             }
 
             await commitBatchNonBlocking(batch, `users/${user.uid}/expenses`);

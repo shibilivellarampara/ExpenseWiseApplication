@@ -22,18 +22,29 @@ import { Loader2 } from 'lucide-react';
 import { useFirestore, useUser, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { DateTimePicker } from '@/components/DateTimePicker';
-import { SharedSpaceMember } from '@/lib/types';
+import { SharedSpaceMember, SharedCategory, SharedTag } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 const sharedExpenseSchema = z.object({
   amount: z.coerce.number().positive('Amount must be greater than zero.'),
   description: z.string().optional(),
   date: z.date(),
   paidByUid: z.string().min(1, 'Select who paid.'),
+  categoryId: z.string().optional(),
+  tagIds: z.array(z.string()).optional(),
 });
 
 type SharedExpenseFormData = z.infer<typeof sharedExpenseSchema>;
 
-export function AddSharedExpenseDialog({ spaceId, members, children }: { spaceId: string; members: SharedSpaceMember[]; children: React.ReactNode }) {
+interface AddSharedExpenseDialogProps {
+  spaceId: string;
+  members: SharedSpaceMember[];
+  categories: SharedCategory[];
+  tags: SharedTag[];
+  children: React.ReactNode;
+}
+
+export function AddSharedExpenseDialog({ spaceId, members, categories, tags, children }: AddSharedExpenseDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useUser();
@@ -47,13 +58,15 @@ export function AddSharedExpenseDialog({ spaceId, members, children }: { spaceId
       description: '',
       date: new Date(),
       paidByUid: user?.uid || '',
+      categoryId: '',
+      tagIds: [],
     },
   });
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
     if (nextOpen) {
-      form.reset({ amount: '' as any, description: '', date: new Date(), paidByUid: user?.uid || '' });
+      form.reset({ amount: '' as any, description: '', date: new Date(), paidByUid: user?.uid || '', categoryId: '', tagIds: [] });
     }
   };
 
@@ -71,6 +84,8 @@ export function AddSharedExpenseDialog({ spaceId, members, children }: { spaceId
         description: values.description || '',
         date: values.date,
         createdAt: serverTimestamp(),
+        ...(values.categoryId ? { categoryId: values.categoryId } : {}),
+        ...(values.tagIds && values.tagIds.length > 0 ? { tagIds: values.tagIds } : {}),
       });
       toast({ title: 'Shared Expense Added' });
       setOpen(false);
@@ -84,7 +99,7 @@ export function AddSharedExpenseDialog({ spaceId, members, children }: { spaceId
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Shared Expense</DialogTitle>
           <DialogDescription>Visible to everyone in this space.</DialogDescription>
@@ -152,6 +167,60 @@ export function AddSharedExpenseDialog({ spaceId, members, children }: { spaceId
                 </FormItem>
               )}
             />
+            {categories.length > 0 && (
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            {tags.length > 0 && (
+              <FormField
+                control={form.control}
+                name="tagIds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tags</FormLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag) => {
+                        const selected = (field.value || []).includes(tag.id);
+                        return (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={() => field.onChange(selected ? (field.value || []).filter((id) => id !== tag.id) : [...(field.value || []), tag.id])}
+                            className={cn(
+                              'text-xs font-medium px-3 py-1.5 rounded-full border transition-colors',
+                              selected ? 'bg-primary text-primary-foreground border-primary' : 'bg-transparent border-input hover:bg-muted'
+                            )}
+                          >
+                            {tag.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={isSaving}>

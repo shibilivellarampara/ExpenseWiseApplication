@@ -71,6 +71,14 @@ service cloud.firestore {
       match /expenses/{expenseId} {
         allow read, write: if isSharedMember(spaceId);
       }
+
+      match /categories/{categoryId} {
+        allow read, write: if isSharedMember(spaceId);
+      }
+
+      match /tags/{tagId} {
+        allow read, write: if isSharedMember(spaceId);
+      }
     }
   }
 }

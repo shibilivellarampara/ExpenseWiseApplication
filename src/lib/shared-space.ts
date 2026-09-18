@@ -5,6 +5,7 @@ import {
   doc,
   runTransaction,
   serverTimestamp,
+  arrayUnion,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -28,6 +29,7 @@ export async function createSharedSpace(
     const code = generateJoinCode();
     const spaceRef = doc(firestore, 'sharedSpaces', code);
     const memberRef = doc(firestore, `sharedSpaces/${code}/members`, uid);
+    const userRef = doc(firestore, 'users', uid);
     try {
       await runTransaction(firestore, async (tx) => {
         const snap = await tx.get(spaceRef);
@@ -47,6 +49,7 @@ export async function createSharedSpace(
           isOwner: true,
           joinedAt: serverTimestamp(),
         });
+        tx.set(userRef, { sharedSpaceIds: arrayUnion(code) }, { merge: true });
       });
       return code;
     } catch (e) {

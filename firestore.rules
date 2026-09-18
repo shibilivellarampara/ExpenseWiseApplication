@@ -56,13 +56,13 @@ service cloud.firestore {
       match /members/{userId} {
         // isSharedMember lets existing members read each other's membership doc
         // (member list, "paid by" lookups). isOwner(userId) covers a get()-by-ID
-        // (e.g. checking your own membership before mounting the rest of a
-        // space's data). The "list my spaces" collection-group query filters on
-        // the `uid` FIELD (not the path segment) — Firestore's `list` rule
-        // provability requires the rule to reference the same field the query
-        // filters on, so resource.data.uid == request.auth.uid is what actually
-        // makes that query work.
-        allow read: if isSharedMember(spaceId) || isOwner(userId) || resource.data.uid == request.auth.uid;
+        // of your own membership doc (e.g. checking whether you belong to a
+        // space before mounting the rest of its data). "Which spaces am I in"
+        // is tracked via UserProfile.sharedSpaceIds (covered by the existing
+        // /users/{userId} isOwner rule) rather than a collection-group query
+        // here — collectionGroup() + documentId()/field-filter rules turned out
+        // to be a genuinely fragile combination for this, not worth the risk.
+        allow read: if isSharedMember(spaceId) || isOwner(userId);
         allow create: if isOwner(userId) && request.resource.data.uid == userId;
         allow update: if isOwner(userId);
         allow delete: if isOwner(userId) || isSpaceOwner(spaceId);

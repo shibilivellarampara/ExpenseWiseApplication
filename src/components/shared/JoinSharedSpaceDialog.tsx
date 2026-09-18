@@ -17,7 +17,7 @@ import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useUser, commitBatchNonBlocking } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { doc, getDoc, writeBatch, increment, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, writeBatch, increment, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { JOIN_CODE_LENGTH } from '@/lib/shared-space';
 
 export function JoinSharedSpaceDialog({ children }: { children: React.ReactNode }) {
@@ -61,6 +61,7 @@ export function JoinSharedSpaceDialog({ children }: { children: React.ReactNode 
         joinedAt: serverTimestamp(),
       });
       batch.update(spaceRef, { memberCount: increment(1) });
+      batch.set(doc(firestore, 'users', user.uid), { sharedSpaceIds: arrayUnion(code) }, { merge: true });
       await commitBatchNonBlocking(batch, `sharedSpaces/${code}`);
 
       toast({ title: 'Joined Shared Space' });

@@ -14,6 +14,7 @@ import {
   Briefcase,
   Repeat,
   Settings,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -32,6 +33,7 @@ const secondaryNavItems = [
     { href: '/debts', icon: HandCoins, label: 'Debts'},
     { href: '/assets', icon: Briefcase, label: 'Assets'},
     { href: '/recurring', icon: Repeat, label: 'Recurring'},
+    { href: '/shared', icon: Users, label: 'Shared'},
     { href: '/profile', icon: Settings, label: 'Settings'},
 ];
 

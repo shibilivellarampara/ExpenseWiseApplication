@@ -161,6 +161,41 @@ export type EnrichedAsset = Omit<Asset, 'startDate' | 'lastUpdated'> & {
     lastUpdated: Date;
 };
 
+export type SharedSpace = {
+  id: string; // == the join code itself (7-digit numeric string), Firestore doc ID
+  name: string;
+  ownerId: string;
+  memberCount: number;
+  createdAt: Timestamp;
+};
+
+export type SharedSpaceMember = {
+  id: string; // == uid
+  uid: string;
+  spaceId: string;
+  spaceName: string;
+  displayName: string | null;
+  photoURL: string | null;
+  isOwner: boolean;
+  joinedAt: Timestamp;
+};
+
+export type SharedExpense = {
+  id: string;
+  spaceId: string;
+  paidByUid: string;
+  createdByUid: string;
+  amount: number;
+  description?: string;
+  date: Timestamp;
+  createdAt: Timestamp;
+};
+
+export type EnrichedSharedExpense = Omit<SharedExpense, 'date' | 'paidByUid'> & {
+  date: Date;
+  paidBy?: SharedSpaceMember;
+};
+
 export interface TagStat {
     name: string;
     amount: number;

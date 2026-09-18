@@ -158,22 +158,22 @@ export function AddRecurringDialog({ children, itemToEdit }: { children: React.R
         setIsLoading(true);
         if (!firestore || !user) return;
 
-        const recurringData = {
-            ...values,
-            userId: user.uid,
-            status: itemToEdit?.status || 'active',
-            nextDueDate: values.startDate,
-            createdAt: serverTimestamp(),
-        };
-
         try {
             if (isEditMode && itemToEdit) {
+                // Deliberately omit nextDueDate/lastCreatedDate/createdAt here — editing a
+                // field on an existing item shouldn't reset its schedule or creation time.
                 const docRef = doc(firestore, `users/${user.uid}/recurringExpenses`, itemToEdit.id);
-                await setDocumentNonBlocking(docRef, recurringData, { merge: true });
+                await setDocumentNonBlocking(docRef, { ...values, userId: user.uid }, { merge: true });
                 toast({ title: 'Recurring item updated' });
             } else {
                 const colRef = collection(firestore, `users/${user.uid}/recurringExpenses`);
-                await addDocumentNonBlocking(colRef, recurringData);
+                await addDocumentNonBlocking(colRef, {
+                    ...values,
+                    userId: user.uid,
+                    status: 'active',
+                    nextDueDate: values.startDate,
+                    createdAt: serverTimestamp(),
+                });
                 toast({ title: 'Recurring item added' });
             }
             setOpen(false);

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, writeBatch, doc, query, where, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, getDoc, writeBatch, doc, Timestamp, DocumentReference } from 'firebase/firestore';
 import { Loader2, Download, Upload, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -43,9 +43,9 @@ export function BackupAndRestore() {
             
             for (const collectionName of COLLECTIONS_TO_BACKUP) {
                 if (collectionName === 'userProfile') {
-                     const docSnap = await getDocs(query(collection(firestore, 'users'), where('id', '==', user.uid)));
-                    if (!docSnap.empty) {
-                        backupData.userProfile = docSnap.docs[0].data();
+                    const docSnap = await getDoc(doc(firestore, 'users', user.uid));
+                    if (docSnap.exists()) {
+                        backupData.userProfile = docSnap.data();
                     }
                 } else {
                     const colRef = collection(firestore, `users/${user.uid}/${collectionName}`);
@@ -117,55 +117,78 @@ export function BackupAndRestore() {
         setProgress(0);
 
         try {
-            // Step 1: Delete all existing data
-            const deleteBatch = writeBatch(firestore);
-            for (const collectionName of COLLECTIONS_TO_BACKUP) {
-                 if (collectionName === 'userProfile') continue; // Don't delete the user doc itself
-                 const colRef = collection(firestore, `users/${user.uid}/${collectionName}`);
-                 const snapshot = await getDocs(colRef);
-                 snapshot.docs.forEach(d => deleteBatch.delete(d.ref));
-            }
-            await deleteBatch.commit();
-            setProgress(50);
+            const processItem = (item: any, dateFields: string[]) => {
+                const processedItem = { ...item };
+                dateFields.forEach(field => {
+                    if (processedItem[field] && typeof processedItem[field] === 'string') {
+                        processedItem[field] = Timestamp.fromDate(new Date(processedItem[field]));
+                    } else if (processedItem[field] && typeof processedItem[field] === 'object' && 'seconds' in processedItem[field]) {
+                        // Already a Firestore-like timestamp object
+                        processedItem[field] = new Timestamp(processedItem[field].seconds, processedItem[field].nanoseconds);
+                    }
+                });
+                return processedItem;
+            };
 
-            // Step 2: Restore from backup
-            const restoreBatch = writeBatch(firestore);
+            // Write the backup's data first — deleting current data up front (as this used
+            // to do) means a failure partway through (e.g. exceeding Firestore's 500-mutation
+            // batch limit) permanently wipes the account with nothing restored. Writing first
+            // means a failure here leaves the user's original data intact instead.
+            const writeOps: { ref: DocumentReference; data: any; merge: boolean }[] = [];
+            const restoredIdsByCollection: Record<string, Set<string>> = {};
+
             for (const collectionName of COLLECTIONS_TO_BACKUP) {
                 const dataToRestore = restoreData[collectionName];
+                if (!dataToRestore) continue;
                 const dateFields = DATE_FIELDS_BY_COLLECTION[collectionName] || [];
 
-                if (dataToRestore) {
-                     const processItem = (item: any) => {
-                        const processedItem = { ...item };
-                        dateFields.forEach(field => {
-                            if (processedItem[field] && typeof processedItem[field] === 'string') {
-                                processedItem[field] = Timestamp.fromDate(new Date(processedItem[field]));
-                            } else if (processedItem[field] && typeof processedItem[field] === 'object' && 'seconds' in processedItem[field]) {
-                                // Already a Firestore-like timestamp object
-                                processedItem[field] = new Timestamp(processedItem[field].seconds, processedItem[field].nanoseconds);
-                            }
-                        });
-                        return processedItem;
-                    };
-
-                    if (collectionName === 'userProfile') {
-                        const docRef = doc(firestore, 'users', user.uid);
-                        const { id, email, ...profileData } = processItem(dataToRestore);
-                        restoreBatch.set(docRef, profileData, { merge: true });
-                    } else {
-                        dataToRestore.forEach((itemData: any) => {
-                             if(itemData.id) {
-                                const itemRef = doc(firestore, `users/${user.uid}/${collectionName}`, itemData.id);
-                                restoreBatch.set(itemRef, processItem(itemData));
-                             }
-                        });
-                    }
+                if (collectionName === 'userProfile') {
+                    const docRef = doc(firestore, 'users', user.uid);
+                    const { id, email, ...profileData } = processItem(dataToRestore, dateFields);
+                    writeOps.push({ ref: docRef, data: profileData, merge: true });
+                } else {
+                    restoredIdsByCollection[collectionName] = new Set();
+                    dataToRestore.forEach((itemData: any) => {
+                        if (itemData.id) {
+                            restoredIdsByCollection[collectionName].add(itemData.id);
+                            const itemRef = doc(firestore, `users/${user.uid}/${collectionName}`, itemData.id);
+                            writeOps.push({ ref: itemRef, data: processItem(itemData, dateFields), merge: false });
+                        }
+                    });
                 }
             }
-            await restoreBatch.commit();
+
+            for (let i = 0; i < writeOps.length; i += 450) {
+                const batch = writeBatch(firestore);
+                writeOps.slice(i, i + 450).forEach(({ ref, data, merge }) => {
+                    batch.set(ref, data, { merge });
+                });
+                await batch.commit();
+                setProgress(Math.min(80, ((i + 450) / Math.max(writeOps.length, 1)) * 80));
+            }
+
+            // Now remove any documents that exist but weren't part of the backup, so the
+            // account matches the backup's snapshot exactly.
+            const deleteRefs: DocumentReference[] = [];
+            for (const collectionName of Object.keys(restoredIdsByCollection)) {
+                const colRef = collection(firestore, `users/${user.uid}/${collectionName}`);
+                const snapshot = await getDocs(colRef);
+                snapshot.docs.forEach(d => {
+                    if (!restoredIdsByCollection[collectionName].has(d.id)) {
+                        deleteRefs.push(d.ref);
+                    }
+                });
+            }
+
+            for (let i = 0; i < deleteRefs.length; i += 450) {
+                const batch = writeBatch(firestore);
+                deleteRefs.slice(i, i + 450).forEach(ref => batch.delete(ref));
+                await batch.commit();
+            }
+
             setProgress(100);
             setRestoreStep('complete');
-            
+
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Restore Failed', description: error.message });
             resetRestore();
@@ -224,7 +247,7 @@ export function BackupAndRestore() {
                             <AlertTriangle className="h-4 w-4" />
                             Warning: This is a destructive action.
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">Restoring will first delete all current data in your account.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Restoring will overwrite your current data with the contents of the backup file.</p>
                     </div>
                      {restoreStep === 'progress' && <Progress value={progress} className="mt-4 [&>div]:bg-destructive" />}
                 </CardContent>
@@ -240,13 +263,13 @@ export function BackupAndRestore() {
                              <AlertDialogHeader>
                                 <AlertDialogTitle>Confirm Restore</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    You are about to restore from file <span className="font-bold">{restoreFile?.name}</span>. This will <span className="font-bold text-destructive">delete all existing data</span> before importing the backup. Are you sure you want to continue?
+                                    You are about to restore from file <span className="font-bold">{restoreFile?.name}</span>. This will <span className="font-bold text-destructive">overwrite your existing data</span> with the contents of the backup. Are you sure you want to continue?
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction onClick={handleRestore} className="bg-destructive hover:bg-destructive/90">
-                                    {isRestoring ? <Loader2 className="animate-spin" /> : "Yes, Delete & Restore"}
+                                    {isRestoring ? <Loader2 className="animate-spin" /> : "Yes, Restore"}
                                 </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>

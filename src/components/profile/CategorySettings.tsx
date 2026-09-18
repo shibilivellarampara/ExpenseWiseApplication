@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from 'react';
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError, setDocumentNonBlocking } from '@/firebase';
 import { Category } from '@/lib/types';
-import { collection, doc, writeBatch, query, getDocs, where } from 'firebase/firestore';
+import { collection, doc, writeBatch, query, getDocs, where, deleteDoc, deleteField } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -136,21 +136,30 @@ export function CategorySettings() {
 
         setIsSaving(true);
         const itemRef = doc(firestore, `users/${user.uid}/categories`, itemId);
-        
-        const batch = writeBatch(firestore);
-        batch.delete(itemRef);
 
-        batch.commit()
-            .catch(async (serverError) => {
-                errorEmitter.emit('permission-error', new FirestorePermissionError({
-                    path: itemRef.path,
-                    operation: 'delete',
-                }));
-            })
-            .finally(() => {
-                toast({ title: 'Category Removed' });
-                setIsSaving(false);
-            });
+        try {
+            const expensesRef = collection(firestore, `users/${user.uid}/expenses`);
+            const q = query(expensesRef, where('categoryId', '==', itemId));
+            const expensesSnapshot = await getDocs(q);
+            const expenseRefs = expensesSnapshot.docs.map(d => d.ref);
+
+            for (let i = 0; i < expenseRefs.length; i += 499) {
+                const batch = writeBatch(firestore);
+                expenseRefs.slice(i, i + 499).forEach(ref => batch.update(ref, { categoryId: deleteField() }));
+                await batch.commit();
+            }
+
+            await deleteDoc(itemRef);
+            toast({ title: 'Category Removed' });
+        } catch (serverError: any) {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: itemRef.path,
+                operation: 'delete',
+            }));
+            toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleUpdateStatus = (itemId: string, status: 'active' | 'inactive') => {

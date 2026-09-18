@@ -7,9 +7,14 @@ import { PageLoader } from '@/components/PageLoader';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { cn } from '@/lib/utils';
+import { useFirestore, useUser } from '@/firebase';
+import { useRecurringExpenseProcessor } from '@/hooks/use-recurring-expense-processor';
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
     const isMobile = useMediaQuery("(max-width: 768px)");
+    const { user } = useUser();
+    const firestore = useFirestore();
+    useRecurringExpenseProcessor(firestore, user?.uid);
 
     return (
         <div className="flex h-dvh w-full flex-col bg-background">

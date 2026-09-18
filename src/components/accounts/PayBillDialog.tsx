@@ -57,6 +57,11 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
         return;
     }
 
+    if (amountToPay > outstandingAmount) {
+        toast({ variant: 'destructive', title: 'Invalid Amount', description: 'Payment amount cannot exceed the outstanding balance.' });
+        return;
+    }
+
 
     setIsProcessing(true);
 
@@ -166,6 +171,7 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
                     <div className="pt-2">
                          <Input
                             type="number"
+                            max={outstandingAmount}
                             placeholder="Enter amount to pay"
                             value={specificAmount}
                             onChange={(e) => setSpecificAmount(e.target.value)}
@@ -176,7 +182,7 @@ export function PayBillDialog({ children, creditCard, paymentAccounts, outstandi
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handlePayBill} disabled={isProcessing || !selectedPaymentAccountId || amountToPay <= 0}>
+          <Button onClick={handlePayBill} disabled={isProcessing || !selectedPaymentAccountId || amountToPay <= 0 || amountToPay > outstandingAmount}>
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : `Pay ${amountToPay > 0 ? formatAmount(amountToPay) : ''}`}
           </Button>
         </DialogFooter>

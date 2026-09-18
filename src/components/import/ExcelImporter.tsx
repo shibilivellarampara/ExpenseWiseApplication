@@ -461,8 +461,13 @@ export function ExcelImporter() {
             const tagMap = new Map(allTagsFromDB.map(t => [normalizeName(t.name), t.id]));
             
             const chosenAccountId = importAccountId || allAccountsFromDB.find(a => a.type === 'cash')?.id || allAccountsFromDB[0]?.id;
-    
-            // --- 4. Process transactions in chunks (without balance updates, as it's already set) ---
+
+            // Newly created accounts already have their balance seeded from this same import
+            // (see step 2), so only pre-existing accounts need their balance adjusted here.
+            const newlyCreatedAccountIds = new Set(Array.from(newAccountRefs.values()).map(v => v.id));
+            const existingAccountBalanceChanges = new Map<string, number>();
+
+            // --- 4. Process transactions in chunks ---
             let docsImportedInLoop = 0;
             for (let i = 0; i < totalBatches; i++) {
                 const batch = writeBatch(firestore);
@@ -489,7 +494,12 @@ export function ExcelImporter() {
                     }
                     
                     if (!finalAccountId) return;
-    
+
+                    if (!newlyCreatedAccountIds.has(finalAccountId)) {
+                        const amountChange = item.type === 'income' ? item.amount : -item.amount;
+                        existingAccountBalanceChanges.set(finalAccountId, (existingAccountBalanceChanges.get(finalAccountId) || 0) + amountChange);
+                    }
+
                     const expenseDocData: any = {
                         id: expenseRef.id, userId: user.uid, type: item.type, amount: item.amount,
                         description: item.description, date: item.date, accountId: finalAccountId,
@@ -513,7 +523,16 @@ export function ExcelImporter() {
                     setImportedCount(prev => prev + 1);
                 }
             }
-    
+
+            if (existingAccountBalanceChanges.size > 0) {
+                const balanceUpdateBatch = writeBatch(firestore);
+                existingAccountBalanceChanges.forEach((amountChange, accountId) => {
+                    const accountRef = firestoreDoc(firestore, `users/${user.uid}/accounts`, accountId);
+                    balanceUpdateBatch.update(accountRef, { balance: increment(amountChange) });
+                });
+                await balanceUpdateBatch.commit();
+            }
+
             toast({
                 title: 'Import Successful',
                 description: `${processedData.length} expenses were added.`,

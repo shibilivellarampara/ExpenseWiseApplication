@@ -35,14 +35,14 @@ interface ExpensesTableProps {
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
   isDeleting: boolean;
-  onDeleteSelected: () => void;
+  onDeleteSelected: (ids?: string[]) => void;
 }
 
-type VirtualRowData = 
+type VirtualRowData =
   | { type: 'header'; label: string; key: string; dailyTotal: number }
   | { type: 'expense'; expense: EnrichedExpense };
 
-function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: () => void; }) {
+function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, onBadgeClick, selectedIds, onSelectionChange, onDeleteSelected, isDeleting }: { expenses: EnrichedExpense[], currencySymbol: string, onDataChange: () => void; viewMode: 'normal' | 'compact', onBadgeClick?: (type: 'category' | 'tag' | 'account', id: string) => void; selectedIds: string[]; onSelectionChange: (ids: string[]) => void; isDeleting: boolean; onDeleteSelected: (ids?: string[]) => void; }) {
     
     const [focusedId, setFocusedId] = useState<string | null>(null);
     const [editingExpense, setEditingExpense] = useState<EnrichedExpense | null>(null);
@@ -175,7 +175,7 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={onDeleteSelected} className="bg-destructive hover:bg-destructive/90">
+                                    <AlertDialogAction onClick={() => onDeleteSelected()} className="bg-destructive hover:bg-destructive/90">
                                         {isDeleting ? <Loader2 className="h-4 w-4 animate-spin"/> : "Confirm Delete"}
                                     </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -331,12 +331,11 @@ function GroupedExpenseList({ expenses, currencySymbol, onDataChange, viewMode, 
                                                                 </AlertDialogHeader>
                                                                 <AlertDialogFooter>
                                                                     <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction 
+                                                                    <AlertDialogAction
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            onSelectionChange([row.expense.id]);
-                                                                            setTimeout(() => onDeleteSelected(), 50);
-                                                                        }} 
+                                                                            onDeleteSelected([row.expense.id]);
+                                                                        }}
                                                                         className="bg-destructive hover:bg-destructive/90"
                                                                     >
                                                                         Delete

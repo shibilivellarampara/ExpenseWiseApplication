@@ -46,20 +46,27 @@ export default function DebtsPage() {
 
         setIsDeleting(true);
         try {
-            const batch = writeBatch(firestore);
-            
             const debtsRef = collection(firestore, `users/${user.uid}/debts`);
-            const q = query(debtsRef, where('personName', 'in', selectedPersonNames));
-            
-            const snapshot = await getDocs(q);
-            
-            if (snapshot.empty) {
+
+            // Firestore's 'in' operator supports at most 30 comparison values.
+            const nameChunks: string[][] = [];
+            for (let i = 0; i < selectedPersonNames.length; i += 30) {
+                nameChunks.push(selectedPersonNames.slice(i, i + 30));
+            }
+
+            const docRefsToDelete = (await Promise.all(
+                nameChunks.map(chunk => getDocs(query(debtsRef, where('personName', 'in', chunk))))
+            )).flatMap(snapshot => snapshot.docs.map(doc => doc.ref));
+
+            if (docRefsToDelete.length === 0) {
                 toast({ variant: "destructive", title: "No records found for the selected person(s)." });
             } else {
-                snapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
+                // A single writeBatch supports at most 500 mutations.
+                for (let i = 0; i < docRefsToDelete.length; i += 500) {
+                    const batch = writeBatch(firestore);
+                    docRefsToDelete.slice(i, i + 500).forEach(ref => batch.delete(ref));
+                    await commitBatchNonBlocking(batch, `users/${user.uid}/debts`);
+                }
                 toast({
                     title: `${selectedPersonNames.length} Person(s) Removed`,
                     description: `All debt records for the selected people have been deleted.`,

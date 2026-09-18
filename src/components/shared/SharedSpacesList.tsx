@@ -5,14 +5,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users } from 'lucide-react';
-import { SharedSpaceMember } from '@/lib/types';
+import { SharedSpace } from '@/lib/types';
 
 interface SharedSpacesListProps {
-  spaces: SharedSpaceMember[];
+  spaces: (SharedSpace & { id: string })[];
+  currentUid?: string;
   isLoading?: boolean;
 }
 
-export function SharedSpacesList({ spaces, isLoading }: SharedSpacesListProps) {
+export function SharedSpacesList({ spaces, currentUid, isLoading }: SharedSpacesListProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -35,16 +36,16 @@ export function SharedSpacesList({ spaces, isLoading }: SharedSpacesListProps) {
 
   return (
     <div className="space-y-3">
-      {spaces.map((member) => (
-        <Link key={member.spaceId} href={`/shared/${member.spaceId}`}>
+      {spaces.map((space) => (
+        <Link key={space.id} href={`/shared/${space.id}`}>
           <Card className="rounded-2xl border-none shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4 flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <h3 className="font-bold truncate">{member.spaceName}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Code: {member.spaceId}</p>
+                <h3 className="font-bold truncate">{space.name}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Code: {space.id}</p>
               </div>
-              <Badge variant={member.isOwner ? 'default' : 'outline'} className="shrink-0">
-                {member.isOwner ? 'Owner' : 'Member'}
+              <Badge variant={space.ownerId === currentUid ? 'default' : 'outline'} className="shrink-0">
+                {space.ownerId === currentUid ? 'Owner' : 'Member'}
               </Badge>
             </CardContent>
           </Card>

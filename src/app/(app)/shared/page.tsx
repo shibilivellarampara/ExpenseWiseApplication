@@ -1,11 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, KeyRound } from 'lucide-react';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { SharedSpaceMember } from '@/lib/types';
-import { collectionGroup, query, where } from 'firebase/firestore';
+import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { SharedSpace, UserProfile } from '@/lib/types';
+import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { CreateSharedSpaceDialog } from '@/components/shared/CreateSharedSpaceDialog';
 import { JoinSharedSpaceDialog } from '@/components/shared/JoinSharedSpaceDialog';
 import { SharedSpacesList } from '@/components/shared/SharedSpacesList';
@@ -14,11 +15,51 @@ export default function SharedSpacesPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const membershipsQuery = useMemoFirebase(() =>
-    user ? query(collectionGroup(firestore, 'members'), where('uid', '==', user.uid)) : null
-  , [firestore, user]);
+  const userProfileRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
 
-  const { data: spaces, isLoading } = useCollection<SharedSpaceMember>(membershipsQuery);
+  const [spaces, setSpaces] = useState<(SharedSpace & { id: string })[]>([]);
+  const [isLoadingSpaces, setIsLoadingSpaces] = useState(true);
+
+  // Stable string key so this effect only re-runs when the actual set of space
+  // ids changes, not on every profile snapshot (unrelated profile fields change often).
+  const idsKey = (userProfile?.sharedSpaceIds || []).join(',');
+
+  useEffect(() => {
+    if (!firestore || !user) return;
+    const ids = idsKey ? idsKey.split(',') : [];
+
+    if (ids.length === 0) {
+      setSpaces([]);
+      setIsLoadingSpaces(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoadingSpaces(true);
+
+    (async () => {
+      const results = await Promise.all(
+        ids.map(async (id) => {
+          const snap = await getDoc(doc(firestore, 'sharedSpaces', id));
+          if (!snap.exists()) {
+            // Stale reference (e.g. the space was deleted by its owner) — self-clean.
+            updateDoc(doc(firestore, 'users', user.uid), { sharedSpaceIds: arrayRemove(id) }).catch(() => {});
+            return null;
+          }
+          return { ...(snap.data() as SharedSpace), id: snap.id };
+        })
+      );
+      if (!cancelled) {
+        setSpaces(results.filter((s): s is SharedSpace & { id: string } => s !== null));
+        setIsLoadingSpaces(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [firestore, user, idsKey]);
 
   return (
     <div className="w-full space-y-6 pb-32">
@@ -37,7 +78,7 @@ export default function SharedSpacesPage() {
         </CreateSharedSpaceDialog>
       </PageHeader>
 
-      <SharedSpacesList spaces={spaces || []} isLoading={isLoading} />
+      <SharedSpacesList spaces={spaces} currentUid={user?.uid} isLoading={isProfileLoading || isLoadingSpaces} />
     </div>
   );
 }

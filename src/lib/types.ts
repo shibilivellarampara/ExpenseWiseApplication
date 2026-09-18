@@ -37,6 +37,7 @@ export type UserProfile = {
   transactionFieldOrder?: ('description' | 'accountId' | 'categoryId' | 'tagIds')[];
   createdAt?: Timestamp;
   isAdmin?: boolean;
+  sharedSpaceIds?: string[];
 };
 
 export type Category = {

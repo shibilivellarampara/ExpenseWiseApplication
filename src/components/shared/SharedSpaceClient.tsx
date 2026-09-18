@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { doc, collection, query, orderBy, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, collection, query, orderBy, getDocs, writeBatch, arrayRemove } from 'firebase/firestore';
 import {
   useUser,
   useFirestore,
@@ -11,7 +11,6 @@ import {
   useCollection,
   useMemoFirebase,
   commitBatchNonBlocking,
-  deleteDocumentNonBlocking,
 } from '@/firebase';
 import { SharedSpace, SharedSpaceMember, SharedExpense, UserProfile } from '@/lib/types';
 import { PageHeader } from '@/components/PageHeader';
@@ -75,7 +74,10 @@ export function SharedSpaceClient({ spaceId }: { spaceId: string }) {
     if (!user || !firestore) return;
     setIsLeaving(true);
     try {
-      await deleteDocumentNonBlocking(doc(firestore, `sharedSpaces/${spaceId}/members`, user.uid));
+      const batch = writeBatch(firestore);
+      batch.delete(doc(firestore, `sharedSpaces/${spaceId}/members`, user.uid));
+      batch.set(doc(firestore, 'users', user.uid), { sharedSpaceIds: arrayRemove(spaceId) }, { merge: true });
+      await commitBatchNonBlocking(batch, `sharedSpaces/${spaceId}`);
       toast({ title: 'Left Shared Space' });
       router.push('/shared');
     } catch (error: any) {

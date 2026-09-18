@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, KeyRound } from 'lucide-react';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { SharedSpaceMember } from '@/lib/types';
-import { collectionGroup, documentId, query, where } from 'firebase/firestore';
+import { collectionGroup, query, where } from 'firebase/firestore';
 import { CreateSharedSpaceDialog } from '@/components/shared/CreateSharedSpaceDialog';
 import { JoinSharedSpaceDialog } from '@/components/shared/JoinSharedSpaceDialog';
 import { SharedSpacesList } from '@/components/shared/SharedSpacesList';
@@ -15,7 +15,7 @@ export default function SharedSpacesPage() {
   const firestore = useFirestore();
 
   const membershipsQuery = useMemoFirebase(() =>
-    user ? query(collectionGroup(firestore, 'members'), where(documentId(), '==', user.uid)) : null
+    user ? query(collectionGroup(firestore, 'members'), where('uid', '==', user.uid)) : null
   , [firestore, user]);
 
   const { data: spaces, isLoading } = useCollection<SharedSpaceMember>(membershipsQuery);
